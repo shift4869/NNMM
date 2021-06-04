@@ -17,14 +17,20 @@ logger.setLevel(INFO)
 
 
 def GetMovieList(url: str) -> list[str]:
-    """マイリストや投稿動画ページアドレスから掲載されている動画のURLを取得する
+    """投稿動画ページアドレスから掲載されている動画のURLを取得する
 
     Args:
-        url (str): マイリストまたは投稿動画ページのアドレス
+        url (str): 投稿動画ページのアドレス
 
     Returns:
         movie_list (str): 動画URLリスト
     """
+    # 入力チェック
+    pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
+    f1 = re.search(pattern, url)
+    if not f1:
+        return []
+
     # セッション開始
     session = HTMLSession()
     r = session.get(url)
@@ -49,8 +55,6 @@ def GetMovieList(url: str) -> list[str]:
         test_count = test_count + 1
         sleep(5)
 
-    # print(movie_list)
-
     return movie_list
 
 
@@ -62,5 +66,6 @@ if __name__ == "__main__":
     
     url = "https://www.nicovideo.jp/user/12899156/video"
     movie_list = GetMovieList(url)
+    print(movie_list)
 
     pass
