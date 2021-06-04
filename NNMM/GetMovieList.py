@@ -55,6 +55,7 @@ def GetMovieList(url: str) -> list[str]:
         test_count = test_count + 1
         sleep(5)
 
+    movie_list.sort(reverse=True)  # 降順ソート
     return movie_list
 
 

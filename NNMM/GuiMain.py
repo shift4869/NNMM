@@ -5,6 +5,8 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
+from NNMM import GetMovieList
+
 # 左ペイン
 l_pane = [
     [sg.Listbox(["a", "b", "c"], key="-LIST-", enable_events=False, size=(40, 100), auto_size_text=True)]
@@ -36,9 +38,9 @@ r_pane = [
 def GuiMain():
     # 対象URL例サンプル
     target_url_example = {
-        "pixiv": "https://www.pixiv.net/artworks/xxxxxxxx",
-        "nijie": "http://nijie.info/view_popup.php?id=xxxxxx",
-        "seiga": "https://seiga.nicovideo.jp/seiga/imxxxxxxx",
+        "a": "https://www.nicovideo.jp/user/12899156/video",
+        "b": "https://www.nicovideo.jp/user/1594318/video",
+        "c": "https://www.nicovideo.jp/user/error_address/video",
     }
 
     # ウィンドウのレイアウト
@@ -68,12 +70,15 @@ def GuiMain():
         if event in [sg.WIN_CLOSED, "-EXIT-"]:
             break
         if event == "-LIST-+DOUBLE CLICK+":
-            v = values["-LIST-"][0]
-            def_data = window['-TABLE-'].Values
-            a_data = [v, '0', '0', '0', '00', '0']
-            def_data.append(a_data)
+            v = values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
+            def_data = window['-TABLE-'].Values  # 現在のtableの全リスト
+
+            def_data = []
+            movie_list = GetMovieList.GetMovieList(target_url_example.get(v, ""))
+
+            for i, m in enumerate(movie_list):
+                def_data.append([i, "", m, "", "", ""])
             window['-TABLE-'].update(values=def_data)
-            print("ok")
             pass
         if event == "-TARGET-":
             work_kind = values["-TARGET-"]
