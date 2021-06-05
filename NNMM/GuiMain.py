@@ -2,7 +2,6 @@
 import logging.config
 from logging import INFO, getLogger
 from pathlib import Path
-from typing import Text
 
 import PySimpleGUI as sg
 
@@ -24,8 +23,9 @@ tree_style = {
     "justification": "left",
 }
 l_pane = [
-    [sg.Listbox(["willow8713さんの投稿動画", "moco78さんの投稿動画", "エラー値"], key="-LIST-", enable_events=False, size=(40, 100), auto_size_text=True)]
+    [sg.Listbox(["willow8713さんの投稿動画", "moco78さんの投稿動画", "エラー値"], key="-LIST-", enable_events=False, size=(40, 48), auto_size_text=True)],
     # [sg.Tree(**tree_style)]
+    [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Input("", key="-INPUT2-", size=(30, 10))],
 ]
 
 # 右ペイン
@@ -45,12 +45,13 @@ table_style = {
     'key': '-TABLE-'
 }
 t = sg.Table(**table_style)
-ip = sg.Input("", key="-INPUT1-", size=(90, 100))
+ip = sg.Input("", key="-INPUT1-", size=(84, 100))
 r_pane = [
-    [ip, sg.Button("終了", key="-EXIT-")],
+    [ip, sg.Button("更新", key="-UPDATE-"), sg.Button("終了", key="-EXIT-")],
     [sg.Column([[t]], expand_x=True)],
 ]
 
+# マイリスト一覧
 db_fullpath = Path("NNMM_DB.db")
 mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
 
@@ -90,7 +91,8 @@ def GuiMain():
     #     list_data.Insert("", r["listname"], "*" + r["listname"], values=[])
     window['-LIST-'].update(values=list_data)
 
-    def_data = [['y', '0', '[ゆっくり実況]\u3000大神\u3000絶景版\u3000その87', '0', '00', '0']]
+    # def_data = [['y', '0', '[ゆっくり実況]\u3000大神\u3000絶景版\u3000その87', '0', '00', '0']]
+    def_data = [[]]
     window['-TABLE-'].update(values=def_data)
 
     # イベントのループ
@@ -112,33 +114,75 @@ def GuiMain():
             target_url = mylist_db.SelectFromListname(v)[0].get("url")
             window["-INPUT1-"].update(value=target_url)  # 対象マイリスのアドレスをテキストボックスに表示
 
+            window["-INPUT2-"].update(value="ロード中")
+            window.refresh()
+
             # 右ペインのテーブルに表示するマイリスト情報を取得
             def_data = []
             table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
-            movie_list = GetMyListInfo.GetMyListInfo(target_url)
+            now_movie_list = GetMyListInfo.GetMyListInfo(target_url)
+
+            window["-INPUT2-"].update(value="")
 
             # 右ペインのテーブルにマイリスト情報を表示
-            for m in movie_list:
+            for m in now_movie_list:
                 a = [m["no"], m["id"], m["title"], m["username"], m["status"], m["uploaded"]]
                 def_data.append(a)
             window['-TABLE-'].update(values=def_data)
             pass
-        if event == "-TARGET-":
-            work_kind = values["-TARGET-"]
-            # print(target_url_example[work_kind])
-            window["-WORK_URL_SAMPLE-"].update(target_url_example[work_kind])
-        if event == "-RUN-":
-            work_kind = values["-TARGET-"]
-            work_url = values["-WORK_URL-"]
-            save_path = values["-SAVE_PATH-"]
-            # print(work_kind + "_" + work_url + "_" + save_path)
+        if event == "-CREATE-":
+            # 左下、マイリスト追加ボタンが押された場合
+            mylist_url = values["-INPUT1-"]
 
-            # res = LinkSearchMain.LinkSearchMain(work_kind, work_url, save_path)
-            res = -1
-            if res == 0:
-                logger.info("Process done: success!")
-            else:
-                logger.info("Process failed...")
+            # 右上のテキストボックスにも左下のテキストボックスにもURLが入力されていない場合何もしない
+            if mylist_url == "":
+                mylist_url = values["-INPUT2-"]
+                if mylist_url == "":
+                    continue
+
+            # 既存マイリストと重複していた場合何もしない
+            prev_mylist = mylist_db.SelectFromURL(mylist_url)
+            if prev_mylist:
+                continue
+
+            # 確認
+            # res = sg.popup_ok_cancel(mylist_url + "\nマイリスト追加しますか？")
+            # if res == "Cancel":
+            #     continue
+
+            # マイリスト情報収集
+            # 右ペインのテーブルに表示するマイリスト情報を取得
+            window["-INPUT2-"].update(value="ロード中")
+            window.refresh()
+            def_data = []
+            table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
+            now_movie_list = GetMyListInfo.GetMyListInfo(mylist_url)
+            s_record = now_movie_list[0]
+            window["-INPUT2-"].update(value="")
+
+            # 新規マイリスト追加
+            username = s_record["username"]
+            type = "uploaded"  # タイプは投稿動画固定（TODO）
+            listname = f"{username}さんの投稿動画"
+
+            td_format = "%Y/%m/%d %H:%M"
+            dts_format = "%Y-%m-%d %H:%M:%S"
+            dst = datetime.now().strftime(dts_format)
+
+            mylist_db.Upsert(username, type, listname, mylist_url, dst)
+
+            # listbox更新
+            list_data = window["-LIST-"].Values
+            n_record = mylist_db.SelectFromURL(mylist_url)
+            list_data.append(n_record[0]["listname"])
+            window["-LIST-"].update(values=list_data)
+
+            # 右ペインのテーブルにマイリスト情報を表示
+            for m in now_movie_list:
+                a = [m["no"], m["id"], m["title"], m["username"], m["status"], m["uploaded"]]
+                def_data.append(a)
+            window['-TABLE-'].update(values=def_data)
+            pass
 
     # ウィンドウ終了処理
     window.close()

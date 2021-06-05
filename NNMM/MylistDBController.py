@@ -104,6 +104,27 @@ class MylistDBController(DBControllerBase):
         session.close()
         return res_dict
 
+    def SelectFromURL(self, url):
+        """Mylistからurlを条件としてSELECTする
+
+        Note:
+            "select * from Mylist where url = {}".format(url)
+
+        Args:
+            url (str): 取得対象のマイリストurl
+
+        Returns:
+            dict[]: SELECTしたレコードの辞書リスト
+        """
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        res = session.query(Mylist).filter_by(url=url).all()
+        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+
+        session.close()
+        return res_dict
+
 
 if __name__ == "__main__":
     DEBUG = True
