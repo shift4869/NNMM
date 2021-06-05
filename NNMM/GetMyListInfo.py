@@ -81,8 +81,17 @@ def GetMyListInfo(url: str) -> list[dict]:
     title_list = [str(t.text) for t in title_lx]
 
     # 投稿日時収集
+    td_format = "%Y/%m/%d %H:%M"
+    dts_format = "%Y-%m-%d %H:%M:00"
     uploaded_lx = response.html.lxml.find_class("NC-VideoMediaObject-metaAdditionalRegisteredAt")
-    uploaded_list = [str(t.text) for t in uploaded_lx]
+    uploaded_list = []
+    for t in uploaded_lx:
+        tca = str(t.text)
+        if "前" in tca or "今" in tca:
+            uploaded_list.append(tca)
+        else:
+            dst = datetime.strptime(tca, td_format)
+            uploaded_list.append(dst.strftime(dts_format))
 
     # 動画ID収集
     pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"  # ニコニコ動画URLの形式
