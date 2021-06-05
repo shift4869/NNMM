@@ -32,18 +32,21 @@ l_pane = [
 # 右ペイン
 table_cols_name = [" No. ", "   動画ID   ", "              動画名              ", "    投稿者    ", "  状況  ", "   投稿日時   "]
 cols_width = [20, 20, 20, 20, 80, 80]
-def_data = [['x', '0', '[ゆっくり実況]\u3000大神\u3000絶景版\u3000その87', '0', '00', '0']]
+def_data = [['', '', '', '', '', '']]
+right_click_menu = ['Unused', ["Play", "---", "Play2"]]
 table_style = {
     'values': def_data,
     'headings': table_cols_name,
     'max_col_width': 500,
     # 'def_col_width': 72 // len(cols_width),
     'def_col_width': cols_width,
-    "size": (1000, 1000),
+    # "size": (1000, 1000),
+    "num_rows": 2400,
     "auto_size_columns": True,
     "bind_return_key": True,
     "justification": "left",
-    'key': '-TABLE-'
+    'key': '-TABLE-',
+    "right_click_menu": right_click_menu,
 }
 t = sg.Table(**table_style)
 ip = sg.Input("", key="-INPUT1-", size=(84, 100))
@@ -105,6 +108,15 @@ def GuiMain():
         if event in [sg.WIN_CLOSED, "-EXIT-"]:
             # ウィンドウの×ボタンが押されれば終了
             break
+        if event == "Play":
+            # テーブル右クリックで再生が選択された場合
+            row = int(values["-TABLE-"][0])
+            def_data = window['-TABLE-'].Values  # 現在のtableの全リスト
+            selected = def_data[row]
+            url = mylist_info_db.SelectFromMovieID(selected[1])[0].get("url")
+            cmd = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe"
+            sp = sg.execute_command_subprocess(cmd, url)
+            print(sg.execute_get_results(sp)[0])
         if event == "-LIST-+DOUBLE CLICK+":
             # リストボックスの項目がダブルクリックされた場合（単一）
             v = values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
@@ -121,7 +133,7 @@ def GuiMain():
             m_list = mylist_info_db.SelectFromUsername(username)
             def_data = []
             for i, m in enumerate(m_list):
-                a = [i, m["id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
+                a = [i, m["movie_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
                 def_data.append(a)
             window['-TABLE-'].update(values=def_data)
         if event == "-UPDATE-":
