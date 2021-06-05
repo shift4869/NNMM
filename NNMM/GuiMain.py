@@ -32,20 +32,20 @@ l_pane = [
 # 右ペイン
 table_cols_name = [" No. ", "   動画ID   ", "              動画名              ", "    投稿者    ", "  状況  ", "   投稿日時   "]
 cols_width = [20, 20, 20, 20, 80, 80]
-def_data = [['', '', '', '', '', '']]
-right_click_menu = ['Unused', ["Play", "---", "Play2"]]
+def_data = [["", "", "", "", "", ""]]
+right_click_menu = ["Unused", ["再生", "---", "視聴済にする", "未視聴にする"]]
 table_style = {
-    'values': def_data,
-    'headings': table_cols_name,
-    'max_col_width': 500,
-    # 'def_col_width': 72 // len(cols_width),
-    'def_col_width': cols_width,
+    "values": def_data,
+    "headings": table_cols_name,
+    "max_col_width": 500,
+    # "def_col_width": 72 // len(cols_width),
+    "def_col_width": cols_width,
     # "size": (1000, 1000),
     "num_rows": 2400,
     "auto_size_columns": True,
     "bind_return_key": True,
     "justification": "left",
-    'key': '-TABLE-',
+    "key": "-TABLE-",
     "right_click_menu": right_click_menu,
 }
 t = sg.Table(**table_style)
@@ -81,7 +81,7 @@ def GuiMain():
     # ウィンドウオブジェクトの作成
     window = sg.Window("NNMM", layout, size=(1070, 900), finalize=True, resizable=True)
     # window["-TREE-"].bind("<Double-Button1>", "-LIST_D-")
-    window['-LIST-'].bind('<Double-Button-1>', "+DOUBLE CLICK+")
+    window["-LIST-"].bind("<Double-Button-1>", "+DOUBLE CLICK+")
 
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     logger = getLogger("root")
@@ -94,11 +94,11 @@ def GuiMain():
     # list_data = sg.TreeData()
     # for r in m_list:
     #     list_data.Insert("", r["listname"], "*" + r["listname"], values=[])
-    window['-LIST-'].update(values=list_data)
+    window["-LIST-"].update(values=list_data)
 
-    # def_data = [['y', '0', '[ゆっくり実況]\u3000大神\u3000絶景版\u3000その87', '0', '00', '0']]
+    # def_data = [["y", "0", "[ゆっくり実況]\u3000大神\u3000絶景版\u3000その87", "0", "00", "0"]]
     def_data = [[]]
-    window['-TABLE-'].update(values=def_data)
+    window["-TABLE-"].update(values=def_data)
 
     # イベントのループ
     while True:
@@ -108,10 +108,42 @@ def GuiMain():
         if event in [sg.WIN_CLOSED, "-EXIT-"]:
             # ウィンドウの×ボタンが押されれば終了
             break
-        if event == "Play":
+        if event == "視聴済にする":
+            # テーブル右クリックで視聴済にするが選択された場合
+            row = int(values["-TABLE-"][0])
+            def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
+
+            # DB更新
+            selected = def_data[row]
+            record = mylist_info_db.SelectFromMovieID(selected[1])[0]
+            record["status"] = ""
+            record = mylist_info_db.Upsert(record["movie_id"], record["title"], record["username"],
+                                           record["status"], record["uploaded_at"], record["url"],
+                                           record["created_at"])
+
+            # テーブル更新
+            def_data[row][4] = ""
+            window["-TABLE-"].update(values=def_data)
+        if event == "未視聴にする":
+            # テーブル右クリックで未視聴にするが選択された場合
+            row = int(values["-TABLE-"][0])
+            def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
+
+            # DB更新
+            selected = def_data[row]
+            record = mylist_info_db.SelectFromMovieID(selected[1])[0]
+            record["status"] = "未視聴"
+            record = mylist_info_db.Upsert(record["movie_id"], record["title"], record["username"],
+                                           record["status"], record["uploaded_at"], record["url"],
+                                           record["created_at"])
+
+            # テーブル更新
+            def_data[row][4] = "未視聴"
+            window["-TABLE-"].update(values=def_data)
+        if event == "再生":
             # テーブル右クリックで再生が選択された場合
             row = int(values["-TABLE-"][0])
-            def_data = window['-TABLE-'].Values  # 現在のtableの全リスト
+            def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
             selected = def_data[row]
             url = mylist_info_db.SelectFromMovieID(selected[1])[0].get("url")
             cmd = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe"
@@ -120,7 +152,7 @@ def GuiMain():
         if event == "-LIST-+DOUBLE CLICK+":
             # リストボックスの項目がダブルクリックされた場合（単一）
             v = values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
-            def_data = window['-TABLE-'].Values  # 現在のtableの全リスト
+            def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
 
             if v[:2] == "*:":
                 v = v[2:]
@@ -129,13 +161,13 @@ def GuiMain():
             target_url = record.get("url")
             window["-INPUT1-"].update(value=target_url)  # 対象マイリスのアドレスをテキストボックスに表示
 
-            # DBからロード(TODO)
+            # DBからロード
             m_list = mylist_info_db.SelectFromUsername(username)
             def_data = []
             for i, m in enumerate(m_list):
                 a = [i, m["movie_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
                 def_data.append(a)
-            window['-TABLE-'].update(values=def_data)
+            window["-TABLE-"].update(values=def_data)
         if event == "-UPDATE-":
             # 右上の更新ボタンが押された場合
             mylist_url = values["-INPUT1-"]
@@ -143,22 +175,38 @@ def GuiMain():
             window["-INPUT2-"].update(value="ロード中")
             window.refresh()
 
+            # DBからロード
+            record = mylist_db.SelectFromURL(mylist_url)[0]
+            username = record.get("username")
+            m_list = mylist_info_db.SelectFromUsername(username)
+            prev_movieid_list = [m["movie_id"] for m in m_list]
+
             # 右ペインのテーブルに表示するマイリスト情報を取得
             def_data = []
             table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
             now_movie_list = GetMyListInfo.GetMyListInfo(mylist_url)
+            now_movieid_list = [m["movie_id"] for m in now_movie_list]
 
             window["-INPUT2-"].update(value="")
 
-            # 右ペインのテーブルにマイリスト情報を表示
-            for m in now_movie_list:
-                a = [m["no"], m["id"], m["title"], m["username"], m["status"], m["uploaded"]]
-                def_data.append(a)
-            window['-TABLE-'].update(values=def_data)
+            # 状況ステータスを調べる
+            status_check_list = []
+            for i, n in enumerate(now_movieid_list):
+                if n in prev_movieid_list:
+                    status_check_list.append(m_list[i]["status"])
+                else:
+                    status_check_list.append("未視聴")
 
-            # DBに格納(TODO)
+            # 右ペインのテーブルにマイリスト情報を表示
+            for m, s in zip(now_movie_list, status_check_list):
+                m["status"] = s
+                a = [m["no"], m["movie_id"], m["title"], m["username"], m["status"], m["uploaded"]]
+                def_data.append(a)
+            window["-TABLE-"].update(values=def_data)
+
+            # DBに格納
             for m in now_movie_list:
-                movie_id = m["id"]
+                movie_id = m["movie_id"]
                 title = m["title"]
                 username = m["username"]
                 status = m["status"]
@@ -196,7 +244,7 @@ def GuiMain():
             window["-INPUT2-"].update(value="ロード中")
             window.refresh()
             def_data = []
-            table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
+            table_cols = ["no", "movie_id", "title", "username", "status", "uploaded", "url"]
             now_movie_list = GetMyListInfo.GetMyListInfo(mylist_url)
             s_record = now_movie_list[0]
             window["-INPUT2-"].update(value="")
@@ -220,9 +268,9 @@ def GuiMain():
 
             # 右ペインのテーブルにマイリスト情報を表示
             for m in now_movie_list:
-                a = [m["no"], m["id"], m["title"], m["username"], m["status"], m["uploaded"]]
+                a = [m["no"], m["movie_id"], m["title"], m["username"], m["status"], m["uploaded"]]
                 def_data.append(a)
-            window['-TABLE-'].update(values=def_data)
+            window["-TABLE-"].update(values=def_data)
             pass
 
     # ウィンドウ終了処理

@@ -141,7 +141,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(username=username).all()
+        res = session.query(MylistInfo).filter_by(username=username).order_by(desc(MylistInfo.movie_id)).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()

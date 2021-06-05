@@ -69,7 +69,7 @@ def GetMyListInfo(url: str) -> list[dict]:
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
     table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
-    table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
+    table_cols = ["no", "movie_id", "title", "username", "status", "uploaded", "url"]
 
     # 動画リンク抽出は降順でないため、ソートする（ロード順？）
     movie_list.sort(reverse=True)  # 降順ソート
@@ -113,7 +113,7 @@ def GetMyListInfo(url: str) -> list[dict]:
 
     # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
     # No.も付記する
-    res.sort(key=lambda t: t["id"], reverse=True)
+    res.sort(key=lambda t: t["movie_id"], reverse=True)
     for i, r in enumerate(res):
         res[i]["no"] = i + 1
     return res
