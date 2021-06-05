@@ -7,6 +7,7 @@ import PySimpleGUI as sg
 
 from NNMM import GetMyListInfo
 from NNMM.MylistDBController import *
+from NNMM.MylistInfoDBController import *
 
 # 左ペイン
 treedata = sg.TreeData()
@@ -54,6 +55,7 @@ r_pane = [
 # マイリスト一覧
 db_fullpath = Path("NNMM_DB.db")
 mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
+mylist_info_db = MylistInfoDBController(db_fullpath=str(db_fullpath))
 
 
 def GuiMain():
@@ -108,11 +110,23 @@ def GuiMain():
             v = values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
             def_data = window['-TABLE-'].Values  # 現在のtableの全リスト
 
-            # target_url = target_url_example.get(v, "")  # listboxの選択値に対応するアドレス
             if v[:2] == "*:":
                 v = v[2:]
-            target_url = mylist_db.SelectFromListname(v)[0].get("url")
+            record = mylist_db.SelectFromListname(v)[0]
+            username = record.get("username")
+            target_url = record.get("url")
             window["-INPUT1-"].update(value=target_url)  # 対象マイリスのアドレスをテキストボックスに表示
+
+            # DBからロード(TODO)
+            m_list = mylist_info_db.SelectFromUsername(username)
+            def_data = []
+            for i, m in enumerate(m_list):
+                a = [i, m["id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
+                def_data.append(a)
+            window['-TABLE-'].update(values=def_data)
+        if event == "-UPDATE-":
+            # 右上の更新ボタンが押された場合
+            mylist_url = values["-INPUT1-"]
 
             window["-INPUT2-"].update(value="ロード中")
             window.refresh()
@@ -120,7 +134,7 @@ def GuiMain():
             # 右ペインのテーブルに表示するマイリスト情報を取得
             def_data = []
             table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
-            now_movie_list = GetMyListInfo.GetMyListInfo(target_url)
+            now_movie_list = GetMyListInfo.GetMyListInfo(mylist_url)
 
             window["-INPUT2-"].update(value="")
 
@@ -129,6 +143,21 @@ def GuiMain():
                 a = [m["no"], m["id"], m["title"], m["username"], m["status"], m["uploaded"]]
                 def_data.append(a)
             window['-TABLE-'].update(values=def_data)
+
+            # DBに格納(TODO)
+            for m in now_movie_list:
+                movie_id = m["id"]
+                title = m["title"]
+                username = m["username"]
+                status = m["status"]
+                uploaded_at = m["uploaded"]
+                url = m["url"]
+
+                td_format = "%Y/%m/%d %H:%M"
+                dts_format = "%Y-%m-%d %H:%M:%S"
+                dst = datetime.now().strftime(dts_format)
+                created_at = dst
+                mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
             pass
         if event == "-CREATE-":
             # 左下、マイリスト追加ボタンが押された場合
