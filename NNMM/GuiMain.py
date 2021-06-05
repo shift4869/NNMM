@@ -2,33 +2,35 @@
 import logging.config
 from logging import INFO, getLogger
 from pathlib import Path
+from typing import Text
 
 import PySimpleGUI as sg
 
-from NNMM import GetMovieList
+from NNMM import GetMyListInfo
 
 # 左ペイン
 l_pane = [
-    [sg.Listbox(["a", "b", "c"], key="-LIST-", enable_events=False, size=(40, 100), auto_size_text=True)]
+    [sg.Listbox(["willow8713さんの投稿動画", "moco78さんの投稿動画", "エラー値"], key="-LIST-", enable_events=False, size=(40, 100), auto_size_text=True)]
 ]
 
 # 右ペイン
-table_cols = ["No.", "  動画ID  ", "               動画名               ", "      投稿者      ", "  状況  ", "  投稿日時  "]
+table_cols_name = [" No. ", "   動画ID   ", "              動画名              ", "    投稿者    ", "  状況  ", "   投稿日時   "]
 cols_width = [20, 20, 20, 20, 80, 80]
-def_data = [['x', '0', '0', '0', '00', '0']]
+def_data = [['x', '0', '[ゆっくり実況]\u3000大神\u3000絶景版\u3000その87', '0', '00', '0']]
 table_style = {
     'values': def_data,
-    'headings': table_cols,
+    'headings': table_cols_name,
     'max_col_width': 500,
     # 'def_col_width': 72 // len(cols_width),
     'def_col_width': cols_width,
     "size": (1000, 1000),
     "auto_size_columns": True,
     "bind_return_key": True,
+    "justification": "left",
     'key': '-TABLE-'
 }
 t = sg.Table(**table_style)
-ip = sg.Input("", size=(90, 100))
+ip = sg.Input("", key="-INPUT1-", size=(90, 100))
 r_pane = [
     [ip, sg.Button("終了", key="-EXIT-")],
     [sg.Column([[t]], expand_x=True)],
@@ -38,9 +40,9 @@ r_pane = [
 def GuiMain():
     # 対象URL例サンプル
     target_url_example = {
-        "a": "https://www.nicovideo.jp/user/12899156/video",
-        "b": "https://www.nicovideo.jp/user/1594318/video",
-        "c": "https://www.nicovideo.jp/user/error_address/video",
+        "willow8713さんの投稿動画": "https://www.nicovideo.jp/user/12899156/video",
+        "moco78さんの投稿動画": "https://www.nicovideo.jp/user/1594318/video",
+        "エラー値": "https://www.nicovideo.jp/user/error_address/video",
     }
 
     # ウィンドウのレイアウト
@@ -60,24 +62,35 @@ def GuiMain():
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     logger = getLogger("root")
     logger.setLevel(INFO)
+    
+    def_data = [['y', '0', '[ゆっくり実況]\u3000大神\u3000絶景版\u3000その87', '0', '00', '0']]
+    window['-TABLE-'].update(values=def_data)
 
     # イベントのループ
     while True:
         # イベントの読み込み
         event, values = window.read()
         # print(event, values)
-        # ウィンドウの×ボタンが押されれば終了
         if event in [sg.WIN_CLOSED, "-EXIT-"]:
+            # ウィンドウの×ボタンが押されれば終了
             break
         if event == "-LIST-+DOUBLE CLICK+":
+            # リストボックスの項目がダブルクリックされた場合（単一）
             v = values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
             def_data = window['-TABLE-'].Values  # 現在のtableの全リスト
 
-            def_data = []
-            movie_list = GetMovieList.GetMovieList(target_url_example.get(v, ""))
+            target_url = target_url_example.get(v, "")  # listboxの選択値に対応するアドレス
+            window["-INPUT1-"].update(value=target_url)  # 対象マイリスのアドレスをテキストボックスに表示
 
-            for i, m in enumerate(movie_list):
-                def_data.append([i, "", m, "", "", ""])
+            # 右ペインのテーブルに表示するマイリスト情報を取得
+            def_data = []
+            table_cols = ["no", "id", "title", "username", "state", "uploaded", "url"]
+            movie_list = GetMyListInfo.GetMyListInfo(target_url)
+
+            # 右ペインのテーブルにマイリスト情報を表示
+            for m in movie_list:
+                a = [m["no"], m["id"], m["title"], m["username"], m["state"], m["uploaded"]]
+                def_data.append(a)
             window['-TABLE-'].update(values=def_data)
             pass
         if event == "-TARGET-":
