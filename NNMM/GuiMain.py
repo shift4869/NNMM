@@ -7,10 +7,25 @@ from typing import Text
 import PySimpleGUI as sg
 
 from NNMM import GetMyListInfo
+from NNMM.MylistDBController import *
 
 # 左ペイン
+treedata = sg.TreeData()
+treedata.Insert("", "k1", "t1", values=[])
+tree_style = {
+    "data": treedata,
+    "headings": [],
+    "auto_size_columns": False,
+    "num_rows": 2400,
+    "col0_width": 32,
+    "key": "-TREE-",
+    "show_expanded": False,
+    "enable_events": False,
+    "justification": "left",
+}
 l_pane = [
     [sg.Listbox(["willow8713さんの投稿動画", "moco78さんの投稿動画", "エラー値"], key="-LIST-", enable_events=False, size=(40, 100), auto_size_text=True)]
+    # [sg.Tree(**tree_style)]
 ]
 
 # 右ペイン
@@ -36,6 +51,9 @@ r_pane = [
     [sg.Column([[t]], expand_x=True)],
 ]
 
+db_fullpath = Path("NNMM_DB.db")
+mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
+
 
 def GuiMain():
     # 対象URL例サンプル
@@ -56,13 +74,22 @@ def GuiMain():
 
     # ウィンドウオブジェクトの作成
     window = sg.Window("NNMM", layout, size=(1070, 900), finalize=True, resizable=True)
-    # window["-LIST-"].bind("<Double-Button1>", "-LIST_D-")
+    # window["-TREE-"].bind("<Double-Button1>", "-LIST_D-")
     window['-LIST-'].bind('<Double-Button-1>', "+DOUBLE CLICK+")
 
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     logger = getLogger("root")
     logger.setLevel(INFO)
-    
+
+    # listbox初期化
+    m_list = mylist_db.Select()
+    list_data = [m["listname"] for m in m_list]
+    list_data[0] = "*:" + list_data[0]
+    # list_data = sg.TreeData()
+    # for r in m_list:
+    #     list_data.Insert("", r["listname"], "*" + r["listname"], values=[])
+    window['-LIST-'].update(values=list_data)
+
     def_data = [['y', '0', '[ゆっくり実況]\u3000大神\u3000絶景版\u3000その87', '0', '00', '0']]
     window['-TABLE-'].update(values=def_data)
 
@@ -79,17 +106,20 @@ def GuiMain():
             v = values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
             def_data = window['-TABLE-'].Values  # 現在のtableの全リスト
 
-            target_url = target_url_example.get(v, "")  # listboxの選択値に対応するアドレス
+            # target_url = target_url_example.get(v, "")  # listboxの選択値に対応するアドレス
+            if v[:2] == "*:":
+                v = v[2:]
+            target_url = mylist_db.SelectFromListname(v)[0].get("url")
             window["-INPUT1-"].update(value=target_url)  # 対象マイリスのアドレスをテキストボックスに表示
 
             # 右ペインのテーブルに表示するマイリスト情報を取得
             def_data = []
-            table_cols = ["no", "id", "title", "username", "state", "uploaded", "url"]
+            table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
             movie_list = GetMyListInfo.GetMyListInfo(target_url)
 
             # 右ペインのテーブルにマイリスト情報を表示
             for m in movie_list:
-                a = [m["no"], m["id"], m["title"], m["username"], m["state"], m["uploaded"]]
+                a = [m["no"], m["id"], m["title"], m["username"], m["status"], m["uploaded"]]
                 def_data.append(a)
             window['-TABLE-'].update(values=def_data)
             pass
