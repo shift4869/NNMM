@@ -223,7 +223,12 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # 結合
     res = []
-    # 収集した情報の数はそれぞれ一致するはず
+    # 収集した情報の数はそれぞれ一致するはずだが最小のものに合わせる
+    list_num_min = min(len(movie_list), len(title_list), len(uploaded_list), len(movie_id_list))
+    movie_list = movie_list[:list_num_min]
+    title_list = title_list[:list_num_min]
+    uploaded_list = uploaded_list[:list_num_min]
+    movie_id_list = movie_id_list[:list_num_min]
     if len(movie_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(movie_id_list):
         return []
     for id, title, uploaded, movie_url in zip(movie_id_list, title_list, uploaded_list, movie_list):
