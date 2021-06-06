@@ -48,17 +48,20 @@ def GetMyListInfo(url: str) -> list[dict]:
     while True:
         # ブラウザエンジンでHTMLを生成
         # 初回起動時はchromiumインストールのために時間がかかる
-        response.html.render()
+        try:
+            response.html.render()
 
-        # すべてのリンクを抽出
-        # 生成に失敗した場合、動画リンクが取得できないため失敗時は繰り返す（最大{MAX_TEST_NUM}回）
-        all_links_set = response.html.links
-        all_links_list = list(all_links_set)  # setをlistにキャストするとvalueのみのリストになる
-        pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+$"  # ニコニコ動画URLの形式
-        movie_list = [s for s in all_links_list if re.search(pattern, s)]
+            # すべてのリンクを抽出
+            # 生成に失敗した場合、動画リンクが取得できないため失敗時は繰り返す（最大{MAX_TEST_NUM}回）
+            all_links_set = response.html.links
+            all_links_list = list(all_links_set)  # setをlistにキャストするとvalueのみのリストになる
+            pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+$"  # ニコニコ動画URLの形式
+            movie_list = [s for s in all_links_list if re.search(pattern, s)]
+        except Exception:
+            pass
+
         if movie_list or (test_count > MAX_TEST_NUM):
             break
-
         test_count = test_count + 1
         sleep(5)
 
