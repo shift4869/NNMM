@@ -41,9 +41,9 @@ def UpdateMylistShow(window, mylist_db):
     return 0
 
 
-def UpdateTableShow(window, mylist_db, mylist_info_db):
+def UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url):
     # 右上のテキストボックスにマイリストのURLがあるとき限定(window["-INPUT1-"])
-    mylist_url = window["-INPUT1-"].get()
+    # mylist_url = window["-INPUT1-"].get()
     # MylistInfoからロード
     record = mylist_db.SelectFromURL(mylist_url)[0]
 
@@ -96,19 +96,22 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
         now_show_table_data = list[def_data]
 
     # DBに格納
+    records = []
     for m in now_movie_list:
-        movie_id = m["movie_id"]
-        title = m["title"]
-        username = m["username"]
-        status = m["status"]
-        uploaded_at = m["uploaded"]
-        url = m["url"]
-
         td_format = "%Y/%m/%d %H:%M"
         dts_format = "%Y-%m-%d %H:%M:%S"
         dst = datetime.now().strftime(dts_format)
-        created_at = dst
-        mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
+        r = {
+            "movie_id": m["movie_id"],
+            "title": m["title"],
+            "username": m["username"],
+            "status": m["status"],
+            "uploaded_at": m["uploaded"],
+            "url": m["url"],
+            "created_at": dst
+        }
+        records.append(r)
+    mylist_info_db.Upsert(records)
 
     # 左のマイリストlistboxの表示を更新する
     # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
@@ -136,8 +139,9 @@ def UpdateAllMylistInfoThread(window, mylist_db, mylist_info_db):
     # 全てのマイリストを更新する（マルチスレッド前提）
     m_list = mylist_db.Select()
     now_show_table_data = []
-    for record in m_list:
+    for i, record in enumerate(m_list):
         UpdateMylistInfo(window, mylist_db, mylist_info_db, record)
+        window.write_event_value("-THREAD PROGRESS-", i)
 
     # if now_show_table_data:
     #     window["-TABLE-"].update(values=now_show_table_data)

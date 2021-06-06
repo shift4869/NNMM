@@ -62,6 +62,63 @@ class MylistInfoDBController(DBControllerBase):
 
         return res
 
+    def Upsert(self, records):
+        """MylistInfoにUPSERTする
+
+        Notes:
+            追加しようとしているレコードが既存テーブルに存在しなければINSERT
+            存在しているならばUPDATE(DELETE->INSERT)
+            一致しているかの判定はurlが一致している場合、とする
+
+        Args:
+            以下のArgsをキーとするrecordのlistを引数としてとる
+            records = list(dict)
+                dictb Keys
+                    movie_id (str): 動画ID(smxxxxxxxx)
+                    title (str): 動画タイトル
+                    username (str): 投稿者名
+                    status (str): 視聴状況({"未視聴", "視聴済"})
+                    uploaded_at (str): 動画投稿日時
+                    url (str): 動画URL
+                    created_at (str): 作成日時
+
+        Returns:
+            int: 0(成功,新規追加), 1(成功,更新), other(失敗)
+        """
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        res = -1
+
+        for record in records:
+            movie_id = record.get("movie_id")
+            title = record.get("title")
+            username = record.get("username")
+            status = record.get("status")
+            uploaded_at = record.get("uploaded_at")
+            url = record.get("url")
+            created_at = record.get("created_at")
+
+            r = MylistInfo(movie_id, title, username, status, uploaded_at, url, created_at)
+
+            try:
+                q = session.query(MylistInfo).filter(or_(MylistInfo.movie_id == r.movie_id))
+                ex = q.one()
+            except NoResultFound:
+                # INSERT
+                session.add(r)
+                res = 0
+            else:
+                # UPDATEは実質DELETE->INSERTと同じとする
+                session.delete(ex)
+                session.commit()
+                session.add(r)
+                res = 1
+
+        session.commit()
+        session.close()
+
+        return res
+
     def Select(self):
         """MylistInfoからSELECTする
 

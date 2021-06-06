@@ -145,7 +145,6 @@ def GuiMain():
 
                 # マイリスト画面表示更新
                 UpdateMylistShow(window, mylist_db)
-                pass
         if event == "未視聴にする":
             # テーブル右クリックで未視聴にするが選択された場合
             def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
@@ -175,7 +174,6 @@ def GuiMain():
 
             # マイリスト画面表示更新
             UpdateMylistShow(window, mylist_db)
-            pass
         if event == "再生":
             # テーブル右クリックで再生が選択された場合
             row = int(values["-TABLE-"][0])
@@ -215,77 +213,33 @@ def GuiMain():
                 v = v[2:]
             record = mylist_db.SelectFromListname(v)[0]
             username = record.get("username")
-            target_url = record.get("url")
-            window["-INPUT1-"].update(value=target_url)  # 対象マイリスのアドレスをテキストボックスに表示
+            mylist_url = record.get("url")
+            window["-INPUT1-"].update(value=mylist_url)  # 対象マイリスのアドレスをテキストボックスに表示
 
             # テーブル更新
-            UpdateTableShow(window, mylist_db, mylist_info_db)
+            UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
         if event == "-UPDATE-":
             # 右上の更新ボタンが押された場合
             mylist_url = values["-INPUT1-"]
 
+            # 左下の表示変更
             window["-INPUT2-"].update(value="ロード中")
             window.refresh()
 
-            # DBからロード
+            # マイリストレコードから現在のマイリスト情報を取得する
+            # AsyncHTMLSessionでページ情報をレンダリングして解釈する
+            # マルチスレッド処理
             record = mylist_db.SelectFromURL(mylist_url)[0]
-            username = record.get("username")
-            m_list = mylist_info_db.SelectFromUsername(username)
-            prev_movieid_list = [m["movie_id"] for m in m_list]
-
-            # 右ペインのテーブルに表示するマイリスト情報を取得
-            def_data = []
-            table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
-            now_movie_list = GetMyListInfo.GetMyListInfo(mylist_url)
-            now_movieid_list = [m["movie_id"] for m in now_movie_list]
-
+            threading.Thread(target=GuiFunction.UpdateMylistInfoThread, args=(window, mylist_db, mylist_info_db, record), daemon=True).start()
+        if event == "-UPDATE_THREAD_DONE-":
+            # -UPDATE-のマルチスレッド処理が終わった後の処理
+            # 左下の表示を戻す
             window["-INPUT2-"].update(value="")
 
-            # 状況ステータスを調べる
-            status_check_list = []
-            for i, n in enumerate(now_movieid_list):
-                if n in prev_movieid_list:
-                    status_check_list.append(m_list[i]["status"])
-                else:
-                    status_check_list.append("未視聴")
-
-            # 右ペインのテーブルにマイリスト情報を表示
-            for m, s in zip(now_movie_list, status_check_list):
-                m["status"] = s
-                a = [m["no"], m["movie_id"], m["title"], m["username"], m["status"], m["uploaded"]]
-                def_data.append(a)
-            window["-TABLE-"].update(values=def_data)
-
-            # DBに格納
-            for m in now_movie_list:
-                movie_id = m["movie_id"]
-                title = m["title"]
-                username = m["username"]
-                status = m["status"]
-                uploaded_at = m["uploaded"]
-                url = m["url"]
-
-                td_format = "%Y/%m/%d %H:%M"
-                dts_format = "%Y-%m-%d %H:%M:%S"
-                dst = datetime.now().strftime(dts_format)
-                created_at = dst
-                mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
-
-            # 左のマイリストlistboxの表示を更新する
-            # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
-            if IsMylistIncludeNewMovie(window["-TABLE-"].Values):
-                # マイリストDB更新
-                mylist_url = values["-INPUT1-"]
-                record = mylist_db.SelectFromURL(mylist_url)[0]
-                record["is_include_new"] = True  # 新着マークを更新
-                # record["listname"] = record["listname"][2:]  # *:を削除
-                mylist_db.Upsert(record["username"], record["type"], record["listname"],
-                                 record["url"], record["created_at"], record["is_include_new"])
-
-                # マイリスト画面表示更新
-                UpdateMylistShow(window, mylist_db)
-                pass
-            pass
+            # テーブルの表示を更新する
+            mylist_url = values["-INPUT1-"]
+            if mylist_url != "":
+                UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
         if event == "-CREATE-":
             # 左下、マイリスト追加ボタンが押された場合
             mylist_url = values["-INPUT1-"]
@@ -313,6 +267,7 @@ def GuiMain():
             window.refresh()
             def_data = []
             table_cols = ["no", "movie_id", "title", "username", "status", "uploaded", "url"]
+            # TODO::async
             now_movie_list = GetMyListInfo.GetMyListInfo(mylist_url)
             s_record = now_movie_list[0]
             window["-INPUT2-"].update(value="")
@@ -331,20 +286,13 @@ def GuiMain():
 
             # マイリスト画面表示更新
             UpdateMylistShow(window, mylist_db)
-
-            # 右ペインのテーブルにマイリスト情報を表示
-            for m in now_movie_list:
-                m["status"] = "未視聴"  # 新規追加なのですべて未視聴
-                a = [m["no"], m["movie_id"], m["title"], m["username"], m["status"], m["uploaded"]]
-                def_data.append(a)
-            window["-TABLE-"].update(values=def_data)
             
             # DBに格納
             for m in now_movie_list:
                 movie_id = m["movie_id"]
                 title = m["title"]
                 username = m["username"]
-                status = m["status"]
+                status = "未視聴"  # 初追加時はすべて未視聴扱い
                 uploaded_at = m["uploaded"]
                 url = m["url"]
 
@@ -353,14 +301,27 @@ def GuiMain():
                 dst = datetime.now().strftime(dts_format)
                 created_at = dst
                 mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
+
+            # テーブルの表示を更新する
+            UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
         if event == "-ALL_UPDATE-":
             # 左下のすべて更新ボタンが押された場合
             window["-INPUT2-"].update(value="全てのマイリストを更新中")
             window.refresh()
-            threading.Thread(target=GuiFunction.UpdateAllMylistInfoThread, args=(window, mylist_db, mylist_info_db), daemon=True).start()
-            pass
+            # 存在するすべてのマイリストから現在のマイリスト情報を取得する
+            # AsyncHTMLSessionでページ情報をレンダリングして解釈する
+            # マルチスレッド処理
+            threading.Thread(target=GuiFunction.UpdateAllMylistInfoThread,
+                             args=(window, mylist_db, mylist_info_db), daemon=True).start()
         if event == "-ALL_UPDATE_THREAD_DONE-":
+            # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
+            # 左下の表示を戻す
             window["-INPUT2-"].update(value="")
+
+            # テーブルの表示を更新する
+            mylist_url = values["-INPUT1-"]
+            if mylist_url != "":
+                UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
 
     # ウィンドウ終了処理
     window.close()
