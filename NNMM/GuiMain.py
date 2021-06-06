@@ -1,11 +1,14 @@
 # coding: utf-8
 import logging.config
+import time
+import threading
 from logging import INFO, getLogger
 from pathlib import Path
 
 import PySimpleGUI as sg
 
 from NNMM import GetMyListInfo
+from NNMM import GuiFunction
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
@@ -354,6 +357,14 @@ def GuiMain():
                 dst = datetime.now().strftime(dts_format)
                 created_at = dst
                 mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
+        if event == "-ALL_UPDATE-":
+            # 左下のすべて更新ボタンが押された場合
+            window["-INPUT2-"].update(value="全てのマイリストを更新中")
+            window.refresh()
+            threading.Thread(target=GuiFunction.UpdateAllMylistInfo, args=(window, mylist_db, mylist_info_db), daemon=True).start()
+            pass
+        if event == "-THREAD_DONE-":
+            window["-INPUT2-"].update(value="")
 
     # ウィンドウ終了処理
     window.close()
