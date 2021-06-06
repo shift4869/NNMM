@@ -136,10 +136,10 @@ if __name__ == "__main__":
     dts_format = "%Y-%m-%d %H:%M:%S"
     dst = datetime.now().strftime(dts_format)
     url = "https://www.nicovideo.jp/user/12899156/video"
-    db_cont.Upsert("willow8713", "uploaded", "willow8713さんの投稿動画", url, dst)
+    db_cont.Upsert("willow8713", "uploaded", "willow8713さんの投稿動画", url, dst, true)
 
     url = "https://www.nicovideo.jp/user/1594318/video"
-    db_cont.Upsert("moco78", "uploaded", "moco78さんの投稿動画", url, dst)
+    db_cont.Upsert("moco78", "uploaded", "moco78さんの投稿動画", url, dst, true)
 
     records = db_cont.Select()
     pass
