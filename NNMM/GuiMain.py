@@ -8,6 +8,7 @@ import PySimpleGUI as sg
 from NNMM import GetMyListInfo
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
+from NNMM.GuiFunction import *
 
 # 左ペイン
 treedata = sg.TreeData()
@@ -90,7 +91,7 @@ def GuiMain():
     # listbox初期化
     m_list = mylist_db.Select()
     for m in m_list:
-        if m["is_include_new"] == 1:
+        if m["is_include_new"]:
             m["listname"] = "*:" + m["listname"]
     list_data = [m["listname"] for m in m_list]
     # list_data = sg.TreeData()
@@ -127,31 +128,80 @@ def GuiMain():
                 # テーブル更新
                 def_data[row][4] = ""
             window["-TABLE-"].update(values=def_data)
+
+            # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
+            if not IsMylistIncludeNewMovie(window["-TABLE-"].Values):
+                # マイリストDB更新
+                mylist_url = values["-INPUT1-"]
+                record = mylist_db.SelectFromURL(mylist_url)[0]
+                record["is_include_new"] = False  # 新着マークを更新
+                # record["listname"] = record["listname"][2:]  # *:を削除
+                mylist_db.Upsert(record["username"], record["type"], record["listname"],
+                                 record["url"], record["created_at"], record["is_include_new"])
+
+                # マイリスト画面表示更新
+                UpdateMylistShow(window, mylist_db)
+                pass
         if event == "未視聴にする":
             # テーブル右クリックで未視聴にするが選択された場合
-            row = int(values["-TABLE-"][0])
             def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
+            for v in values["-TABLE-"]:
+                row = int(v)
 
-            # DB更新
-            selected = def_data[row]
-            record = mylist_info_db.SelectFromMovieID(selected[1])[0]
-            record["status"] = "未視聴"
-            record = mylist_info_db.Upsert(record["movie_id"], record["title"], record["username"],
-                                           record["status"], record["uploaded_at"], record["url"],
-                                           record["created_at"])
+                # DB更新
+                selected = def_data[row]
+                record = mylist_info_db.SelectFromMovieID(selected[1])[0]
+                record["status"] = "未視聴"
+                record = mylist_info_db.Upsert(record["movie_id"], record["title"], record["username"],
+                                               record["status"], record["uploaded_at"], record["url"],
+                                               record["created_at"])
 
-            # テーブル更新
-            def_data[row][4] = "未視聴"
+                # テーブル更新
+                def_data[row][4] = "未視聴"
             window["-TABLE-"].update(values=def_data)
+
+            # 未視聴になったことでマイリストの新着表示を表示する
+            # 未視聴にしたので必ず新着あり扱いになる
+            # マイリストDB更新
+            mylist_url = values["-INPUT1-"]
+            record = mylist_db.SelectFromURL(mylist_url)[0]
+            record["is_include_new"] = True
+            mylist_db.Upsert(record["username"], record["type"], record["listname"],
+                             record["url"], record["created_at"], record["is_include_new"])
+
+            # マイリスト画面表示更新
+            UpdateMylistShow(window, mylist_db)
+            pass
         if event == "再生":
             # テーブル右クリックで再生が選択された場合
             row = int(values["-TABLE-"][0])
             def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
             selected = def_data[row]
+
+            # 視聴済にする
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+            if def_data[row][4] != "":
+                def_data[row][4] = ""
+                window["-TABLE-"].update(values=def_data)
+
+            # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
+            if not IsMylistIncludeNewMovie(window["-TABLE-"].Values):
+                # マイリストDB更新
+                mylist_url = values["-INPUT1-"]
+                record = mylist_db.SelectFromURL(mylist_url)[0]
+                record["is_include_new"] = False  # 新着マークを更新
+                # record["listname"] = record["listname"][2:]  # *:を削除
+                mylist_db.Upsert(record["username"], record["type"], record["listname"],
+                                 record["url"], record["created_at"], record["is_include_new"])
+
+                # マイリスト画面表示更新
+                UpdateMylistShow(window, mylist_db)
+
+            # ブラウザに動画urlを渡す
             url = mylist_info_db.SelectFromMovieID(selected[1])[0].get("url")
             cmd = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe"
             sp = sg.execute_command_subprocess(cmd, url)
-            print(sg.execute_get_results(sp)[0])
+            # print(sg.execute_get_results(sp)[0])
         if event == "-LIST-+DOUBLE CLICK+":
             # リストボックスの項目がダブルクリックされた場合（単一）
             v = values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
@@ -223,7 +273,19 @@ def GuiMain():
                 mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
 
             # 左のマイリストlistboxの表示を更新する
-            # 一つでも未視聴の動画が含まれる場合はマークを追加する
+            # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
+            if IsMylistIncludeNewMovie(window["-TABLE-"].Values):
+                # マイリストDB更新
+                mylist_url = values["-INPUT1-"]
+                record = mylist_db.SelectFromURL(mylist_url)[0]
+                record["is_include_new"] = True  # 新着マークを更新
+                # record["listname"] = record["listname"][2:]  # *:を削除
+                mylist_db.Upsert(record["username"], record["type"], record["listname"],
+                                 record["url"], record["created_at"], record["is_include_new"])
+
+                # マイリスト画面表示更新
+                UpdateMylistShow(window, mylist_db)
+                pass
             pass
         if event == "-CREATE-":
             # 左下、マイリスト追加ボタンが押された場合
@@ -268,11 +330,8 @@ def GuiMain():
 
             mylist_db.Upsert(username, type, listname, mylist_url, dst, is_include_new)
 
-            # listbox更新
-            list_data = window["-LIST-"].Values
-            n_record = mylist_db.SelectFromURL(mylist_url)
-            list_data.append(n_record[0]["listname"])
-            window["-LIST-"].update(values=list_data)
+            # マイリスト画面表示更新
+            UpdateMylistShow(window, mylist_db)
 
             # 右ペインのテーブルにマイリスト情報を表示
             for m in now_movie_list:
