@@ -30,7 +30,8 @@ tree_style = {
 l_pane = [
     [sg.Listbox(["willow8713さんの投稿動画", "moco78さんの投稿動画", "エラー値"], key="-LIST-", enable_events=False, size=(40, 48), auto_size_text=True)],
     # [sg.Tree(**tree_style)]
-    [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Input("", key="-INPUT2-", size=(30, 10))],
+    [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Button(" all ", key="-ALL_UPDATE-"),
+     sg.Input("", key="-INPUT2-", size=(24, 10))],
 ]
 
 # 右ペイン
@@ -217,13 +218,8 @@ def GuiMain():
             target_url = record.get("url")
             window["-INPUT1-"].update(value=target_url)  # 対象マイリスのアドレスをテキストボックスに表示
 
-            # DBからロード
-            m_list = mylist_info_db.SelectFromUsername(username)
-            def_data = []
-            for i, m in enumerate(m_list):
-                a = [i + 1, m["movie_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
-                def_data.append(a)
-            window["-TABLE-"].update(values=def_data)
+            # テーブル更新
+            UpdateTableShow(window, mylist_db, mylist_info_db)
         if event == "-UPDATE-":
             # 右上の更新ボタンが押された場合
             mylist_url = values["-INPUT1-"]

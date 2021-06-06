@@ -41,6 +41,20 @@ def UpdateMylistShow(window, mylist_db):
     return 0
 
 
+def UpdateTableShow(window, mylist_db, mylist_info_db):
+    # 右上のテキストボックスにマイリストのURLがあるとき限定(window["-INPUT1-"])
+    mylist_url = window["-INPUT1-"].get()
+    # MylistInfoからロード
+    record = mylist_db.SelectFromURL(mylist_url)[0]
+
+    # usernameだと重複するかも(TODO)
+    username = record.get("username")
+    m_list = mylist_info_db.SelectFromUsername(username)
+    def_data = []
+    for i, m in enumerate(m_list):
+        a = [i + 1, m["movie_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
+        def_data.append(a)
+    window["-TABLE-"].update(values=def_data)
     pass
 
 
