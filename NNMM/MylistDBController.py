@@ -17,7 +17,7 @@ class MylistDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def Upsert(self, username, type, listname, url, created_at):
+    def Upsert(self, username, type, listname, url, created_at, is_include_new):
         """MylistにUPSERTする
 
         Notes:
@@ -32,6 +32,7 @@ class MylistDBController(DBControllerBase):
                             typeが"uploaded"の場合："{username}さんの投稿動画"
             url (str): マイリストURL
             created_at (str): 作成日時
+            is_include_new (boolean): 未視聴動画を含むかどうか
 
         Returns:
             int: 0(成功,新規追加), 1(成功,更新), other(失敗)
@@ -40,7 +41,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = Mylist(username, type, listname, url, created_at)
+        r = Mylist(username, type, listname, url, created_at, is_include_new)
 
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url))

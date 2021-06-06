@@ -89,8 +89,10 @@ def GuiMain():
 
     # listbox初期化
     m_list = mylist_db.Select()
+    for m in m_list:
+        if m["is_include_new"] == 1:
+            m["listname"] = "*:" + m["listname"]
     list_data = [m["listname"] for m in m_list]
-    list_data[0] = "*:" + list_data[0]
     # list_data = sg.TreeData()
     # for r in m_list:
     #     list_data.Insert("", r["listname"], "*" + r["listname"], values=[])
@@ -110,19 +112,20 @@ def GuiMain():
             break
         if event == "視聴済にする":
             # テーブル右クリックで視聴済にするが選択された場合
-            row = int(values["-TABLE-"][0])
             def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
+            for v in values["-TABLE-"]:
+                row = int(v)
 
-            # DB更新
-            selected = def_data[row]
-            record = mylist_info_db.SelectFromMovieID(selected[1])[0]
-            record["status"] = ""
-            record = mylist_info_db.Upsert(record["movie_id"], record["title"], record["username"],
-                                           record["status"], record["uploaded_at"], record["url"],
-                                           record["created_at"])
+                # DB更新
+                selected = def_data[row]
+                record = mylist_info_db.SelectFromMovieID(selected[1])[0]
+                record["status"] = ""
+                record = mylist_info_db.Upsert(record["movie_id"], record["title"], record["username"],
+                                               record["status"], record["uploaded_at"], record["url"],
+                                               record["created_at"])
 
-            # テーブル更新
-            def_data[row][4] = ""
+                # テーブル更新
+                def_data[row][4] = ""
             window["-TABLE-"].update(values=def_data)
         if event == "未視聴にする":
             # テーブル右クリックで未視聴にするが選択された場合
@@ -165,7 +168,7 @@ def GuiMain():
             m_list = mylist_info_db.SelectFromUsername(username)
             def_data = []
             for i, m in enumerate(m_list):
-                a = [i, m["movie_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
+                a = [i + 1, m["movie_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
                 def_data.append(a)
             window["-TABLE-"].update(values=def_data)
         if event == "-UPDATE-":
@@ -218,12 +221,16 @@ def GuiMain():
                 dst = datetime.now().strftime(dts_format)
                 created_at = dst
                 mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
+
+            # 左のマイリストlistboxの表示を更新する
+            # 一つでも未視聴の動画が含まれる場合はマークを追加する
             pass
         if event == "-CREATE-":
             # 左下、マイリスト追加ボタンが押された場合
             mylist_url = values["-INPUT1-"]
 
-            # 右上のテキストボックスにも左下のテキストボックスにもURLが入力されていない場合何もしない
+            # 右上のテキストボックスにも左下のテキストボックスにも
+            # URLが入力されていない場合何もしない
             if mylist_url == "":
                 mylist_url = values["-INPUT2-"]
                 if mylist_url == "":
@@ -253,12 +260,13 @@ def GuiMain():
             username = s_record["username"]
             type = "uploaded"  # タイプは投稿動画固定（TODO）
             listname = f"{username}さんの投稿動画"
+            is_include_new = True
 
             td_format = "%Y/%m/%d %H:%M"
             dts_format = "%Y-%m-%d %H:%M:%S"
             dst = datetime.now().strftime(dts_format)
 
-            mylist_db.Upsert(username, type, listname, mylist_url, dst)
+            mylist_db.Upsert(username, type, listname, mylist_url, dst, is_include_new)
 
             # listbox更新
             list_data = window["-LIST-"].Values
@@ -268,10 +276,25 @@ def GuiMain():
 
             # 右ペインのテーブルにマイリスト情報を表示
             for m in now_movie_list:
+                m["status"] = "未視聴"  # 新規追加なのですべて未視聴
                 a = [m["no"], m["movie_id"], m["title"], m["username"], m["status"], m["uploaded"]]
                 def_data.append(a)
             window["-TABLE-"].update(values=def_data)
-            pass
+            
+            # DBに格納
+            for m in now_movie_list:
+                movie_id = m["movie_id"]
+                title = m["title"]
+                username = m["username"]
+                status = m["status"]
+                uploaded_at = m["uploaded"]
+                url = m["url"]
+
+                td_format = "%Y/%m/%d %H:%M"
+                dts_format = "%Y-%m-%d %H:%M:%S"
+                dst = datetime.now().strftime(dts_format)
+                created_at = dst
+                mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
 
     # ウィンドウ終了処理
     window.close()

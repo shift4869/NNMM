@@ -73,6 +73,7 @@ class Mylist(Base):
         [listname] TEXT NOT NULL UNIQUE,
         [url] TEXT NOT NULL UNIQUE,
         [created_at] TEXT,
+        [is_include_new] BOOLEAN DEFAULT 'True',
         PRIMARY KEY([id])
     """
 
@@ -84,17 +85,19 @@ class Mylist(Base):
     listname = Column(String(256), nullable=False, unique=True)
     url = Column(String(512), nullable=False, unique=True)
     created_at = Column(String(256))
+    is_include_new = Column(Boolean, server_default=text("True"))
 
     def __init__(self, *args, **kwargs):
         super(Base, self).__init__(*args, **kwargs)
 
-    def __init__(self, username, type, listname, url, created_at):
+    def __init__(self, username, type, listname, url, created_at, is_include_new):
         # self.id = id
         self.username = username
         self.type = type
         self.listname = listname
         self.url = url
         self.created_at = created_at
+        self.is_include_new = is_include_new
 
     def __repr__(self):
         return "<Mylist(id='{}', username='{}')>".format(self.id, self.username)
@@ -110,6 +113,7 @@ class Mylist(Base):
             "listname": self.listname,
             "url": self.url,
             "created_at": self.created_at,
+            "is_include_new": self.is_include_new,
         }
 
 
