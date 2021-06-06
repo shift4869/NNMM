@@ -62,7 +62,7 @@ class MylistInfoDBController(DBControllerBase):
 
         return res
 
-    def Upsert(self, records):
+    def UpsertFromList(self, records):
         """MylistInfoにUPSERTする
 
         Notes:

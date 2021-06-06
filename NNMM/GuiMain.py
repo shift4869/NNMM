@@ -176,6 +176,8 @@ def GuiMain():
             UpdateMylistShow(window, mylist_db)
         if event == "再生":
             # テーブル右クリックで再生が選択された場合
+            if not values["-TABLE-"]:
+                continue
             row = int(values["-TABLE-"][0])
             def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
             selected = def_data[row]
@@ -240,6 +242,22 @@ def GuiMain():
             mylist_url = values["-INPUT1-"]
             if mylist_url != "":
                 UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
+            window.refresh()
+            
+            # マイリストの新着表示を表示するかどうか判定する
+            def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
+
+            # 左のマイリストlistboxの表示を更新する
+            # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
+            if IsMylistIncludeNewMovie(def_data):
+                record = mylist_db.SelectFromURL(mylist_url)[0]
+                # マイリストDB更新
+                record["is_include_new"] = True  # 新着マークを更新
+                mylist_db.Upsert(record["username"], record["type"], record["listname"],
+                                 record["url"], record["created_at"], record["is_include_new"])
+
+            # マイリスト画面表示更新
+            UpdateMylistShow(window, mylist_db)
         if event == "-CREATE-":
             # 左下、マイリスト追加ボタンが押された場合
             mylist_url = values["-INPUT1-"]
@@ -322,6 +340,28 @@ def GuiMain():
             mylist_url = values["-INPUT1-"]
             if mylist_url != "":
                 UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
+
+            # マイリストの新着表示を表示するかどうか判定する
+            m_list = mylist_db.Select()
+            for m in m_list:
+                username = m["username"]
+                movie_list = mylist_info_db.SelectFromUsername(username)
+                table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+                def_data = []
+                for i, t in enumerate(movie_list):
+                    a = [i + 1, t["movie_id"], t["title"], t["username"], t["status"], t["uploaded_at"]]
+                    def_data.append(a)
+
+                # 左のマイリストlistboxの表示を更新する
+                # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
+                if IsMylistIncludeNewMovie(def_data):
+                    # マイリストDB更新
+                    m["is_include_new"] = True  # 新着マークを更新
+                    mylist_db.Upsert(m["username"], m["type"], m["listname"],
+                                     m["url"], m["created_at"], m["is_include_new"])
+
+            # マイリスト画面表示更新
+            UpdateMylistShow(window, mylist_db)
 
     # ウィンドウ終了処理
     window.close()

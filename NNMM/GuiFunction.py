@@ -111,27 +111,12 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
             "created_at": dst
         }
         records.append(r)
-    mylist_info_db.Upsert(records)
-
-    # 左のマイリストlistboxの表示を更新する
-    # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
-    if IsMylistIncludeNewMovie(def_data):
-        # マイリストDB更新
-        record["is_include_new"] = True  # 新着マークを更新
-        # record["listname"] = record["listname"][2:]  # *:を削除
-        mylist_db.Upsert(record["username"], record["type"], record["listname"],
-                         record["url"], record["created_at"], record["is_include_new"])
-
-        # マイリスト画面表示更新
-        UpdateMylistShow(window, mylist_db)
+    mylist_info_db.UpsertFromList(records)
 
 
 def UpdateMylistInfoThread(window, mylist_db, mylist_info_db, record):
     # マイリストを更新する（マルチスレッド前提）
     UpdateMylistInfo(window, mylist_db, mylist_info_db, record)
-
-    # if now_show_table_data:
-    #     window["-TABLE-"].update(values=now_show_table_data)
     window.write_event_value("-UPDATE_THREAD_DONE-", "")
 
 
@@ -143,8 +128,6 @@ def UpdateAllMylistInfoThread(window, mylist_db, mylist_info_db):
         UpdateMylistInfo(window, mylist_db, mylist_info_db, record)
         window.write_event_value("-THREAD PROGRESS-", i)
 
-    # if now_show_table_data:
-    #     window["-TABLE-"].update(values=now_show_table_data)
     window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
 
 
