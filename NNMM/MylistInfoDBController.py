@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy import *
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import *
 from sqlalchemy.orm.exc import *
 
@@ -104,15 +105,35 @@ class MylistInfoDBController(DBControllerBase):
                 q = session.query(MylistInfo).filter(or_(MylistInfo.movie_id == r.movie_id))
                 ex = q.one()
             except NoResultFound:
+                pass
+            else:
+                # UPDATEは実質DELETE->INSERTと同じとする
+                session.delete(ex)
+                res = 1
+
+        session.commit()
+
+        for record in records:
+            movie_id = record.get("movie_id")
+            title = record.get("title")
+            username = record.get("username")
+            status = record.get("status")
+            uploaded_at = record.get("uploaded_at")
+            url = record.get("url")
+            created_at = record.get("created_at")
+
+            r = MylistInfo(movie_id, title, username, status, uploaded_at, url, created_at)
+
+            try:
+                q = session.query(MylistInfo).filter(or_(MylistInfo.movie_id == r.movie_id))
+                ex = q.one()
+            except NoResultFound:
                 # INSERT
                 session.add(r)
                 res = 0
             else:
-                # UPDATEは実質DELETE->INSERTと同じとする
-                session.delete(ex)
-                session.commit()
-                session.add(r)
-                res = 1
+                res = -1
+                raise SQLAlchemyError
 
         session.commit()
         session.close()
