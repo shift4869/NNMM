@@ -123,6 +123,7 @@ log*.txt*
 *.pdf
 *.bat
 /sample
+*.csv
 
 # CI環境が整うまで無効化
 /.github

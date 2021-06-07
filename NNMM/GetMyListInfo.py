@@ -21,12 +21,194 @@ logger = getLogger("root")
 logger.setLevel(INFO)
 
 
+def GetMyListInfoLightWeight(url: str) -> list[dict]:
+    """投稿動画ページアドレスに対応するRSSを取得して動画の情報を取得する
+
+    Notes:
+        以下をキーとする情報を辞書で返す
+        table_cols = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+        元データは以下の通り
+            ・あるユーザーの投稿動画一覧を取得する場合(RSS)
+                https://www.nicovideo.jp/user/{ユーザーID}/video?rss=atom
+        ※最大30件まで
+
+    Args:
+        url (str): 投稿動画ページのアドレス
+
+    Returns:
+        movie_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照
+    """
+    # 入力チェック
+    pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
+    f1 = re.search(pattern, url)
+    if not f1:
+        return []
+
+    soup = None
+    test_count = 0
+    MAX_TEST_NUM = 5
+    while True:
+        # 失敗時は繰り返す（最大{MAX_TEST_NUM}回）
+        try:
+            response = requests.get(url + "?rss=atom")
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "lxml-xml")
+        except Exception:
+            pass
+
+        if soup:
+            break  # 取得成功
+
+        if test_count > MAX_TEST_NUM:
+            break  # 取得失敗
+        test_count = test_count + 1
+        sleep(5)
+
+    # {MAX_TEST_NUM}回requests.getしても失敗した場合はエラー
+    if (test_count > MAX_TEST_NUM) or (soup is None):
+        return []
+
+    # ループ脱出後はレンダリングが正常に行えたことが保証されている
+    # 動画情報を集める
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+    table_cols = ["no", "movie_id", "title", "username", "status", "uploaded", "url"]
+
+    # 投稿者収集
+    # ひとまず投稿動画の投稿者のみ（単一）
+    username = ""
+    title_lx = soup.find_all("title")
+    pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
+    username = re.findall(pattern, title_lx[0].text)[0]
+
+    # 一つのentryから動画ID, 動画名, 投稿日時, URLを抽出する関数
+    def GetEntryInfo(entry_lx) -> tuple[str, str, str, str]:
+        # 動画ID, 動画名, 投稿日時, URL
+        movie_id = ""
+        title = ""
+        uploaded = ""
+        movie_url = ""
+
+        title = entry_lx.find("title").text
+
+        link_lx = entry_lx.find("link")
+        pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+"
+        if re.findall(pattern, link_lx.get("href")):
+            # クエリ除去してURL部分のみ保持
+            movie_url = urllib.parse.urlunparse(
+                urllib.parse.urlparse(link_lx.get("href"))._replace(query=None)
+            )
+
+        pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
+        movie_id = re.findall(pattern, movie_url)[0]
+
+        published_lx = entry_lx.find("published")
+        td_format = "%Y-%m-%dT%H:%M:%S%z"
+        dts_format = "%Y-%m-%d %H:%M:%S"
+        uploaded = datetime.strptime(published_lx.text, td_format).strftime(dts_format)
+
+        return (movie_id, title, uploaded, movie_url)
+
+    res = []
+    entries_lx = soup.find_all("entry")
+    for entry in entries_lx:
+        movie_id, title, uploaded, movie_url = GetEntryInfo(entry)
+
+        value_list = [-1, movie_id, title, username, "", uploaded, movie_url]
+        res.append(dict(zip(table_cols, value_list)))
+
+    return res
+
+
+async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
+    # 入力チェック
+    pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
+    f1 = re.search(pattern, url)
+    if not f1:
+        return []
+
+    loop = asyncio.get_event_loop()
+    soup = None
+    test_count = 0
+    MAX_TEST_NUM = 5
+    while True:
+        # 失敗時は繰り返す（最大{MAX_TEST_NUM}回）
+        try:
+            response = await loop.run_in_executor(None, requests.get, url + "?rss=atom")
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "lxml-xml")
+        except Exception:
+            pass
+
+        if soup:
+            break  # 取得成功
+
+        if test_count > MAX_TEST_NUM:
+            break  # 取得失敗
+        test_count = test_count + 1
+        sleep(5)
+
+    # {MAX_TEST_NUM}回requests.getしても失敗した場合はエラー
+    if (test_count > MAX_TEST_NUM) or (soup is None):
+        return []
+
+    # ループ脱出後はレンダリングが正常に行えたことが保証されている
+    # 動画情報を集める
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+    table_cols = ["no", "movie_id", "title", "username", "status", "uploaded", "url"]
+
+    # 投稿者収集
+    # ひとまず投稿動画の投稿者のみ（単一）
+    username = ""
+    title_lx = soup.find_all("title")
+    pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
+    username = re.findall(pattern, title_lx[0].text)[0]
+
+    # 一つのentryから動画ID, 動画名, 投稿日時, URLを抽出する関数
+    def GetEntryInfo(entry_lx) -> tuple[str, str, str, str]:
+        # 動画ID, 動画名, 投稿日時, URL
+        movie_id = ""
+        title = ""
+        uploaded = ""
+        movie_url = ""
+
+        title = entry_lx.find("title").text
+
+        link_lx = entry_lx.find("link")
+        pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+"
+        if re.findall(pattern, link_lx.get("href")):
+            # クエリ除去してURL部分のみ保持
+            movie_url = urllib.parse.urlunparse(
+                urllib.parse.urlparse(link_lx.get("href"))._replace(query=None)
+            )
+
+        pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
+        movie_id = re.findall(pattern, movie_url)[0]
+
+        published_lx = entry_lx.find("published")
+        td_format = "%Y-%m-%dT%H:%M:%S%z"
+        dts_format = "%Y-%m-%d %H:%M:%S"
+        uploaded = datetime.strptime(published_lx.text, td_format).strftime(dts_format)
+
+        return (movie_id, title, uploaded, movie_url)
+
+    res = []
+    entries_lx = soup.find_all("entry")
+    for entry in entries_lx:
+        movie_id, title, uploaded, movie_url = GetEntryInfo(entry)
+
+        value_list = [-1, movie_id, title, username, "", uploaded, movie_url]
+        res.append(dict(zip(table_cols, value_list)))
+
+    return res
+
+
 def GetMyListInfo(url: str) -> list[dict]:
     """投稿動画ページアドレスから掲載されている動画の情報を取得する
 
     Notes:
         以下をキーとする情報を辞書で返す
         table_cols = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+        ※最大100件まで
 
     Args:
         url (str): 投稿動画ページのアドレス
@@ -109,7 +291,12 @@ def GetMyListInfo(url: str) -> list[dict]:
 
     # 結合
     res = []
-    # 収集した情報の数はそれぞれ一致するはず
+    # 収集した情報の数はそれぞれ一致するはずだが最小のものに合わせる
+    list_num_min = min(len(movie_list), len(title_list), len(uploaded_list), len(movie_id_list))
+    movie_list = movie_list[:list_num_min]
+    title_list = title_list[:list_num_min]
+    uploaded_list = uploaded_list[:list_num_min]
+    movie_id_list = movie_id_list[:list_num_min]
     if len(movie_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(movie_id_list):
         return []
     for id, title, uploaded, movie_url in zip(movie_id_list, title_list, uploaded_list, movie_list):
@@ -250,7 +437,9 @@ if __name__ == "__main__":
     config.read(CONFIG_FILE_NAME, encoding="utf8")
     
     url = "https://www.nicovideo.jp/user/12899156/video"
-    movie_list = GetMyListInfo(url)
+    # movie_list = GetMyListInfoLightWeight(url)
+    loop = asyncio.new_event_loop()
+    movie_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
     print(movie_list)
 
     pass

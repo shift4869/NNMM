@@ -68,12 +68,21 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     prev_movie_list = mylist_info_db.SelectFromUsername(username)
     prev_movieid_list = [m["movie_id"] for m in prev_movie_list]
 
+    func = None
+    if not prev_movieid_list:
+        # 初回読み込みなら最大100件取れる代わりに遅いこちら
+        func = GetMyListInfo.AsyncGetMyListInfo
+    else:
+        # 既に動画情報が存在しているなら速い代わりに最大30件まで取れるこちら
+        func = GetMyListInfo.AsyncGetMyListInfoLightWeight
+
     # 右ペインのテーブルに表示するマイリスト情報を取得
     def_data = []
     table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
-    
+
+    # マルチスレッド開始
     loop = asyncio.new_event_loop()
-    now_movie_list = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(mylist_url))
+    now_movie_list = loop.run_until_complete(func(mylist_url))
     now_movieid_list = [m["movie_id"] for m in now_movie_list]
 
     # window["-INPUT2-"].update(value="")

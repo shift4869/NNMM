@@ -220,44 +220,6 @@ def GuiMain():
 
             # テーブル更新
             UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
-        if event == "-UPDATE-":
-            # 右上の更新ボタンが押された場合
-            mylist_url = values["-INPUT1-"]
-
-            # 左下の表示変更
-            window["-INPUT2-"].update(value="ロード中")
-            window.refresh()
-
-            # マイリストレコードから現在のマイリスト情報を取得する
-            # AsyncHTMLSessionでページ情報をレンダリングして解釈する
-            # マルチスレッド処理
-            record = mylist_db.SelectFromURL(mylist_url)[0]
-            threading.Thread(target=GuiFunction.UpdateMylistInfoThread, args=(window, mylist_db, mylist_info_db, record), daemon=True).start()
-        if event == "-UPDATE_THREAD_DONE-":
-            # -UPDATE-のマルチスレッド処理が終わった後の処理
-            # 左下の表示を戻す
-            window["-INPUT2-"].update(value="")
-
-            # テーブルの表示を更新する
-            mylist_url = values["-INPUT1-"]
-            if mylist_url != "":
-                UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
-            window.refresh()
-            
-            # マイリストの新着表示を表示するかどうか判定する
-            def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
-
-            # 左のマイリストlistboxの表示を更新する
-            # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
-            if IsMylistIncludeNewMovie(def_data):
-                record = mylist_db.SelectFromURL(mylist_url)[0]
-                # マイリストDB更新
-                record["is_include_new"] = True  # 新着マークを更新
-                mylist_db.Upsert(record["username"], record["type"], record["listname"],
-                                 record["url"], record["created_at"], record["is_include_new"])
-
-            # マイリスト画面表示更新
-            UpdateMylistShow(window, mylist_db)
         if event == "-CREATE-":
             # 左下、マイリスト追加ボタンが押された場合
             mylist_url = values["-INPUT1-"]
@@ -322,6 +284,44 @@ def GuiMain():
 
             # テーブルの表示を更新する
             UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
+        if event == "-UPDATE-":
+            # 右上の更新ボタンが押された場合
+            mylist_url = values["-INPUT1-"]
+
+            # 左下の表示変更
+            window["-INPUT2-"].update(value="ロード中")
+            window.refresh()
+
+            # マイリストレコードから現在のマイリスト情報を取得する
+            # AsyncHTMLSessionでページ情報をレンダリングして解釈する
+            # マルチスレッド処理
+            record = mylist_db.SelectFromURL(mylist_url)[0]
+            threading.Thread(target=GuiFunction.UpdateMylistInfoThread, args=(window, mylist_db, mylist_info_db, record), daemon=True).start()
+        if event == "-UPDATE_THREAD_DONE-":
+            # -UPDATE-のマルチスレッド処理が終わった後の処理
+            # 左下の表示を戻す
+            window["-INPUT2-"].update(value="")
+
+            # テーブルの表示を更新する
+            mylist_url = values["-INPUT1-"]
+            if mylist_url != "":
+                UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
+            window.refresh()
+            
+            # マイリストの新着表示を表示するかどうか判定する
+            def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
+
+            # 左のマイリストlistboxの表示を更新する
+            # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
+            if IsMylistIncludeNewMovie(def_data):
+                record = mylist_db.SelectFromURL(mylist_url)[0]
+                # マイリストDB更新
+                record["is_include_new"] = True  # 新着マークを更新
+                mylist_db.Upsert(record["username"], record["type"], record["listname"],
+                                 record["url"], record["created_at"], record["is_include_new"])
+
+            # マイリスト画面表示更新
+            UpdateMylistShow(window, mylist_db)
         if event == "-ALL_UPDATE-":
             # 左下のすべて更新ボタンが押された場合
             window["-INPUT2-"].update(value="全てのマイリストを更新中")
