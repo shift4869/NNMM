@@ -427,6 +427,9 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     res.sort(key=lambda t: t["movie_id"], reverse=True)
     for i, r in enumerate(res):
         res[i]["no"] = i + 1
+
+    await session.close()
+
     return res
 
 
