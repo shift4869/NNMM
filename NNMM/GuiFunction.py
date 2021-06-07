@@ -110,6 +110,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
         td_format = "%Y/%m/%d %H:%M"
         dts_format = "%Y-%m-%d %H:%M:%S"
         dst = datetime.now().strftime(dts_format)
+
         r = {
             "movie_id": m["movie_id"],
             "title": m["title"],

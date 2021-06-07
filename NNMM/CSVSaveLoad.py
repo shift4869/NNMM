@@ -16,7 +16,7 @@ def SaveMylist(mylist_db, save_file_path):
     records = mylist_db.Select()
     mylist_cols = ["id", "username", "type", "listname", "url", "created_at", "is_include_new"]
     param_list = []
-    with sd_path.open("w") as fout:
+    with sd_path.open("w", encoding="utf-8") as fout:
         fout.write(",".join(mylist_cols) + "\n")
         for r in records:
             param_list = [str(r.get(s)) for s in mylist_cols]
@@ -29,7 +29,7 @@ def SaveXML(directory_path):
     r_path = sd_path.parent / "res.csv"
     mylist_cols = ["id", "username", "type", "listname", "url", "created_at", "is_include_new"]
 
-    with r_path.open("w") as fout:
+    with r_path.open("w", encoding="utf-8") as fout:
         fout.write(",".join(mylist_cols) + "\n")
         file_list = list(sd_path.glob("**/*.xml"))
         sorted(file_list)
@@ -44,7 +44,7 @@ def SaveXML(directory_path):
 
                 pattern = "^(.*)さんの投稿動画‐ニコニコ動画"
                 username = re.findall(pattern, title)[0]
-                username = re.sub(r'[\\/:*?"<>|՞ਊ՞]', "", username)
+                username = re.sub(r'[\\/:*?"<>|]', "", username)
                 username = emoji.get_emoji_regexp().sub("", username)
 
                 td_format = "%Y/%m/%d %H:%M"
@@ -60,7 +60,7 @@ def LoadMylist(mylist_db, load_file_path):
     sd_path = Path(load_file_path)
     mylist_cols = ["id", "username", "type", "listname", "url", "created_at", "is_include_new"]
     param_dict = {}
-    with sd_path.open("r") as fin:
+    with sd_path.open("r", encoding="utf-8") as fin:
         fin.readline()
         for line in fin:
             if line == "":
