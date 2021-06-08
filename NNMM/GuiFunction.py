@@ -1,13 +1,12 @@
 # coding: utf-8
 import asyncio
 import logging.config
-import time
+from datetime import date, datetime, timedelta
 from logging import INFO, getLogger
 from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM import GuiMain
 from NNMM import GetMyListInfo
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
@@ -58,88 +57,6 @@ def UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url):
     pass
 
 
-def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
-    # マイリストを更新する（マルチスレッド前提）
-    mylist_url = record.get("url")
-    print(mylist_url)
-
-    # DBからロード
-    username = record.get("username")
-    prev_movie_list = mylist_info_db.SelectFromUsername(username)
-    prev_movieid_list = [m["movie_id"] for m in prev_movie_list]
-
-    func = None
-    if not prev_movieid_list:
-        # 初回読み込みなら最大100件取れる代わりに遅いこちら
-        func = GetMyListInfo.AsyncGetMyListInfo
-    else:
-        # 既に動画情報が存在しているなら速い代わりに最大30件まで取れるこちら
-        func = GetMyListInfo.AsyncGetMyListInfoLightWeight
-
-    # 右ペインのテーブルに表示するマイリスト情報を取得
-    def_data = []
-    table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
-
-    # マルチスレッド開始
-    loop = asyncio.new_event_loop()
-    now_movie_list = loop.run_until_complete(func(mylist_url))
-    now_movieid_list = [m["movie_id"] for m in now_movie_list]
-
-    # window["-INPUT2-"].update(value="")
-
-    # 状況ステータスを調べる
-    status_check_list = []
-    for i, n in enumerate(now_movieid_list):
-        if n in prev_movieid_list:
-            s = [p["status"] for p in prev_movie_list if p["movie_id"] == n]
-            status_check_list.append(s[0])
-        else:
-            status_check_list.append("未視聴")
-
-    # 右ペインのテーブルにマイリスト情報を表示
-    for m, s in zip(now_movie_list, status_check_list):
-        m["status"] = s
-        a = [m["no"], m["movie_id"], m["title"], m["username"], m["status"], m["uploaded"]]
-        def_data.append(a)
-    if window["-INPUT1-"].get() == mylist_url:
-        now_show_table_data = list[def_data]
-
-    # DBに格納
-    records = []
-    for m in now_movie_list:
-        td_format = "%Y/%m/%d %H:%M"
-        dts_format = "%Y-%m-%d %H:%M:%S"
-        dst = datetime.now().strftime(dts_format)
-
-        r = {
-            "movie_id": m["movie_id"],
-            "title": m["title"],
-            "username": m["username"],
-            "status": m["status"],
-            "uploaded_at": m["uploaded"],
-            "url": m["url"],
-            "created_at": dst
-        }
-        records.append(r)
-    mylist_info_db.UpsertFromList(records)
-
-
-def UpdateMylistInfoThread(window, mylist_db, mylist_info_db, record):
-    # マイリストを更新する（マルチスレッド前提）
-    UpdateMylistInfo(window, mylist_db, mylist_info_db, record)
-    window.write_event_value("-UPDATE_THREAD_DONE-", "")
-
-
-def UpdateAllMylistInfoThread(window, mylist_db, mylist_info_db):
-    # 全てのマイリストを更新する（マルチスレッド前提）
-    m_list = mylist_db.Select()
-    now_show_table_data = []
-    for i, record in enumerate(m_list):
-        UpdateMylistInfo(window, mylist_db, mylist_info_db, record)
-        window.write_event_value("-THREAD PROGRESS-", i)
-
-    window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
-
-
 if __name__ == "__main__":
+    from NNMM import GuiMain
     GuiMain.GuiMain()
