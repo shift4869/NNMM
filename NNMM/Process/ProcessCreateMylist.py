@@ -12,6 +12,7 @@ from NNMM.GuiFunction import *
 
 def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
     # 左下、マイリスト追加ボタンが押された場合
+    # 現在のマイリストURL
     mylist_url = values["-INPUT1-"]
 
     # 右上のテキストボックスにも左下のテキストボックスにも
@@ -35,7 +36,6 @@ def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
     # 右ペインのテーブルに表示するマイリスト情報を取得
     window["-INPUT2-"].update(value="ロード中")
     window.refresh()
-    def_data = []
     table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url"]
     # async
     loop = asyncio.new_event_loop()
@@ -56,19 +56,23 @@ def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
     mylist_db.Upsert(username, type, listname, mylist_url, dst, is_include_new)
 
     # DBに格納
+    records = []
+    td_format = "%Y/%m/%d %H:%M"
+    dts_format = "%Y-%m-%d %H:%M:%S"
     for m in now_video_list:
-        video_id = m["video_id"]
-        title = m["title"]
-        username = m["username"]
-        status = "未視聴"  # 初追加時はすべて未視聴扱い
-        uploaded_at = m["uploaded"]
-        video_url = m["video_url"]
-
-        td_format = "%Y/%m/%d %H:%M"
-        dts_format = "%Y-%m-%d %H:%M:%S"
         dst = datetime.now().strftime(dts_format)
-        created_at = dst
-        mylist_info_db.Upsert(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
+        r = {
+            "video_id": m["video_id"],
+            "title": m["title"],
+            "username": m["username"],
+            "status": "未視聴",  # 初追加時はすべて未視聴扱い
+            "uploaded_at": m["uploaded"],
+            "video_url": m["video_url"],
+            "mylist_url": m["mylist_url"],
+            "created_at": dst,
+        }
+        records.append(r)
+    mylist_info_db.UpsertFromList(records)
 
     # 後続処理へ
     window.write_event_value("-CREATE_THREAD_DONE-", "")
