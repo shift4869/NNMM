@@ -18,13 +18,13 @@ class MylistInfoDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def Upsert(self, video_id, title, username, status, uploaded_at, url, created_at):
+    def Upsert(self, video_id, title, username, status, uploaded_at, video_url, created_at):
         """MylistInfoにUPSERTする
 
         Notes:
             追加しようとしているレコードが既存テーブルに存在しなければINSERT
             存在しているならばUPDATE(DELETE->INSERT)
-            一致しているかの判定はurlが一致している場合、とする
+            一致しているかの判定はvideo_urlが一致している場合、とする
 
         Args:
             video_id (str): 動画ID(smxxxxxxxx)
@@ -32,7 +32,7 @@ class MylistInfoDBController(DBControllerBase):
             username (str): 投稿者名
             status (str): 視聴状況({"未視聴", "視聴済"})
             uploaded_at (str): 動画投稿日時
-            url (str): 動画URL
+            video_url (str): 動画URL
             created_at (str): 作成日時
 
         Returns:
@@ -42,7 +42,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = MylistInfo(video_id, title, username, status, uploaded_at, url, created_at)
+        r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, created_at)
 
         try:
             q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
@@ -69,7 +69,7 @@ class MylistInfoDBController(DBControllerBase):
         Notes:
             追加しようとしているレコードが既存テーブルに存在しなければINSERT
             存在しているならばUPDATE(DELETE->INSERT)
-            一致しているかの判定はurlが一致している場合、とする
+            一致しているかの判定はvideo_urlが一致している場合、とする
 
         Args:
             以下のArgsをキーとするrecordのlistを引数としてとる
@@ -80,7 +80,7 @@ class MylistInfoDBController(DBControllerBase):
                     username (str): 投稿者名
                     status (str): 視聴状況({"未視聴", "視聴済"})
                     uploaded_at (str): 動画投稿日時
-                    url (str): 動画URL
+                    video_url (str): 動画URL
                     created_at (str): 作成日時
 
         Returns:
@@ -96,10 +96,10 @@ class MylistInfoDBController(DBControllerBase):
             username = record.get("username")
             status = record.get("status")
             uploaded_at = record.get("uploaded_at")
-            url = record.get("url")
+            video_url = record.get("video_url")
             created_at = record.get("created_at")
 
-            r = MylistInfo(video_id, title, username, status, uploaded_at, url, created_at)
+            r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, created_at)
 
             try:
                 q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
@@ -119,10 +119,10 @@ class MylistInfoDBController(DBControllerBase):
             username = record.get("username")
             status = record.get("status")
             uploaded_at = record.get("uploaded_at")
-            url = record.get("url")
+            video_url = record.get("video_url")
             created_at = record.get("created_at")
 
-            r = MylistInfo(video_id, title, username, status, uploaded_at, url, created_at)
+            r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, created_at)
 
             try:
                 q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
@@ -183,14 +183,14 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromURL(self, url):
-        """MylistInfoからurlを条件としてSELECTする
+    def SelectFromURL(self, video_url):
+        """MylistInfoからvideo_urlを条件としてSELECTする
 
         Note:
-            "select * from MylistInfo where url = {}".format(url)
+            "select * from MylistInfo where video_url = {}".format(video_url)
 
         Args:
-            url (str): 取得対象のマイリストurl
+            video_url (str): 取得対象のマイリストvideo_url
 
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
@@ -198,7 +198,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(url=url).all()
+        res = session.query(MylistInfo).filter_by(video_url=video_url).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()

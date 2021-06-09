@@ -15,7 +15,7 @@ class MylistInfo(Base):
         [username] TEXT NOT NULL,
         [status] TEXT,
         [uploaded_at] TEXT,
-        [url] TEXT NOT NULL,
+        [video_url] TEXT NOT NULL,
         [created_at] TEXT,
         PRIMARY KEY([id])
     """
@@ -28,21 +28,21 @@ class MylistInfo(Base):
     username = Column(String(512), nullable=False)
     status = Column(String(512))
     uploaded_at = Column(String(256))
-    url = Column(String(512), nullable=False)
+    video_url = Column(String(512), nullable=False)
     created_at = Column(String(256))
 
     def __init__(self, *args, **kwargs):
         super(Base, self).__init__(*args, **kwargs)
         self.status = "未視聴"
 
-    def __init__(self, video_id, title, username, status, uploaded_at, url, created_at):
+    def __init__(self, video_id, title, username, status, uploaded_at, video_url, created_at):
         # self.id = id
         self.video_id = video_id
         self.title = title
         self.username = username
         self.status = status
         self.uploaded_at = uploaded_at
-        self.url = url
+        self.video_url = video_url
         self.created_at = created_at
 
     def __repr__(self):
@@ -59,7 +59,7 @@ class MylistInfo(Base):
             "username": self.username,
             "status": self.status,
             "uploaded_at": self.uploaded_at,
-            "url": self.url,
+            "video_url": self.video_url,
             "created_at": self.created_at,
         }
 

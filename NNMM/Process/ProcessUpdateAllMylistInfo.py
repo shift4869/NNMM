@@ -47,7 +47,7 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
     for m in m_list:
         username = m["username"]
         movie_list = mylist_info_db.SelectFromUsername(username)
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
         def_data = []
         for i, t in enumerate(movie_list):
             a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"]]

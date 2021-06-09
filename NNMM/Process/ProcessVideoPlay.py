@@ -24,7 +24,7 @@ def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):
     selected = def_data[row]
 
     # 視聴済にする
-    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
     # 状況を更新
     if def_data[row][4] != "":
         def_data[row][4] = ""
@@ -43,9 +43,9 @@ def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):
         UpdateMylistShow(window, mylist_db)
 
     # ブラウザに動画urlを渡す
-    url = mylist_info_db.SelectFromMovieID(selected[1])[0].get("url")
+    video_url = mylist_info_db.SelectFromMovieID(selected[1])[0].get("video_url")
     cmd = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe"
-    sp = sg.execute_command_subprocess(cmd, url)
+    sp = sg.execute_command_subprocess(cmd, video_url)
     # print(sg.execute_get_results(sp)[0])
 
 

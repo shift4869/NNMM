@@ -30,7 +30,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
 
     # 右ペインのテーブルに表示するマイリスト情報を取得
     def_data = []
-    table_cols = ["no", "id", "title", "username", "status", "uploaded", "url"]
+    table_cols = ["no", "id", "title", "username", "status", "uploaded", "video_url"]
 
     # マルチスレッド開始
     loop = asyncio.new_event_loop()
@@ -70,7 +70,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
             "username": m["username"],
             "status": m["status"],
             "uploaded_at": m["uploaded"],
-            "url": m["url"],
+            "video_url": m["video_url"],
             "created_at": dst
         }
         records.append(r)
