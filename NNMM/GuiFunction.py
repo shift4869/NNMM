@@ -40,20 +40,34 @@ def UpdateMylistShow(window, mylist_db):
     return 0
 
 
-def UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url):
+def UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url=""):
     # 右上のテキストボックスにマイリストのURLがあるとき限定(window["-INPUT1-"])
-    # mylist_url = window["-INPUT1-"].get()
-    # MylistInfoからロード
-    record = mylist_db.SelectFromURL(mylist_url)[0]
+    # 現在のマイリストURL
+    if mylist_url == "":
+        mylist_url = window["-INPUT1-"].get()
+    
+    if mylist_url == "":
+        return -1
 
-    # usernameだと重複するかも(TODO)
-    username = record.get("username")
-    m_list = mylist_info_db.SelectFromUsername(username)
+    # 現在のマイリストURLからlistboxのindexを求める
+    index = 0
+    m_list = mylist_db.Select()
+    mylist_url_list = [m["url"] for m in m_list]
+    for i, url in enumerate(mylist_url_list):
+        if mylist_url == url:
+            index = i
+            break
+
+    # 現在のマイリストURLからテーブル情報を求める
+    records = mylist_info_db.SelectFromMylistURL(mylist_url)
     def_data = []
-    for i, m in enumerate(m_list):
+    for i, m in enumerate(records):
         a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
         def_data.append(a)
+
+    # 画面更新
     window["-TABLE-"].update(values=def_data)
+    window["-LIST-"].update(set_to_index=index)
     pass
 
 

@@ -234,7 +234,7 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromURL(self, video_url):
+    def SelectFromVideoURL(self, video_url):
         """MylistInfoからvideo_urlを条件としてSELECTする
 
         Note:
@@ -250,6 +250,27 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
 
         res = session.query(MylistInfo).filter_by(video_url=video_url).all()
+        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+
+        session.close()
+        return res_dict
+
+    def SelectFromMylistURL(self, mylist_url):
+        """MylistInfoからmylist_urlを条件としてSELECTする
+
+        Note:
+            "select * from MylistInfo where mylist_url = {}".format(mylist_url)
+
+        Args:
+            mylist_url (str): 取得対象の所属マイリストURL
+
+        Returns:
+            dict[]: SELECTしたレコードの辞書リスト
+        """
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()
