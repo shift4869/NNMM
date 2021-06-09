@@ -12,7 +12,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 
 
-def IsMylistIncludeNewMovie(table_list):
+def IsMylistIncludeNewVideo(table_list):
     """現在のテーブルリスト内に状況が未視聴のものが一つでも含まれているかを返す
 
     Args:

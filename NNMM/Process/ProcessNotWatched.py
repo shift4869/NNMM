@@ -17,11 +17,11 @@ def ProcessNotWatched(window, values, mylist_db, mylist_info_db):
 
         # DB更新
         selected = def_data[row]
-        record = mylist_info_db.SelectFromMovieID(selected[1])[0]
+        record = mylist_info_db.SelectFromVideoID(selected[1])[0]
         record["status"] = "未視聴"
         record = mylist_info_db.Upsert(record["video_id"], record["title"], record["username"],
                                        record["status"], record["uploaded_at"], record["video_url"],
-                                       record["created_at"])
+                                       record["mylist_url"], record["created_at"])
 
         # テーブル更新
         def_data[row][4] = "未視聴"

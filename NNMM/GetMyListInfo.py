@@ -55,7 +55,9 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
 
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
-    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url"]
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
+    mylist_url = url
 
     # 投稿者収集
     # ひとまず投稿動画の投稿者のみ（単一）
@@ -97,7 +99,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     for entry in entries_lx:
         video_id, title, uploaded, video_url = GetEntryInfo(entry)
 
-        value_list = [-1, video_id, title, username, "", uploaded, video_url]
+        value_list = [-1, video_id, title, username, "", uploaded, video_url, mylist_url]
         res.append(dict(zip(table_cols, value_list)))
 
     return res
@@ -114,7 +116,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
         url (str): 投稿動画ページのアドレス
 
     Returns:
-        movie_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照
+        video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照
     """
     # 入力チェック
     pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
@@ -136,7 +138,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     })
     session._browser = browser
 
-    movie_list = []
+    video_list = []
     test_count = 0
     MAX_TEST_NUM = 5
     while True:
@@ -151,11 +153,11 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
             all_links_set = response.html.links
             all_links_list = list(all_links_set)  # setをlistにキャストするとvalueのみのリストになる
             pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+$"  # ニコニコ動画URLの形式
-            movie_list = [s for s in all_links_list if re.search(pattern, s)]
+            video_list = [s for s in all_links_list if re.search(pattern, s)]
         except Exception:
             pass
 
-        if movie_list or (test_count > MAX_TEST_NUM):
+        if video_list or (test_count > MAX_TEST_NUM):
             break
         test_count = test_count + 1
         sleep(5)
@@ -166,11 +168,12 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
-    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
-    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url"]
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
+    mylist_url = url
 
     # 動画リンク抽出は降順でないため、ソートする（ロード順？）
-    movie_list.sort(reverse=True)  # 降順ソート
+    video_list.sort(reverse=True)  # 降順ソート
 
     # 動画名収集
     # 全角スペースは\u3000(unicode-escape)となっている
@@ -193,7 +196,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # 動画ID収集
     pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"  # ニコニコ動画URLの形式
-    video_id_list = [re.findall(pattern, s)[0] for s in movie_list]
+    video_id_list = [re.findall(pattern, s)[0] for s in video_list]
 
     # 投稿者収集
     # ひとまず投稿動画の投稿者のみ（単一）
@@ -203,15 +206,15 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     # 結合
     res = []
     # 収集した情報の数はそれぞれ一致するはずだが最小のものに合わせる
-    list_num_min = min(len(movie_list), len(title_list), len(uploaded_list), len(video_id_list))
-    movie_list = movie_list[:list_num_min]
+    list_num_min = min(len(video_list), len(title_list), len(uploaded_list), len(video_id_list))
+    video_list = video_list[:list_num_min]
     title_list = title_list[:list_num_min]
     uploaded_list = uploaded_list[:list_num_min]
     video_id_list = video_id_list[:list_num_min]
-    if len(movie_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(video_id_list):
+    if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(video_id_list):
         return []
-    for id, title, uploaded, video_url in zip(video_id_list, title_list, uploaded_list, movie_list):
-        value_list = [-1, id, title, username, "", uploaded, video_url]
+    for id, title, uploaded, video_url in zip(video_id_list, title_list, uploaded_list, video_list):
+        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url]
         res.append(dict(zip(table_cols, value_list)))
 
     # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
@@ -232,9 +235,9 @@ if __name__ == "__main__":
     config.read(CONFIG_FILE_NAME, encoding="utf8")
     
     url = "https://www.nicovideo.jp/user/12899156/video"
-    # movie_list = GetMyListInfoLightWeight(url)
+    # video_list = GetMyListInfoLightWeight(url)
     loop = asyncio.new_event_loop()
-    movie_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
-    print(movie_list)
+    video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
+    print(video_list)
 
     pass

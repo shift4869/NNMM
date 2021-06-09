@@ -17,11 +17,11 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
 
     # DBからロード
     username = record.get("username")
-    prev_movie_list = mylist_info_db.SelectFromUsername(username)
-    prev_movieid_list = [m["video_id"] for m in prev_movie_list]
+    prev_video_list = mylist_info_db.SelectFromUsername(username)
+    prev_videoid_list = [m["video_id"] for m in prev_video_list]
 
     func = None
-    if not prev_movieid_list:
+    if not prev_videoid_list:
         # 初回読み込みなら最大100件取れる代わりに遅いこちら
         func = GetMyListInfo.AsyncGetMyListInfo
     else:
@@ -34,22 +34,22 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
 
     # マルチスレッド開始
     loop = asyncio.new_event_loop()
-    now_movie_list = loop.run_until_complete(func(mylist_url))
-    now_movieid_list = [m["video_id"] for m in now_movie_list]
+    now_video_list = loop.run_until_complete(func(mylist_url))
+    now_videoid_list = [m["video_id"] for m in now_video_list]
 
     # window["-INPUT2-"].update(value="")
 
     # 状況ステータスを調べる
     status_check_list = []
-    for i, n in enumerate(now_movieid_list):
-        if n in prev_movieid_list:
-            s = [p["status"] for p in prev_movie_list if p["video_id"] == n]
+    for i, n in enumerate(now_videoid_list):
+        if n in prev_videoid_list:
+            s = [p["status"] for p in prev_video_list if p["video_id"] == n]
             status_check_list.append(s[0])
         else:
             status_check_list.append("未視聴")
 
     # 右ペインのテーブルにマイリスト情報を表示
-    for m, s in zip(now_movie_list, status_check_list):
+    for m, s in zip(now_video_list, status_check_list):
         m["status"] = s
         a = [m["no"], m["video_id"], m["title"], m["username"], m["status"], m["uploaded"]]
         def_data.append(a)
@@ -58,7 +58,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
 
     # DBに格納
     records = []
-    for m in now_movie_list:
+    for m in now_video_list:
         td_format = "%Y/%m/%d %H:%M"
         dts_format = "%Y-%m-%d %H:%M:%S"
         dst = datetime.now().strftime(dts_format)
@@ -71,6 +71,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
             "status": m["status"],
             "uploaded_at": m["uploaded"],
             "video_url": m["video_url"],
+            "mylist_url": m["mylist_url"],
             "created_at": dst
         }
         records.append(r)
@@ -114,7 +115,7 @@ def ProcessUpdateMylistInfoThreadDone(window, values, mylist_db, mylist_info_db)
 
     # 左のマイリストlistboxの表示を更新する
     # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
-    if IsMylistIncludeNewMovie(def_data):
+    if IsMylistIncludeNewVideo(def_data):
         record = mylist_db.SelectFromURL(mylist_url)[0]
         # マイリストDB更新
         record["is_include_new"] = True  # 新着マークを更新

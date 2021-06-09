@@ -10,12 +10,13 @@ class MylistInfo(Base):
     """マイリスト情報モデル
 
         [id] INTEGER NOT NULL UNIQUE,
-        [video_id] TEXT NOT NULL UNIQUE,
+        [video_id] TEXT NOT NULL,
         [title] TEXT NOT NULL,
         [username] TEXT NOT NULL,
         [status] TEXT,
         [uploaded_at] TEXT,
         [video_url] TEXT NOT NULL,
+        [mylist_url] TEXT NOT NULL,
         [created_at] TEXT,
         PRIMARY KEY([id])
     """
@@ -23,19 +24,20 @@ class MylistInfo(Base):
     __tablename__ = "MylistInfo"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    video_id = Column(String(256), nullable=False, unique=True)
+    video_id = Column(String(256), nullable=False)
     title = Column(String(256), nullable=False)
     username = Column(String(512), nullable=False)
     status = Column(String(512))
     uploaded_at = Column(String(256))
     video_url = Column(String(512), nullable=False)
+    mylist_url = Column(String(512), nullable=False)
     created_at = Column(String(256))
 
     def __init__(self, *args, **kwargs):
         super(Base, self).__init__(*args, **kwargs)
         self.status = "未視聴"
 
-    def __init__(self, video_id, title, username, status, uploaded_at, video_url, created_at):
+    def __init__(self, video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at):
         # self.id = id
         self.video_id = video_id
         self.title = title
@@ -43,6 +45,7 @@ class MylistInfo(Base):
         self.status = status
         self.uploaded_at = uploaded_at
         self.video_url = video_url
+        self.mylist_url = mylist_url
         self.created_at = created_at
 
     def __repr__(self):
@@ -60,6 +63,7 @@ class MylistInfo(Base):
             "status": self.status,
             "uploaded_at": self.uploaded_at,
             "video_url": self.video_url,
+            "mylist_url": self.mylist_url,
             "created_at": self.created_at,
         }
 

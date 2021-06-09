@@ -18,7 +18,7 @@ class MylistInfoDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def Upsert(self, video_id, title, username, status, uploaded_at, video_url, created_at):
+    def Upsert(self, video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at):
         """MylistInfoにUPSERTする
 
         Notes:
@@ -33,6 +33,7 @@ class MylistInfoDBController(DBControllerBase):
             status (str): 視聴状況({"未視聴", "視聴済"})
             uploaded_at (str): 動画投稿日時
             video_url (str): 動画URL
+            mylist_url (str): 所属マイリストURL
             created_at (str): 作成日時
 
         Returns:
@@ -42,7 +43,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, created_at)
+        r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
 
         try:
             q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
@@ -81,6 +82,7 @@ class MylistInfoDBController(DBControllerBase):
                     status (str): 視聴状況({"未視聴", "視聴済"})
                     uploaded_at (str): 動画投稿日時
                     video_url (str): 動画URL
+                    mylist_url (str): 所属マイリストURL
                     created_at (str): 作成日時
 
         Returns:
@@ -97,9 +99,10 @@ class MylistInfoDBController(DBControllerBase):
             status = record.get("status")
             uploaded_at = record.get("uploaded_at")
             video_url = record.get("video_url")
+            mylist_url = record.get("mylist_url")
             created_at = record.get("created_at")
 
-            r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, created_at)
+            r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
 
             try:
                 q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
@@ -120,9 +123,10 @@ class MylistInfoDBController(DBControllerBase):
             status = record.get("status")
             uploaded_at = record.get("uploaded_at")
             video_url = record.get("video_url")
+            mylist_url = record.get("mylist_url")
             created_at = record.get("created_at")
 
-            r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, created_at)
+            r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
 
             try:
                 q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
@@ -155,14 +159,13 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
-        # res = session.query(MylistInfo).order_by(asc(MylistInfo.created_at)).limit(limit).all()
         res = session.query(MylistInfo).order_by(asc(MylistInfo.created_at)).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()
         return res_dict
 
-    def SelectFromMovieID(self, video_id):
+    def SelectFromVideoID(self, video_id):
         """MylistInfoからvideo_idを条件としてSELECTする
 
         Note:

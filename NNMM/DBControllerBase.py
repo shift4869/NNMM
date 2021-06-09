@@ -35,8 +35,8 @@ class DBControllerBase(metaclass=ABCMeta):
 
 
 if __name__ == "__main__":
-    import NNMM.FavDBController
+    import NNMM.MylistInfoDBController
     DEBUG = True
     db_fullpath = Path("NNMM_DB.db")
-    db_cont = NNMM.FavDBController(db_fullpath=str(db_fullpath))
+    db_cont = NNMM.MylistInfoDBController(db_fullpath=str(db_fullpath))
     pass

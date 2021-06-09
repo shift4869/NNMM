@@ -31,7 +31,7 @@ def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):
         window["-TABLE-"].update(values=def_data)
 
     # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
-    if not IsMylistIncludeNewMovie(window["-TABLE-"].Values):
+    if not IsMylistIncludeNewVideo(window["-TABLE-"].Values):
         # マイリストDB更新
         mylist_url = values["-INPUT1-"]
         record = mylist_db.SelectFromURL(mylist_url)[0]
@@ -43,7 +43,7 @@ def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):
         UpdateMylistShow(window, mylist_db)
 
     # ブラウザに動画urlを渡す
-    video_url = mylist_info_db.SelectFromMovieID(selected[1])[0].get("video_url")
+    video_url = mylist_info_db.SelectFromVideoID(selected[1])[0].get("video_url")
     cmd = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe"
     sp = sg.execute_command_subprocess(cmd, video_url)
     # print(sg.execute_get_results(sp)[0])
