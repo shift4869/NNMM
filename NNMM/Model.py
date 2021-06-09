@@ -10,7 +10,7 @@ class MylistInfo(Base):
     """マイリスト情報モデル
 
         [id] INTEGER NOT NULL UNIQUE,
-        [movie_id] TEXT NOT NULL UNIQUE,
+        [video_id] TEXT NOT NULL UNIQUE,
         [title] TEXT NOT NULL,
         [username] TEXT NOT NULL,
         [status] TEXT,
@@ -23,7 +23,7 @@ class MylistInfo(Base):
     __tablename__ = "MylistInfo"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    movie_id = Column(String(256), nullable=False, unique=True)
+    video_id = Column(String(256), nullable=False, unique=True)
     title = Column(String(256), nullable=False)
     username = Column(String(512), nullable=False)
     status = Column(String(512))
@@ -35,9 +35,9 @@ class MylistInfo(Base):
         super(Base, self).__init__(*args, **kwargs)
         self.status = "未視聴"
 
-    def __init__(self, movie_id, title, username, status, uploaded_at, url, created_at):
+    def __init__(self, video_id, title, username, status, uploaded_at, url, created_at):
         # self.id = id
-        self.movie_id = movie_id
+        self.video_id = video_id
         self.title = title
         self.username = username
         self.status = status
@@ -46,15 +46,15 @@ class MylistInfo(Base):
         self.created_at = created_at
 
     def __repr__(self):
-        return "<MylistInfo(id='{}', movie_id='{}')>".format(self.id, self.movie_id)
+        return "<MylistInfo(id='{}', video_id='{}')>".format(self.id, self.video_id)
 
     def __eq__(self, other):
-        return isinstance(other, MylistInfo) and other.movie_id == self.movie_id
+        return isinstance(other, MylistInfo) and other.video_id == self.video_id
 
     def toDict(self):
         return {
             "id": self.id,
-            "movie_id": self.movie_id,
+            "video_id": self.video_id,
             "title": self.title,
             "username": self.username,
             "status": self.status,

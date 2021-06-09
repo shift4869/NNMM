@@ -36,7 +36,7 @@ def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
     window["-INPUT2-"].update(value="ロード中")
     window.refresh()
     def_data = []
-    table_cols = ["no", "movie_id", "title", "username", "status", "uploaded", "url"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "url"]
     # async
     loop = asyncio.new_event_loop()
     now_movie_list = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(mylist_url))
@@ -57,7 +57,7 @@ def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
 
     # DBに格納
     for m in now_movie_list:
-        movie_id = m["movie_id"]
+        video_id = m["video_id"]
         title = m["title"]
         username = m["username"]
         status = "未視聴"  # 初追加時はすべて未視聴扱い
@@ -68,7 +68,7 @@ def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
         dts_format = "%Y-%m-%d %H:%M:%S"
         dst = datetime.now().strftime(dts_format)
         created_at = dst
-        mylist_info_db.Upsert(movie_id, title, username, status, uploaded_at, url, created_at)
+        mylist_info_db.Upsert(video_id, title, username, status, uploaded_at, url, created_at)
 
     # 後続処理へ
     window.write_event_value("-CREATE_THREAD_DONE-", "")

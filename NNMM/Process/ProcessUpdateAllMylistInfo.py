@@ -50,7 +50,7 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
         def_data = []
         for i, t in enumerate(movie_list):
-            a = [i + 1, t["movie_id"], t["title"], t["username"], t["status"], t["uploaded_at"]]
+            a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"]]
             def_data.append(a)
 
         # 左のマイリストlistboxの表示を更新する

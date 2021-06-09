@@ -51,7 +51,7 @@ def UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url):
     m_list = mylist_info_db.SelectFromUsername(username)
     def_data = []
     for i, m in enumerate(m_list):
-        a = [i + 1, m["movie_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
+        a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
         def_data.append(a)
     window["-TABLE-"].update(values=def_data)
     pass

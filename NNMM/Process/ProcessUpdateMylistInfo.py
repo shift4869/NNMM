@@ -18,7 +18,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     # DBからロード
     username = record.get("username")
     prev_movie_list = mylist_info_db.SelectFromUsername(username)
-    prev_movieid_list = [m["movie_id"] for m in prev_movie_list]
+    prev_movieid_list = [m["video_id"] for m in prev_movie_list]
 
     func = None
     if not prev_movieid_list:
@@ -35,7 +35,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     # マルチスレッド開始
     loop = asyncio.new_event_loop()
     now_movie_list = loop.run_until_complete(func(mylist_url))
-    now_movieid_list = [m["movie_id"] for m in now_movie_list]
+    now_movieid_list = [m["video_id"] for m in now_movie_list]
 
     # window["-INPUT2-"].update(value="")
 
@@ -43,7 +43,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     status_check_list = []
     for i, n in enumerate(now_movieid_list):
         if n in prev_movieid_list:
-            s = [p["status"] for p in prev_movie_list if p["movie_id"] == n]
+            s = [p["status"] for p in prev_movie_list if p["video_id"] == n]
             status_check_list.append(s[0])
         else:
             status_check_list.append("未視聴")
@@ -51,7 +51,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     # 右ペインのテーブルにマイリスト情報を表示
     for m, s in zip(now_movie_list, status_check_list):
         m["status"] = s
-        a = [m["no"], m["movie_id"], m["title"], m["username"], m["status"], m["uploaded"]]
+        a = [m["no"], m["video_id"], m["title"], m["username"], m["status"], m["uploaded"]]
         def_data.append(a)
     if window["-INPUT1-"].get() == mylist_url:
         now_show_table_data = list[def_data]
@@ -65,7 +65,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
 
         # usernameが変更されていた場合、既存のレコードも含めてすべて更新する必要がある(TODO)
         r = {
-            "movie_id": m["movie_id"],
+            "video_id": m["video_id"],
             "title": m["title"],
             "username": m["username"],
             "status": m["status"],

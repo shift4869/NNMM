@@ -56,7 +56,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
     table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
-    table_cols = ["no", "movie_id", "title", "username", "status", "uploaded", "url"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "url"]
 
     # 投稿者収集
     # ひとまず投稿動画の投稿者のみ（単一）
@@ -68,7 +68,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     # 一つのentryから動画ID, 動画名, 投稿日時, URLを抽出する関数
     def GetEntryInfo(entry_lx) -> tuple[str, str, str, str]:
         # 動画ID, 動画名, 投稿日時, URL
-        movie_id = ""
+        video_id = ""
         title = ""
         uploaded = ""
         movie_url = ""
@@ -84,21 +84,21 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
             )
 
         pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-        movie_id = re.findall(pattern, movie_url)[0]
+        video_id = re.findall(pattern, movie_url)[0]
 
         published_lx = entry_lx.find("published")
         td_format = "%Y-%m-%dT%H:%M:%S%z"
         dts_format = "%Y-%m-%d %H:%M:%S"
         uploaded = datetime.strptime(published_lx.text, td_format).strftime(dts_format)
 
-        return (movie_id, title, uploaded, movie_url)
+        return (video_id, title, uploaded, movie_url)
 
     res = []
     entries_lx = soup.find_all("entry")
     for entry in entries_lx:
-        movie_id, title, uploaded, movie_url = GetEntryInfo(entry)
+        video_id, title, uploaded, movie_url = GetEntryInfo(entry)
 
-        value_list = [-1, movie_id, title, username, "", uploaded, movie_url]
+        value_list = [-1, video_id, title, username, "", uploaded, movie_url]
         res.append(dict(zip(table_cols, value_list)))
 
     return res
@@ -168,7 +168,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
     table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
-    table_cols = ["no", "movie_id", "title", "username", "status", "uploaded", "url"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "url"]
 
     # 動画リンク抽出は降順でないため、ソートする（ロード順？）
     movie_list.sort(reverse=True)  # 降順ソート
@@ -194,7 +194,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # 動画ID収集
     pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"  # ニコニコ動画URLの形式
-    movie_id_list = [re.findall(pattern, s)[0] for s in movie_list]
+    video_id_list = [re.findall(pattern, s)[0] for s in movie_list]
 
     # 投稿者収集
     # ひとまず投稿動画の投稿者のみ（単一）
@@ -204,20 +204,20 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     # 結合
     res = []
     # 収集した情報の数はそれぞれ一致するはずだが最小のものに合わせる
-    list_num_min = min(len(movie_list), len(title_list), len(uploaded_list), len(movie_id_list))
+    list_num_min = min(len(movie_list), len(title_list), len(uploaded_list), len(video_id_list))
     movie_list = movie_list[:list_num_min]
     title_list = title_list[:list_num_min]
     uploaded_list = uploaded_list[:list_num_min]
-    movie_id_list = movie_id_list[:list_num_min]
-    if len(movie_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(movie_id_list):
+    video_id_list = video_id_list[:list_num_min]
+    if len(movie_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(video_id_list):
         return []
-    for id, title, uploaded, movie_url in zip(movie_id_list, title_list, uploaded_list, movie_list):
+    for id, title, uploaded, movie_url in zip(video_id_list, title_list, uploaded_list, movie_list):
         value_list = [-1, id, title, username, "", uploaded, movie_url]
         res.append(dict(zip(table_cols, value_list)))
 
     # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
     # No.も付記する
-    res.sort(key=lambda t: t["movie_id"], reverse=True)
+    res.sort(key=lambda t: t["video_id"], reverse=True)
     for i, r in enumerate(res):
         res[i]["no"] = i + 1
 

@@ -18,7 +18,7 @@ class MylistInfoDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def Upsert(self, movie_id, title, username, status, uploaded_at, url, created_at):
+    def Upsert(self, video_id, title, username, status, uploaded_at, url, created_at):
         """MylistInfoにUPSERTする
 
         Notes:
@@ -27,7 +27,7 @@ class MylistInfoDBController(DBControllerBase):
             一致しているかの判定はurlが一致している場合、とする
 
         Args:
-            movie_id (str): 動画ID(smxxxxxxxx)
+            video_id (str): 動画ID(smxxxxxxxx)
             title (str): 動画タイトル
             username (str): 投稿者名
             status (str): 視聴状況({"未視聴", "視聴済"})
@@ -42,10 +42,10 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = MylistInfo(movie_id, title, username, status, uploaded_at, url, created_at)
+        r = MylistInfo(video_id, title, username, status, uploaded_at, url, created_at)
 
         try:
-            q = session.query(MylistInfo).filter(or_(MylistInfo.movie_id == r.movie_id))
+            q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
             ex = q.one()
         except NoResultFound:
             # INSERT
@@ -75,7 +75,7 @@ class MylistInfoDBController(DBControllerBase):
             以下のArgsをキーとするrecordのlistを引数としてとる
             records = list(dict)
                 dictb Keys
-                    movie_id (str): 動画ID(smxxxxxxxx)
+                    video_id (str): 動画ID(smxxxxxxxx)
                     title (str): 動画タイトル
                     username (str): 投稿者名
                     status (str): 視聴状況({"未視聴", "視聴済"})
@@ -91,7 +91,7 @@ class MylistInfoDBController(DBControllerBase):
         res = -1
 
         for record in records:
-            movie_id = record.get("movie_id")
+            video_id = record.get("video_id")
             title = record.get("title")
             username = record.get("username")
             status = record.get("status")
@@ -99,10 +99,10 @@ class MylistInfoDBController(DBControllerBase):
             url = record.get("url")
             created_at = record.get("created_at")
 
-            r = MylistInfo(movie_id, title, username, status, uploaded_at, url, created_at)
+            r = MylistInfo(video_id, title, username, status, uploaded_at, url, created_at)
 
             try:
-                q = session.query(MylistInfo).filter(or_(MylistInfo.movie_id == r.movie_id))
+                q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
                 ex = q.one()
             except NoResultFound:
                 pass
@@ -114,7 +114,7 @@ class MylistInfoDBController(DBControllerBase):
         session.commit()
 
         for record in records:
-            movie_id = record.get("movie_id")
+            video_id = record.get("video_id")
             title = record.get("title")
             username = record.get("username")
             status = record.get("status")
@@ -122,10 +122,10 @@ class MylistInfoDBController(DBControllerBase):
             url = record.get("url")
             created_at = record.get("created_at")
 
-            r = MylistInfo(movie_id, title, username, status, uploaded_at, url, created_at)
+            r = MylistInfo(video_id, title, username, status, uploaded_at, url, created_at)
 
             try:
-                q = session.query(MylistInfo).filter(or_(MylistInfo.movie_id == r.movie_id))
+                q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
                 ex = q.one()
             except NoResultFound:
                 # INSERT
@@ -162,14 +162,14 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromMovieID(self, movie_id):
-        """MylistInfoからmovie_idを条件としてSELECTする
+    def SelectFromMovieID(self, video_id):
+        """MylistInfoからvideo_idを条件としてSELECTする
 
         Note:
-            "select * from MylistInfo where movie_id = {}".format(movie_id)
+            "select * from MylistInfo where video_id = {}".format(video_id)
 
         Args:
-            movie_id (str): 取得対象の動画ID
+            video_id (str): 取得対象の動画ID
 
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
@@ -177,7 +177,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(movie_id=movie_id).all()
+        res = session.query(MylistInfo).filter_by(video_id=video_id).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()
@@ -219,7 +219,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(username=username).order_by(desc(MylistInfo.movie_id)).all()
+        res = session.query(MylistInfo).filter_by(username=username).order_by(desc(MylistInfo.video_id)).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()
