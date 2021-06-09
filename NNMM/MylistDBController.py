@@ -62,6 +62,42 @@ class MylistDBController(DBControllerBase):
 
         return res
 
+    def UpdateIncludeFlag(self, mylist_url, is_include_new=False):
+        """Mylistの特定のレコードについて新着フラグを更新する
+
+        Note:
+            "update Mylist set is_include_new = {} where mylist_url = {}"
+
+        Args:
+            mylist_url (str): マイリストURL
+            is_include_new (boolean): 変更後の新着フラグ
+
+        Returns:
+            int: 新着フラグを更新した場合0, 対象レコードが存在しなかった場合1, その他失敗時-1
+        """
+        # UPDATE対象をSELECT
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
+
+        # 存在しない場合はエラー
+        if not record:
+            session.close()
+            return 1
+
+        # 更新前と更新後のstatusが同じ場合は何もせずに終了
+        if record.is_include_new == is_include_new:
+            session.close()
+            return 0
+
+        # 更新する
+        record.is_include_new = is_include_new
+
+        session.commit()
+        session.close()
+
+        return 0
+
     def Select(self):
         """MylistからSELECTする
 
@@ -130,16 +166,17 @@ class MylistDBController(DBControllerBase):
 if __name__ == "__main__":
     DEBUG = True
     db_fullpath = Path("NNMM_DB.db")
-    db_cont = MylistDBController(db_fullpath=str(db_fullpath))
+    mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
 
-    td_format = "%Y/%m/%d %H:%M"
-    dts_format = "%Y-%m-%d %H:%M:%S"
-    dst = datetime.now().strftime(dts_format)
+    # td_format = "%Y/%m/%d %H:%M"
+    # dts_format = "%Y-%m-%d %H:%M:%S"
+    # dst = datetime.now().strftime(dts_format)
     url = "https://www.nicovideo.jp/user/12899156/video"
-    db_cont.Upsert("willow8713", "uploaded", "willow8713さんの投稿動画", url, dst, true)
+    # mylist_db.Upsert("willow8713", "uploaded", "willow8713さんの投稿動画", url, dst, true)
 
-    url = "https://www.nicovideo.jp/user/1594318/video"
-    db_cont.Upsert("moco78", "uploaded", "moco78さんの投稿動画", url, dst, true)
+    # url = "https://www.nicovideo.jp/user/1594318/video"
+    # mylist_db.Upsert("moco78", "uploaded", "moco78さんの投稿動画", url, dst, true)
 
-    records = db_cont.Select()
+    records = mylist_db.Select()
+    mylist_db.UpdateIncludeFlag(url, False)
     pass

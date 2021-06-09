@@ -52,7 +52,7 @@ class MylistInfo(Base):
         return "<MylistInfo(id='{}', video_id='{}')>".format(self.id, self.video_id)
 
     def __eq__(self, other):
-        return isinstance(other, MylistInfo) and other.video_id == self.video_id
+        return isinstance(other, MylistInfo) and other.video_id == self.video_id and other.mylist_url == self.mylist_url
 
     def toDict(self):
         return {

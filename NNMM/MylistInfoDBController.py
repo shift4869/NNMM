@@ -1,4 +1,5 @@
 # coding: utf-8
+import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -144,6 +145,53 @@ class MylistInfoDBController(DBControllerBase):
 
         return res
 
+    def UpdateStatus(self, video_id, mylist_url, status=""):
+        """MylistInfoの特定のレコードについてstatusを更新する
+
+        Note:
+            "update MylistInfo set status = {} where video_id = {} and mylist_url = {}"
+
+        Args:
+            video_id (str): 動画ID(smxxxxxxxx)
+            mylist_url (str): 所属マイリストURL
+            status (str): 変更後の視聴状況({"未視聴", ""})
+
+        Returns:
+            int: statusを更新した場合0, 対象レコードが存在しなかった場合1, その他失敗時-1
+        """
+        # 入力値チェック
+        if status not in ["未視聴", ""]:
+            return -1
+        
+        pattern = "sm[0-9]+"
+        if not re.search(pattern, video_id):
+            return -1
+
+        # UPDATE対象をSELECT
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        record = session.query(MylistInfo).filter(
+            and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url)
+        ).first()
+
+        # 存在しない場合はエラー
+        if not record:
+            session.close()
+            return 1
+
+        # 更新前と更新後のstatusが同じ場合は何もせずに終了
+        if record.status == status:
+            session.close()
+            return 0
+
+        # 更新する
+        record.status = status
+
+        session.commit()
+        session.close()
+
+        return 0
+
     def Select(self):
         """MylistInfoからSELECTする
 
@@ -232,7 +280,10 @@ class MylistInfoDBController(DBControllerBase):
 if __name__ == "__main__":
     DEBUG = True
     db_fullpath = Path("NNMM_DB.db")
-    db_cont = MylistInfoDBController(db_fullpath=str(db_fullpath))
+    mylist_info_db = MylistInfoDBController(db_fullpath=str(db_fullpath))
 
-    records = db_cont.Select()
+    records = mylist_info_db.Select()
+    video_id = "sm38859846"
+    mylist_url = "https://www.nicovideo.jp/user/12899156/video"
+    res = mylist_info_db.UpdateStatus(video_id, mylist_url, "")
     pass
