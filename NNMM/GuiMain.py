@@ -9,6 +9,7 @@ import PySimpleGUI as sg
 
 from NNMM import GetMyListInfo
 from NNMM import GuiFunction
+from NNMM import ConfigMain
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
@@ -16,7 +17,7 @@ from NNMM.Process import *
 
 # 左ペイン
 l_pane = [
-    [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 48), auto_size_text=True)],
+    [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 46), auto_size_text=True)],
     [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Button(" all ", key="-ALL_UPDATE-"),
      sg.Input("", key="-INPUT2-", size=(24, 10))],
 ]
@@ -52,12 +53,14 @@ mylist_info_db = MylistInfoDBController(db_fullpath=str(db_fullpath))
 
 def GuiMain():
     # ウィンドウのレイアウト
-    mf = sg.Frame("F1",
-                  [
-                      [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
-                  ], size=(1070, 100))
+    mf_layout = [[
+        sg.Frame("Main", [
+            [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
+        ], size=(1070, 100))
+    ]]
+    cf_layout = ConfigMain.GetConfigLayout()
     layout = [
-        [mf],
+        [sg.TabGroup([[sg.Tab("マイリスト", mf_layout), sg.Tab("設定", cf_layout)]])]
     ]
 
     # ウィンドウオブジェクトの作成
