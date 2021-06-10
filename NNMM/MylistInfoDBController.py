@@ -192,6 +192,24 @@ class MylistInfoDBController(DBControllerBase):
 
         return 0
 
+    def DeleteFromMylistURL(self, mylist_url):
+        # DELETE対象をSELECT
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        records = session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).first()
+
+        # 存在しない場合はエラー
+        if not records:
+            session.close()
+            return 1
+
+        # DELETEする
+        session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).delete()
+
+        session.commit()
+        session.close()
+        return 0
+
     def Select(self):
         """MylistInfoからSELECTする
 

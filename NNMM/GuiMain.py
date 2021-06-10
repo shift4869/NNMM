@@ -103,6 +103,9 @@ def GuiMain():
         if event == "-CREATE_THREAD_DONE-":
             # -CREATE-のマルチスレッド処理が終わった後の処理
             ProcessCreateMylist.ProcessCreateMylistThreadDone(window, values, mylist_db, mylist_info_db)
+        if event == "-DELETE-":
+            # 左下、マイリスト削除ボタンが押された場合
+            ProcessDeleteMylist.ProcessDeleteMylist(window, values, mylist_db, mylist_info_db)
         if event == "-UPDATE-":
             # 右上の更新ボタンが押された場合
             ProcessUpdateMylistInfo.ProcessUpdateMylistInfo(window, values, mylist_db, mylist_info_db)
