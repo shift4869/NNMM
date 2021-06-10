@@ -16,8 +16,7 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     print(mylist_url)
 
     # DBからロード
-    username = record.get("username")
-    prev_video_list = mylist_info_db.SelectFromUsername(username)
+    prev_video_list = mylist_info_db.SelectFromMylistURL(mylist_url)
     prev_videoid_list = [m["video_id"] for m in prev_video_list]
 
     func = None
@@ -114,13 +113,10 @@ def ProcessUpdateMylistInfoThreadDone(window, values, mylist_db, mylist_info_db)
     def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
 
     # 左のマイリストlistboxの表示を更新する
-    # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
+    # 一つでも未視聴の動画が含まれる場合はマイリストの進捗フラグを立てる
     if IsMylistIncludeNewVideo(def_data):
-        record = mylist_db.SelectFromURL(mylist_url)[0]
-        # マイリストDB更新
-        record["is_include_new"] = True  # 新着マークを更新
-        mylist_db.Upsert(record["username"], record["type"], record["listname"],
-                         record["url"], record["created_at"], record["is_include_new"])
+        # 新着フラグを更新
+        mylist_db.UpdateIncludeFlag(mylist_url, True)
 
     # マイリスト画面表示更新
     UpdateMylistShow(window, mylist_db)

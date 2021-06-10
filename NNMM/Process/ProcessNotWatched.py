@@ -30,6 +30,10 @@ def ProcessNotWatched(window, values, mylist_db, mylist_info_db):
         def_data[row][4] = "未視聴"
     window["-TABLE-"].update(values=def_data)
 
+    # テーブルの表示を更新する
+    UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
+    window["-TABLE-"].update(select_rows=[row])
+
     # 未視聴になったことでマイリストの新着表示を表示する
     # 未視聴にしたので必ず新着あり扱いになる
     # マイリストDB新着フラグ更新

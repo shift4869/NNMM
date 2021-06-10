@@ -30,6 +30,10 @@ def ProcessWatched(window, values, mylist_db, mylist_info_db):
         def_data[row][4] = ""
     window["-TABLE-"].update(values=def_data)
 
+    # テーブルの表示を更新する
+    UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
+    window["-TABLE-"].update(select_rows=[row])
+
     # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
     if not IsMylistIncludeNewVideo(window["-TABLE-"].Values):
         # マイリストDB新着フラグ更新

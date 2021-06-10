@@ -7,6 +7,7 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
+from NNMM.Process.ProcessWatched import *
 
 
 def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):
@@ -25,22 +26,14 @@ def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):
 
     # 視聴済にする
     table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
+    mylist_url = values["-INPUT1-"]
     # 状況を更新
     if def_data[row][4] != "":
         def_data[row][4] = ""
         window["-TABLE-"].update(values=def_data)
 
-    # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
-    if not IsMylistIncludeNewVideo(window["-TABLE-"].Values):
-        # マイリストDB更新
-        mylist_url = values["-INPUT1-"]
-        record = mylist_db.SelectFromURL(mylist_url)[0]
-        record["is_include_new"] = False  # 新着マークを更新
-        mylist_db.Upsert(record["username"], record["type"], record["listname"],
-                         record["url"], record["created_at"], record["is_include_new"])
-
-        # マイリスト画面表示更新
-        UpdateMylistShow(window, mylist_db)
+    # 視聴済にする
+    ProcessWatched(window, values, mylist_db, mylist_info_db)
 
     # ブラウザに動画urlを渡す
     video_url = mylist_info_db.SelectFromVideoID(selected[1])[0].get("video_url")

@@ -270,7 +270,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).all()
+        res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).order_by(desc(MylistInfo.video_id)).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()

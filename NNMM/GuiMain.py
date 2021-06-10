@@ -71,12 +71,7 @@ def GuiMain():
 
     # マイリスト一覧初期化
     # DBからマイリスト一覧を取得する
-    m_list = mylist_db.Select()
-    for m in m_list:
-        if m["is_include_new"]:
-            m["listname"] = "*:" + m["listname"]
-    list_data = [m["listname"] for m in m_list]
-    window["-LIST-"].update(values=list_data)
+    UpdateMylistShow(window, mylist_db)
 
     # テーブル初期化
     def_data = [[]]

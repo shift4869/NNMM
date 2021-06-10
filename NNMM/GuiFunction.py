@@ -29,6 +29,11 @@ def IsMylistIncludeNewVideo(table_list):
 
 
 def UpdateMylistShow(window, mylist_db):
+    # 現在マイリストが選択中の場合indexを保存
+    index = 0
+    if window["-LIST-"].get_indexes():
+        index = window["-LIST-"].get_indexes()[0]
+
     # マイリスト画面表示更新
     list_data = window["-LIST-"].Values
     m_list = mylist_db.Select()
@@ -37,6 +42,12 @@ def UpdateMylistShow(window, mylist_db):
             m["listname"] = "*:" + m["listname"]
     list_data = [m["listname"] for m in m_list]
     window["-LIST-"].update(values=list_data)
+
+    # 一定値以上だった場合、indexをセットしてスクロール(TODO)
+    MAX_MYLIST_PAGE_INDEX = 47
+    if index > MAX_MYLIST_PAGE_INDEX:
+        window["-LIST-"].update(scroll_to_index=index)
+    window["-LIST-"].update(set_to_index=index)
     return 0
 
 
@@ -45,7 +56,7 @@ def UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url=""):
     # 現在のマイリストURL
     if mylist_url == "":
         mylist_url = window["-INPUT1-"].get()
-    
+
     if mylist_url == "":
         return -1
 
@@ -67,6 +78,7 @@ def UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url=""):
 
     # 画面更新
     window["-TABLE-"].update(values=def_data)
+    window["-TABLE-"].update(select_rows=[0])
     window["-LIST-"].update(set_to_index=index)
     pass
 
