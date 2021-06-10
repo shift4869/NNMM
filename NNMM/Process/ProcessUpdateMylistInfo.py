@@ -88,7 +88,7 @@ def ProcessUpdateMylistInfo(window, values, mylist_db, mylist_info_db):
     mylist_url = values["-INPUT1-"]
 
     # 左下の表示変更
-    window["-INPUT2-"].update(value="ロード中")
+    window["-INPUT2-"].update(value="更新中")
     window.refresh()
 
     # マイリストレコードから現在のマイリスト情報を取得する
@@ -101,7 +101,7 @@ def ProcessUpdateMylistInfo(window, values, mylist_db, mylist_info_db):
 def ProcessUpdateMylistInfoThreadDone(window, values, mylist_db, mylist_info_db):
     # -UPDATE-のマルチスレッド処理が終わった後の処理
     # 左下の表示を戻す
-    window["-INPUT2-"].update(value="")
+    window["-INPUT2-"].update(value="更新完了！")
 
     # テーブルの表示を更新する
     mylist_url = values["-INPUT1-"]

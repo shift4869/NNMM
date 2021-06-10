@@ -118,6 +118,9 @@ def GuiMain():
         if event == "-ALL_UPDATE-":
             # 左下のすべて更新ボタンが押された場合
             ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo(window, values, mylist_db, mylist_info_db)
+        if event == "-ALL_UPDATE_THREAD_PROGRESS-":
+            # -ALL_UPDATE-処理中の処理
+            ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress(window, values, mylist_db, mylist_info_db)
         if event == "-ALL_UPDATE_THREAD_DONE-":
             # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
             ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_db)

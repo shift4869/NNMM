@@ -14,16 +14,18 @@ from NNMM.Process.ProcessUpdateMylistInfo import *
 def UpdateAllMylistInfoThread(window, mylist_db, mylist_info_db):
     # 全てのマイリストを更新する（マルチスレッド前提）
     m_list = mylist_db.Select()
+    all_index_num = len(m_list)
     for i, record in enumerate(m_list):
         UpdateMylistInfo(window, mylist_db, mylist_info_db, record)
-        window.write_event_value("-THREAD PROGRESS-", i)
+        p_str = f"更新中({i + 1}/{all_index_num})"
+        window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
 
     window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
 
 
 def ProcessUpdateAllMylistInfo(window, values, mylist_db, mylist_info_db):
     # 左下のすべて更新ボタンが押された場合
-    window["-INPUT2-"].update(value="全てのマイリストを更新中")
+    window["-INPUT2-"].update(value="更新中")
     window.refresh()
     # 存在するすべてのマイリストから現在のマイリスト情報を取得する
     # AsyncHTMLSessionでページ情報をレンダリングして解釈する
@@ -32,10 +34,16 @@ def ProcessUpdateAllMylistInfo(window, values, mylist_db, mylist_info_db):
                      args=(window, mylist_db, mylist_info_db), daemon=True).start()
 
 
+def ProcessUpdateAllMylistInfoThreadProgress(window, values, mylist_db, mylist_info_db):
+    # -ALL_UPDATE-処理中のプログレス
+    p_str = values["-ALL_UPDATE_THREAD_PROGRESS-"]
+    window["-INPUT2-"].update(value=p_str)
+
+
 def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_db):
     # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
     # 左下の表示を戻す
-    window["-INPUT2-"].update(value="")
+    window["-INPUT2-"].update(value="更新完了！")
 
     # テーブルの表示を更新する
     mylist_url = values["-INPUT1-"]
