@@ -7,6 +7,10 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
+from NNMM.MylistDBController import *
+from NNMM.MylistInfoDBController import *
+
+
 CONFIG_FILE_PATH = "./config/config.ini"
 global_config = None
 
@@ -47,6 +51,12 @@ def GetConfigLayout():
         sg.Frame("Config", cf, size=(1070, 100))
     ]]
     return layout
+
+
+def GetConfig():
+    # global_configを返す
+    global global_config
+    return global_config
 
 
 def SetConfig():
@@ -101,8 +111,18 @@ def ProcessConfigSave(window, values, mylist_db, mylist_info_db):
         sd_new = Path(db_new)
 
         if sd_prev.is_file():
+            # 移動先のディレクトリを作成する
             sd_new.parent.mkdir(exist_ok=True, parents=True)
+
+            # DB移動
             shutil.move(sd_prev, sd_new)
+
+            # 以降の処理で新しいパスに移動させたDBを参照するように再設定
+            from NNMM import GuiMain
+            GuiMain.mylist_db = MylistDBController(db_fullpath=str(sd_new))
+            GuiMain.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
+
+            # 移動成功
             db_move_success = True
     if db_move_success:
         c["db"]["save_path"] = window["-C_DB_PATH-"].get()

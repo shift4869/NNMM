@@ -4,6 +4,7 @@ from logging import INFO, getLogger
 
 import PySimpleGUI as sg
 
+from NNMM import ConfigMain
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
@@ -36,9 +37,13 @@ def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):
     ProcessWatched(window, values, mylist_db, mylist_info_db)
 
     # ブラウザに動画urlを渡す
+    config = ConfigMain.global_config
     video_url = mylist_info_db.SelectFromVideoID(selected[1])[0].get("video_url")
-    cmd = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe"
-    sp = sg.execute_command_subprocess(cmd, video_url)
+    cmd = config["general"].get("browser_path", "")
+    if cmd != "" and Path(cmd).is_file():
+        sp = sg.execute_command_subprocess(cmd, video_url)
+    else:
+        sg.popup_ok("ブラウザパスが不正です。設定タブから設定してください。")
     # print(sg.execute_get_results(sp)[0])
 
 

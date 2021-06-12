@@ -41,8 +41,12 @@ r_pane = [
     [sg.Column([[t]], expand_x=True)],
 ]
 
+# 設定値初期化
+ConfigMain.SetConfig()
+config = ConfigMain.global_config
+
 # DB操作コンポーネント設定
-db_fullpath = Path("NNMM_DB.db")
+db_fullpath = Path(config["db"].get("save_path", ""))
 mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
 mylist_info_db = MylistInfoDBController(db_fullpath=str(db_fullpath))
 
@@ -76,9 +80,6 @@ def GuiMain():
     # テーブル初期化
     def_data = [[]]
     window["-TABLE-"].update(values=def_data)
-
-    # 設定値初期化
-    ConfigMain.SetConfig()
 
     # イベントのループ
     while True:
@@ -129,11 +130,9 @@ def GuiMain():
             if select_tab == "設定":
                 # 設定タブを開いたときの処理
                 ConfigMain.ProcessConfigLoad(window, values, mylist_db, mylist_info_db)
-            pass
         if event == "-C_CONFIG_SAVE-":
             # 設定保存ボタンが押された場合
             ConfigMain.ProcessConfigSave(window, values, mylist_db, mylist_info_db)
-            pass
 
     # ウィンドウ終了処理
     window.close()
