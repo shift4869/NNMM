@@ -91,18 +91,66 @@ def ProcessConfigLoad(window, values, mylist_db, mylist_info_db):
     pass
 
 
-def ProcessMylistSaveCVS(window, values, mylist_db, mylist_info_db):
+def ProcessMylistSaveCSV(window, values, mylist_db, mylist_info_db):
     # "-C_MYLIST_SAVE-"
     # マイリスト一覧保存ボタンが押されたときの処理
     # 現在のマイリストをcsvとして保存する
-    pass
+
+    # 保存先ファイルパスをユーザーから取得する
+    default_path = Path("") / "result.csv"
+    sd_path_str = sg.popup_get_file(
+        "保存先ファイル選択",
+        default_path=default_path.absolute(),
+        default_extension="csv",
+        save_as=True
+    )
+
+    # キャンセルされた場合は何もしない
+    if not sd_path_str:
+        return
+
+    # マイリスト保存
+    sd_path = Path(sd_path_str)
+    res = SaveMylist(mylist_db, str(sd_path))
+
+    # 結果通知
+    if res == 0:
+        sg.popup("保存完了")
+    else:
+        sg.popup("保存失敗")
+    
+    return res
 
 
-def ProcessMaylistLoadCSV(window, values, mylist_db, mylist_info_db):
+def ProcessMylistLoadCSV(window, values, mylist_db, mylist_info_db):
     # "-C_MYLIST_LOAD-"
     # マイリスト一覧読込ボタンが押されたときの処理
     # csvを読み込んで現在のマイリストに追加する
-    pass
+
+    # 読込ファイルパスをユーザーから取得する
+    default_path = Path("") / "input.csv"
+    sd_path_str = sg.popup_get_file(
+        "読込ファイル選択",
+        default_path=default_path.absolute(),
+        default_extension="csv",
+        save_as=False
+    )
+
+    # キャンセルされた場合は何もしない
+    if not sd_path_str:
+        return
+
+    # マイリスト読込
+    sd_path = Path(sd_path_str)
+    res = LoadMylist(mylist_db, str(sd_path))
+
+    # 結果通知
+    if res == 0:
+        sg.popup("読込完了")
+    else:
+        sg.popup("読込失敗")
+    
+    return res
 
 
 def ProcessConfigSave(window, values, mylist_db, mylist_info_db):
