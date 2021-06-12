@@ -7,6 +7,7 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
+from NNMM.CSVSaveLoad import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 
@@ -87,6 +88,20 @@ def ProcessConfigLoad(window, values, mylist_db, mylist_info_db):
 
     # 選択された状態になるので外す
     window["-C_BROWSER_PATH-"].update(select=False)
+    pass
+
+
+def ProcessMylistSaveCVS(window, values, mylist_db, mylist_info_db):
+    # "-C_MYLIST_SAVE-"
+    # マイリスト一覧保存ボタンが押されたときの処理
+    # 現在のマイリストをcsvとして保存する
+    pass
+
+
+def ProcessMaylistLoadCSV(window, values, mylist_db, mylist_info_db):
+    # "-C_MYLIST_LOAD-"
+    # マイリスト一覧読込ボタンが押されたときの処理
+    # csvを読み込んで現在のマイリストに追加する
     pass
 
 

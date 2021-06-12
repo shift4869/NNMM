@@ -133,6 +133,12 @@ def GuiMain():
         if event == "-C_CONFIG_SAVE-":
             # 設定保存ボタンが押された場合
             ConfigMain.ProcessConfigSave(window, values, mylist_db, mylist_info_db)
+        if event == "-C_MYLIST_SAVE-":
+            # マイリスト一覧保存ボタンが押された場合
+            ConfigMain.ProcessConfigSave(window, values, mylist_db, mylist_info_db)
+        if event == "-C_MYLIST_LOAD-":
+            # マイリスト一覧読込ボタンが押された場合
+            ConfigMain.ProcessConfigSave(window, values, mylist_db, mylist_info_db)
 
     # ウィンドウ終了処理
     window.close()
