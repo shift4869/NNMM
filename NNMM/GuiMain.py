@@ -1,14 +1,10 @@
 # coding: utf-8
 import logging.config
-import time
-import threading
 from logging import INFO, getLogger
 from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM import GetMyListInfo
-from NNMM import GuiFunction
 from NNMM import ConfigMain
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
@@ -60,7 +56,8 @@ def GuiMain():
     ]]
     cf_layout = ConfigMain.GetConfigLayout()
     layout = [
-        [sg.TabGroup([[sg.Tab("マイリスト", mf_layout), sg.Tab("設定", cf_layout)]])]
+        [sg.TabGroup([[sg.Tab("マイリスト", mf_layout), sg.Tab("設定", cf_layout)]],
+         key="-TAB_CHANGED-", enable_events=True)]
     ]
 
     # ウィンドウオブジェクトの作成
@@ -79,6 +76,9 @@ def GuiMain():
     # テーブル初期化
     def_data = [[]]
     window["-TABLE-"].update(values=def_data)
+
+    # 設定値初期化
+    ConfigMain.SetConfig()
 
     # イベントのループ
     while True:
@@ -124,6 +124,16 @@ def GuiMain():
         if event == "-ALL_UPDATE_THREAD_DONE-":
             # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
             ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_db)
+        if event == "-TAB_CHANGED-":
+            select_tab = values["-TAB_CHANGED-"]
+            if select_tab == "設定":
+                # 設定タブを開いたときの処理
+                ConfigMain.ProcessConfigLoad(window, values, mylist_db, mylist_info_db)
+            pass
+        if event == "-C_CONFIG_SAVE-":
+            # 設定保存ボタンが押された場合
+            ConfigMain.ProcessConfigSave(window, values, mylist_db, mylist_info_db)
+            pass
 
     # ウィンドウ終了処理
     window.close()
