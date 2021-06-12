@@ -17,17 +17,34 @@ import requests
 from bs4 import BeautifulSoup
 from requests_html import HTMLSession, AsyncHTMLSession
 
+from NNMM import ConfigMain
+
+
 logger = getLogger("root")
 logger.setLevel(INFO)
 
 
 async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
+    """投稿動画ページアドレスからRSSを通して動画の情報を取得する
+
+    Notes:
+        以下をキーとする情報を辞書で返す
+        table_cols = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+        RSSは取得が速い代わりに最大30件までしか情報を取得できない
+
+    Args:
+        url (str): 投稿動画ページのアドレス
+
+    Returns:
+        video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照
+    """
     # 入力チェック
     pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
     f1 = re.search(pattern, url)
     if not f1:
         return []
 
+    # RSS取得
     loop = asyncio.get_event_loop()
     soup = None
     test_count = 0
@@ -65,6 +82,23 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     title_lx = soup.find_all("title")
     pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
     username = re.findall(pattern, title_lx[0].text)[0]
+
+    # 投稿者ID
+    userid = ""
+    link_lx = soup.find_all("link")
+    pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
+    userid = re.findall(pattern, link_lx[0].get("href"))[0]
+
+    # RSS保存先パス
+    config = ConfigMain.global_config
+    rd_str = config["general"].get("rss_save_path", "")
+    rd_path = Path(rd_str)
+    rd_path.mkdir(exist_ok=True, parents=True)
+    rss_file_name = f"{userid}.xml"
+
+    # RSS保存
+    with (rd_path / rss_file_name).open("w", encoding="utf-8") as fout:
+        fout.write(response.text)
 
     # 一つのentryから動画ID, 動画名, 投稿日時, URLを抽出する関数
     def GetEntryInfo(entry_lx) -> tuple[str, str, str, str]:
@@ -111,6 +145,9 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     Notes:
         以下をキーとする情報を辞書で返す
         table_cols = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+        実際に内部ブラウザでページを開き、
+        レンダリングして最終的に表示されたページから動画情報をスクレイピングする
+        レンダリングに時間がかかる代わりに最大100件まで取得できる
 
     Args:
         url (str): 投稿動画ページのアドレス
@@ -230,10 +267,8 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
 if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
-    CONFIG_FILE_NAME = "./config/config.ini"
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE_NAME, encoding="utf8")
-    
+    ConfigMain.SetConfig()
+
     url = "https://www.nicovideo.jp/user/12899156/video"
     # video_list = GetMyListInfoLightWeight(url)
     loop = asyncio.new_event_loop()

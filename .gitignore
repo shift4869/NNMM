@@ -124,6 +124,7 @@ log*.txt*
 *.bat
 /sample
 *.csv
+/rss
 
 # CI環境が整うまで無効化
 /.github
