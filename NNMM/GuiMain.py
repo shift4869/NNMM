@@ -60,10 +60,18 @@ def GuiMain():
         ], size=(1070, 100))
     ]]
     cf_layout = ConfigMain.GetConfigLayout()
-    layout = [
-        [sg.TabGroup([[sg.Tab("マイリスト", mf_layout), sg.Tab("設定", cf_layout)]],
-         key="-TAB_CHANGED-", enable_events=True)]
-    ]
+    lf_layout = [[
+        sg.Frame("ログ", [
+            [sg.Column([[sg.Output(size=(1070, 100), echo_stdout_stderr=True)]])]
+        ], size=(1070, 100))
+    ]]
+    layout = [[
+        sg.TabGroup([[
+            sg.Tab("マイリスト", mf_layout),
+            sg.Tab("設定", cf_layout),
+            sg.Tab("ログ", lf_layout)
+        ]], key="-TAB_CHANGED-", enable_events=True)
+    ]]
 
     # ウィンドウオブジェクトの作成
     window = sg.Window("NNMM", layout, size=(1070, 900), finalize=True, resizable=True)
