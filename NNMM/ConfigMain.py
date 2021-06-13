@@ -19,7 +19,7 @@ global_config = None
 def GetConfigLayout():
     # オートリロード間隔
     auto_reload_combo_box = sg.InputCombo(
-        ("(使用しない)", "30分毎"), default_value="(使用しない)", key="-C_AUTO_RELOAD-", size=(20, 10)
+        ("(使用しない)", "15分毎", "30分毎", "60分毎"), default_value="(使用しない)", key="-C_AUTO_RELOAD-", size=(20, 10)
     )
 
     horizontal_line = "-" * 100

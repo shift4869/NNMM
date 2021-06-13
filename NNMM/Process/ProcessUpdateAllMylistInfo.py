@@ -44,6 +44,8 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
     # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
     # 左下の表示を戻す
     window["-INPUT2-"].update(value="更新完了！")
+    dts_format = "%Y-%m-%d %H:%M:00"
+    print("更新完了！：" + datetime.now().strftime(dts_format))
 
     # テーブルの表示を更新する
     mylist_url = values["-INPUT1-"]
