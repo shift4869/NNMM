@@ -149,7 +149,7 @@ def ProcessMylistLoadCSV(window, values, mylist_db, mylist_info_db):
         sg.popup("読込完了")
     else:
         sg.popup("読込失敗")
-    
+
     return res
 
 
@@ -162,8 +162,10 @@ def ProcessConfigSave(window, values, mylist_db, mylist_info_db):
 
     # General
     c["general"]["browser_path"] = window["-C_BROWSER_PATH-"].get()
-    c["general"]["auto_reload"] = window["-C_AUTO_RELOAD-"].get()
     c["general"]["rss_save_path"] = window["-C_RSS_PATH-"].get()
+    # タイマーセットイベントを登録
+    c["general"]["auto_reload"] = window["-C_AUTO_RELOAD-"].get()
+    window.write_event_value("-TIMER_SET-", "-FIRST_SET-")
 
     # DB
     db_prev = c["db"]["save_path"]

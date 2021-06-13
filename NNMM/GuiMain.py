@@ -6,6 +6,7 @@ from pathlib import Path
 import PySimpleGUI as sg
 
 from NNMM import ConfigMain
+from NNMM import Timer
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
@@ -81,6 +82,9 @@ def GuiMain():
     def_data = [[]]
     window["-TABLE-"].update(values=def_data)
 
+    # タイマーセットイベントを起動
+    window.write_event_value("-TIMER_SET-", "-FIRST_SET-")
+
     # イベントのループ
     while True:
         # イベントの読み込み
@@ -139,6 +143,9 @@ def GuiMain():
         if event == "-C_MYLIST_LOAD-":
             # マイリスト一覧読込ボタンが押された場合
             ConfigMain.ProcessMylistLoadCSV(window, values, mylist_db, mylist_info_db)
+        if event == "-TIMER_SET-":
+            # タイマーセットイベントが登録された場合
+            Timer.ProcessTimer(window, values, mylist_db, mylist_info_db)
 
     # ウィンドウ終了処理
     window.close()
