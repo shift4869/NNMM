@@ -12,8 +12,11 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 
 
+timer_thread = None
+
+
 def ProcessTimer(window, values, mylist_db, mylist_info_db):
-    # global timer_thread
+    global timer_thread
 
     # タイマーセットイベントが登録された場合
     # v = values["-TIMER_SET-"]
@@ -24,6 +27,9 @@ def ProcessTimer(window, values, mylist_db, mylist_info_db):
     config = ConfigMain.GetConfig()
     i_str = config["general"].get("auto_reload", "")
     if i_str == "(使用しない)" or i_str == "":
+        if timer_thread:
+            timer_thread.cancel()
+            timer_thread = None
         return
 
     pattern = "^([0-9]+)分毎$"
@@ -32,7 +38,15 @@ def ProcessTimer(window, values, mylist_db, mylist_info_db):
     # 既に更新中なら二重に実行はしない
     pattern = "^更新中\([0-9]+\/[0-9]+\)$|^更新中$"
     v = window["-INPUT2-"].get()
-    if re.search(pattern, v) or values["-TIMER_SET-"] == "-FIRST_SET-":
+    if values["-TIMER_SET-"] == "-FIRST_SET-":
+        values["-TIMER_SET-"] = ""
+        print("-FIRST_SET- ... skip first auto-reload cycle.")
+
+        if timer_thread:
+            timer_thread.cancel()
+            timer_thread = None
+
+    elif re.search(pattern, v):
         values["-TIMER_SET-"] = ""
         print("-ALL_UPDATE- running now ... skip this auto-reload cycle.")
         pass
