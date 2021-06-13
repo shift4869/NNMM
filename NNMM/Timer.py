@@ -58,6 +58,8 @@ def ProcessTimer(window, values, mylist_db, mylist_info_db):
     # interval = 5
     interval = interval * 60  # [min] -> [sec]
     timer_thread = threading.Timer(interval, ProcessTimer, (window, values, mylist_db, mylist_info_db))
+    # デーモンスレッドはデーモンスレッド以外のスレッドが動いていない場合に自動的に終了される
+    timer_thread.setDaemon(True)
     timer_thread.start()
 
     return
