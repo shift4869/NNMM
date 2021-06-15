@@ -13,8 +13,9 @@ from NNMM.GuiFunction import *
 from NNMM.Process import *
 
 # 左ペイン
+listbox_right_click_menu = ["-LISTBOX_RIGHT_CLICK_MENU-", ["! ", "---", "上に移動", "下に移動"]]
 l_pane = [
-    [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 46), auto_size_text=True)],
+    [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 46), auto_size_text=True, right_click_menu=listbox_right_click_menu)],
     [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Button(" all ", key="-ALL_UPDATE-"),
      sg.Input("", key="-INPUT2-", size=(24, 10))],
 ]
@@ -23,7 +24,7 @@ l_pane = [
 table_cols_name = [" No. ", "   動画ID   ", "              動画名              ", "    投稿者    ", "  状況  ", "   投稿日時   "]
 cols_width = [20, 20, 20, 20, 80, 80]
 def_data = [["", "", "", "", "", ""]]
-right_click_menu = ["Unused", ["ブラウザで開く", "---", "視聴済にする", "未視聴にする"]]
+table_right_click_menu = ["-TABLE_RIGHT_CLICK_MENU-", ["! ", "---", "ブラウザで開く", "---", "視聴済にする", "未視聴にする"]]
 table_style = {
     "values": def_data,
     "headings": table_cols_name,
@@ -34,7 +35,7 @@ table_style = {
     "bind_return_key": True,
     "justification": "left",
     "key": "-TABLE-",
-    "right_click_menu": right_click_menu,
+    "right_click_menu": table_right_click_menu,
 }
 t = sg.Table(**table_style)
 r_pane = [
@@ -97,6 +98,7 @@ def GuiMain():
     while True:
         # イベントの読み込み
         event, values = window.read()
+        # print(event, values)
 
         if event in [sg.WIN_CLOSED, "-EXIT-"]:
             # 終了ボタンかウィンドウの×ボタンが押されれば終了
