@@ -68,7 +68,7 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
         if IsMylistIncludeNewVideo(def_data):
             # マイリストDB更新
             m["is_include_new"] = True  # 新着マークを更新
-            mylist_db.Upsert(m["username"], m["type"], m["listname"],
+            mylist_db.Upsert(m["id"], m["username"], m["type"], m["listname"],
                              m["url"], m["created_at"], m["is_include_new"])
 
     # マイリスト画面表示更新

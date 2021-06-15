@@ -23,7 +23,7 @@ class MylistInfo(Base):
 
     __tablename__ = "MylistInfo"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     video_id = Column(String(256), nullable=False)
     title = Column(String(256), nullable=False)
     username = Column(String(512), nullable=False)
@@ -94,8 +94,8 @@ class Mylist(Base):
     def __init__(self, *args, **kwargs):
         super(Base, self).__init__(*args, **kwargs)
 
-    def __init__(self, username, type, listname, url, created_at, is_include_new):
-        # self.id = id
+    def __init__(self, id, username, type, listname, url, created_at, is_include_new):
+        self.id = id
         self.username = username
         self.type = type
         self.listname = listname

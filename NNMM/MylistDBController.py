@@ -17,7 +17,7 @@ class MylistDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def Upsert(self, username, type, listname, url, created_at, is_include_new):
+    def Upsert(self, id, username, type, listname, url, created_at, is_include_new):
         """MylistにUPSERTする
 
         Notes:
@@ -41,7 +41,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = Mylist(username, type, listname, url, created_at, is_include_new)
+        r = Mylist(id, username, type, listname, url, created_at, is_include_new)
 
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url))
@@ -132,7 +132,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
 
         # res = session.query(Mylist).order_by(asc(Mylist.created_at)).limit(limit).all()
-        res = session.query(Mylist).order_by(asc(Mylist.created_at)).all()
+        res = session.query(Mylist).order_by(asc(Mylist.id)).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()
@@ -190,10 +190,10 @@ if __name__ == "__main__":
     # dts_format = "%Y-%m-%d %H:%M:%S"
     # dst = datetime.now().strftime(dts_format)
     url = "https://www.nicovideo.jp/user/12899156/video"
-    # mylist_db.Upsert("willow8713", "uploaded", "willow8713さんの投稿動画", url, dst, true)
+    # mylist_db.Upsert(1, "willow8713", "uploaded", "willow8713さんの投稿動画", url, dst, true)
 
     # url = "https://www.nicovideo.jp/user/1594318/video"
-    # mylist_db.Upsert("moco78", "uploaded", "moco78さんの投稿動画", url, dst, true)
+    # mylist_db.Upsert(2, "moco78", "uploaded", "moco78さんの投稿動画", url, dst, true)
 
     records = mylist_db.Select()
     mylist_db.UpdateIncludeFlag(url, False)

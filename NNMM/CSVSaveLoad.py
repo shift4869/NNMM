@@ -72,6 +72,7 @@ def LoadMylist(mylist_db, load_file_path):
             if r:
                 continue
 
+            id_index = param_dict["id"]
             username = param_dict["username"]
             type = param_dict["type"]
             listname = param_dict["listname"]
@@ -81,7 +82,7 @@ def LoadMylist(mylist_db, load_file_path):
             dts_format = "%Y-%m-%d %H:%M:%S"
             dst = datetime.strptime(created_at, td_format).strftime(dts_format)
             is_include_new = param_dict["is_include_new"]
-            mylist_db.Upsert(username, type, listname, url, dst, False)
+            mylist_db.Upsert(id_index, username, type, listname, url, dst, False)
     return 0
 
 
