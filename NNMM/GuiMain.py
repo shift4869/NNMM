@@ -13,7 +13,7 @@ from NNMM.GuiFunction import *
 from NNMM.Process import *
 
 # 左ペイン
-listbox_right_click_menu = ["-LISTBOX_RIGHT_CLICK_MENU-", ["! ", "---", "上に移動", "下に移動"]]
+listbox_right_click_menu = ["-LISTBOX_RIGHT_CLICK_MENU-", ["! ", "---", "上に移動", "下に移動", "---", "視聴済にする（選択）", "視聴済にする（全て）"]]
 l_pane = [
     [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 46), auto_size_text=True, right_click_menu=listbox_right_click_menu)],
     [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Button(" all ", key="-ALL_UPDATE-"),
@@ -116,8 +116,14 @@ def GuiMain():
             # マイリスト右クリックで「上に移動」が選択された場合
             ProcessMoveUp.ProcessMoveUp(window, values, mylist_db, mylist_info_db)
         if event == "下に移動":
-            # マイリスト右クリックで「上に移動」が選択された場合
+            # マイリスト右クリックで「下に移動」が選択された場合
             ProcessMoveDown.ProcessMoveDown(window, values, mylist_db, mylist_info_db)
+        if event == "視聴済にする（選択）":
+            # マイリスト右クリックで「視聴済にする（選択）」が選択された場合
+            ProcessWatchedMylist.ProcessWatchedMylist(window, values, mylist_db, mylist_info_db)
+        if event == "視聴済にする（全て）":
+            # マイリスト右クリックで「視聴済にする（全て）」が選択された場合
+            ProcessWatchedAllMylist.ProcessWatchedAllMylist(window, values, mylist_db, mylist_info_db)
         if event == "-LIST-+DOUBLE CLICK+":
             # リストボックスの項目がダブルクリックされた場合（単一）
             ProcessShowMylistInfo.ProcessShowMylistInfo(window, values, mylist_db, mylist_info_db)

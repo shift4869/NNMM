@@ -8,3 +8,5 @@ from . import ProcessUpdateMylistInfo
 from . import ProcessUpdateAllMylistInfo
 from . import ProcessMoveUp
 from . import ProcessMoveDown
+from . import ProcessWatchedMylist
+from . import ProcessWatchedAllMylist
