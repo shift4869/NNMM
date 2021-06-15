@@ -98,6 +98,44 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
+    def SwapId(self, src_id, dst_id):
+        """idを交換する
+
+        Note:
+            idはプライマリキーなので一度連番でないものを割り当ててから交換する
+
+        Args:
+            src_id (int): 交換元レコードのid
+            dst_id (int): 交換先レコードのid
+
+        Returns:
+            (Mylist, Mylist): 交換後のレコード（交換元レコード, 交換先レコード）
+        """
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        # 交換元レコード
+        src_record = session.query(Mylist).filter(Mylist.id == src_id).first()
+        # 交換先レコード
+        dst_record = session.query(Mylist).filter(Mylist.id == dst_id).first()
+
+        # 一旦idを重複しないものに変更する（マイナス）
+        src_record.id = -src_id
+        dst_record.id = -dst_id
+        session.commit()
+
+        # idを交換する
+        src_record.id = dst_id
+        dst_record.id = src_id
+
+        # 返り値作成
+        res = (src_record.toDict(), dst_record.toDict())
+
+        # セッション終了
+        session.commit()
+        session.close()
+        return res
+
     def DeleteFromURL(self, mylist_url):
         # DELETE対象をSELECT
         Session = sessionmaker(bind=self.engine)

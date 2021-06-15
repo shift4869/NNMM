@@ -112,6 +112,12 @@ def GuiMain():
         if event == "ブラウザで開く":
             # テーブル右クリックで「ブラウザで開く」が選択された場合
             ProcessVideoPlay.ProcessVideoPlay(window, values, mylist_db, mylist_info_db)
+        if event == "上に移動":
+            # マイリスト右クリックで「上に移動」が選択された場合
+            ProcessMoveUp.ProcessMoveUp(window, values, mylist_db, mylist_info_db)
+        if event == "下に移動":
+            # マイリスト右クリックで「上に移動」が選択された場合
+            ProcessMoveDown.ProcessMoveDown(window, values, mylist_db, mylist_info_db)
         if event == "-LIST-+DOUBLE CLICK+":
             # リストボックスの項目がダブルクリックされた場合（単一）
             ProcessShowMylistInfo.ProcessShowMylistInfo(window, values, mylist_db, mylist_info_db)
