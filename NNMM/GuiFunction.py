@@ -35,18 +35,27 @@ def UpdateMylistShow(window, mylist_db):
         index = window["-LIST-"].get_indexes()[0]
 
     # マイリスト画面表示更新
+    NEW_MARK = "*:"
     list_data = window["-LIST-"].Values
     m_list = mylist_db.Select()
-    for m in m_list:
+    include_new_index_list = []
+    for i, m in enumerate(m_list):
         if m["is_include_new"]:
-            m["listname"] = "*:" + m["listname"]
+            m["listname"] = NEW_MARK + m["listname"]
+            include_new_index_list.append(i)
     list_data = [m["listname"] for m in m_list]
     window["-LIST-"].update(values=list_data)
 
-    # 一定値以上だった場合、indexをセットしてスクロール(TODO)
-    MAX_MYLIST_PAGE_INDEX = 47
-    if index > MAX_MYLIST_PAGE_INDEX:
-        window["-LIST-"].update(scroll_to_index=index)
+    # 新着マイリストの背景色とテキスト色を変更する
+    # update(values=list_data)で更新されるとデフォルトに戻る？
+    # 強調したいindexのみ適用すればそれ以外はデフォルトになる
+    for i in include_new_index_list:
+        window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
+
+    # indexをセットしてスクロール
+    # scroll_to_indexは強制的にindexを一番上に表示するのでWidget.seeを使用
+    # window["-LIST-"].update(scroll_to_index=index)
+    window["-LIST-"].Widget.see(index)
     window["-LIST-"].update(set_to_index=index)
     return 0
 
