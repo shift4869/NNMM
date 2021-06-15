@@ -17,6 +17,10 @@ def ProcessWatched(window, values, mylist_db, mylist_info_db):
     # 現在のマイリストURL
     mylist_url = values["-INPUT1-"]
 
+    # 行が選択されていないなら何もしない
+    if not values["-TABLE-"]:
+        return
+
     # 選択された行（複数可）についてすべて処理する
     for v in values["-TABLE-"]:
         row = int(v)
