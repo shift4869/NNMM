@@ -21,14 +21,14 @@ l_pane = [
 ]
 
 # 右ペイン
-table_cols_name = [" No. ", "   動画ID   ", "              動画名              ", "    投稿者    ", "  状況  ", "   投稿日時   "]
-cols_width = [20, 20, 20, 20, 80, 80]
+table_cols_name = [" No. ", "   動画ID   ", "               動画名               ", "    投稿者    ", "  状況  ", "     投稿日時     "]
+cols_width = [20, 20, 20, 20, 80, 100]
 def_data = [["", "", "", "", "", ""]]
 table_right_click_menu = ["-TABLE_RIGHT_CLICK_MENU-", ["! ", "---", "ブラウザで開く", "---", "視聴済にする", "未視聴にする"]]
 table_style = {
     "values": def_data,
     "headings": table_cols_name,
-    "max_col_width": 500,
+    "max_col_width": 600,
     "def_col_width": cols_width,
     "num_rows": 2400,
     "auto_size_columns": True,
@@ -39,7 +39,7 @@ table_style = {
 }
 t = sg.Table(**table_style)
 r_pane = [
-    [sg.Input("", key="-INPUT1-", size=(84, 100)), sg.Button("更新", key="-UPDATE-"), sg.Button("終了", key="-EXIT-")],
+    [sg.Input("", key="-INPUT1-", size=(91, 100)), sg.Button("更新", key="-UPDATE-"), sg.Button("終了", key="-EXIT-")],
     [sg.Column([[t]], expand_x=True)],
 ]
 
@@ -63,7 +63,7 @@ def GuiMain():
     cf_layout = ConfigMain.GetConfigLayout()
     lf_layout = [[
         sg.Frame("ログ", [
-            [sg.Column([[sg.Output(size=(1070, 100), echo_stdout_stderr=True)]])]
+            [sg.Column([[sg.Output(size=(1080, 100), echo_stdout_stderr=True)]])]
         ], size=(1070, 100))
     ]]
     layout = [[
@@ -75,7 +75,7 @@ def GuiMain():
     ]]
 
     # ウィンドウオブジェクトの作成
-    window = sg.Window("NNMM", layout, size=(1070, 900), finalize=True, resizable=True)
+    window = sg.Window("NNMM", layout, size=(1130, 900), finalize=True, resizable=True)
     window["-LIST-"].bind("<Double-Button-1>", "+DOUBLE CLICK+")
 
     # ログ設定
