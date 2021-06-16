@@ -17,7 +17,7 @@ class MylistDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def Upsert(self, id, username, type, listname, url, created_at, is_include_new):
+    def Upsert(self, id, username, type, listname, url, created_at, updated_at, is_include_new):
         """MylistにUPSERTする
 
         Notes:
@@ -32,6 +32,7 @@ class MylistDBController(DBControllerBase):
                             typeが"uploaded"の場合："{username}さんの投稿動画"
             url (str): マイリストURL
             created_at (str): 作成日時
+            updated_at (str): 更新日時
             is_include_new (boolean): 未視聴動画を含むかどうか
 
         Returns:
@@ -41,7 +42,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = Mylist(id, username, type, listname, url, created_at, is_include_new)
+        r = Mylist(id, username, type, listname, url, created_at, updated_at, is_include_new)
 
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url))
@@ -73,7 +74,7 @@ class MylistDBController(DBControllerBase):
             is_include_new (boolean): 変更後の新着フラグ
 
         Returns:
-            int: 新着フラグを更新した場合0, 対象レコードが存在しなかった場合1, その他失敗時-1
+            int: 新着フラグを更新した場合0, その他失敗時-1
         """
         # UPDATE対象をSELECT
         Session = sessionmaker(bind=self.engine)
@@ -83,7 +84,7 @@ class MylistDBController(DBControllerBase):
         # 存在しない場合はエラー
         if not record:
             session.close()
-            return 1
+            return -1
 
         # 更新前と更新後のstatusが同じ場合は何もせずに終了
         if record.is_include_new == is_include_new:
@@ -92,6 +93,37 @@ class MylistDBController(DBControllerBase):
 
         # 更新する
         record.is_include_new = is_include_new
+
+        session.commit()
+        session.close()
+
+        return 0
+
+    def UpdateUpdatedAt(self, mylist_url, updated_at):
+        """Mylistの特定のレコードについて更新日時を更新する
+
+        Note:
+            "update Mylist set updated_at = {} where mylist_url = {}"
+
+        Args:
+            mylist_url (str): マイリストURL
+            updated_at (str): 変更後の更新日時："%Y-%m-%d %H:%M:%S" 形式
+
+        Returns:
+            int: 更新日時を更新した場合0, その他失敗時-1
+        """
+        # UPDATE対象をSELECT
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
+
+        # 存在しない場合はエラー
+        if not record:
+            session.close()
+            return -1
+
+        # 更新する
+        record.updated_at = updated_at
 
         session.commit()
         session.close()
@@ -228,10 +260,10 @@ if __name__ == "__main__":
     # dts_format = "%Y-%m-%d %H:%M:%S"
     # dst = datetime.now().strftime(dts_format)
     url = "https://www.nicovideo.jp/user/12899156/video"
-    # mylist_db.Upsert(1, "willow8713", "uploaded", "willow8713さんの投稿動画", url, dst, true)
+    # mylist_db.Upsert(1, "willow8713", "uploaded", "willow8713さんの投稿動画", url, dst, dst, true)
 
     # url = "https://www.nicovideo.jp/user/1594318/video"
-    # mylist_db.Upsert(2, "moco78", "uploaded", "moco78さんの投稿動画", url, dst, true)
+    # mylist_db.Upsert(2, "moco78", "uploaded", "moco78さんの投稿動画", url, dst, dst, true)
 
     records = mylist_db.Select()
     mylist_db.UpdateIncludeFlag(url, False)

@@ -54,7 +54,7 @@ def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
     dst = datetime.now().strftime(dts_format)
 
     id_index = len(mylist_db.Select()) + 1
-    mylist_db.Upsert(id_index, username, type, listname, mylist_url, dst, is_include_new)
+    mylist_db.Upsert(id_index, username, type, listname, mylist_url, dst, dst, is_include_new)
 
     # DBに格納
     records = []

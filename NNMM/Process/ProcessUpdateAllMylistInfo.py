@@ -56,6 +56,7 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
     m_list = mylist_db.Select()
     for m in m_list:
         username = m["username"]
+        mylist_url = m["url"]
         video_list = mylist_info_db.SelectFromUsername(username)
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
         def_data = []
@@ -67,9 +68,7 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
         # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
         if IsMylistIncludeNewVideo(def_data):
             # マイリストDB更新
-            m["is_include_new"] = True  # 新着マークを更新
-            mylist_db.Upsert(m["id"], m["username"], m["type"], m["listname"],
-                             m["url"], m["created_at"], m["is_include_new"])
+            mylist_db.UpdateIncludeFlag(mylist_url, True)
 
     # マイリスト画面表示更新
     UpdateMylistShow(window, mylist_db)

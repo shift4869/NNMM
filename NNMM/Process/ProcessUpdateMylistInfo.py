@@ -40,12 +40,16 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
 
     # 状況ステータスを調べる
     status_check_list = []
+    add_new_video_flag = False
     for i, n in enumerate(now_videoid_list):
         if n in prev_videoid_list:
+            # 以前から保持していた動画が取得された場合
             s = [p["status"] for p in prev_video_list if p["video_id"] == n]
             status_check_list.append(s[0])
         else:
+            # 新規に動画が追加された場合
             status_check_list.append("未視聴")
+            add_new_video_flag = True
 
     # 右ペインのテーブルにマイリスト情報を表示
     for m, s in zip(now_video_list, status_check_list):
@@ -75,6 +79,12 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
         }
         records.append(r)
     mylist_info_db.UpsertFromList(records)
+
+    # マイリストの更新日時更新
+    if add_new_video_flag:
+        dts_format = "%Y-%m-%d %H:%M:%S"
+        dst = datetime.now().strftime(dts_format)
+        mylist_db.UpdateUpdatedAt(mylist_url, dst)
 
 
 def UpdateMylistInfoThread(window, mylist_db, mylist_info_db, record):
