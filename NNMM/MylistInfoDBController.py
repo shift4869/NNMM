@@ -162,7 +162,7 @@ class MylistInfoDBController(DBControllerBase):
         # 入力値チェック
         if status not in ["未視聴", ""]:
             return -1
-        
+
         pattern = "sm[0-9]+"
         if not re.search(pattern, video_id):
             return -1
@@ -186,6 +186,48 @@ class MylistInfoDBController(DBControllerBase):
 
         # 更新する
         record.status = status
+
+        session.commit()
+        session.close()
+
+        return 0
+
+    def UpdateStatusInMylist(self, mylist_url, status=""):
+        """MylistInfoについて特定のマイリストに含まれるレコードのstatusをすべて更新する
+
+        Note:
+            "update MylistInfo set status = {} where mylist_url = {}"
+
+        Args:
+            mylist_url (str): 所属マイリストURL
+            status (str): 変更後の視聴状況({"未視聴", ""})
+
+        Returns:
+            int: statusをすべて更新した場合0, 対象レコードが存在しなかった場合1, その他失敗時-1
+        """
+        # 入力値チェック
+        if status not in ["未視聴", ""]:
+            return -1
+
+        # UPDATE対象をSELECT
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        records = session.query(MylistInfo).filter(
+            MylistInfo.mylist_url == mylist_url
+        )
+
+        # 1件も存在しない場合はエラー
+        if not records:
+            session.close()
+            return 1
+
+        for record in records:
+            # 更新前と更新後のstatusが同じ場合は何もしない
+            if record.status == status:
+                continue
+
+            # 更新する
+            record.status = status
 
         session.commit()
         session.close()
