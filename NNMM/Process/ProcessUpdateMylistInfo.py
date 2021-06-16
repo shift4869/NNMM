@@ -1,5 +1,4 @@
 # coding: utf-8
-import logging.config
 import threading
 from logging import INFO, getLogger
 
@@ -8,6 +7,10 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
+
+
+logger = getLogger("root")
+logger.setLevel(INFO)
 
 
 def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):

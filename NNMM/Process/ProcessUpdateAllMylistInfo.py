@@ -1,5 +1,4 @@
 # coding: utf-8
-import logging.config
 import threading
 from logging import INFO, getLogger
 
@@ -9,6 +8,10 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process.ProcessUpdateMylistInfo import *
+
+
+logger = getLogger("root")
+logger.setLevel(INFO)
 
 
 def UpdateAllMylistInfoThread(window, mylist_db, mylist_info_db):

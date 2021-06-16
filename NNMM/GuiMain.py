@@ -94,6 +94,8 @@ def GuiMain():
     # タイマーセットイベントを起動
     window.write_event_value("-TIMER_SET-", "-FIRST_SET-")
 
+    logger.info("window setup done")
+
     # イベントのループ
     while True:
         # イベントの読み込み

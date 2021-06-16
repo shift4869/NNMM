@@ -1,5 +1,4 @@
 # coding: utf-8
-import logging.config
 from logging import INFO, getLogger
 
 import PySimpleGUI as sg
@@ -9,6 +8,10 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process.ProcessWatched import *
+
+
+logger = getLogger("root")
+logger.setLevel(INFO)
 
 
 def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):

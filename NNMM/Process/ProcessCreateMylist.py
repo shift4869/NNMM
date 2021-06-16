@@ -1,6 +1,5 @@
 # coding: utf-8
 import asyncio
-import logging.config
 from logging import INFO, getLogger
 
 import PySimpleGUI as sg
@@ -8,6 +7,10 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
+
+
+logger = getLogger("root")
+logger.setLevel(INFO)
 
 
 def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):

@@ -1,5 +1,4 @@
 # coding: utf-8
-import logging.config
 from logging import INFO, getLogger
 
 import PySimpleGUI as sg
@@ -7,6 +6,10 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
+
+
+logger = getLogger("root")
+logger.setLevel(INFO)
 
 
 def ProcessWatchedMylist(window: sg.Window, values: dict, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController):
