@@ -34,9 +34,9 @@ def ProcessNotWatched(window, values, mylist_db, mylist_info_db):
         selected = def_data[row]
         res = mylist_info_db.UpdateStatus(selected[1], mylist_url, "未視聴")
         if res == 0:
-            logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "non-watched"')
+            logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "non-watched".')
         else:
-            logger.info(f"{selected[1]} ({i+1}/{all_num}) -> 失敗")
+            logger.info(f"{selected[1]} ({i+1}/{all_num}) -> failed.")
 
         # テーブル更新
         def_data[row][4] = "未視聴"

@@ -34,9 +34,9 @@ def ProcessWatched(window: sg.Window, values: dict, mylist_db: MylistDBControlle
         selected = def_data[row]
         res = mylist_info_db.UpdateStatus(selected[1], mylist_url, "")
         if res == 0:
-            logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "watched"')
+            logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "watched".')
         else:
-            logger.info(f"{selected[1]} ({i+1}/{all_num}) -> failed")
+            logger.info(f"{selected[1]} ({i+1}/{all_num}) -> failed.")
 
         # テーブル更新
         def_data[row][4] = ""

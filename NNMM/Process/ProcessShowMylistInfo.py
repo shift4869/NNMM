@@ -27,6 +27,8 @@ def ProcessShowMylistInfo(window, values, mylist_db, mylist_info_db):
     # テーブル更新
     UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
 
+    logger.info(f"{mylist_url} -> mylist info shown.")
+
 
 if __name__ == "__main__":
     from NNMM import GuiMain
