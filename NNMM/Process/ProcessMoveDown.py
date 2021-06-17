@@ -22,6 +22,7 @@ def ProcessMoveDown(window: sg.Window, values: dict, mylist_db: MylistDBControll
 
     max_index = len(mylist_db.Select()) - 1
     if src_index >= max_index:
+        logger.info(f"{src_v} -> index is {max_index} , can't move down.")
         return
 
     if src_v[:2] == "*:":
@@ -39,7 +40,9 @@ def ProcessMoveDown(window: sg.Window, values: dict, mylist_db: MylistDBControll
     # テーブル更新
     UpdateMylistShow(window, mylist_db)
     window["-LIST-"].update(set_to_index=dst_index)
-    
+
+    logger.info(f"{src_v} -> index move down from {src_index} to {dst_index}.")
+
 
 if __name__ == "__main__":
     from NNMM import GuiMain

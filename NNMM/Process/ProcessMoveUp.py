@@ -21,6 +21,7 @@ def ProcessMoveUp(window: sg.Window, values: dict, mylist_db: MylistDBController
     list_data = window["-LIST-"].Values  # 現在のtableの全リスト
 
     if src_index == 0:
+        logger.info(f"{src_v} -> index is 0 , can't move up.")
         return
 
     if src_v[:2] == "*:":
@@ -38,6 +39,8 @@ def ProcessMoveUp(window: sg.Window, values: dict, mylist_db: MylistDBController
     # テーブル更新
     UpdateMylistShow(window, mylist_db)
     window["-LIST-"].update(set_to_index=dst_index)
+
+    logger.info(f"{src_v} -> index move up from {src_index} to {dst_index}.")
     
 
 if __name__ == "__main__":
