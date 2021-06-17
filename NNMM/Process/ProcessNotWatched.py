@@ -25,13 +25,18 @@ def ProcessNotWatched(window, values, mylist_db, mylist_info_db):
         return
 
     # 選択された行（複数可）についてすべて処理する
-    for v in values["-TABLE-"]:
+    all_num = len(values["-TABLE-"])
+    for i, v in enumerate(values["-TABLE-"]):
         row = int(v)
 
         # マイリスト情報ステータスDB更新
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
         selected = def_data[row]
-        mylist_info_db.UpdateStatus(selected[1], mylist_url, "未視聴")
+        res = mylist_info_db.UpdateStatus(selected[1], mylist_url, "未視聴")
+        if res == 0:
+            logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "non-watched"')
+        else:
+            logger.info(f"{selected[1]} ({i+1}/{all_num}) -> 失敗")
 
         # テーブル更新
         def_data[row][4] = "未視聴"
