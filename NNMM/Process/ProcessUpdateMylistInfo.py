@@ -17,7 +17,6 @@ logger.setLevel(INFO)
 def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     # マイリストを更新する（マルチスレッド前提）
     mylist_url = record.get("url")
-    print(mylist_url)
 
     # DBからロード
     prev_video_list = mylist_info_db.SelectFromMylistURL(mylist_url)
@@ -134,6 +133,8 @@ def ProcessUpdateMylistInfoThreadDone(window, values, mylist_db, mylist_info_db)
 
     # マイリスト画面表示更新
     UpdateMylistShow(window, mylist_db)
+
+    logger.info(mylist_url + " : update done.")
 
 
 if __name__ == "__main__":

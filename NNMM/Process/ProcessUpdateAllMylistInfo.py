@@ -23,6 +23,9 @@ def UpdateAllMylistInfoThread(window, mylist_db, mylist_info_db):
         p_str = f"更新中({i + 1}/{all_index_num})"
         window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
 
+        mylist_url = record.get("url")
+        logger.info(mylist_url + f" : update done ... ({i + 1}/{all_index_num}).")
+
     window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
 
 
@@ -30,6 +33,7 @@ def ProcessUpdateAllMylistInfo(window, values, mylist_db, mylist_info_db):
     # 左下のすべて更新ボタンが押された場合
     window["-INPUT2-"].update(value="更新中")
     window.refresh()
+    logger.info("All mylist update starting.")
     # 存在するすべてのマイリストから現在のマイリスト情報を取得する
     # AsyncHTMLSessionでページ情報をレンダリングして解釈する
     # マルチスレッド処理
@@ -47,8 +51,6 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
     # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
     # 左下の表示を戻す
     window["-INPUT2-"].update(value="更新完了！")
-    dts_format = "%Y-%m-%d %H:%M:00"
-    print("更新完了！：" + datetime.now().strftime(dts_format))
 
     # テーブルの表示を更新する
     mylist_url = values["-INPUT1-"]
@@ -75,6 +77,8 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
 
     # マイリスト画面表示更新
     UpdateMylistShow(window, mylist_db)
+
+    logger.info("All mylist update finished.")
 
 
 if __name__ == "__main__":

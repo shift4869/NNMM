@@ -141,12 +141,12 @@ def GuiMain():
             p_func = t[3]
 
             if log_sflag:
-                logger.info(f'"{p_str}" start.')
+                logger.info(f'"{p_str}" starting.')
 
             p_func(window, values, mylist_db, mylist_info_db)
 
             if log_eflag:
-                logger.info(f'"{p_str}" finish.')
+                logger.info(f'"{p_str}" finished.')
 
         if event == "-TAB_CHANGED-":
             select_tab = values["-TAB_CHANGED-"]
