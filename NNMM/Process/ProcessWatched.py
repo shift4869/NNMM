@@ -12,7 +12,7 @@ logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-def ProcessWatched(window, values, mylist_db, mylist_info_db):
+def ProcessWatched(window: sg.Window, values: dict, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController):
     # テーブル右クリックで「視聴済にする」が選択された場合
 
     # 現在のtableの全リスト
@@ -25,13 +25,18 @@ def ProcessWatched(window, values, mylist_db, mylist_info_db):
         return
 
     # 選択された行（複数可）についてすべて処理する
-    for v in values["-TABLE-"]:
+    all_num = len(values["-TABLE-"])
+    for i, v in enumerate(values["-TABLE-"]):
         row = int(v)
 
         # マイリスト情報ステータスDB更新
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
         selected = def_data[row]
-        mylist_info_db.UpdateStatus(selected[1], mylist_url, "")
+        res = mylist_info_db.UpdateStatus(selected[1], mylist_url, "")
+        if res == 0:
+            logger.info(f"{selected[1]} ({i+1}/{all_num}) -> 視聴済")
+        else:
+            logger.info(f"{selected[1]} ({i+1}/{all_num}) -> 失敗")
 
         # テーブル更新
         def_data[row][4] = ""

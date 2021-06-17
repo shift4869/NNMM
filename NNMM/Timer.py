@@ -1,7 +1,7 @@
 # coding: utf-8
-import logging.config
 import re
 import threading
+from datetime import date, datetime, timedelta
 from logging import INFO, getLogger
 from pathlib import Path
 
@@ -10,7 +10,11 @@ import PySimpleGUI as sg
 from NNMM import ConfigMain
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
+from NNMM.GuiFunction import *
 
+
+logger = getLogger("root")
+logger.setLevel(INFO)
 
 timer_thread = None
 
@@ -40,7 +44,7 @@ def ProcessTimer(window, values, mylist_db, mylist_info_db):
     v = window["-INPUT2-"].get()
     if values["-TIMER_SET-"] == "-FIRST_SET-":
         values["-TIMER_SET-"] = ""
-        print("-FIRST_SET- ... skip first auto-reload cycle.")
+        logger.info("Auto-reload -FIRST_SET- ... skip first auto-reload cycle.")
 
         if timer_thread:
             timer_thread.cancel()
@@ -48,7 +52,7 @@ def ProcessTimer(window, values, mylist_db, mylist_info_db):
 
     elif re.search(pattern, v):
         values["-TIMER_SET-"] = ""
-        print("-ALL_UPDATE- running now ... skip this auto-reload cycle.")
+        logger.info("-ALL_UPDATE- running now ... skip this auto-reload cycle.")
         pass
     else:
         # すべて更新ボタンが押された場合の処理を起動する
@@ -56,12 +60,15 @@ def ProcessTimer(window, values, mylist_db, mylist_info_db):
 
     # タイマーをセットして起動
     # interval = 5
-    interval = interval * 60  # [min] -> [sec]
-    timer_thread = threading.Timer(interval, ProcessTimer, (window, values, mylist_db, mylist_info_db))
+    s_interval = interval * 60  # [min] -> [sec]
+    timer_thread = threading.Timer(s_interval, ProcessTimer, (window, values, mylist_db, mylist_info_db))
     # デーモンスレッドはデーモンスレッド以外のスレッドが動いていない場合に自動的に終了される
     timer_thread.setDaemon(True)
     timer_thread.start()
 
+    dts_format = "%Y-%m-%d %H:%M:%S"
+    dst = datetime.now() + timedelta(minutes=interval)
+    logger.info(f"Next auto-reload cycle start at {dst.strftime(dts_format)}.")
     return
 
 

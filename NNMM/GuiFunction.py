@@ -1,6 +1,4 @@
 # coding: utf-8
-import asyncio
-import logging.config
 from datetime import date, datetime, timedelta
 from logging import INFO, getLogger
 from pathlib import Path
@@ -10,6 +8,22 @@ import PySimpleGUI as sg
 from NNMM import GetMyListInfo
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
+
+
+logger = getLogger("root")
+logger.setLevel(INFO)
+
+
+def GetNowDatetime() -> str:
+    """タイムスタンプを返す
+
+    Returns:
+        str: 現在日時 "%Y-%m-%d %H:%M:%S" 形式
+    """
+    td_format = "%Y/%m/%d %H:%M"
+    dts_format = "%Y-%m-%d %H:%M:%S"
+    dst = datetime.now().strftime(dts_format)
+    return dst
 
 
 def IsMylistIncludeNewVideo(table_list):

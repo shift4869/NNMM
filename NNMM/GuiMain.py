@@ -94,7 +94,32 @@ def GuiMain():
     # タイマーセットイベントを起動
     window.write_event_value("-TIMER_SET-", "-FIRST_SET-")
 
-    logger.info("window setup done")
+    # イベントと処理の辞書
+    ep_dict = {
+        # "イベントキー": (開始ログ出力するか, 終了ログ出力するか, "処理名", 処理関数)
+        "視聴済にする": (True, True, "視聴済にする", ProcessWatched.ProcessWatched),
+        "未視聴にする": (True, True, "未視聴にする", ProcessNotWatched.ProcessNotWatched),
+        "ブラウザで開く": (True, True, "ブラウザで開く", ProcessVideoPlay.ProcessVideoPlay),
+        "上に移動": (True, True, "上に移動", ProcessMoveUp.ProcessMoveUp),
+        "下に移動": (True, True, "下に移動", ProcessMoveDown.ProcessMoveDown),
+        "視聴済にする（選択）": (True, True, "視聴済にする（選択）", ProcessWatchedMylist.ProcessWatchedMylist),
+        "視聴済にする（全て）": (True, True, "視聴済にする（全て）", ProcessWatchedAllMylist.ProcessWatchedAllMylist),
+        "-LIST-+DOUBLE CLICK+": (True, True, "マイリスト内容表示", ProcessShowMylistInfo.ProcessShowMylistInfo),
+        "-CREATE-": (True, False, "マイリスト追加", ProcessCreateMylist.ProcessCreateMylist),
+        "-CREATE_THREAD_DONE-": (False, True, "マイリスト追加", ProcessCreateMylist.ProcessCreateMylistThreadDone),
+        "-DELETE-": (True, True, "マイリスト削除", ProcessDeleteMylist.ProcessDeleteMylist),
+        "-UPDATE-": (True, False, "マイリスト内容更新", ProcessUpdateMylistInfo.ProcessUpdateMylistInfo),
+        "-UPDATE_THREAD_DONE-": (False, True, "マイリスト内容更新", ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone),
+        "-ALL_UPDATE-": (True, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo),
+        "-ALL_UPDATE_THREAD_PROGRESS-": (False, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress),
+        "-ALL_UPDATE_THREAD_DONE-": (False, True, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone),
+        "-C_CONFIG_SAVE-": (True, True, "設定保存", ConfigMain.ProcessConfigSave),
+        "-C_MYLIST_SAVE-": (True, True, "マイリスト一覧出力", ConfigMain.ProcessMylistSaveCSV),
+        "-C_MYLIST_LOAD-": (True, True, "マイリスト一覧入力", ConfigMain.ProcessMylistLoadCSV),
+        "-TIMER_SET-": (False, False, "タイマーセット", Timer.ProcessTimer),
+    }
+
+    logger.info("window setup done.")
 
     # イベントのループ
     while True:
@@ -104,72 +129,30 @@ def GuiMain():
 
         if event in [sg.WIN_CLOSED, "-EXIT-"]:
             # 終了ボタンかウィンドウの×ボタンが押されれば終了
+            logger.info("window exit.")
             break
-        if event == "視聴済にする":
-            # テーブル右クリックで「視聴済にする」が選択された場合
-            ProcessWatched.ProcessWatched(window, values, mylist_db, mylist_info_db)
-        if event == "未視聴にする":
-            # テーブル右クリックで「未視聴にする」が選択された場合
-            ProcessNotWatched.ProcessNotWatched(window, values, mylist_db, mylist_info_db)
-        if event == "ブラウザで開く":
-            # テーブル右クリックで「ブラウザで開く」が選択された場合
-            ProcessVideoPlay.ProcessVideoPlay(window, values, mylist_db, mylist_info_db)
-        if event == "上に移動":
-            # マイリスト右クリックで「上に移動」が選択された場合
-            ProcessMoveUp.ProcessMoveUp(window, values, mylist_db, mylist_info_db)
-        if event == "下に移動":
-            # マイリスト右クリックで「下に移動」が選択された場合
-            ProcessMoveDown.ProcessMoveDown(window, values, mylist_db, mylist_info_db)
-        if event == "視聴済にする（選択）":
-            # マイリスト右クリックで「視聴済にする（選択）」が選択された場合
-            ProcessWatchedMylist.ProcessWatchedMylist(window, values, mylist_db, mylist_info_db)
-        if event == "視聴済にする（全て）":
-            # マイリスト右クリックで「視聴済にする（全て）」が選択された場合
-            ProcessWatchedAllMylist.ProcessWatchedAllMylist(window, values, mylist_db, mylist_info_db)
-        if event == "-LIST-+DOUBLE CLICK+":
-            # リストボックスの項目がダブルクリックされた場合（単一）
-            ProcessShowMylistInfo.ProcessShowMylistInfo(window, values, mylist_db, mylist_info_db)
-        if event == "-CREATE-":
-            # 左下、マイリスト追加ボタンが押された場合
-            ProcessCreateMylist.ProcessCreateMylist(window, values, mylist_db, mylist_info_db)
-        if event == "-CREATE_THREAD_DONE-":
-            # -CREATE-のマルチスレッド処理が終わった後の処理
-            ProcessCreateMylist.ProcessCreateMylistThreadDone(window, values, mylist_db, mylist_info_db)
-        if event == "-DELETE-":
-            # 左下、マイリスト削除ボタンが押された場合
-            ProcessDeleteMylist.ProcessDeleteMylist(window, values, mylist_db, mylist_info_db)
-        if event == "-UPDATE-":
-            # 右上の更新ボタンが押された場合
-            ProcessUpdateMylistInfo.ProcessUpdateMylistInfo(window, values, mylist_db, mylist_info_db)
-        if event == "-UPDATE_THREAD_DONE-":
-            # -UPDATE-のマルチスレッド処理が終わった後の処理
-            ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone(window, values, mylist_db, mylist_info_db)
-        if event == "-ALL_UPDATE-":
-            # 左下のすべて更新ボタンが押された場合
-            ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo(window, values, mylist_db, mylist_info_db)
-        if event == "-ALL_UPDATE_THREAD_PROGRESS-":
-            # -ALL_UPDATE-処理中の処理
-            ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress(window, values, mylist_db, mylist_info_db)
-        if event == "-ALL_UPDATE_THREAD_DONE-":
-            # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
-            ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_db)
+
+        # イベント処理
+        if ep_dict.get(event):
+            t = ep_dict.get(event)
+            log_sflag = t[0]
+            log_eflag = t[1]
+            p_str = t[2]
+            p_func = t[3]
+
+            if log_sflag:
+                logger.info(f'"{p_str}" start.')
+
+            p_func(window, values, mylist_db, mylist_info_db)
+
+            if log_eflag:
+                logger.info(f'"{p_str}" finish.')
+
         if event == "-TAB_CHANGED-":
             select_tab = values["-TAB_CHANGED-"]
             if select_tab == "設定":
                 # 設定タブを開いたときの処理
                 ConfigMain.ProcessConfigLoad(window, values, mylist_db, mylist_info_db)
-        if event == "-C_CONFIG_SAVE-":
-            # 設定保存ボタンが押された場合
-            ConfigMain.ProcessConfigSave(window, values, mylist_db, mylist_info_db)
-        if event == "-C_MYLIST_SAVE-":
-            # マイリスト一覧保存ボタンが押された場合
-            ConfigMain.ProcessMylistSaveCSV(window, values, mylist_db, mylist_info_db)
-        if event == "-C_MYLIST_LOAD-":
-            # マイリスト一覧読込ボタンが押された場合
-            ConfigMain.ProcessMylistLoadCSV(window, values, mylist_db, mylist_info_db)
-        if event == "-TIMER_SET-":
-            # タイマーセットイベントが登録された場合
-            Timer.ProcessTimer(window, values, mylist_db, mylist_info_db)
 
     # ウィンドウ終了処理
     window.close()
