@@ -34,6 +34,8 @@ def ProcessWatchedMylist(window: sg.Window, values: dict, mylist_db: MylistDBCon
     UpdateMylistShow(window, mylist_db)
     # テーブル画面表示更新
     UpdateTableShow(window, mylist_db, mylist_info_db)
+
+    logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
     
 
 if __name__ == "__main__":
