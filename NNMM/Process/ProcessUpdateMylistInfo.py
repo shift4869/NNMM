@@ -14,13 +14,16 @@ logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
+def UpdateMylistInfo(window: sg.Window, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController, record: Mylist):
     # マイリストを更新する（マルチスレッド前提）
     mylist_url = record.get("url")
 
     # DBからロード
     prev_video_list = mylist_info_db.SelectFromMylistURL(mylist_url)
     prev_videoid_list = [m["video_id"] for m in prev_video_list]
+    prev_username = ""
+    if prev_video_list:
+        prev_username = prev_video_list[0].get("username")
 
     func = None
     if not prev_videoid_list:
@@ -38,8 +41,6 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     loop = asyncio.new_event_loop()
     now_video_list = loop.run_until_complete(func(mylist_url))
     now_videoid_list = [m["video_id"] for m in now_video_list]
-
-    # window["-INPUT2-"].update(value="")
 
     # 状況ステータスを調べる
     status_check_list = []
@@ -62,14 +63,19 @@ def UpdateMylistInfo(window, mylist_db, mylist_info_db, record):
     if window["-INPUT1-"].get() == mylist_url:
         now_show_table_data = list[def_data]
 
+    # usernameが変更されていた場合
+    if now_video_list:
+        now_username = now_video_list[0].get("username")
+        if prev_username != now_username:
+            # マイリストの名前を更新する
+            mylist_db.UpdateUsername(mylist_url, now_username)
+            # 格納済の動画情報の投稿者名を更新する
+            mylist_info_db.UpdateUsernameInMylist(mylist_url, now_username)
+
     # DBに格納
     records = []
     for m in now_video_list:
-        td_format = "%Y/%m/%d %H:%M"
-        dts_format = "%Y-%m-%d %H:%M:%S"
-        dst = datetime.now().strftime(dts_format)
-
-        # usernameが変更されていた場合、既存のレコードも含めてすべて更新する必要がある(TODO)
+        dst = GetNowDatetime()
         r = {
             "video_id": m["video_id"],
             "title": m["title"],
@@ -121,7 +127,7 @@ def ProcessUpdateMylistInfoThreadDone(window, values, mylist_db, mylist_info_db)
     if mylist_url != "":
         UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
     window.refresh()
-    
+
     # マイリストの新着表示を表示するかどうか判定する
     def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
 

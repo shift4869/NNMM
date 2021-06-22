@@ -1,4 +1,5 @@
 # coding: utf-8
+import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -16,6 +17,12 @@ DEBUG = False
 class MylistDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
+
+    def GetListname(self, url, username) -> str:
+        pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
+        if re.search(pattern, url):
+            return f"{username}さんの投稿動画"
+        return ""
 
     def Upsert(self, id, username, type, listname, url, created_at, updated_at, is_include_new):
         """MylistにUPSERTする
@@ -128,6 +135,35 @@ class MylistDBController(DBControllerBase):
         session.commit()
         session.close()
 
+        return 0
+
+    def UpdateUsername(self, mylist_url, now_username):
+        """Mylistの特定のレコードについてusernameを更新する
+
+        Note:
+            "update Mylist set username = {now_username} where url = {mylist_url}"
+            listnameも更新する
+
+        Args:
+            mylist_url (str): マイリストURL
+            now_username (str): 変更後のusername
+
+        Returns:
+            int: usernameを更新した場合0, その他失敗時-1
+        """
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        # 対象レコード
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
+        if not record:
+            session.close()
+            return -1
+        record.username = now_username
+        record.listname = self.GetListname(mylist_url, now_username)
+
+        session.commit()
+        session.close()
         return 0
 
     def SwapId(self, src_id, dst_id):

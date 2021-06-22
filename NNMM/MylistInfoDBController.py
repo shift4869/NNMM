@@ -76,7 +76,7 @@ class MylistInfoDBController(DBControllerBase):
         Args:
             以下のArgsをキーとするrecordのlistを引数としてとる
             records = list(dict)
-                dictb Keys
+                dict Keys
                     video_id (str): 動画ID(smxxxxxxxx)
                     title (str): 動画タイトル
                     username (str): 投稿者名
@@ -196,7 +196,7 @@ class MylistInfoDBController(DBControllerBase):
         """MylistInfoについて特定のマイリストに含まれるレコードのstatusをすべて更新する
 
         Note:
-            "update MylistInfo set status = {} where mylist_url = {}"
+            "update MylistInfo set status = {status} where mylist_url = {mylist_url}"
 
         Args:
             mylist_url (str): 所属マイリストURL
@@ -228,6 +228,40 @@ class MylistInfoDBController(DBControllerBase):
 
             # 更新する
             record.status = status
+
+        session.commit()
+        session.close()
+
+        return 0
+
+    def UpdateUsernameInMylist(self, mylist_url, username):
+        """MylistInfoについて特定のマイリストに含まれるレコードのusernameをすべて更新する
+
+        Note:
+            "update MylistInfo set username = {username} where mylist_url = {mylist_url}"
+            listnameも更新する
+
+        Args:
+            mylist_url (str): マイリストURL
+            username (str): 変更後のusername
+
+        Returns:
+            int: usernameを更新した場合0, 対象レコードが存在しなかった場合1, その他失敗時-1
+        """
+        # UPDATE対象をSELECT
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        records = session.query(MylistInfo).filter(
+            MylistInfo.mylist_url == mylist_url
+        )
+
+        # 1件も存在しない場合はエラー
+        if not records:
+            session.close()
+            return 1
+
+        for record in records:
+            record.username = username
 
         session.commit()
         session.close()

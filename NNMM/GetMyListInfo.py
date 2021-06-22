@@ -28,8 +28,9 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     """投稿動画ページアドレスからRSSを通して動画の情報を取得する
 
     Notes:
-        以下をキーとする情報を辞書で返す
-        table_cols = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+        table_colsをキーとする情報を辞書で返す
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
         RSSは取得が速い代わりに最大30件までしか情報を取得できない
 
     Args:
@@ -143,8 +144,9 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     """投稿動画ページアドレスから掲載されている動画の情報を取得する
 
     Notes:
-        以下をキーとする情報を辞書で返す
-        table_cols = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
+        table_colsをキーとする情報を辞書で返す
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
         実際に内部ブラウザでページを開き、
         レンダリングして最終的に表示されたページから動画情報をスクレイピングする
         レンダリングに時間がかかる代わりに最大100件まで取得できる
