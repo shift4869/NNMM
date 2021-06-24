@@ -13,7 +13,19 @@ from NNMM.GuiFunction import *
 from NNMM.Process import *
 
 # 左ペイン
-listbox_right_click_menu = ["-LISTBOX_RIGHT_CLICK_MENU-", ["! ", "---", "上に移動", "下に移動", "---", "視聴済にする（選択）", "視聴済にする（全て）"]]
+listbox_right_click_menu = [
+    "-LISTBOX_RIGHT_CLICK_MENU-", [
+        "! ",
+        "---",
+        "上に移動::-MR-",
+        "下に移動::-MR-",
+        "---",
+        "視聴済にする（選択）::-MR-",
+        "視聴済にする（全て）::-MR-",
+        "---",
+        "検索::-MR-",
+    ]
+]
 l_pane = [
     [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 46), auto_size_text=True, right_click_menu=listbox_right_click_menu)],
     [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Button(" all ", key="-ALL_UPDATE-"),
@@ -24,7 +36,16 @@ l_pane = [
 table_cols_name = [" No. ", "   動画ID   ", "               動画名               ", "    投稿者    ", "  状況  ", "     投稿日時     "]
 cols_width = [20, 20, 20, 20, 80, 100]
 def_data = [["", "", "", "", "", ""]]
-table_right_click_menu = ["-TABLE_RIGHT_CLICK_MENU-", ["! ", "---", "ブラウザで開く", "---", "視聴済にする", "未視聴にする"]]
+table_right_click_menu = [
+    "-TABLE_RIGHT_CLICK_MENU-", [
+        "! ",
+        "---",
+        "ブラウザで開く",
+        "---",
+        "視聴済にする",
+        "未視聴にする"
+    ]
+]
 table_style = {
     "values": def_data,
     "headings": table_cols_name,
@@ -100,10 +121,11 @@ def GuiMain():
         "視聴済にする": (True, True, "視聴済にする", ProcessWatched.ProcessWatched),
         "未視聴にする": (True, True, "未視聴にする", ProcessNotWatched.ProcessNotWatched),
         "ブラウザで開く": (True, True, "ブラウザで開く", ProcessVideoPlay.ProcessVideoPlay),
-        "上に移動": (True, True, "上に移動", ProcessMoveUp.ProcessMoveUp),
-        "下に移動": (True, True, "下に移動", ProcessMoveDown.ProcessMoveDown),
-        "視聴済にする（選択）": (True, True, "視聴済にする（選択）", ProcessWatchedMylist.ProcessWatchedMylist),
-        "視聴済にする（全て）": (True, True, "視聴済にする（全て）", ProcessWatchedAllMylist.ProcessWatchedAllMylist),
+        "上に移動::-MR-": (True, True, "上に移動", ProcessMoveUp.ProcessMoveUp),
+        "下に移動::-MR-": (True, True, "下に移動", ProcessMoveDown.ProcessMoveDown),
+        "視聴済にする（選択）::-MR-": (True, True, "視聴済にする（選択）", ProcessWatchedMylist.ProcessWatchedMylist),
+        "視聴済にする（全て）::-MR-": (True, True, "視聴済にする（全て）", ProcessWatchedAllMylist.ProcessWatchedAllMylist),
+        "検索::-MR-": (True, True, "マイリスト検索", ProcessSearch.ProcessMylistSearch),
         "-LIST-+DOUBLE CLICK+": (True, True, "マイリスト内容表示", ProcessShowMylistInfo.ProcessShowMylistInfo),
         "-CREATE-": (True, False, "マイリスト追加", ProcessCreateMylist.ProcessCreateMylist),
         "-CREATE_THREAD_DONE-": (False, True, "マイリスト追加", ProcessCreateMylist.ProcessCreateMylistThreadDone),

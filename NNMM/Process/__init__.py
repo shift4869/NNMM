@@ -10,3 +10,4 @@ from . import ProcessMoveUp
 from . import ProcessMoveDown
 from . import ProcessWatchedMylist
 from . import ProcessWatchedAllMylist
+from . import ProcessSearch
