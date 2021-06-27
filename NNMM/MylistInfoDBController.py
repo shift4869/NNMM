@@ -304,6 +304,9 @@ class MylistInfoDBController(DBControllerBase):
         res = session.query(MylistInfo).order_by(asc(MylistInfo.created_at)).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
+        # 動画IDでソート
+        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
+
         session.close()
         return res_dict
 
@@ -324,6 +327,9 @@ class MylistInfoDBController(DBControllerBase):
 
         res = session.query(MylistInfo).filter_by(video_id=video_id).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+
+        # 動画IDでソート
+        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
 
         session.close()
         return res_dict
@@ -346,6 +352,9 @@ class MylistInfoDBController(DBControllerBase):
         res = session.query(MylistInfo).filter_by(video_url=video_url).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
+        # 動画IDでソート
+        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
+
         session.close()
         return res_dict
 
@@ -364,8 +373,12 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).order_by(desc(MylistInfo.video_id)).all()
+        # res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).order_by(desc(MylistInfo.video_id)).all()
+        res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+
+        # 動画IDでソート
+        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
 
         session.close()
         return res_dict
@@ -385,8 +398,11 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(username=username).order_by(desc(MylistInfo.video_id)).all()
+        res = session.query(MylistInfo).filter_by(username=username).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+
+        # 動画IDでソート
+        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
 
         session.close()
         return res_dict

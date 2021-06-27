@@ -26,7 +26,7 @@ def GetNowDatetime() -> str:
     return dst
 
 
-def IsMylistIncludeNewVideo(table_list):
+def IsMylistIncludeNewVideo(table_list: list):
     """現在のテーブルリスト内に状況が未視聴のものが一つでも含まれているかを返す
 
     Args:
@@ -42,7 +42,7 @@ def IsMylistIncludeNewVideo(table_list):
     return False
 
 
-def UpdateMylistShow(window, mylist_db):
+def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController):
     # 現在マイリストが選択中の場合indexを保存
     index = 0
     if window["-LIST-"].get_indexes():
@@ -74,7 +74,7 @@ def UpdateMylistShow(window, mylist_db):
     return 0
 
 
-def UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url=""):
+def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController, mylist_url: str = ""):
     # 右上のテキストボックスにマイリストのURLがあるとき限定(window["-INPUT1-"])
     # 現在のマイリストURL
     if mylist_url == "":
