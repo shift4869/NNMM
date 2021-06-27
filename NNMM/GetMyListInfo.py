@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 from requests_html import HTMLSession, AsyncHTMLSession
 
 from NNMM import ConfigMain
+from NNMM import GuiFunction
 
 
 logger = getLogger("root")
@@ -71,7 +72,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     if (test_count > MAX_TEST_NUM) or (soup is None):
         return []
 
-    # ループ脱出後はレンダリングが正常に行えたことが保証されている
+    # ループ脱出後はRSS取得が正常に行えたことが保証されている
     # 動画情報を集める
     table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
     table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
@@ -101,6 +102,9 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     with (rd_path / rss_file_name).open("w", encoding="utf-8") as fout:
         fout.write(response.text)
 
+    td_format = "%Y-%m-%dT%H:%M:%S%z"
+    dts_format = "%Y-%m-%d %H:%M:%S"
+
     # 一つのentryから動画ID, 動画名, 投稿日時, URLを抽出する関数
     def GetEntryInfo(entry_lx) -> tuple[str, str, str, str]:
         # 動画ID, 動画名, 投稿日時, URL
@@ -123,16 +127,20 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
         video_id = re.findall(pattern, video_url)[0]
 
         published_lx = entry_lx.find("published")
-        td_format = "%Y-%m-%dT%H:%M:%S%z"
-        dts_format = "%Y-%m-%d %H:%M:%S"
         uploaded = datetime.strptime(published_lx.text, td_format).strftime(dts_format)
 
         return (video_id, title, uploaded, video_url)
 
+    # 動画エントリ取得
     res = []
+    now_date = datetime.now()
     entries_lx = soup.find_all("entry")
     for entry in entries_lx:
         video_id, title, uploaded, video_url = GetEntryInfo(entry)
+
+        # 投稿日時が未来日の場合、登録しない（投稿予約など）
+        if now_date < datetime.strptime(uploaded, dts_format):
+            continue
 
         value_list = [-1, video_id, title, username, "", uploaded, video_url, mylist_url]
         res.append(dict(zip(table_cols, value_list)))
@@ -271,7 +279,7 @@ if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     ConfigMain.SetConfig()
 
-    url = "https://www.nicovideo.jp/user/12899156/video"
+    url = "https://www.nicovideo.jp/user/37896001/video"
     # video_list = GetMyListInfoLightWeight(url)
     loop = asyncio.new_event_loop()
     video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
