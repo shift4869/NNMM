@@ -62,7 +62,7 @@ def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_
     for m in m_list:
         username = m["username"]
         mylist_url = m["url"]
-        video_list = mylist_info_db.SelectFromUsername(username)
+        video_list = mylist_info_db.SelectFromMylistURL(mylist_url)
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
         def_data = []
         for i, t in enumerate(video_list):

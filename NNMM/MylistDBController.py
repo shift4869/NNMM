@@ -18,10 +18,16 @@ class MylistDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def GetListname(self, url, username) -> str:
+    def GetListname(self, url, username, old_listname) -> str:
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
         if re.search(pattern, url):
             return f"{username}さんの投稿動画"
+
+        pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
+        if re.search(pattern, url):
+            # TODO::マイリスト名の一部のみしか反映できていない
+            res_str = re.sub("-(.*)さんのマイリスト", f"-{username}さんのマイリスト", old_listname)
+            return res_str
         return ""
 
     def Upsert(self, id, username, type, listname, url, created_at, updated_at, is_include_new):
@@ -160,7 +166,7 @@ class MylistDBController(DBControllerBase):
             session.close()
             return -1
         record.username = now_username
-        record.listname = self.GetListname(mylist_url, now_username)
+        record.listname = self.GetListname(mylist_url, now_username, record.listname)
 
         session.commit()
         session.close()

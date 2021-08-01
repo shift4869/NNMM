@@ -25,7 +25,7 @@ class MylistInfoDBController(DBControllerBase):
         Notes:
             追加しようとしているレコードが既存テーブルに存在しなければINSERT
             存在しているならばUPDATE(DELETE->INSERT)
-            一致しているかの判定はvideo_urlが一致している場合、とする
+            一致しているかの判定はvideo_urlとmylist_urlの組が一致している場合、とする
 
         Args:
             video_id (str): 動画ID(smxxxxxxxx)
@@ -47,7 +47,7 @@ class MylistInfoDBController(DBControllerBase):
         r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
 
         try:
-            q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
+            q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
             ex = q.one()
         except NoResultFound:
             # INSERT
@@ -71,7 +71,7 @@ class MylistInfoDBController(DBControllerBase):
         Notes:
             追加しようとしているレコードが既存テーブルに存在しなければINSERT
             存在しているならばUPDATE(DELETE->INSERT)
-            一致しているかの判定はvideo_urlが一致している場合、とする
+            一致しているかの判定はvideo_urlとmylist_urlの組が一致している場合、とする
 
         Args:
             以下のArgsをキーとするrecordのlistを引数としてとる
@@ -106,7 +106,7 @@ class MylistInfoDBController(DBControllerBase):
             r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
 
             try:
-                q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
+                q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
                 ex = q.one()
             except NoResultFound:
                 pass
@@ -130,7 +130,7 @@ class MylistInfoDBController(DBControllerBase):
             r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
 
             try:
-                q = session.query(MylistInfo).filter(or_(MylistInfo.video_id == r.video_id))
+                q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
                 ex = q.one()
             except NoResultFound:
                 # INSERT
@@ -315,6 +315,7 @@ class MylistInfoDBController(DBControllerBase):
 
         Note:
             "select * from MylistInfo where video_id = {}".format(video_id)
+            複数マイリストの同じ動画がそれぞれ登録されていた場合、複数SELECTされ得る
 
         Args:
             video_id (str): 取得対象の動画ID

@@ -30,6 +30,11 @@ def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
     if prev_mylist:
         return
 
+    # 入力されたurlが対応したタイプでない場合何もしない
+    url_type = GetURLType(mylist_url)
+    if url_type == "":
+        return
+
     # 確認
     # res = sg.popup_ok_cancel(mylist_url + "\nマイリスト追加しますか？")
     # if res == "Cancel":
@@ -48,16 +53,16 @@ def ProcessCreateMylist(window, values, mylist_db, mylist_info_db):
 
     # 新規マイリスト追加
     username = s_record["username"]
-    type = "uploaded"  # タイプは投稿動画固定（TODO）
-    listname = f"{username}さんの投稿動画"
+    listname = s_record["listname"]
     is_include_new = True
 
     td_format = "%Y/%m/%d %H:%M"
     dts_format = "%Y-%m-%d %H:%M:%S"
     dst = datetime.now().strftime(dts_format)
 
-    id_index = len(mylist_db.Select()) + 1
-    mylist_db.Upsert(id_index, username, type, listname, mylist_url, dst, dst, is_include_new)
+    # id_index = len(mylist_db.Select()) + 1
+    id_index = max([int(r["id"]) for r in mylist_db.Select()]) + 1
+    mylist_db.Upsert(id_index, username, url_type, listname, mylist_url, dst, dst, is_include_new)
 
     # DBに格納
     records = []

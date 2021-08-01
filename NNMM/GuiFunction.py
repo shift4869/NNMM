@@ -1,4 +1,5 @@
 # coding: utf-8
+import re
 from datetime import date, datetime, timedelta
 from logging import INFO, getLogger
 from pathlib import Path
@@ -12,6 +13,28 @@ from NNMM.MylistInfoDBController import *
 
 logger = getLogger("root")
 logger.setLevel(INFO)
+
+
+def GetURLType(url: str) -> str:
+    """マイリストのタイプを返す
+
+    Args:
+        url (str): 判定対象URL
+
+    Returns:
+        str: マイリストのタイプ
+             "uploaded": 投稿動画
+             "mylist": 通常のマイリスト
+    """
+    url_type = ""
+    p_uploaded = "^https://www.nicovideo.jp/user/[0-9]+/video$"
+    p_mylist = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
+    if re.search(p_uploaded, url):
+        url_type = "uploaded"
+    elif re.search(p_mylist, url):
+        url_type = "mylist"
+
+    return url_type
 
 
 def GetNowDatetime() -> str:
