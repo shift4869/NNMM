@@ -40,10 +40,10 @@ table_right_click_menu = [
     "-TABLE_RIGHT_CLICK_MENU-", [
         "! ",
         "---",
-        "ブラウザで開く",
+        "ブラウザで開く::-TR-",
         "---",
-        "視聴済にする",
-        "未視聴にする"
+        "視聴済にする::-TR-",
+        "未視聴にする::-TR-"
     ]
 ]
 table_style = {
@@ -118,9 +118,9 @@ def GuiMain():
     # イベントと処理の辞書
     ep_dict = {
         # "イベントキー": (開始ログ出力するか, 終了ログ出力するか, "処理名", 処理関数)
-        "視聴済にする": (True, True, "視聴済にする", ProcessWatched.ProcessWatched),
-        "未視聴にする": (True, True, "未視聴にする", ProcessNotWatched.ProcessNotWatched),
-        "ブラウザで開く": (True, True, "ブラウザで開く", ProcessVideoPlay.ProcessVideoPlay),
+        "視聴済にする::-TR-": (True, True, "視聴済にする", ProcessWatched.ProcessWatched),
+        "未視聴にする::-TR-": (True, True, "未視聴にする", ProcessNotWatched.ProcessNotWatched),
+        "ブラウザで開く::-TR-": (True, True, "ブラウザで開く", ProcessVideoPlay.ProcessVideoPlay),
         "上に移動::-MR-": (True, True, "上に移動", ProcessMoveUp.ProcessMoveUp),
         "下に移動::-MR-": (True, True, "下に移動", ProcessMoveDown.ProcessMoveDown),
         "視聴済にする（選択）::-MR-": (True, True, "視聴済にする（選択）", ProcessWatchedMylist.ProcessWatchedMylist),
