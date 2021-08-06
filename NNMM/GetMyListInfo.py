@@ -245,7 +245,8 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     # 投稿日時収集
     td_format = "%Y/%m/%d %H:%M"
     dts_format = "%Y-%m-%d %H:%M:00"
-    uploaded_lx = response.html.lxml.find_class("NC-VideoMediaObject-metaAdditionalRegisteredAt")
+    # uploaded_lx = response.html.lxml.find_class("NC-VideoMediaObject-metaAdditionalRegisteredAt")
+    uploaded_lx = response.html.lxml.find_class("NC-VideoRegisteredAtText-text")
     uploaded_list = []
     for t in uploaded_lx:
         tca = str(t.text)
