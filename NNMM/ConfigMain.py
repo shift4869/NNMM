@@ -79,10 +79,10 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
         return res
 
 
-class ProcessMylistLoadCSVC(ProcessConfigBase):
+class ProcessMylistLoadCSV(ProcessConfigBase):
 
     def __init__(self):
-        super(ProcessMylistLoadCSVC, self).__init__(True, True, "マイリスト一覧入力")
+        super(ProcessMylistLoadCSV, self).__init__(True, True, "マイリスト一覧入力")
 
     def Run(self, mw):
         # "-C_MYLIST_LOAD-"
@@ -115,10 +115,10 @@ class ProcessMylistLoadCSVC(ProcessConfigBase):
             return -1
 
 
-class ProcessMylistSaveCSVC(ProcessConfigBase):
+class ProcessMylistSaveCSV(ProcessConfigBase):
 
     def __init__(self):
-        super(ProcessMylistSaveCSVC, self).__init__(True, True, "マイリスト一覧出力")
+        super(ProcessMylistSaveCSV, self).__init__(True, True, "マイリスト一覧出力")
 
     def Run(self, mw):
         # "-C_MYLIST_SAVE-"
@@ -151,10 +151,10 @@ class ProcessMylistSaveCSVC(ProcessConfigBase):
             return -1
 
 
-class ProcessConfigLoadC(ProcessConfigBase):
+class ProcessConfigLoad(ProcessConfigBase):
 
     def __init__(self):
-        super(ProcessConfigLoadC, self).__init__(False, False, "設定読込")
+        super(ProcessConfigLoad, self).__init__(False, False, "設定読込")
     
     def Run(self, mw):
         # 設定タブを開いたときの処理
@@ -179,10 +179,10 @@ class ProcessConfigLoadC(ProcessConfigBase):
         window["-C_BROWSER_PATH-"].update(select=False)
 
 
-class ProcessConfigSaveC(ProcessConfigBase):
+class ProcessConfigSave(ProcessConfigBase):
 
     def __init__(self):
-        super(ProcessConfigSaveC, self).__init__(True, True, "設定保存")
+        super(ProcessConfigSave, self).__init__(True, True, "設定保存")
 
     def Run(self, mw):
         # "-C_CONFIG_SAVE-"
@@ -235,7 +235,7 @@ class ProcessConfigSaveC(ProcessConfigBase):
 
 
 if __name__ == "__main__":
-    ps = ProcessConfigSaveC()
+    ps = ProcessConfigSave()
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
     mw.Run()

@@ -81,10 +81,10 @@ class MainWindow():
 
         # イベントと処理の辞書(new)
         self.epc_dict = {
-            "-C_CONFIG_SAVE-": ConfigMain.ProcessConfigSaveC,
-            "-C_MYLIST_SAVE-": ConfigMain.ProcessMylistSaveCSVC,
-            "-C_MYLIST_LOAD-": ConfigMain.ProcessMylistLoadCSVC,
-            "-TIMER_SET-": Timer.ProcessTimerC,
+            "-C_CONFIG_SAVE-": ConfigMain.ProcessConfigSave,
+            "-C_MYLIST_SAVE-": ConfigMain.ProcessMylistSaveCSV,
+            "-C_MYLIST_LOAD-": ConfigMain.ProcessMylistLoadCSV,
+            "-TIMER_SET-": Timer.ProcessTimer,
         }
 
         logger.info("window setup done.")
@@ -209,7 +209,7 @@ class MainWindow():
                 select_tab = values["-TAB_CHANGED-"]
                 if select_tab == "設定":
                     # 設定タブを開いたときの処理
-                    pb = ConfigMain.ProcessConfigLoadC()
+                    pb = ConfigMain.ProcessConfigLoad()
                     pb.Run(self)
 
         # ウィンドウ終了処理
