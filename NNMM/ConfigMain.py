@@ -182,10 +182,10 @@ def ProcessConfigSave(window, values, mylist_db, mylist_info_db):
             # DB移動
             shutil.move(sd_prev, sd_new)
 
-            # 以降の処理で新しいパスに移動させたDBを参照するように再設定
-            from NNMM import GuiMain
-            GuiMain.mylist_db = MylistDBController(db_fullpath=str(sd_new))
-            GuiMain.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
+            # TODO::以降の処理で新しいパスに移動させたDBを参照するように再設定
+            # from NNMM import GuiMain
+            # GuiMain.mylist_db = MylistDBController(db_fullpath=str(sd_new))
+            # GuiMain.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
 
             # 移動成功
             db_move_success = True

@@ -1,7 +1,8 @@
 # coding: utf-8
-import NNMM.GuiMain
+import NNMM.MainWindow
 
 # python NNMM.py
 
 if __name__ == "__main__":
-    NNMM.GuiMain.GuiMain()
+    mw = NNMM.MainWindow.MainWindow()
+    mw.Run()
