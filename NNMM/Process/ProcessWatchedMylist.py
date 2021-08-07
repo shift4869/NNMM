@@ -39,5 +39,6 @@ def ProcessWatchedMylist(window: sg.Window, values: dict, mylist_db: MylistDBCon
     
 
 if __name__ == "__main__":
-    from NNMM import GuiMain
-    GuiMain.GuiMain()
+    from NNMM import MainWindow
+    mw = MainWindow.MainWindow()
+    mw.Run()

@@ -56,5 +56,6 @@ def ProcessNotWatched(window, values, mylist_db, mylist_info_db):
 
 
 if __name__ == "__main__":
-    from NNMM import GuiMain
-    GuiMain.GuiMain()
+    from NNMM import MainWindow
+    mw = MainWindow.MainWindow()
+    mw.Run()
