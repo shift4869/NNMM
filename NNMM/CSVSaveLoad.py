@@ -78,9 +78,10 @@ def LoadMylist(mylist_db, load_file_path):
             listname = param_dict["listname"]
             url = param_dict["url"]
             created_at = param_dict["created_at"]
-            td_format = "%Y/%m/%d %H:%M"
-            dts_format = "%Y-%m-%d %H:%M:%S"
-            dst = datetime.strptime(created_at, td_format).strftime(dts_format)
+            # td_format = "%Y/%m/%d %H:%M"
+            # dts_format = "%Y-%m-%d %H:%M:%S"
+            # dst = datetime.strptime(created_at, td_format).strftime(dts_format)
+            dst = created_at
             is_include_new = param_dict["is_include_new"]
             mylist_db.Upsert(id_index, username, type, listname, url, dst, dst, False)
     return 0

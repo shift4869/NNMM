@@ -6,7 +6,6 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM import GetMyListInfo
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 

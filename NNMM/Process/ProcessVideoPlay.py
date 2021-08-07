@@ -30,7 +30,7 @@ def ProcessVideoPlay(window, values, mylist_db, mylist_info_db):
     selected = def_data[row]
 
     # ブラウザに動画urlを渡す
-    config = ConfigMain.global_config
+    config = ConfigMain.ProcessConfigBase.GetConfig()
     cmd = config["general"].get("browser_path", "")
     video_url = mylist_info_db.SelectFromVideoID(selected[1])[0].get("video_url")
     if cmd != "" and Path(cmd).is_file():

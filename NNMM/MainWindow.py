@@ -22,8 +22,8 @@ class MainWindow():
     """
     def __init__(self):
         # 設定値初期化
-        ConfigMain.SetConfig()
-        self.config = ConfigMain.global_config
+        ConfigMain.ProcessConfigBase.SetConfig()
+        self.config = ConfigMain.ProcessConfigBase.GetConfig()
 
         # DB操作コンポーネント設定
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
@@ -73,10 +73,18 @@ class MainWindow():
             "-ALL_UPDATE-": (True, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo),
             "-ALL_UPDATE_THREAD_PROGRESS-": (False, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress),
             "-ALL_UPDATE_THREAD_DONE-": (False, True, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone),
-            "-C_CONFIG_SAVE-": (True, True, "設定保存", ConfigMain.ProcessConfigSave),
-            "-C_MYLIST_SAVE-": (True, True, "マイリスト一覧出力", ConfigMain.ProcessMylistSaveCSV),
-            "-C_MYLIST_LOAD-": (True, True, "マイリスト一覧入力", ConfigMain.ProcessMylistLoadCSV),
-            "-TIMER_SET-": (False, False, "タイマーセット", Timer.ProcessTimer),
+            # "-C_CONFIG_SAVE-": (True, True, "設定保存", ConfigMain.ProcessConfigSave),
+            # "-C_MYLIST_SAVE-": (True, True, "マイリスト一覧出力", ConfigMain.ProcessMylistSaveCSV),
+            # "-C_MYLIST_LOAD-": (True, True, "マイリスト一覧入力", ConfigMain.ProcessMylistLoadCSV),
+            # "-TIMER_SET-": (False, False, "タイマーセット", Timer.ProcessTimer),
+        }
+
+        # イベントと処理の辞書(new)
+        self.epc_dict = {
+            "-C_CONFIG_SAVE-": ConfigMain.ProcessConfigSaveC,
+            "-C_MYLIST_SAVE-": ConfigMain.ProcessMylistSaveCSVC,
+            "-C_MYLIST_LOAD-": ConfigMain.ProcessMylistLoadCSVC,
+            "-TIMER_SET-": Timer.ProcessTimerC,
         }
 
         logger.info("window setup done.")
@@ -140,7 +148,7 @@ class MainWindow():
                 [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
             ], size=(1070, 100))
         ]]
-        cf_layout = ConfigMain.GetConfigLayout()
+        cf_layout = ConfigMain.ProcessConfigBase.GetConfigLayout()
         lf_layout = [[
             sg.Frame("ログ", [
                 [sg.Column([[sg.Output(size=(1080, 100), echo_stdout_stderr=True)]])]
@@ -168,6 +176,19 @@ class MainWindow():
                 logger.info("window exit.")
                 break
 
+            # イベント処理(new)
+            if self.epc_dict.get(event):
+                self.values = values
+                pb = self.epc_dict.get(event)()
+
+                if pb.log_sflag:
+                    logger.info(f'"{pb.process_name}" starting.')
+
+                pb.Run(self)
+
+                if pb.log_eflag:
+                    logger.info(f'"{pb.process_name}" finished.')
+
             # イベント処理
             if self.ep_dict.get(event):
                 t = self.ep_dict.get(event)
@@ -188,7 +209,8 @@ class MainWindow():
                 select_tab = values["-TAB_CHANGED-"]
                 if select_tab == "設定":
                     # 設定タブを開いたときの処理
-                    ConfigMain.ProcessConfigLoad(self.window, values, self.mylist_db, self.mylist_info_db)
+                    pb = ConfigMain.ProcessConfigLoadC()
+                    pb.Run(self)
 
         # ウィンドウ終了処理
         self.window.close()

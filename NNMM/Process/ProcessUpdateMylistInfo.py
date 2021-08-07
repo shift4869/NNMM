@@ -8,6 +8,7 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
+from NNMM import GetMyListInfo
 
 
 logger = getLogger("root")

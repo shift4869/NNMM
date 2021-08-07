@@ -102,7 +102,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
         userid, mylistid = re.findall(pattern, url)[0]
 
     # RSS保存
-    config = ConfigMain.global_config
+    config = ConfigMain.ProcessConfigBase.GetConfig()
     rd_str = config["general"].get("rss_save_path", "")
     rd_path = Path(rd_str)
     rd_path.mkdir(exist_ok=True, parents=True)
@@ -301,7 +301,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
 if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
-    ConfigMain.SetConfig()
+    ConfigMain.ProcessConfigBase.SetConfig()
 
     # url = "https://www.nicovideo.jp/user/37896001/video"
     url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
