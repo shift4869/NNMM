@@ -23,7 +23,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
     config = None
 
     def __init__(self, *args, **kwargs):
-        super(ProcessConfigBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def GetConfigLayout(cls):
@@ -82,7 +82,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
 class ProcessMylistLoadCSV(ProcessConfigBase):
 
     def __init__(self):
-        super(ProcessMylistLoadCSV, self).__init__(True, True, "マイリスト一覧入力")
+        super().__init__(True, True, "マイリスト一覧入力")
 
     def Run(self, mw):
         # "-C_MYLIST_LOAD-"
@@ -118,7 +118,7 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
 class ProcessMylistSaveCSV(ProcessConfigBase):
 
     def __init__(self):
-        super(ProcessMylistSaveCSV, self).__init__(True, True, "マイリスト一覧出力")
+        super().__init__(True, True, "マイリスト一覧出力")
 
     def Run(self, mw):
         # "-C_MYLIST_SAVE-"
@@ -154,8 +154,8 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
 class ProcessConfigLoad(ProcessConfigBase):
 
     def __init__(self):
-        super(ProcessConfigLoad, self).__init__(False, False, "設定読込")
-    
+        super().__init__(False, False, "設定読込")
+
     def Run(self, mw):
         # 設定タブを開いたときの処理
         # config.iniをロードして現在の設定値をレイアウトに表示する
@@ -182,7 +182,7 @@ class ProcessConfigLoad(ProcessConfigBase):
 class ProcessConfigSave(ProcessConfigBase):
 
     def __init__(self):
-        super(ProcessConfigSave, self).__init__(True, True, "設定保存")
+        super().__init__(True, True, "設定保存")
 
     def Run(self, mw):
         # "-C_CONFIG_SAVE-"

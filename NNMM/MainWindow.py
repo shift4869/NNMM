@@ -68,11 +68,11 @@ class MainWindow():
             "-CREATE-": (True, False, "マイリスト追加", ProcessCreateMylist.ProcessCreateMylist),
             "-CREATE_THREAD_DONE-": (False, True, "マイリスト追加", ProcessCreateMylist.ProcessCreateMylistThreadDone),
             "-DELETE-": (True, True, "マイリスト削除", ProcessDeleteMylist.ProcessDeleteMylist),
-            "-UPDATE-": (True, False, "マイリスト内容更新", ProcessUpdateMylistInfo.ProcessUpdateMylistInfo),
-            "-UPDATE_THREAD_DONE-": (False, True, "マイリスト内容更新", ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone),
-            "-ALL_UPDATE-": (True, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo),
-            "-ALL_UPDATE_THREAD_PROGRESS-": (False, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress),
-            "-ALL_UPDATE_THREAD_DONE-": (False, True, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone),
+            # "-UPDATE-": (True, False, "マイリスト内容更新", ProcessUpdateMylistInfo.ProcessUpdateMylistInfo),
+            # "-UPDATE_THREAD_DONE-": (False, True, "マイリスト内容更新", ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone),
+            # "-ALL_UPDATE-": (True, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo),
+            # "-ALL_UPDATE_THREAD_PROGRESS-": (False, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress),
+            # "-ALL_UPDATE_THREAD_DONE-": (False, True, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone),
             # "-C_CONFIG_SAVE-": (True, True, "設定保存", ConfigMain.ProcessConfigSave),
             # "-C_MYLIST_SAVE-": (True, True, "マイリスト一覧出力", ConfigMain.ProcessMylistSaveCSV),
             # "-C_MYLIST_LOAD-": (True, True, "マイリスト一覧入力", ConfigMain.ProcessMylistLoadCSV),
@@ -81,6 +81,11 @@ class MainWindow():
 
         # イベントと処理の辞書(new)
         self.epc_dict = {
+            "-UPDATE-": ProcessUpdateMylistInfo.ProcessUpdateMylistInfo,
+            "-UPDATE_THREAD_DONE-": ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone,
+            "-ALL_UPDATE-": ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo,
+            "-ALL_UPDATE_THREAD_PROGRESS-": ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress,
+            "-ALL_UPDATE_THREAD_DONE-": ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone,
             "-C_CONFIG_SAVE-": ConfigMain.ProcessConfigSave,
             "-C_MYLIST_SAVE-": ConfigMain.ProcessMylistSaveCSV,
             "-C_MYLIST_LOAD-": ConfigMain.ProcessMylistLoadCSV,

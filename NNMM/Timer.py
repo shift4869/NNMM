@@ -22,7 +22,7 @@ timer_thread = None
 class ProcessTimer(ProcessBase.ProcessBase):
 
     def __init__(self):
-        super(ProcessTimer, self).__init__(False, False, "タイマーセット")
+        super().__init__(False, False, "タイマーセット")
 
     def Run(self, mw):
         global timer_thread

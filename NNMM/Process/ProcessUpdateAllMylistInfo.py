@@ -8,77 +8,105 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process.ProcessUpdateMylistInfo import *
+from NNMM.Process import ProcessBase
 
 
 logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-def UpdateAllMylistInfoThread(window, mylist_db, mylist_info_db):
-    # 全てのマイリストを更新する（マルチスレッド前提）
-    m_list = mylist_db.Select()
-    all_index_num = len(m_list)
-    for i, record in enumerate(m_list):
-        UpdateMylistInfo(window, mylist_db, mylist_info_db, record)
-        p_str = f"更新中({i + 1}/{all_index_num})"
-        window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
+class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
-        mylist_url = record.get("url")
-        logger.info(mylist_url + f" : update done ... ({i + 1}/{all_index_num}).")
+    def __init__(self):
+        super().__init__(True, False, "全マイリスト内容更新")
 
-    window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
+    def Run(self, mw):
+        # -ALL_UPDATE-
+        # 左下のすべて更新ボタンが押された場合
+        self.window = mw.window
+        self.values = mw.values
+        self.mylist_db = mw.mylist_db
+        self.mylist_info_db = mw.mylist_info_db
+
+        self.window["-INPUT2-"].update(value="更新中")
+        self.window.refresh()
+        logger.info("All mylist update starting.")
+        # 存在するすべてのマイリストから現在のマイリスト情報を取得する
+        # AsyncHTMLSessionでページ情報をレンダリングして解釈する
+        # マルチスレッド処理
+        threading.Thread(target=self.UpdateAllMylistInfoThread,
+                         args=(), daemon=True).start()
+
+    def UpdateAllMylistInfoThread(self):
+        # 全てのマイリストを更新する（マルチスレッド前提）
+        m_list = self.mylist_db.Select()
+        all_index_num = len(m_list)
+        for i, record in enumerate(m_list):
+            self.UpdateMylistInfo(record)
+            p_str = f"更新中({i + 1}/{all_index_num})"
+            self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
+
+            mylist_url = record.get("url")
+            logger.info(mylist_url + f" : update done ... ({i + 1}/{all_index_num}).")
+
+        self.window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
 
 
-def ProcessUpdateAllMylistInfo(window, values, mylist_db, mylist_info_db):
-    # 左下のすべて更新ボタンが押された場合
-    window["-INPUT2-"].update(value="更新中")
-    window.refresh()
-    logger.info("All mylist update starting.")
-    # 存在するすべてのマイリストから現在のマイリスト情報を取得する
-    # AsyncHTMLSessionでページ情報をレンダリングして解釈する
-    # マルチスレッド処理
-    threading.Thread(target=UpdateAllMylistInfoThread,
-                     args=(window, mylist_db, mylist_info_db), daemon=True).start()
+class ProcessUpdateAllMylistInfoThreadProgress(ProcessBase.ProcessBase):
+
+    def __init__(self):
+        super().__init__(False, False, "全マイリスト内容更新")
+
+    def Run(self, mw):
+        # -ALL_UPDATE-処理中のプログレス
+        self.window = mw.window
+        self.values = mw.values
+        p_str = self.values["-ALL_UPDATE_THREAD_PROGRESS-"]
+        self.window["-INPUT2-"].update(value=p_str)
 
 
-def ProcessUpdateAllMylistInfoThreadProgress(window, values, mylist_db, mylist_info_db):
-    # -ALL_UPDATE-処理中のプログレス
-    p_str = values["-ALL_UPDATE_THREAD_PROGRESS-"]
-    window["-INPUT2-"].update(value=p_str)
+class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
 
+    def __init__(self):
+        super().__init__(False, True, "全マイリスト内容更新")
 
-def ProcessUpdateAllMylistInfoThreadDone(window, values, mylist_db, mylist_info_db):
-    # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
-    # 左下の表示を戻す
-    window["-INPUT2-"].update(value="更新完了！")
+    def Run(self, mw):
+        # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
+        self.window = mw.window
+        self.values = mw.values
+        self.mylist_db = mw.mylist_db
+        self.mylist_info_db = mw.mylist_info_db
 
-    # テーブルの表示を更新する
-    mylist_url = values["-INPUT1-"]
-    if mylist_url != "":
-        UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
+        # 左下の表示を戻す
+        self.window["-INPUT2-"].update(value="更新完了！")
 
-    # マイリストの新着表示を表示するかどうか判定する
-    m_list = mylist_db.Select()
-    for m in m_list:
-        username = m["username"]
-        mylist_url = m["url"]
-        video_list = mylist_info_db.SelectFromMylistURL(mylist_url)
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
-        def_data = []
-        for i, t in enumerate(video_list):
-            a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"]]
-            def_data.append(a)
+        # テーブルの表示を更新する
+        mylist_url = self.values["-INPUT1-"]
+        if mylist_url != "":
+            UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
-        # 左のマイリストlistboxの表示を更新する
-        # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
-        if IsMylistIncludeNewVideo(def_data):
-            # マイリストDB更新
-            mylist_db.UpdateIncludeFlag(mylist_url, True)
+        # マイリストの新着表示を表示するかどうか判定する
+        m_list = self.mylist_db.Select()
+        for m in m_list:
+            username = m["username"]
+            mylist_url = m["url"]
+            video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
+            def_data = []
+            for i, t in enumerate(video_list):
+                a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"]]
+                def_data.append(a)
 
-    # マイリスト画面表示更新
-    UpdateMylistShow(window, mylist_db)
+            # 左のマイリストlistboxの表示を更新する
+            # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
+            if IsMylistIncludeNewVideo(def_data):
+                # マイリストDB更新
+                self.mylist_db.UpdateIncludeFlag(mylist_url, True)
 
-    logger.info("All mylist update finished.")
+        # マイリスト画面表示更新
+        UpdateMylistShow(self.window, self.mylist_db)
+
+        logger.info("All mylist update finished.")
 
 
 if __name__ == "__main__":
