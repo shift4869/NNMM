@@ -55,32 +55,6 @@ class MainWindow():
 
         # イベントと処理の辞書
         self.ep_dict = {
-            # "イベントキー": (開始ログ出力するか, 終了ログ出力するか, "処理名", 処理関数)
-            # "視聴済にする::-TR-": (True, True, "視聴済にする", ProcessWatched.ProcessWatched),
-            # "未視聴にする::-TR-": (True, True, "未視聴にする", ProcessNotWatched.ProcessNotWatched),
-            # "ブラウザで開く::-TR-": (True, True, "ブラウザで開く", ProcessVideoPlay.ProcessVideoPlay),
-            # "上に移動::-MR-": (True, True, "上に移動", ProcessMoveUp.ProcessMoveUp),
-            # "下に移動::-MR-": (True, True, "下に移動", ProcessMoveDown.ProcessMoveDown),
-            # "視聴済にする（選択）::-MR-": (True, True, "視聴済にする（選択）", ProcessWatchedMylist.ProcessWatchedMylist),
-            # "視聴済にする（全て）::-MR-": (True, True, "視聴済にする（全て）", ProcessWatchedAllMylist.ProcessWatchedAllMylist),
-            # "検索::-MR-": (True, True, "マイリスト検索", ProcessSearch.ProcessMylistSearch),
-            # "-LIST-+DOUBLE CLICK+": (True, True, "マイリスト内容表示", ProcessShowMylistInfo.ProcessShowMylistInfo),
-            # "-CREATE-": (True, False, "マイリスト追加", ProcessCreateMylist.ProcessCreateMylist),
-            # "-CREATE_THREAD_DONE-": (False, True, "マイリスト追加", ProcessCreateMylist.ProcessCreateMylistThreadDone),
-            # "-DELETE-": (True, True, "マイリスト削除", ProcessDeleteMylist.ProcessDeleteMylist),
-            # "-UPDATE-": (True, False, "マイリスト内容更新", ProcessUpdateMylistInfo.ProcessUpdateMylistInfo),
-            # "-UPDATE_THREAD_DONE-": (False, True, "マイリスト内容更新", ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone),
-            # "-ALL_UPDATE-": (True, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo),
-            # "-ALL_UPDATE_THREAD_PROGRESS-": (False, False, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress),
-            # "-ALL_UPDATE_THREAD_DONE-": (False, True, "全マイリスト内容更新", ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone),
-            # "-C_CONFIG_SAVE-": (True, True, "設定保存", ConfigMain.ProcessConfigSave),
-            # "-C_MYLIST_SAVE-": (True, True, "マイリスト一覧出力", ConfigMain.ProcessMylistSaveCSV),
-            # "-C_MYLIST_LOAD-": (True, True, "マイリスト一覧入力", ConfigMain.ProcessMylistLoadCSV),
-            # "-TIMER_SET-": (False, False, "タイマーセット", Timer.ProcessTimer),
-        }
-
-        # イベントと処理の辞書(new)
-        self.epc_dict = {
             "視聴済にする::-TR-": ProcessWatched.ProcessWatched,
             "未視聴にする::-TR-": ProcessNotWatched.ProcessNotWatched,
             "ブラウザで開く::-TR-": ProcessVideoPlay.ProcessVideoPlay,
@@ -193,10 +167,10 @@ class MainWindow():
                 logger.info("window exit.")
                 break
 
-            # イベント処理(new)
-            if self.epc_dict.get(event):
+            # イベント処理
+            if self.ep_dict.get(event):
                 self.values = values
-                pb = self.epc_dict.get(event)()
+                pb = self.ep_dict.get(event)()
 
                 if pb.log_sflag:
                     logger.info(f'"{pb.process_name}" starting.')
@@ -205,22 +179,6 @@ class MainWindow():
 
                 if pb.log_eflag:
                     logger.info(f'"{pb.process_name}" finished.')
-
-            # イベント処理
-            if self.ep_dict.get(event):
-                t = self.ep_dict.get(event)
-                log_sflag = t[0]
-                log_eflag = t[1]
-                p_str = t[2]
-                p_func = t[3]
-
-                if log_sflag:
-                    logger.info(f'"{p_str}" starting.')
-
-                p_func(self.window, values, self.mylist_db, self.mylist_info_db)
-
-                if log_eflag:
-                    logger.info(f'"{p_str}" finished.')
 
             if event == "-TAB_CHANGED-":
                 select_tab = values["-TAB_CHANGED-"]
