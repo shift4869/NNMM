@@ -6,36 +6,48 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
+from NNMM.Process import ProcessBase
 
 
 logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-def ProcessWatchedMylist(window: sg.Window, values: dict, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController):
-    # マイリスト右クリックで「視聴済にする（選択）」が選択された場合
-    v = values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
+class ProcessWatchedMylist(ProcessBase.ProcessBase):
 
-    if v[:2] == "*:":
-        v = v[2:]
-    record = mylist_db.SelectFromListname(v)[0]
-    mylist_url = record.get("url")
+    def __init__(self):
+        super().__init__(True, True, "視聴済にする（選択）")
 
-    # マイリストの新着フラグがFalseなら何もしない
-    if not record.get("is_include_new"):
-        return
+    def Run(self, mw):
+        # "視聴済にする（選択）::-MR-""
+        # マイリスト右クリックで「視聴済にする（選択）」が選択された場合
+        self.window = mw.window
+        self.values = mw.values
+        self.mylist_db = mw.mylist_db
+        self.mylist_info_db = mw.mylist_info_db
 
-    # マイリスト情報内の視聴済フラグを更新
-    mylist_info_db.UpdateStatusInMylist(mylist_url, "")
-    # マイリストの新着フラグを更新
-    mylist_db.UpdateIncludeFlag(mylist_url, False)
+        v = self.values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
 
-    # マイリスト画面表示更新
-    UpdateMylistShow(window, mylist_db)
-    # テーブル画面表示更新
-    UpdateTableShow(window, mylist_db, mylist_info_db)
+        if v[:2] == "*:":
+            v = v[2:]
+        record = self.mylist_db.SelectFromListname(v)[0]
+        mylist_url = record.get("url")
 
-    logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
+        # マイリストの新着フラグがFalseなら何もしない
+        if not record.get("is_include_new"):
+            return
+
+        # マイリスト情報内の視聴済フラグを更新
+        self.mylist_info_db.UpdateStatusInMylist(mylist_url, "")
+        # マイリストの新着フラグを更新
+        self.mylist_db.UpdateIncludeFlag(mylist_url, False)
+
+        # マイリスト画面表示更新
+        UpdateMylistShow(self.window, self.mylist_db)
+        # テーブル画面表示更新
+        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db)
+
+        logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
     
 
 if __name__ == "__main__":

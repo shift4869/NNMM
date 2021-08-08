@@ -6,53 +6,64 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
+from NNMM.Process import ProcessBase
 
 
 logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-def ProcessWatched(window: sg.Window, values: dict, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController):
-    # テーブル右クリックで「視聴済にする」が選択された場合
+class ProcessWatched(ProcessBase.ProcessBase):
 
-    # 現在のtableの全リスト
-    def_data = window["-TABLE-"].Values
-    # 現在のマイリストURL
-    mylist_url = values["-INPUT1-"]
+    def __init__(self):
+        super().__init__(True, True, "視聴済にする")
 
-    # 行が選択されていないなら何もしない
-    if not values["-TABLE-"]:
-        return
+    def Run(self, mw):
+        # "視聴済にする::-TR-"
+        # テーブル右クリックで「視聴済にする」が選択された場合
+        self.window = mw.window
+        self.values = mw.values
+        self.mylist_db = mw.mylist_db
+        self.mylist_info_db = mw.mylist_info_db
 
-    # 選択された行（複数可）についてすべて処理する
-    all_num = len(values["-TABLE-"])
-    for i, v in enumerate(values["-TABLE-"]):
-        row = int(v)
+        # 現在のtableの全リスト
+        def_data = self.window["-TABLE-"].Values
+        # 現在のマイリストURL
+        mylist_url = self.values["-INPUT1-"]
 
-        # マイリスト情報ステータスDB更新
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
-        selected = def_data[row]
-        res = mylist_info_db.UpdateStatus(selected[1], mylist_url, "")
-        if res == 0:
-            logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "watched".')
-        else:
-            logger.info(f"{selected[1]} ({i+1}/{all_num}) -> failed.")
+        # 行が選択されていないなら何もしない
+        if not self.values["-TABLE-"]:
+            return
 
-        # テーブル更新
-        def_data[row][4] = ""
-    window["-TABLE-"].update(values=def_data)
+        # 選択された行（複数可）についてすべて処理する
+        all_num = len(self.values["-TABLE-"])
+        for i, v in enumerate(self.values["-TABLE-"]):
+            row = int(v)
 
-    # テーブルの表示を更新する
-    UpdateTableShow(window, mylist_db, mylist_info_db, mylist_url)
-    window["-TABLE-"].update(select_rows=[row])
+            # マイリスト情報ステータスDB更新
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
+            selected = def_data[row]
+            res = self.mylist_info_db.UpdateStatus(selected[1], mylist_url, "")
+            if res == 0:
+                logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "watched".')
+            else:
+                logger.info(f"{selected[1]} ({i+1}/{all_num}) -> failed.")
 
-    # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
-    if not IsMylistIncludeNewVideo(window["-TABLE-"].Values):
-        # マイリストDB新着フラグ更新
-        mylist_db.UpdateIncludeFlag(mylist_url, False)
+            # テーブル更新
+            def_data[row][4] = ""
+        self.window["-TABLE-"].update(values=def_data)
 
-        # マイリスト画面表示更新
-        UpdateMylistShow(window, mylist_db)
+        # テーブルの表示を更新する
+        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        self.window["-TABLE-"].update(select_rows=[row])
+
+        # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
+        if not IsMylistIncludeNewVideo(self.window["-TABLE-"].Values):
+            # マイリストDB新着フラグ更新
+            self.mylist_db.UpdateIncludeFlag(mylist_url, False)
+
+            # マイリスト画面表示更新
+            UpdateMylistShow(self.window, self.mylist_db)
 
 
 if __name__ == "__main__":
