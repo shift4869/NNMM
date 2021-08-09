@@ -55,14 +55,18 @@ class MainWindow():
 
         # イベントと処理の辞書
         self.ep_dict = {
+            "ブラウザで開く::-TR-": ProcessVideoPlay.ProcessVideoPlay,
             "視聴済にする::-TR-": ProcessWatched.ProcessWatched,
             "未視聴にする::-TR-": ProcessNotWatched.ProcessNotWatched,
-            "ブラウザで開く::-TR-": ProcessVideoPlay.ProcessVideoPlay,
+            "検索（動画名）::-TR-": ProcessSearch.ProcessVideoSearch,
+            "強調表示を解除::-TR-": ProcessSearch.ProcessVideoSearchClear,
             "上に移動::-MR-": ProcessMoveUp.ProcessMoveUp,
             "下に移動::-MR-": ProcessMoveDown.ProcessMoveDown,
             "視聴済にする（選択）::-MR-": ProcessWatchedMylist.ProcessWatchedMylist,
             "視聴済にする（全て）::-MR-": ProcessWatchedAllMylist.ProcessWatchedAllMylist,
-            "検索::-MR-": ProcessSearch.ProcessMylistSearch,
+            "検索（マイリスト名）::-MR-": ProcessSearch.ProcessMylistSearch,
+            "検索（動画名）::-MR-": ProcessSearch.ProcessMylistSearchFromVideo,
+            "強調表示を解除::-MR-": ProcessSearch.ProcessMylistSearchClear,
             "-LIST-+DOUBLE CLICK+": ProcessShowMylistInfo.ProcessShowMylistInfo,
             "-CREATE-": ProcessCreateMylist.ProcessCreateMylist,
             "-CREATE_THREAD_DONE-": ProcessCreateMylist.ProcessCreateMylistThreadDone,
@@ -92,7 +96,9 @@ class MainWindow():
                 "視聴済にする（選択）::-MR-",
                 "視聴済にする（全て）::-MR-",
                 "---",
-                "検索::-MR-",
+                "検索（マイリスト名）::-MR-",
+                "検索（動画名）::-MR-",
+                "強調表示を解除::-MR-",
             ]
         ]
         l_pane = [
@@ -112,7 +118,10 @@ class MainWindow():
                 "ブラウザで開く::-TR-",
                 "---",
                 "視聴済にする::-TR-",
-                "未視聴にする::-TR-"
+                "未視聴にする::-TR-",
+                "---",
+                "検索（動画名）::-TR-",
+                "強調表示を解除::-TR-",
             ]
         ]
         table_style = {
