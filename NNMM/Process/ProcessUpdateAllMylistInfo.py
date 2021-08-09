@@ -1,5 +1,6 @@
 # coding: utf-8
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
 import PySimpleGUI as sg
@@ -39,15 +40,41 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
     def UpdateAllMylistInfoThread(self):
         # 全てのマイリストを更新する（マルチスレッド前提）
+
+        # それぞれのマイリストごとに初回ロードか確認し、
+        # 簡易版かレンダリングかどちらで更新するかを保持する
         m_list = self.mylist_db.Select()
         all_index_num = len(m_list)
+        func_list = []
         for i, record in enumerate(m_list):
-            self.UpdateMylistInfo(record)
-            p_str = f"更新中({i + 1}/{all_index_num})"
-            self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
-
             mylist_url = record.get("url")
-            logger.info(mylist_url + f" : update done ... ({i + 1}/{all_index_num}).")
+            prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            if not prev_video_list:
+                func_list.append(GetMyListInfo.AsyncGetMyListInfo)
+            else:
+                func_list.append(GetMyListInfo.GetMyListInfoLightWeight)
+
+        # マルチスレッドですべてのマイリストの情報を取得する
+        # resultにすべてのthreadの結果を格納して以下で利用する
+        result = []
+        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
+            futures = []
+            for func, record in zip(func_list, m_list):
+                mylist_url = record.get("url")
+                futures.append((mylist_url, executor.submit(func, mylist_url)))
+            result = [(f[0], f[1].result()) for f in futures]
+            # p_str = f"更新中({i + 1}/{all_index_num})"
+            # self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
+            # logger.info(mylist_url + f" : update done ... ({i + 1}/{all_index_num}).")
+
+        # すべてのマイリストの情報を更新する
+        for m in m_list:
+            mylist_url = m.get("url")
+            record = [r[1] for r in result if r[0] == mylist_url]
+            if record:
+                record = record[0]
+            else:
+                continue
 
         self.window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
 
