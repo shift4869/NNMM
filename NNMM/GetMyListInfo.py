@@ -3,6 +3,7 @@ import logging.config
 import pprint
 import re
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from logging import INFO, getLogger
 from pathlib import Path
@@ -12,7 +13,7 @@ import asyncio
 import pyppeteer
 import requests
 from bs4 import BeautifulSoup
-from requests_html import AsyncHTMLSession
+from requests_html import AsyncHTMLSession, HTMLSession
 
 from NNMM import ConfigMain, GuiFunction
 
@@ -303,6 +304,139 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     return res
 
 
+def GetMyListInfo(url: str) -> list[dict]:
+    """投稿動画ページアドレスから掲載されている動画の情報を取得する
+
+    Notes:
+        table_colsをキーとする情報を辞書で返す
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
+        実際に内部ブラウザでページを開き、
+        レンダリングして最終的に表示されたページから動画情報をスクレイピングする
+        レンダリングに時間がかかる代わりに最大100件まで取得できる
+
+    Args:
+        url (str): 投稿動画ページのアドレス
+
+    Returns:
+        video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照
+    """
+    # 入力チェック
+    url_type = GuiFunction.GetURLType(url)
+    if url_type == "":
+        return
+
+    # セッション開始
+    session = HTMLSession()
+    browser = pyppeteer.launch({
+        "ignoreHTTPSErrors": True,
+        "headless": True,
+        "handleSIGINT": False,
+        "handleSIGTERM": False,
+        "handleSIGHUP": False
+    })
+    session._browser = browser
+
+    video_list = []
+    test_count = 0
+    MAX_TEST_NUM = 5
+    while True:
+        # ブラウザエンジンでHTMLを生成
+        # 初回起動時はchromiumインストールのために時間がかかる
+        try:
+            response = session.get(url)
+            response.html.render()
+
+            # すべてのリンクを抽出
+            # 生成に失敗した場合、動画リンクが取得できないため失敗時は繰り返す（最大{MAX_TEST_NUM}回）
+            all_links_set = response.html.links
+            all_links_list = list(all_links_set)  # setをlistにキャストするとvalueのみのリストになる
+            pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+$"  # ニコニコ動画URLの形式
+            video_list = [s for s in all_links_list if re.search(pattern, s)]
+        except Exception as e:
+            pass
+
+        if video_list or (test_count > MAX_TEST_NUM):
+            break
+        test_count = test_count + 1
+        sleep(3)
+
+    # {MAX_TEST_NUM}回レンダリングしても失敗した場合はエラー
+    if test_count > MAX_TEST_NUM:
+        return []
+
+    # ループ脱出後はレンダリングが正常に行えたことが保証されている
+    # 動画情報を集める
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト名"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "listname"]
+    mylist_url = url
+
+    # 動画リンク抽出は降順でないため、ソートする（ロード順？）
+    video_list.sort(reverse=True)  # 降順ソート
+
+    # 動画名収集
+    # 全角スペースは\u3000(unicode-escape)となっている
+    # lx = r.html.lxml.find_class("NC-MediaObject-main")
+    title_lx = response.html.lxml.find_class("NC-MediaObjectTitle")
+    title_list = [str(t.text) for t in title_lx]
+
+    # 投稿日時収集
+    td_format = "%Y/%m/%d %H:%M"
+    dts_format = "%Y-%m-%d %H:%M:00"
+    # uploaded_lx = response.html.lxml.find_class("NC-VideoMediaObject-metaAdditionalRegisteredAt")
+    uploaded_lx = response.html.lxml.find_class("NC-VideoRegisteredAtText-text")
+    uploaded_list = []
+    for t in uploaded_lx:
+        tca = str(t.text)
+        if "前" in tca or "今" in tca:
+            uploaded_list.append(tca)
+        else:
+            dst = datetime.strptime(tca, td_format)
+            uploaded_list.append(dst.strftime(dts_format))
+
+    # 動画ID収集
+    pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"  # ニコニコ動画URLの形式
+    video_id_list = [re.findall(pattern, s)[0] for s in video_list]
+
+    # 投稿者収集
+    # ひとまず投稿動画の投稿者のみ（単一）
+    username_lx = response.html.lxml.find_class("UserDetailsHeader-nickname")
+    username = username_lx[0].text
+
+    # マイリスト名収集
+    listname = ""
+    if url_type == "uploaded":
+        listname = f"{username}さんの投稿動画"
+    elif url_type == "mylist":
+        mylistname_lx = response.html.lxml.find_class("MylistHeader-name")
+        mylistname = mylistname_lx[0].text
+        listname = f"「{mylistname}」-{username}さんのマイリスト"
+
+    # 結合
+    res = []
+    # 収集した情報の数はそれぞれ一致するはずだが最小のものに合わせる
+    list_num_min = min(len(video_list), len(title_list), len(uploaded_list), len(video_id_list))
+    video_list = video_list[:list_num_min]
+    title_list = title_list[:list_num_min]
+    uploaded_list = uploaded_list[:list_num_min]
+    video_id_list = video_id_list[:list_num_min]
+    if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(video_id_list):
+        return []
+    for id, title, uploaded, video_url in zip(video_id_list, title_list, uploaded_list, video_list):
+        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, listname]
+        res.append(dict(zip(table_cols, value_list)))
+
+    # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
+    # No.も付記する
+    res.sort(key=lambda t: t["video_id"], reverse=True)
+    for i, r in enumerate(res):
+        res[i]["no"] = i + 1
+
+    session.close()
+
+    return res
+
+
 async def AsyncGetMyListInfo(url: str) -> list[dict]:
     """投稿動画ページアドレスから掲載されている動画の情報を取得する
 
@@ -445,10 +579,17 @@ if __name__ == "__main__":
 
     # url = "https://www.nicovideo.jp/user/37896001/video"
     url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
+    url = "https://www.nicovideo.jp/user/24947253/video"
 
-    loop = asyncio.new_event_loop()
+    # loop = asyncio.new_event_loop()
     # video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
-    video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
+    # video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
+
+    video_list = []
+    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
+        future = executor.submit(GetMyListInfo, url)
+        video_list = future.result()
+    # video_list = GetMyListInfo(url)
     pprint.pprint(video_list)
 
     pass

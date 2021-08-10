@@ -71,10 +71,10 @@ class MylistInfoDBController(DBControllerBase):
         Notes:
             追加しようとしているレコードが既存テーブルに存在しなければINSERT
             存在しているならばUPDATE(DELETE->INSERT)
-            一致しているかの判定はvideo_urlとmylist_urlの組が一致している場合、とする
+            一致しているかの判定はvideo_idとmylist_urlの組が一致している場合、とする
 
         Args:
-            以下のArgsをキーとするrecordのlistを引数としてとる
+            以下をキーとするrecordのlistを引数としてとる
             records = list(dict)
                 dict Keys
                     video_id (str): 動画ID(smxxxxxxxx)
@@ -93,20 +93,13 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         res = -1
 
+        # 既に存在しているレコードは削除しておく
         for record in records:
             video_id = record.get("video_id")
-            title = record.get("title")
-            username = record.get("username")
-            status = record.get("status")
-            uploaded_at = record.get("uploaded_at")
-            video_url = record.get("video_url")
             mylist_url = record.get("mylist_url")
-            created_at = record.get("created_at")
-
-            r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
 
             try:
-                q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
+                q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url))
                 ex = q.one()
             except NoResultFound:
                 pass
@@ -117,6 +110,7 @@ class MylistInfoDBController(DBControllerBase):
 
         session.commit()
 
+        # レコード登録
         for record in records:
             video_id = record.get("video_id")
             title = record.get("title")

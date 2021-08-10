@@ -124,7 +124,8 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
     # 画面更新
     window["-LIST-"].update(set_to_index=index)
     window["-TABLE-"].update(values=def_data)
-    window["-TABLE-"].update(select_rows=[0])
+    if len(def_data) > 0:
+        window["-TABLE-"].update(select_rows=[0])
     # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き
     window["-TABLE-"].update(row_colors=[(0, "", "")])
 
