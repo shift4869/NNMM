@@ -40,7 +40,7 @@ class MylistInfoDBController(DBControllerBase):
         Returns:
             int: 0(成功,新規追加), 1(成功,更新), other(失敗)
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         res = -1
 
@@ -89,7 +89,7 @@ class MylistInfoDBController(DBControllerBase):
         Returns:
             int: 0(成功,新規追加), 1(成功,更新), other(失敗)
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         res = -1
 
@@ -162,7 +162,7 @@ class MylistInfoDBController(DBControllerBase):
             return -1
 
         # UPDATE対象をSELECT
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         record = session.query(MylistInfo).filter(
             and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url)
@@ -204,7 +204,7 @@ class MylistInfoDBController(DBControllerBase):
             return -1
 
         # UPDATE対象をSELECT
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         records = session.query(MylistInfo).filter(
             MylistInfo.mylist_url == mylist_url
@@ -243,7 +243,7 @@ class MylistInfoDBController(DBControllerBase):
             int: usernameを更新した場合0, 対象レコードが存在しなかった場合1, その他失敗時-1
         """
         # UPDATE対象をSELECT
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         records = session.query(MylistInfo).filter(
             MylistInfo.mylist_url == mylist_url
@@ -264,7 +264,7 @@ class MylistInfoDBController(DBControllerBase):
 
     def DeleteFromMylistURL(self, mylist_url):
         # DELETE対象をSELECT
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         records = session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).first()
 
@@ -292,7 +292,7 @@ class MylistInfoDBController(DBControllerBase):
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         res = session.query(MylistInfo).order_by(asc(MylistInfo.created_at)).all()
@@ -317,7 +317,7 @@ class MylistInfoDBController(DBControllerBase):
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         res = session.query(MylistInfo).filter_by(video_id=video_id).all()
@@ -341,7 +341,7 @@ class MylistInfoDBController(DBControllerBase):
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         res = session.query(MylistInfo).filter_by(video_url=video_url).all()
@@ -365,7 +365,7 @@ class MylistInfoDBController(DBControllerBase):
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         # res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).order_by(desc(MylistInfo.video_id)).all()
@@ -390,7 +390,7 @@ class MylistInfoDBController(DBControllerBase):
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         res = session.query(MylistInfo).filter_by(username=username).all()

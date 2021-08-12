@@ -1,6 +1,7 @@
 # coding: utf-8
 import asyncio
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
@@ -86,32 +87,36 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
         # すべてのマイリストの情報を更新する
         self.done_count = 0
-        self.old_mylist_db = self.mylist_db
-        self.old_mylist_info_db = self.mylist_info_db
-        self.mylist_db = MylistDBCM(self.mylist_db.dbname)
-        self.mylist_info_db = MylistInfoDBCM(self.mylist_info_db.dbname)
-
-        for m, prev_video_list in zip(m_list, prev_video_lists):
-            self.Working(m, prev_video_list, result)
-
-        self.mylist_db = self.old_mylist_db
-        self.mylist_info_db = self.old_mylist_info_db
+        result_buf = []
+        with ThreadPoolExecutor(max_workers=8, thread_name_prefix="np_thread") as executor:
+            futures = []
+            for m, prev_video_list in zip(m_list, prev_video_lists):
+                future = executor.submit(self.Working, m, prev_video_list, result)
+                futures.append((m.get("url"), future))
+            result_buf = [(f[0], f[1].result()) for f in futures]
 
         self.window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
 
     def Working(self, m, prev_video_list, now_video_lists):
+        # マルチスレッド内では各々のスレッドごとに新しくDBセッションを張る
+        # mylist_db = MylistDBCM(self.mylist_db.dbname)
+        # mylist_info_db = MylistInfoDBCM(self.mylist_info_db.dbname)
+        mylist_db = MylistDBController(self.mylist_db.dbname)
+        mylist_info_db = MylistInfoDBController(self.mylist_info_db.dbname)
+        self.done_count = self.done_count + 1
+
         mylist_url = m.get("url")
         records = [r[1] for r in now_video_lists if r[0] == mylist_url]
         if len(records) == 1:
             records = records[0]
         else:
             # error
-            return
+            return -1
 
         if len(records) == 0:
             # error
             # 新規マイリスト取得でレンダリングが失敗した場合など
-            return
+            return -1
 
         # prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
         prev_videoid_list = [m["video_id"] for m in prev_video_list]
@@ -151,9 +156,9 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
             now_username = now_video_list[0].get("username")
             if prev_username != now_username:
                 # マイリストの名前を更新する
-                self.mylist_db.UpdateUsername(mylist_url, now_username)
+                mylist_db.UpdateUsername(mylist_url, now_username)
                 # 格納済の動画情報の投稿者名を更新する
-                self.mylist_info_db.UpdateUsernameInMylist(mylist_url, now_username)
+                mylist_info_db.UpdateUsernameInMylist(mylist_url, now_username)
 
         # DBに格納
         records = []
@@ -170,14 +175,13 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
                 "created_at": dst
             }
             records.append(r)
-        self.mylist_info_db.UpsertFromList(records)
+        mylist_info_db.UpsertFromList(records)
 
         # マイリストの更新日時更新
         if add_new_video_flag:
             dst = GetNowDatetime()
-            self.mylist_db.UpdateUpdatedAt(mylist_url, dst)
+            mylist_db.UpdateUpdatedAt(mylist_url, dst)
 
-        self.done_count = self.done_count + 1
         all_index_num = len(now_video_lists)
         p_str = f"更新中({self.done_count}/{all_index_num})"
         self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)

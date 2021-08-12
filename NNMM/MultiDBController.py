@@ -19,7 +19,7 @@ class MylistInfoDBCM(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         self.session = Session()
 
     def __del__(self):
@@ -387,7 +387,7 @@ class MylistDBCM(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         self.session = Session()
 
     def __del__(self):

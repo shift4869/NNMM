@@ -51,7 +51,7 @@ class MylistDBController(DBControllerBase):
         Returns:
             int: 0(成功,新規追加), 1(成功,更新), other(失敗)
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         res = -1
 
@@ -90,7 +90,7 @@ class MylistDBController(DBControllerBase):
             int: 新着フラグを更新した場合0, その他失敗時-1
         """
         # UPDATE対象をSELECT
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
 
@@ -126,7 +126,7 @@ class MylistDBController(DBControllerBase):
             int: 更新日時を更新した場合0, その他失敗時-1
         """
         # UPDATE対象をSELECT
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
 
@@ -157,7 +157,7 @@ class MylistDBController(DBControllerBase):
         Returns:
             int: usernameを更新した場合0, その他失敗時-1
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         # 対象レコード
@@ -185,7 +185,7 @@ class MylistDBController(DBControllerBase):
         Returns:
             (Mylist, Mylist): 交換後のレコード（交換元レコード, 交換先レコード）
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         # 交換元レコード
@@ -212,7 +212,7 @@ class MylistDBController(DBControllerBase):
 
     def DeleteFromURL(self, mylist_url):
         # DELETE対象をSELECT
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
 
@@ -240,7 +240,7 @@ class MylistDBController(DBControllerBase):
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         # res = session.query(Mylist).order_by(asc(Mylist.created_at)).limit(limit).all()
@@ -262,7 +262,7 @@ class MylistDBController(DBControllerBase):
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         res = session.query(Mylist).filter_by(listname=listname).all()
@@ -283,7 +283,7 @@ class MylistDBController(DBControllerBase):
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
         """
-        Session = sessionmaker(bind=self.engine)
+        Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
         res = session.query(Mylist).filter_by(url=url).all()
