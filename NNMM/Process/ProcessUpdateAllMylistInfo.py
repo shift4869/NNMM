@@ -76,6 +76,8 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
         # マルチスレッドですべてのマイリストの情報を取得する
         # resultにすべてのthreadの結果を格納して以下で利用する
+        start = time.time()
+        self.done_count = 0
         result = []
         with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
             futures = []
@@ -84,8 +86,11 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
                 future = executor.submit(self.GetMylistInfoExecute, func, mylist_url, all_index_num)
                 futures.append((mylist_url, future))
             result = [(f[0], f[1].result()) for f in futures]
+        elapsed_time = time.time() - start
+        logger.info(f"All getting done elapsed_time : {elapsed_time:.2f} [sec]")
 
         # すべてのマイリストの情報を更新する
+        start = time.time()
         self.done_count = 0
         result_buf = []
         with ThreadPoolExecutor(max_workers=8, thread_name_prefix="np_thread") as executor:
@@ -94,6 +99,8 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
                 future = executor.submit(self.Working, m, prev_video_list, result)
                 futures.append((m.get("url"), future))
             result_buf = [(f[0], f[1].result()) for f in futures]
+        elapsed_time = time.time() - start
+        logger.info(f"All update done elapsed_time : {elapsed_time:.2f} [sec]")
 
         self.window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
 
