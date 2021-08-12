@@ -9,7 +9,6 @@ import PySimpleGUI as sg
 
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.MultiDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process.ProcessUpdateMylistInfo import *
 from NNMM.Process import ProcessBase
