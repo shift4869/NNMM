@@ -14,7 +14,7 @@ from NNMM.MylistDBController import *
 def SaveMylist(mylist_db, save_file_path):
     sd_path = Path(save_file_path)
     records = mylist_db.Select()
-    mylist_cols = ["id", "username", "type", "listname", "url", "created_at", "is_include_new"]
+    mylist_cols = ["id", "username", "type", "showname", "url", "created_at", "is_include_new"]
     param_list = []
     with sd_path.open("w", encoding="utf-8") as fout:
         fout.write(",".join(mylist_cols) + "\n")
@@ -27,7 +27,7 @@ def SaveMylist(mylist_db, save_file_path):
 def SaveXML(directory_path):
     sd_path = Path(directory_path)
     r_path = sd_path.parent / "res.csv"
-    mylist_cols = ["id", "username", "type", "listname", "url", "created_at", "is_include_new"]
+    mylist_cols = ["id", "username", "type", "showname", "url", "created_at", "is_include_new"]
 
     with r_path.open("w", encoding="utf-8") as fout:
         fout.write(",".join(mylist_cols) + "\n")
@@ -58,7 +58,7 @@ def SaveXML(directory_path):
 
 def LoadMylist(mylist_db, load_file_path):
     sd_path = Path(load_file_path)
-    mylist_cols = ["id", "username", "type", "listname", "url", "created_at", "is_include_new"]
+    mylist_cols = ["id", "username", "type", "showname", "url", "created_at", "is_include_new"]
     param_dict = {}
     with sd_path.open("r", encoding="utf-8") as fin:
         fin.readline()
@@ -75,7 +75,7 @@ def LoadMylist(mylist_db, load_file_path):
             id_index = param_dict["id"]
             username = param_dict["username"]
             type = param_dict["type"]
-            listname = param_dict["listname"]
+            showname = param_dict["showname"]
             url = param_dict["url"]
             created_at = param_dict["created_at"]
             # td_format = "%Y/%m/%d %H:%M"
@@ -83,7 +83,7 @@ def LoadMylist(mylist_db, load_file_path):
             # dst = datetime.strptime(created_at, td_format).strftime(dts_format)
             dst = created_at
             is_include_new = param_dict["is_include_new"]
-            mylist_db.Upsert(id_index, username, type, listname, url, dst, dst, False)
+            mylist_db.Upsert(id_index, username, type, showname, url, dst, dst, False)
     return 0
 
 

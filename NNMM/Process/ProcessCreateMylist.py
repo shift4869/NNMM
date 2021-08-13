@@ -66,7 +66,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
 
         # 新規マイリスト追加
         username = s_record["username"]
-        listname = s_record["listname"]
+        showname = s_record["showname"]
         is_include_new = True
 
         td_format = "%Y/%m/%d %H:%M"
@@ -75,7 +75,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
 
         # id_index = len(mylist_db.Select()) + 1
         id_index = max([int(r["id"]) for r in self.mylist_db.Select()]) + 1
-        self.mylist_db.Upsert(id_index, username, url_type, listname, mylist_url, dst, dst, is_include_new)
+        self.mylist_db.Upsert(id_index, username, url_type, showname, mylist_url, dst, dst, is_include_new)
 
         # DBに格納
         records = []

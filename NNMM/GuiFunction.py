@@ -77,9 +77,9 @@ def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController):
     include_new_index_list = []
     for i, m in enumerate(m_list):
         if m["is_include_new"]:
-            m["listname"] = NEW_MARK + m["listname"]
+            m["showname"] = NEW_MARK + m["showname"]
             include_new_index_list.append(i)
-    list_data = [m["listname"] for m in m_list]
+    list_data = [m["showname"] for m in m_list]
     window["-LIST-"].update(values=list_data)
 
     # 新着マイリストの背景色とテキスト色を変更する

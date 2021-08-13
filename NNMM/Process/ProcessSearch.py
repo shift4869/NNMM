@@ -46,12 +46,12 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
         match_index_list = []
         for i, m in enumerate(m_list):
             if m["is_include_new"]:
-                m["listname"] = NEW_MARK + m["listname"]
+                m["showname"] = NEW_MARK + m["showname"]
                 include_new_index_list.append(i)
-            if re.search(pattern, m["listname"]):
+            if re.search(pattern, m["showname"]):
                 match_index_list.append(i)
                 index = i  # 更新後にスクロールするインデックスを更新
-        list_data = [m["listname"] for m in m_list]
+        list_data = [m["showname"] for m in m_list]
         self.window["-LIST-"].update(values=list_data)
 
         # 新着マイリストの背景色とテキスト色を変更する
@@ -115,7 +115,7 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
         for i, m in enumerate(m_list):
             # 新着マイリストチェック
             if m["is_include_new"]:
-                m["listname"] = NEW_MARK + m["listname"]
+                m["showname"] = NEW_MARK + m["showname"]
                 include_new_index_list.append(i)
 
             # マイリスト内の動画情報を探索
@@ -125,7 +125,7 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
                 if re.search(pattern, r["title"]):
                     match_index_list.append(i)
                     index = i  # 更新後にスクロールするインデックスを更新
-        list_data = [m["listname"] for m in m_list]
+        list_data = [m["showname"] for m in m_list]
         self.window["-LIST-"].update(values=list_data)
 
         # 新着マイリストの背景色とテキスト色を変更する

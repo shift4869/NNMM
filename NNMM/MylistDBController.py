@@ -18,7 +18,7 @@ class MylistDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def GetListname(self, url, username, old_listname) -> str:
+    def GetListname(self, url, username, old_showname) -> str:
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
         if re.search(pattern, url):
             return f"{username}さんの投稿動画"
@@ -26,11 +26,11 @@ class MylistDBController(DBControllerBase):
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
         if re.search(pattern, url):
             # TODO::マイリスト名の一部のみしか反映できていない
-            res_str = re.sub("-(.*)さんのマイリスト", f"-{username}さんのマイリスト", old_listname)
+            res_str = re.sub("-(.*)さんのマイリスト", f"-{username}さんのマイリスト", old_showname)
             return res_str
         return ""
 
-    def Upsert(self, id, username, type, listname, url, created_at, updated_at, is_include_new):
+    def Upsert(self, id, username, type, showname, url, created_at, updated_at, is_include_new):
         """MylistにUPSERTする
 
         Notes:
@@ -41,7 +41,7 @@ class MylistDBController(DBControllerBase):
         Args:
             username (str): 投稿者名
             type (str): マイリストのタイプ({"uploaded", "mylist", "series"})
-            listname (str): マイリストの一意名({username}_{type})
+            showname (str): マイリストの一意名({username}_{type})
                             typeが"uploaded"の場合："{username}さんの投稿動画"
             url (str): マイリストURL
             created_at (str): 作成日時
@@ -55,7 +55,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = Mylist(id, username, type, listname, url, created_at, updated_at, is_include_new)
+        r = Mylist(id, username, type, showname, url, created_at, updated_at, is_include_new)
 
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url))
@@ -148,7 +148,7 @@ class MylistDBController(DBControllerBase):
 
         Note:
             "update Mylist set username = {now_username} where url = {mylist_url}"
-            listnameも更新する
+            shownameも更新する
 
         Args:
             mylist_url (str): マイリストURL
@@ -166,7 +166,7 @@ class MylistDBController(DBControllerBase):
             session.close()
             return -1
         record.username = now_username
-        record.listname = self.GetListname(mylist_url, now_username, record.listname)
+        record.showname = self.GetListname(mylist_url, now_username, record.showname)
 
         session.commit()
         session.close()
@@ -250,14 +250,14 @@ class MylistDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromListname(self, listname):
-        """Mylistからlistnameを条件としてSELECTする
+    def SelectFromListname(self, showname):
+        """Mylistからshownameを条件としてSELECTする
 
         Note:
-            "select * from Mylist where listname = {}".format(listname)
+            "select * from Mylist where showname = {}".format(showname)
 
         Args:
-            listname (str): 取得対象のマイリスト一意名
+            showname (str): 取得対象のマイリスト一意名
 
         Returns:
             dict[]: SELECTしたレコードの辞書リスト
@@ -265,7 +265,7 @@ class MylistDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
-        res = session.query(Mylist).filter_by(listname=listname).all()
+        res = session.query(Mylist).filter_by(showname=showname).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()

@@ -74,7 +74,7 @@ class Mylist(Base):
         [id] INTEGER NOT NULL UNIQUE,
         [username] TEXT NOT NULL,
         [type] TEXT,
-        [listname] TEXT NOT NULL UNIQUE,
+        [showname] TEXT NOT NULL UNIQUE,
         [url] TEXT NOT NULL UNIQUE,
         [created_at] TEXT,
         [updated_at] TEXT,
@@ -87,7 +87,7 @@ class Mylist(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(256), nullable=False)
     type = Column(String(256))
-    listname = Column(String(256), nullable=False, unique=True)
+    showname = Column(String(256), nullable=False, unique=True)
     url = Column(String(512), nullable=False, unique=True)
     created_at = Column(String(256))
     updated_at = Column(String(256))
@@ -96,11 +96,11 @@ class Mylist(Base):
     def __init__(self, *args, **kwargs):
         super(Base, self).__init__(*args, **kwargs)
 
-    def __init__(self, id, username, type, listname, url, created_at, updated_at, is_include_new):
+    def __init__(self, id, username, type, showname, url, created_at, updated_at, is_include_new):
         self.id = id
         self.username = username
         self.type = type
-        self.listname = listname
+        self.showname = showname
         self.url = url
         self.created_at = created_at
         self.updated_at = updated_at
@@ -117,7 +117,7 @@ class Mylist(Base):
             "id": self.id,
             "username": self.username,
             "type": self.type,
-            "listname": self.listname,
+            "showname": self.showname,
             "url": self.url,
             "created_at": self.created_at,
             "updated_at": self.updated_at,

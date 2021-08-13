@@ -233,7 +233,7 @@ class MylistInfoDBController(DBControllerBase):
 
         Note:
             "update MylistInfo set username = {username} where mylist_url = {mylist_url}"
-            listnameも更新する
+            shownameも更新する
 
         Args:
             mylist_url (str): マイリストURL

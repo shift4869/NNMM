@@ -368,7 +368,7 @@ def GetMyListInfo(url: str) -> list[dict]:
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
     table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト名"]
-    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "listname"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname"]
     mylist_url = url
 
     # 動画リンク抽出は降順でないため、ソートする（ロード順？）
@@ -404,13 +404,13 @@ def GetMyListInfo(url: str) -> list[dict]:
     username = username_lx[0].text
 
     # マイリスト名収集
-    listname = ""
+    showname = ""
     if url_type == "uploaded":
-        listname = f"{username}さんの投稿動画"
+        showname = f"{username}さんの投稿動画"
     elif url_type == "mylist":
-        mylistname_lx = response.html.lxml.find_class("MylistHeader-name")
-        mylistname = mylistname_lx[0].text
-        listname = f"「{mylistname}」-{username}さんのマイリスト"
+        myshowname_lx = response.html.lxml.find_class("MylistHeader-name")
+        myshowname = myshowname_lx[0].text
+        showname = f"「{myshowname}」-{username}さんのマイリスト"
 
     # 結合
     res = []
@@ -423,7 +423,7 @@ def GetMyListInfo(url: str) -> list[dict]:
     if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(video_id_list):
         return []
     for id, title, uploaded, video_url in zip(video_id_list, title_list, uploaded_list, video_list):
-        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, listname]
+        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname]
         res.append(dict(zip(table_cols, value_list)))
 
     # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
@@ -504,7 +504,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
     table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト名"]
-    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "listname"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname"]
     mylist_url = url
 
     # 動画リンク抽出は降順でないため、ソートする（ロード順？）
@@ -540,13 +540,13 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     username = username_lx[0].text
 
     # マイリスト名収集
-    listname = ""
+    showname = ""
     if url_type == "uploaded":
-        listname = f"{username}さんの投稿動画"
+        showname = f"{username}さんの投稿動画"
     elif url_type == "mylist":
-        mylistname_lx = response.html.lxml.find_class("MylistHeader-name")
-        mylistname = mylistname_lx[0].text
-        listname = f"「{mylistname}」-{username}さんのマイリスト"
+        myshowname_lx = response.html.lxml.find_class("MylistHeader-name")
+        myshowname = myshowname_lx[0].text
+        showname = f"「{myshowname}」-{username}さんのマイリスト"
 
     # 結合
     res = []
@@ -559,7 +559,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(video_id_list):
         return []
     for id, title, uploaded, video_url in zip(video_id_list, title_list, uploaded_list, video_list):
-        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, listname]
+        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname]
         res.append(dict(zip(table_cols, value_list)))
 
     # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
