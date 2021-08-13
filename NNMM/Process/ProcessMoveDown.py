@@ -39,13 +39,13 @@ class ProcessMoveDown(ProcessBase.ProcessBase):
 
         if src_v[:2] == "*:":
             src_v = src_v[2:]
-        src_record = self.mylist_db.SelectFromListname(src_v)[0]
+        src_record = self.mylist_db.SelectFromShowname(src_v)[0]
 
         dst_index = src_index + 1
         dst_v = list_data[dst_index]
         if dst_v[:2] == "*:":
             dst_v = dst_v[2:]
-        dst_record = self.mylist_db.SelectFromListname(dst_v)[0]
+        dst_record = self.mylist_db.SelectFromShowname(dst_v)[0]
 
         self.mylist_db.SwapId(src_record["id"], dst_record["id"])
 

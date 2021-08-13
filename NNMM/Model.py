@@ -86,24 +86,28 @@ class Mylist(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(256), nullable=False)
+    mylistname = Column(String(256), nullable=False)
     type = Column(String(256))
     showname = Column(String(256), nullable=False, unique=True)
     url = Column(String(512), nullable=False, unique=True)
     created_at = Column(String(256))
     updated_at = Column(String(256))
+    updated_interval = Column(String(256))
     is_include_new = Column(Boolean, server_default=text("True"))
 
     def __init__(self, *args, **kwargs):
         super(Base, self).__init__(*args, **kwargs)
 
-    def __init__(self, id, username, type, showname, url, created_at, updated_at, is_include_new):
+    def __init__(self, id, username, mylistname, type, showname, url, created_at, updated_at, updated_interval, is_include_new):
         self.id = id
         self.username = username
+        self.mylistname = mylistname
         self.type = type
         self.showname = showname
         self.url = url
         self.created_at = created_at
         self.updated_at = updated_at
+        self.updated_interval = updated_interval
         self.is_include_new = is_include_new
 
     def __repr__(self):
@@ -116,11 +120,13 @@ class Mylist(Base):
         return {
             "id": self.id,
             "username": self.username,
+            "mylistname": self.mylistname,
             "type": self.type,
             "showname": self.showname,
             "url": self.url,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "updated_interval": self.updated_interval,
             "is_include_new": self.is_include_new,
         }
 

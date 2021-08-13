@@ -8,7 +8,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
-from NNMM import GetMyListInfo
+from NNMM import GetMyListInfo, ConfigMain
 
 
 logger = getLogger("root")
@@ -66,23 +66,31 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
 
         # 新規マイリスト追加
         username = s_record["username"]
+        mylistname = s_record["mylistname"]
         showname = s_record["showname"]
         is_include_new = True
 
-        td_format = "%Y/%m/%d %H:%M"
-        dts_format = "%Y-%m-%d %H:%M:%S"
-        dst = datetime.now().strftime(dts_format)
+        # オートリロード間隔を取得する
+        updated_interval = ""
+        config = ConfigMain.ProcessConfigBase.GetConfig()
+        i_str = config["general"].get("auto_reload", "")
+        if i_str == "(使用しない)" or i_str == "":
+            updated_interval = "15分"  # デフォルトは15分
+        else:
+            pattern = "^([0-9]+)分毎$"
+            updated_interval = re.findall(pattern, i_str)[0] + "分"
 
-        # id_index = len(mylist_db.Select()) + 1
+        # 現在時刻取得
+        dst = GetNowDatetime()
+
+        # マイリスト情報をDBに格納
         id_index = max([int(r["id"]) for r in self.mylist_db.Select()]) + 1
-        self.mylist_db.Upsert(id_index, username, url_type, showname, mylist_url, dst, dst, is_include_new)
+        self.mylist_db.Upsert(id_index, username, mylistname, url_type, showname, mylist_url, dst, dst, updated_interval, is_include_new)
 
-        # DBに格納
+        # 動画情報をDBに格納
         records = []
-        td_format = "%Y/%m/%d %H:%M"
-        dts_format = "%Y-%m-%d %H:%M:%S"
         for m in now_video_list:
-            dst = datetime.now().strftime(dts_format)
+            dst = GetNowDatetime()
             r = {
                 "video_id": m["video_id"],
                 "title": m["title"],
@@ -106,6 +114,7 @@ class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
         super().__init__(False, True, "マイリスト追加")
 
     def Run(self, mw):
+        # "-CREATE_THREAD_DONE-"
         # -CREATE-のマルチスレッド処理が終わった後の処理
         self.window = mw.window
         self.values = mw.values

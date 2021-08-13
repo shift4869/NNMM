@@ -442,8 +442,8 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     Notes:
         table_colsをキーとする情報を辞書で返す
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
         実際に内部ブラウザでページを開き、
         レンダリングして最終的に表示されたページから動画情報をスクレイピングする
         レンダリングに時間がかかる代わりに最大100件まで取得できる
@@ -503,8 +503,8 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
-    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト名"]
-    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname"]
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
     mylist_url = url
 
     # 動画リンク抽出は降順でないため、ソートする（ロード順？）
@@ -541,8 +541,10 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # マイリスト名収集
     showname = ""
+    myshowname = ""
     if url_type == "uploaded":
         showname = f"{username}さんの投稿動画"
+        myshowname = "投稿動画"
     elif url_type == "mylist":
         myshowname_lx = response.html.lxml.find_class("MylistHeader-name")
         myshowname = myshowname_lx[0].text
@@ -559,7 +561,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(video_id_list):
         return []
     for id, title, uploaded, video_url in zip(video_id_list, title_list, uploaded_list, video_list):
-        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname]
+        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
         res.append(dict(zip(table_cols, value_list)))
 
     # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
@@ -579,17 +581,9 @@ if __name__ == "__main__":
 
     # url = "https://www.nicovideo.jp/user/37896001/video"
     url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
-    url = "https://www.nicovideo.jp/user/24947253/video"
 
-    # loop = asyncio.new_event_loop()
-    # video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
-    # video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
-
-    video_list = []
-    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
-        future = executor.submit(GetMyListInfo, url)
-        video_list = future.result()
-    # video_list = GetMyListInfo(url)
+    loop = asyncio.new_event_loop()
+    video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
     pprint.pprint(video_list)
 
     pass

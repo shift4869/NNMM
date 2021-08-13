@@ -31,7 +31,7 @@ class ProcessShowMylistInfo(ProcessBase.ProcessBase):
 
         if v[:2] == "*:":
             v = v[2:]
-        record = self.mylist_db.SelectFromListname(v)[0]
+        record = self.mylist_db.SelectFromShowname(v)[0]
         username = record.get("username")
         mylist_url = record.get("url")
         self.window["-INPUT1-"].update(value=mylist_url)  # 対象マイリスのアドレスをテキストボックスに表示

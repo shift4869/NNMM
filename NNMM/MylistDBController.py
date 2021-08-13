@@ -30,7 +30,7 @@ class MylistDBController(DBControllerBase):
             return res_str
         return ""
 
-    def Upsert(self, id, username, type, showname, url, created_at, updated_at, is_include_new):
+    def Upsert(self, id, username, mylistname, type, showname, url, created_at, updated_at, updated_interval, is_include_new):
         """MylistにUPSERTする
 
         Notes:
@@ -40,12 +40,14 @@ class MylistDBController(DBControllerBase):
 
         Args:
             username (str): 投稿者名
+            mylistname (str): マイリスト名
             type (str): マイリストのタイプ({"uploaded", "mylist", "series"})
             showname (str): マイリストの一意名({username}_{type})
                             typeが"uploaded"の場合："{username}さんの投稿動画"
             url (str): マイリストURL
             created_at (str): 作成日時
             updated_at (str): 更新日時
+            updated_interval (str): 最低更新間隔
             is_include_new (boolean): 未視聴動画を含むかどうか
 
         Returns:
@@ -55,7 +57,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = Mylist(id, username, type, showname, url, created_at, updated_at, is_include_new)
+        r = Mylist(id, username, mylistname, type, showname, url, created_at, updated_at, updated_interval, is_include_new)
 
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url))
@@ -243,14 +245,13 @@ class MylistDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
-        # res = session.query(Mylist).order_by(asc(Mylist.created_at)).limit(limit).all()
         res = session.query(Mylist).order_by(asc(Mylist.id)).all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         session.close()
         return res_dict
 
-    def SelectFromListname(self, showname):
+    def SelectFromShowname(self, showname):
         """Mylistからshownameを条件としてSELECTする
 
         Note:

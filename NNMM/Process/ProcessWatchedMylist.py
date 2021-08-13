@@ -30,7 +30,7 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
 
         if v[:2] == "*:":
             v = v[2:]
-        record = self.mylist_db.SelectFromListname(v)[0]
+        record = self.mylist_db.SelectFromShowname(v)[0]
         mylist_url = record.get("url")
 
         # マイリストの新着フラグがFalseなら何もしない
