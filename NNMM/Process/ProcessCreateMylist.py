@@ -71,21 +71,21 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         is_include_new = True
 
         # オートリロード間隔を取得する
-        updated_interval = ""
+        check_interval = ""
         config = ConfigMain.ProcessConfigBase.GetConfig()
         i_str = config["general"].get("auto_reload", "")
         if i_str == "(使用しない)" or i_str == "":
-            updated_interval = "15分"  # デフォルトは15分
+            check_interval = "15分"  # デフォルトは15分
         else:
             pattern = "^([0-9]+)分毎$"
-            updated_interval = re.findall(pattern, i_str)[0] + "分"
+            check_interval = re.findall(pattern, i_str)[0] + "分"
 
         # 現在時刻取得
         dst = GetNowDatetime()
 
         # マイリスト情報をDBに格納
         id_index = max([int(r["id"]) for r in self.mylist_db.Select()]) + 1
-        self.mylist_db.Upsert(id_index, username, mylistname, url_type, showname, mylist_url, dst, dst, updated_interval, is_include_new)
+        self.mylist_db.Upsert(id_index, username, mylistname, url_type, showname, mylist_url, dst, dst, dst, check_interval, is_include_new)
 
         # 動画情報をDBに格納
         records = []

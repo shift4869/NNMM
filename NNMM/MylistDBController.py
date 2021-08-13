@@ -30,7 +30,7 @@ class MylistDBController(DBControllerBase):
             return res_str
         return ""
 
-    def Upsert(self, id, username, mylistname, type, showname, url, created_at, updated_at, updated_interval, is_include_new):
+    def Upsert(self, id, username, mylistname, type, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new):
         """MylistにUPSERTする
 
         Notes:
@@ -47,7 +47,8 @@ class MylistDBController(DBControllerBase):
             url (str): マイリストURL
             created_at (str): 作成日時
             updated_at (str): 更新日時
-            updated_interval (str): 最低更新間隔
+            checked_at (str): 更新確認日時
+            check_interval (str): 最低更新間隔
             is_include_new (boolean): 未視聴動画を含むかどうか
 
         Returns:
@@ -57,7 +58,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = Mylist(id, username, mylistname, type, showname, url, created_at, updated_at, updated_interval, is_include_new)
+        r = Mylist(id, username, mylistname, type, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)
 
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url))
