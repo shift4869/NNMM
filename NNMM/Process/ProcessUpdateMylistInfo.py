@@ -128,10 +128,15 @@ class ProcessUpdateMylistInfo(ProcessBase.ProcessBase):
             records.append(r)
         self.mylist_info_db.UpsertFromList(records)
 
+        # マイリストの更新確認日時更新
+        # 新しい動画情報が追加されたかに関わらずchecked_atを更新する
+        dst = GetNowDatetime()
+        self.mylist_db.UpdateCheckdAt(mylist_url, dst)
+
         # マイリストの更新日時更新
+        # 新しい動画情報が追加されたときにupdated_atを更新する
         if add_new_video_flag:
-            dts_format = "%Y-%m-%d %H:%M:%S"
-            dst = datetime.now().strftime(dts_format)
+            dst = GetNowDatetime()
             self.mylist_db.UpdateUpdatedAt(mylist_url, dst)
 
 

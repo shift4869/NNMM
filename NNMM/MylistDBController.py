@@ -146,6 +146,37 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
+    def UpdateCheckdAt(self, mylist_url, checked_at):
+        """Mylistの特定のレコードについて更新確認日時を更新する
+
+        Note:
+            "update Mylist set checked_at = {} where mylist_url = {}"
+
+        Args:
+            mylist_url (str): マイリストURL
+            checked_at (str): 変更後の更新確認日時："%Y-%m-%d %H:%M:%S" 形式
+
+        Returns:
+            int: 更新確認日時を更新した場合0, その他失敗時-1
+        """
+        # UPDATE対象をSELECT
+        Session = sessionmaker(bind=self.engine, autoflush=False)
+        session = Session()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
+
+        # 存在しない場合はエラー
+        if not record:
+            session.close()
+            return -1
+
+        # 更新する
+        record.checked_at = checked_at
+
+        session.commit()
+        session.close()
+
+        return 0
+
     def UpdateUsername(self, mylist_url, now_username):
         """Mylistの特定のレコードについてusernameを更新する
 
