@@ -36,13 +36,13 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         self.window["-INPUT2-"].update(value="更新中")
         self.window.refresh()
         logger.info("All mylist update starting.")
+
         # 登録されたすべてのマイリストから現在のマイリスト情報を取得する
-        # マルチスレッド処理
+        # 処理中もGUIイベントを処理するため別スレッドで起動
         threading.Thread(target=self.UpdateAllMylistInfoThread,
                          args=(), daemon=True).start()
 
     def GetMylistInfoExecute(self, func, url, all_index_num):
-        # logger.info(url + ":start")
         self.done_count = self.done_count + 1
 
         loop = asyncio.new_event_loop()
@@ -51,7 +51,6 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         p_str = f"取得中({self.done_count}/{all_index_num})"
         self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
         logger.info(url + f" : getting done ... ({self.done_count}/{all_index_num}).")
-        # logger.info(url + ":end")
         return res
 
     def UpdateAllMylistInfoThread(self):
@@ -63,18 +62,19 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         all_index_num = len(m_list)
         func_list = []
         prev_video_lists = []
-        for i, record in enumerate(m_list):
+        for record in m_list:
             mylist_url = record.get("url")
             prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
             if not prev_video_list:
-                # func_list.append(GetMyListInfo.GetMyListInfo)  # 失敗する・・？
+                # 初めての動画情報取得ならページをレンダリングして取得
                 func_list.append(GetMyListInfo.AsyncGetMyListInfo)
             else:
+                # 既に動画情報が存在するならRSSから取得
                 func_list.append(GetMyListInfo.AsyncGetMyListInfoLightWeight)
             prev_video_lists.append(prev_video_list)
 
         # マルチスレッドですべてのマイリストの情報を取得する
-        # resultにすべてのthreadの結果を格納して以下で利用する
+        # resultにすべてのthreadの結果を格納して以降で利用する
         start = time.time()
         self.done_count = 0
         result = []
@@ -88,7 +88,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         elapsed_time = time.time() - start
         logger.info(f"All getting done elapsed_time : {elapsed_time:.2f} [sec]")
 
-        # すべてのマイリストの情報を更新する
+        # マルチスレッドですべてのマイリストの情報を更新する
         start = time.time()
         self.done_count = 0
         result_buf = []
@@ -105,8 +105,6 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
     def Working(self, m, prev_video_list, now_video_lists):
         # マルチスレッド内では各々のスレッドごとに新しくDBセッションを張る
-        # mylist_db = MylistDBCM(self.mylist_db.dbname)
-        # mylist_info_db = MylistInfoDBCM(self.mylist_info_db.dbname)
         mylist_db = MylistDBController(self.mylist_db.dbname)
         mylist_info_db = MylistInfoDBController(self.mylist_info_db.dbname)
         self.done_count = self.done_count + 1
@@ -183,11 +181,18 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
             records.append(r)
         mylist_info_db.UpsertFromList(records)
 
+        # マイリストの更新確認日時更新
+        # 新しい動画情報が追加されたかに関わらずchecked_atを更新する
+        dst = GetNowDatetime()
+        mylist_db.UpdateCheckdAt(mylist_url, dst)
+
         # マイリストの更新日時更新
+        # 新しい動画情報が追加されたときにupdated_atを更新する
         if add_new_video_flag:
             dst = GetNowDatetime()
             mylist_db.UpdateUpdatedAt(mylist_url, dst)
 
+        # プログレス表示
         all_index_num = len(now_video_lists)
         p_str = f"更新中({self.done_count}/{all_index_num})"
         self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
