@@ -42,7 +42,82 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         threading.Thread(target=self.UpdateAllMylistInfoThread,
                          args=(), daemon=True).start()
 
-    def GetMylistInfoExecute(self, func, url, all_index_num):
+    def GetTargetMylist(self):
+        """更新対象のマイリストを返す
+
+        Note:
+            ProcessUpdateAllMylistInfoにおいては対象はすべてのマイリストとなる
+            派生クラスでこのメソッドをオーバーライドして対象を調整する
+
+        Returns:
+            list[Mylist]: 更新対象のマイリストのリスト
+        """
+        m_list = self.mylist_db.Select()
+        return m_list
+
+    def GetFunctionList(self, m_list):
+        """それぞれのマイリストごとに初回ロードか確認し、
+           簡易版かレンダリング版かどちらで更新するかをリストで返す
+
+        Args:
+            m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
+                                   mylist_db.Select系の返り値
+
+        Returns:
+            list[Function]: それぞれのマイリストを更新するためのメソッドリスト
+        """
+        func_list = []
+        for record in m_list:
+            mylist_url = record.get("url")
+            prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            if not prev_video_list:
+                # 初めての動画情報取得ならページをレンダリングして取得
+                func_list.append(GetMyListInfo.AsyncGetMyListInfo)
+            else:
+                # 既に動画情報が存在するならRSSから取得
+                func_list.append(GetMyListInfo.AsyncGetMyListInfoLightWeight)
+        return func_list
+
+    def GetPrevVideoLists(self, m_list):
+        """それぞれのマイリストごとに既存のレコードを取得する
+
+        Args:
+            m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
+                                   mylist_db.Select系の返り値
+
+        Returns:
+            list[list[MylistInfo]]: それぞれのマイリストに含まれる動画情報のリストのリスト
+        """
+        prev_video_lists = []
+        for record in m_list:
+            mylist_url = record.get("url")
+            prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            prev_video_lists.append(prev_video_list)
+        return prev_video_lists
+
+    def GetMylistInfoExecute(self, func_list, m_list):
+        """それぞれのマイリストを引数に動画情報を取得する
+
+        Args:
+            func_list (list[Function]): それぞれのマイリストを更新するためのメソッドリスト
+            m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
+                                   mylist_db.Select系の返り値
+
+        Returns:
+            list[list[MylistInfo]]: それぞれのマイリストについて取得した動画情報のリストのリスト
+        """
+        result = []
+        all_index_num = len(m_list)
+        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
+            futures = []
+            for func, record in zip(func_list, m_list):
+                mylist_url = record.get("url")
+                future = executor.submit(self.GetMylistInfoWorker, func, mylist_url, all_index_num)
+                futures.append((mylist_url, future))
+            result = [(f[0], f[1].result()) for f in futures]
+        return result
+
+    def GetMylistInfoWorker(self, func, url, all_index_num):
         self.done_count = self.done_count + 1
 
         loop = asyncio.new_event_loop()
@@ -53,57 +128,29 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         logger.info(url + f" : getting done ... ({self.done_count}/{all_index_num}).")
         return res
 
-    def UpdateAllMylistInfoThread(self):
-        # 全てのマイリストを更新する（マルチスレッド前提）
+    def UpdateMylistInfoExecute(self, m_list, prev_video_lists, now_video_lists):
+        """それぞれのマイリスト情報を更新する
 
-        # それぞれのマイリストごとに初回ロードか確認し、
-        # 簡易版かレンダリングかどちらで更新するかを保持する
-        m_list = self.mylist_db.Select()
-        all_index_num = len(m_list)
-        func_list = []
-        prev_video_lists = []
-        for record in m_list:
-            mylist_url = record.get("url")
-            prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
-            if not prev_video_list:
-                # 初めての動画情報取得ならページをレンダリングして取得
-                func_list.append(GetMyListInfo.AsyncGetMyListInfo)
-            else:
-                # 既に動画情報が存在するならRSSから取得
-                func_list.append(GetMyListInfo.AsyncGetMyListInfoLightWeight)
-            prev_video_lists.append(prev_video_list)
+        Args:
+            m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
+                                   mylist_db.Select系の返り値
+            prev_video_lists (list[list[MylistInfo]]): それぞれのマイリストに含まれる動画情報のリストのリスト
+            now_video_lists (list[list[MylistInfo]]): それぞれのマイリストについて取得した動画情報のリストのリスト
 
-        # マルチスレッドですべてのマイリストの情報を取得する
-        # resultにすべてのthreadの結果を格納して以降で利用する
-        start = time.time()
-        self.done_count = 0
-        result = []
-        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
-            futures = []
-            for func, record in zip(func_list, m_list):
-                mylist_url = record.get("url")
-                future = executor.submit(self.GetMylistInfoExecute, func, mylist_url, all_index_num)
-                futures.append((mylist_url, future))
-            result = [(f[0], f[1].result()) for f in futures]
-        elapsed_time = time.time() - start
-        logger.info(f"All getting done elapsed_time : {elapsed_time:.2f} [sec]")
-
-        # マルチスレッドですべてのマイリストの情報を更新する
-        start = time.time()
-        self.done_count = 0
+        Returns:
+            list[int]: それぞれのマイリストについて動画情報を更新した際の結果のリスト
+                       成功で0, 失敗で-1が格納される
+        """
         result_buf = []
         with ThreadPoolExecutor(max_workers=8, thread_name_prefix="np_thread") as executor:
             futures = []
             for m, prev_video_list in zip(m_list, prev_video_lists):
-                future = executor.submit(self.Working, m, prev_video_list, result)
+                future = executor.submit(self.UpdateMylistInfoWorker, m, prev_video_list, now_video_lists)
                 futures.append((m.get("url"), future))
             result_buf = [(f[0], f[1].result()) for f in futures]
-        elapsed_time = time.time() - start
-        logger.info(f"All update done elapsed_time : {elapsed_time:.2f} [sec]")
+        return result_buf
 
-        self.window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
-
-    def Working(self, m, prev_video_list, now_video_lists):
+    def UpdateMylistInfoWorker(self, m, prev_video_list, now_video_lists):
         # マルチスレッド内では各々のスレッドごとに新しくDBセッションを張る
         mylist_db = MylistDBController(self.mylist_db.dbname)
         mylist_info_db = MylistInfoDBController(self.mylist_info_db.dbname)
@@ -198,6 +245,32 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
         logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
         return 0
+
+    def UpdateAllMylistInfoThread(self):
+        # 全てのマイリストを更新する（マルチスレッド前提）
+
+        # それぞれのマイリストごとに初回ロードか確認し、
+        # 簡易版かレンダリングかどちらで更新するかを保持する
+        m_list = self.GetTargetMylist()
+        func_list = self.GetFunctionList(m_list)
+        prev_video_lists = self.GetPrevVideoLists(m_list)
+
+        # マルチスレッドですべてのマイリストの情報を取得する
+        # now_video_listsにすべてのthreadの結果を格納して以降で利用する
+        start = time.time()
+        self.done_count = 0
+        now_video_lists = self.GetMylistInfoExecute(func_list, m_list)
+        elapsed_time = time.time() - start
+        logger.info(f"All getting done elapsed_time : {elapsed_time:.2f} [sec]")
+
+        # マルチスレッドですべてのマイリストの情報を更新する
+        start = time.time()
+        self.done_count = 0
+        result = self.UpdateMylistInfoExecute(m_list, prev_video_lists, now_video_lists)
+        elapsed_time = time.time() - start
+        logger.info(f"All update done elapsed_time : {elapsed_time:.2f} [sec]")
+
+        self.window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
 
 
 class ProcessUpdateAllMylistInfoThreadProgress(ProcessBase.ProcessBase):
