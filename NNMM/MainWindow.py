@@ -76,6 +76,9 @@ class MainWindow():
             "-ALL_UPDATE-": ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo,
             "-ALL_UPDATE_THREAD_PROGRESS-": ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadProgress,
             "-ALL_UPDATE_THREAD_DONE-": ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone,
+            "-PARTIAL_UPDATE-": ProcessUpdatePartialMylistInfo.ProcessUpdatePartialMylistInfo,
+            "-PARTIAL_UPDATE_THREAD_PROGRESS-": ProcessUpdatePartialMylistInfo.ProcessUpdatePartialMylistInfoThreadProgress,
+            "-PARTIAL_UPDATE_THREAD_DONE-": ProcessUpdatePartialMylistInfo.ProcessUpdatePartialMylistInfoThreadDone,
             "-C_CONFIG_SAVE-": ConfigMain.ProcessConfigSave,
             "-C_MYLIST_SAVE-": ConfigMain.ProcessMylistSaveCSV,
             "-C_MYLIST_LOAD-": ConfigMain.ProcessMylistLoadCSV,
@@ -102,9 +105,9 @@ class MainWindow():
             ]
         ]
         l_pane = [
-            [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 46), auto_size_text=True, right_click_menu=listbox_right_click_menu)],
-            [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Button(" all ", key="-ALL_UPDATE-"),
-             sg.Input("", key="-INPUT2-", size=(24, 10))],
+            [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 44), auto_size_text=True, right_click_menu=listbox_right_click_menu)],
+            [sg.Button(" partial(intarval update) ", key="-PARTIAL_UPDATE-"), sg.Button(" all(forced update) ", key="-ALL_UPDATE-")],
+            [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Input("", key="-INPUT2-", size=(24, 10))],
         ]
 
         # 右ペイン

@@ -6,6 +6,7 @@ from . import ProcessCreateMylist
 from . import ProcessDeleteMylist
 from . import ProcessUpdateMylistInfo
 from . import ProcessUpdateAllMylistInfo
+from . import ProcessUpdatePartialMylistInfo
 from . import ProcessMoveUp
 from . import ProcessMoveDown
 from . import ProcessWatchedMylist

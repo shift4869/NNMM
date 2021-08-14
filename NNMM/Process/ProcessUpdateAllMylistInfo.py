@@ -23,6 +23,15 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
     def __init__(self):
         super().__init__(True, False, "全マイリスト内容更新")
 
+        # ログメッセージ
+        self.L_START = "All mylist update starting."
+        self.L_GETTING_ELAPSED_TIME = "All getting done elapsed time"
+        self.L_UPDATE_ELAPSED_TIME = "All update done elapsed time"
+
+        # イベントキー
+        self.E_PROGRESS = "-ALL_UPDATE_THREAD_PROGRESS-"
+        self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
+
     def Run(self, mw):
         # -ALL_UPDATE-
         # 左下のすべて更新ボタンが押された場合
@@ -35,11 +44,11 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
         self.window["-INPUT2-"].update(value="更新中")
         self.window.refresh()
-        logger.info("All mylist update starting.")
+        logger.info(self.L_START)
 
         # 登録されたすべてのマイリストから現在のマイリスト情報を取得する
         # 処理中もGUIイベントを処理するため別スレッドで起動
-        threading.Thread(target=self.UpdateAllMylistInfoThread,
+        threading.Thread(target=self.UpdateMylistInfoThread,
                          args=(), daemon=True).start()
 
     def GetTargetMylist(self):
@@ -124,7 +133,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         res = loop.run_until_complete(func(url))
 
         p_str = f"取得中({self.done_count}/{all_index_num})"
-        self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
+        self.window.write_event_value(self.E_PROGRESS, p_str)
         logger.info(url + f" : getting done ... ({self.done_count}/{all_index_num}).")
         return res
 
@@ -242,11 +251,11 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # プログレス表示
         all_index_num = len(now_video_lists)
         p_str = f"更新中({self.done_count}/{all_index_num})"
-        self.window.write_event_value("-ALL_UPDATE_THREAD_PROGRESS-", p_str)
+        self.window.write_event_value(self.E_PROGRESS, p_str)
         logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
         return 0
 
-    def UpdateAllMylistInfoThread(self):
+    def UpdateMylistInfoThread(self):
         # 全てのマイリストを更新する（マルチスレッド前提）
 
         # それぞれのマイリストごとに初回ロードか確認し、
@@ -261,16 +270,16 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         self.done_count = 0
         now_video_lists = self.GetMylistInfoExecute(func_list, m_list)
         elapsed_time = time.time() - start
-        logger.info(f"All getting done elapsed_time : {elapsed_time:.2f} [sec]")
+        logger.info(f"{self.L_GETTING_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
 
         # マルチスレッドですべてのマイリストの情報を更新する
         start = time.time()
         self.done_count = 0
         result = self.UpdateMylistInfoExecute(m_list, prev_video_lists, now_video_lists)
         elapsed_time = time.time() - start
-        logger.info(f"All update done elapsed_time : {elapsed_time:.2f} [sec]")
+        logger.info(f"{self.L_UPDATE_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
 
-        self.window.write_event_value("-ALL_UPDATE_THREAD_DONE-", "")
+        self.window.write_event_value(self.E_DONE, "")
 
 
 class ProcessUpdateAllMylistInfoThreadProgress(ProcessBase.ProcessBase):
@@ -278,12 +287,15 @@ class ProcessUpdateAllMylistInfoThreadProgress(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(False, False, "全マイリスト内容更新")
 
+        # イベントキー
+        self.E_PROGRESS = "-ALL_UPDATE_THREAD_PROGRESS-"
+
     def Run(self, mw):
         # -ALL_UPDATE_THREAD_PROGRESS-
         # -ALL_UPDATE-処理中のプログレス
         self.window = mw.window
         self.values = mw.values
-        p_str = self.values["-ALL_UPDATE_THREAD_PROGRESS-"]
+        p_str = self.values[self.E_PROGRESS]
         self.window["-INPUT2-"].update(value=p_str)
 
 
@@ -291,6 +303,9 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
 
     def __init__(self):
         super().__init__(False, True, "全マイリスト内容更新")
+
+        # ログメッセージ
+        self.L_FINISH = "All mylist update finished."
 
     def Run(self, mw):
         # -ALL_UPDATE_THREAD_DONE-
@@ -329,7 +344,7 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)
 
-        logger.info("All mylist update finished.")
+        logger.info(self.L_FINISH)
 
 
 if __name__ == "__main__":
