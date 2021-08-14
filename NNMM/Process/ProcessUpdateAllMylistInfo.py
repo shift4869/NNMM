@@ -261,6 +261,11 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # それぞれのマイリストごとに初回ロードか確認し、
         # 簡易版かレンダリングかどちらで更新するかを保持する
         m_list = self.GetTargetMylist()
+        if not m_list:
+            logger.info(f"Target Mylist is nothing.")
+            self.window.write_event_value(self.E_DONE, "")
+            return 1
+
         func_list = self.GetFunctionList(m_list)
         prev_video_lists = self.GetPrevVideoLists(m_list)
 
@@ -280,6 +285,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         logger.info(f"{self.L_UPDATE_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
 
         self.window.write_event_value(self.E_DONE, "")
+        return 0
 
 
 class ProcessUpdateAllMylistInfoThreadProgress(ProcessBase.ProcessBase):

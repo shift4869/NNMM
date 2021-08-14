@@ -63,7 +63,9 @@ class ProcessTimer(ProcessBase.ProcessBase):
             pass
         else:
             # すべて更新ボタンが押された場合の処理を起動する
-            self.window.write_event_value("-ALL_UPDATE-", "")
+            # self.window.write_event_value("-ALL_UPDATE-", "")
+            # 一部更新ボタンが押された場合の処理を起動する
+            self.window.write_event_value("-PARTIAL_UPDATE-", "")
 
         # タイマーをセットして起動
         s_interval = interval * 60  # [min] -> [sec]
