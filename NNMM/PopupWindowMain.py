@@ -4,7 +4,6 @@ from logging import INFO, getLogger
 
 import PySimpleGUI as sg
 
-from NNMM.CSVSaveLoad import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
@@ -126,7 +125,7 @@ class PopupMylistWindow(PopupWindowBase):
             [sg.Column([[sg.Button("保存", key="-SAVE-"), sg.Button("終了", key="-EXIT-")]], justification="right")],
         ]
         layout = [[
-            sg.Frame("Config", cf)
+            sg.Frame(self.title, cf)
         ]]
         return layout
 
@@ -191,6 +190,87 @@ class PopupMylistWindowSave(ProcessBase.ProcessBase):
 
         logger.info("マイリスト情報Saved")
         return 0
+
+
+class PopupVideoWindow(PopupWindowBase):
+    
+    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
+        if process_name:
+            super().__init__(log_sflag, log_eflag, process_name)
+        else:
+            super().__init__(True, True, "動画情報ウィンドウ")
+
+    def MakeWindowLayout(self, mw):
+        # 画面のレイアウトを作成する
+        horizontal_line = "-" * 100
+        tsize = (20, 1)
+
+        r = self.record
+        id_index = r["id"]
+        video_id = r["video_id"]
+        title = r["title"]
+        username = r["username"]
+        status = r["status"]
+        uploaded_at = r["uploaded_at"]
+        video_url = r["video_url"]
+        mylist_url = r["mylist_url"]
+        created_at = r["created_at"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
+
+        cf = [
+            [sg.Text(horizontal_line)],
+            [sg.Text("ID", size=tsize, visible=False), sg.Text(f"{id_index}", key="-ID_INDEX-", visible=False)],
+            [sg.Text("動画ID", size=tsize), sg.Text(f"{video_id}", key="-USERNAME-")],
+            [sg.Text("動画名", size=tsize), sg.Text(f"{title}", key="-MYLISTNAME-")],
+            [sg.Text("投稿者", size=tsize), sg.Text(f"{username}", key="-TYPE-")],
+            [sg.Text("状況", size=tsize), sg.Text(f"{status}", key="-SHOWNAME-")],
+            [sg.Text("投稿日時", size=tsize), sg.Text(f"{uploaded_at}", key="-URL-")],
+            [sg.Text("動画URL", size=tsize), sg.Text(f"{video_url}", key="-CREATED_AT-")],
+            [sg.Text("マイリストURL", size=tsize), sg.Text(f"{mylist_url}", key="-UPDATED_AT-")],
+            [sg.Text("作成日時", size=tsize), sg.Text(f"{created_at}", key="-CHECKED_AT-")],
+            [sg.Text(horizontal_line)],
+            [sg.Text("")],
+            [sg.Text("")],
+            [sg.Column([[sg.Button("終了", key="-EXIT-")]], justification="right")],
+        ]
+        layout = [[
+            sg.Frame(self.title, cf)
+        ]]
+        return layout
+
+    def Init(self, mw):
+        # 初期化
+        # 親ウィンドウからの情報を取得する
+        window = mw.window
+        values = mw.values
+        self.mylist_db = mw.mylist_db
+        self.mylist_info_db = mw.mylist_info_db
+
+        mylist_url = values["-INPUT1-"]
+
+        # テーブルの行が選択されていなかったら何もしない
+        if not values["-TABLE-"]:
+            logger.info("Table row is none selected.")
+            return
+
+        # 選択されたテーブル行数
+        row = int(values["-TABLE-"][0])
+        # 現在のテーブルの全リスト
+        def_data = window["-TABLE-"].Values
+        # 選択されたテーブル行
+        selected = def_data[row]
+
+        records = self.mylist_info_db.SelectFromVideoID(selected[1])
+        record = [r for r in records if r["mylist_url"] == mylist_url]
+
+        if record and len(record) == 1:
+            record = record[0]
+
+        self.record = record
+
+        # 子ウィンドウの初期値
+        self.title = "動画情報"
+        self.size = (600, 600)
 
 
 if __name__ == "__main__":

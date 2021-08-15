@@ -61,6 +61,7 @@ class MainWindow():
             "未視聴にする::-TR-": ProcessNotWatched.ProcessNotWatched,
             "検索（動画名）::-TR-": ProcessSearch.ProcessVideoSearch,
             "強調表示を解除::-TR-": ProcessSearch.ProcessVideoSearchClear,
+            "情報表示::-TR-": PopupWindowMain.PopupVideoWindow,
             "上に移動::-MR-": ProcessMoveUp.ProcessMoveUp,
             "下に移動::-MR-": ProcessMoveDown.ProcessMoveDown,
             "視聴済にする（選択）::-MR-": ProcessWatchedMylist.ProcessWatchedMylist,
@@ -129,6 +130,8 @@ class MainWindow():
                 "---",
                 "検索（動画名）::-TR-",
                 "強調表示を解除::-TR-",
+                "---",
+                "情報表示::-TR-",
             ]
         ]
         table_style = {
