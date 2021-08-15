@@ -91,8 +91,9 @@ class PopupMylistWindow(PopupWindowBase):
 
     def MakeWindowLayout(self, mw):
         # 画面のレイアウトを作成する
-        horizontal_line = "-" * 100
-        tsize = (20, 1)
+        horizontal_line = "-" * 132
+        csize = (20, 1)
+        tsize = (50, 1)
 
         r = self.record
         id_index = r["id"]
@@ -106,23 +107,24 @@ class PopupMylistWindow(PopupWindowBase):
         checked_at = r["checked_at"]
         check_interval = r["check_interval"]
         is_include_new = "True" if r["is_include_new"] else "False"
+
         cf = [
             [sg.Text(horizontal_line)],
-            [sg.Text("ID", size=tsize, visible=False), sg.Text(f"{id_index}", key="-ID_INDEX-", visible=False)],
-            [sg.Text("ユーザー名", size=tsize), sg.Text(f"{username}", key="-USERNAME-")],
-            [sg.Text("マイリスト名", size=tsize), sg.Text(f"{mylistname}", key="-MYLISTNAME-")],
-            [sg.Text("種別", size=tsize), sg.Text(f"{typename}", key="-TYPE-")],
-            [sg.Text("表示名", size=tsize), sg.Text(f"{showname}", key="-SHOWNAME-")],
-            [sg.Text("URL", size=tsize), sg.Text(f"{url}", key="-URL-")],
-            [sg.Text("作成日時", size=tsize), sg.Text(f"{created_at}", key="-CREATED_AT-")],
-            [sg.Text("更新日時", size=tsize), sg.Text(f"{updated_at}", key="-UPDATED_AT-")],
-            [sg.Text("更新確認日時", size=tsize), sg.Text(f"{checked_at}", key="-CHECKED_AT-")],
-            [sg.Text("更新確認インターバル", size=tsize), sg.Input(f"{check_interval}", key="-CHECK_INTERVAL-")],
-            [sg.Text("未視聴フラグ", size=tsize), sg.Text(f"{is_include_new}", key="-IS_INCLUDE_NEW-")],
+            [sg.Text("ID", size=csize, visible=False), sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize)],
+            [sg.Text("ユーザー名", size=csize), sg.Input(f"{username}", key="-USERNAME-", readonly=True, size=tsize)],
+            [sg.Text("マイリスト名", size=csize), sg.Input(f"{mylistname}", key="-MYLISTNAME-", readonly=True, size=tsize)],
+            [sg.Text("種別", size=csize), sg.Input(f"{typename}", key="-TYPE-", readonly=True, size=tsize)],
+            [sg.Text("表示名", size=csize), sg.Input(f"{showname}", key="-SHOWNAME-", readonly=True, size=tsize)],
+            [sg.Text("URL", size=csize), sg.Input(f"{url}", key="-URL-", readonly=True, size=tsize)],
+            [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CREATED_AT-", readonly=True, size=tsize)],
+            [sg.Text("更新日時", size=csize), sg.Input(f"{updated_at}", key="-UPDATED_AT-", readonly=True, size=tsize)],
+            [sg.Text("更新確認日時", size=csize), sg.Input(f"{checked_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
+            [sg.Text("更新確認インターバル", size=csize), sg.Input(f"{check_interval}", key="-CHECK_INTERVAL-", background_color="light goldenrod", size=tsize)],
+            [sg.Text("未視聴フラグ", size=csize), sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize)],
             [sg.Text(horizontal_line)],
             [sg.Text("")],
             [sg.Text("")],
-            [sg.Column([[sg.Button("保存", key="-SAVE-"), sg.Button("終了", key="-EXIT-")]], justification="right")],
+            [sg.Column([[sg.Button("保存", key="-SAVE-"), sg.Button("閉じる", key="-EXIT-")]], justification="right")],
         ]
         layout = [[
             sg.Frame(self.title, cf)
@@ -153,7 +155,7 @@ class PopupMylistWindow(PopupWindowBase):
 
         # 子ウィンドウの初期値
         self.title = "マイリスト情報"
-        self.size = (600, 600)
+        self.size = (580, 450)
         self.ep_dict = {
             "-SAVE-": PopupMylistWindowSave,
         }
@@ -202,8 +204,9 @@ class PopupVideoWindow(PopupWindowBase):
 
     def MakeWindowLayout(self, mw):
         # 画面のレイアウトを作成する
-        horizontal_line = "-" * 100
-        tsize = (20, 1)
+        horizontal_line = "-" * 132
+        csize = (20, 1)
+        tsize = (50, 1)
 
         r = self.record
         id_index = r["id"]
@@ -219,19 +222,19 @@ class PopupVideoWindow(PopupWindowBase):
 
         cf = [
             [sg.Text(horizontal_line)],
-            [sg.Text("ID", size=tsize, visible=False), sg.Text(f"{id_index}", key="-ID_INDEX-", visible=False)],
-            [sg.Text("動画ID", size=tsize), sg.Text(f"{video_id}", key="-USERNAME-")],
-            [sg.Text("動画名", size=tsize), sg.Text(f"{title}", key="-MYLISTNAME-")],
-            [sg.Text("投稿者", size=tsize), sg.Text(f"{username}", key="-TYPE-")],
-            [sg.Text("状況", size=tsize), sg.Text(f"{status}", key="-SHOWNAME-")],
-            [sg.Text("投稿日時", size=tsize), sg.Text(f"{uploaded_at}", key="-URL-")],
-            [sg.Text("動画URL", size=tsize), sg.Text(f"{video_url}", key="-CREATED_AT-")],
-            [sg.Text("マイリストURL", size=tsize), sg.Text(f"{mylist_url}", key="-UPDATED_AT-")],
-            [sg.Text("作成日時", size=tsize), sg.Text(f"{created_at}", key="-CHECKED_AT-")],
+            [sg.Text("ID", size=csize, visible=False), sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize)],
+            [sg.Text("動画ID", size=csize), sg.Input(f"{video_id}", key="-USERNAME-", readonly=True, size=tsize)],
+            [sg.Text("動画名", size=csize), sg.Input(f"{title}", key="-MYLISTNAME-", readonly=True, size=tsize)],
+            [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
+            [sg.Text("状況", size=csize), sg.Input(f"{status}", key="-SHOWNAME-", readonly=True, size=tsize)],
+            [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
+            [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
+            [sg.Text("マイリストURL", size=csize), sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize)],
+            [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
             [sg.Text(horizontal_line)],
             [sg.Text("")],
             [sg.Text("")],
-            [sg.Column([[sg.Button("終了", key="-EXIT-")]], justification="right")],
+            [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
         ]
         layout = [[
             sg.Frame(self.title, cf)
@@ -270,7 +273,7 @@ class PopupVideoWindow(PopupWindowBase):
 
         # 子ウィンドウの初期値
         self.title = "動画情報"
-        self.size = (600, 600)
+        self.size = (580, 400)
 
 
 if __name__ == "__main__":
