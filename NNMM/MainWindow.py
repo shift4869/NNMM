@@ -7,6 +7,7 @@ import PySimpleGUI as sg
 
 from NNMM import ConfigMain
 from NNMM import Timer
+from NNMM import PopupWindowMain
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
@@ -67,6 +68,7 @@ class MainWindow():
             "検索（マイリスト名）::-MR-": ProcessSearch.ProcessMylistSearch,
             "検索（動画名）::-MR-": ProcessSearch.ProcessMylistSearchFromVideo,
             "強調表示を解除::-MR-": ProcessSearch.ProcessMylistSearchClear,
+            "情報表示::-MR-": PopupWindowMain.PopupMylistWindow,
             "-LIST-+DOUBLE CLICK+": ProcessShowMylistInfo.ProcessShowMylistInfo,
             "-CREATE-": ProcessCreateMylist.ProcessCreateMylist,
             "-CREATE_THREAD_DONE-": ProcessCreateMylist.ProcessCreateMylistThreadDone,
@@ -102,6 +104,8 @@ class MainWindow():
                 "検索（マイリスト名）::-MR-",
                 "検索（動画名）::-MR-",
                 "強調表示を解除::-MR-",
+                "---",
+                "情報表示::-MR-",
             ]
         ]
         l_pane = [
