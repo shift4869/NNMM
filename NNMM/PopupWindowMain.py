@@ -50,7 +50,7 @@ class PopupWindowBase(ProcessBase.ProcessBase):
             return -1
 
         # ウィンドウオブジェクト作成
-        self.window = sg.Window(self.title, layout, size=self.size, finalize=True, resizable=True)
+        self.window = sg.Window(self.title, layout, size=self.size, finalize=True, resizable=True, modal=True)
 
         # イベントのループ
         while True:
