@@ -1,5 +1,6 @@
 # coding: utf-8
 import re
+import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -111,30 +112,39 @@ class MylistInfoDBController(DBControllerBase):
         session.commit()
 
         # レコード登録
-        for record in records:
-            video_id = record.get("video_id")
-            title = record.get("title")
-            username = record.get("username")
-            status = record.get("status")
-            uploaded_at = record.get("uploaded_at")
-            video_url = record.get("video_url")
-            mylist_url = record.get("mylist_url")
-            created_at = record.get("created_at")
+        success = False
+        try:
+            for record in records:
+                video_id = record.get("video_id")
+                title = record.get("title")
+                username = record.get("username")
+                status = record.get("status")
+                uploaded_at = record.get("uploaded_at")
+                video_url = record.get("video_url")
+                mylist_url = record.get("mylist_url")
+                created_at = record.get("created_at")
 
-            r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
+                r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
 
-            try:
-                q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
-                ex = q.one()
-            except NoResultFound:
-                # INSERT
-                session.add(r)
-                res = 0
-            else:
-                res = -1
-                raise SQLAlchemyError
+                try:
+                    q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
+                    ex = q.one()
+                except NoResultFound:
+                    # INSERT
+                    session.add(r)
+                    res = 0
+                else:
+                    res = -1
+                    raise SQLAlchemyError
 
-        session.commit()
+            session.commit()
+            success = true
+        except Exception:
+            # commitに失敗した場合は何もしないで終了させる
+            # TODO::何かうまい処理を考える
+            time.sleep(1)
+            pass
+
         session.close()
 
         return res
