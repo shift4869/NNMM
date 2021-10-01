@@ -18,7 +18,7 @@ DEBUG = False
 class DBControllerBase(metaclass=ABCMeta):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         self.dbname = db_fullpath
-        self.engine = create_engine(f"sqlite:///{self.dbname}", echo=False)
+        self.engine = create_engine(f"sqlite:///{self.dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
         Base.metadata.create_all(self.engine)
 
     @abstractmethod

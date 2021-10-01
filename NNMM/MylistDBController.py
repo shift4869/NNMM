@@ -131,7 +131,7 @@ class MylistDBController(DBControllerBase):
         # UPDATE対象をSELECT
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
-        record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).with_for_update().first()
 
         # 存在しない場合はエラー
         if not record:
@@ -162,7 +162,7 @@ class MylistDBController(DBControllerBase):
         # UPDATE対象をSELECT
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
-        record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).with_for_update().first()
 
         # 存在しない場合はエラー
         if not record:
@@ -195,7 +195,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
 
         # 対象レコード
-        record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).with_for_update().first()
         if not record:
             session.close()
             return -1

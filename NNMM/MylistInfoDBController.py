@@ -1,6 +1,7 @@
 # coding: utf-8
 import re
 import time
+import traceback
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -95,21 +96,28 @@ class MylistInfoDBController(DBControllerBase):
         res = -1
 
         # 既に存在しているレコードは削除しておく
-        for record in records:
-            video_id = record.get("video_id")
-            mylist_url = record.get("mylist_url")
+        try:
+            for record in records:
+                video_id = record.get("video_id")
+                mylist_url = record.get("mylist_url")
 
-            try:
-                q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url))
-                ex = q.one()
-            except NoResultFound:
-                pass
-            else:
-                # UPDATEは実質DELETE->INSERTと同じとする
-                session.delete(ex)
-                res = 1
+                try:
+                    q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url))
+                    ex = q.with_for_update().one()
+                except NoResultFound:
+                    pass
+                else:
+                    # UPDATEは実質DELETE->INSERTと同じとする
+                    session.delete(ex)
+                    res = 1
 
-        session.commit()
+            session.commit()
+        except Exception as e:
+            # commitに失敗した場合は何もしないで終了させる
+            # TODO::何かうまい処理を考える
+            time.sleep(1)
+            print(traceback.format_exc())
+            pass
 
         # レコード登録
         success = False
@@ -128,7 +136,7 @@ class MylistInfoDBController(DBControllerBase):
 
                 try:
                     q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
-                    ex = q.one()
+                    ex = q.with_for_update().one()
                 except NoResultFound:
                     # INSERT
                     session.add(r)
@@ -139,10 +147,11 @@ class MylistInfoDBController(DBControllerBase):
 
             session.commit()
             success = true
-        except Exception:
+        except Exception as e:
             # commitに失敗した場合は何もしないで終了させる
             # TODO::何かうまい処理を考える
             time.sleep(1)
+            print(traceback.format_exc())
             pass
 
         session.close()
@@ -257,7 +266,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         records = session.query(MylistInfo).filter(
             MylistInfo.mylist_url == mylist_url
-        )
+        ).with_for_update()
 
         # 1件も存在しない場合はエラー
         if not records:
