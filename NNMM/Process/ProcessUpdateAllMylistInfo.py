@@ -117,7 +117,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         """
         result = []
         all_index_num = len(m_list)
-        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
+        with ThreadPoolExecutor(max_workers=8, thread_name_prefix="ap_thread") as executor:
             futures = []
             for func, record in zip(func_list, m_list):
                 mylist_url = record.get("url")
@@ -133,7 +133,8 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         res = loop.run_until_complete(func(url))
 
         p_str = f"取得中({self.done_count}/{all_index_num})"
-        self.window.write_event_value(self.E_PROGRESS, p_str)
+        # self.window.write_event_value(self.E_PROGRESS, p_str)
+        self.window["-INPUT2-"].update(value=p_str)
         logger.info(url + f" : getting done ... ({self.done_count}/{all_index_num}).")
         return res
 
@@ -251,7 +252,8 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # プログレス表示
         all_index_num = len(now_video_lists)
         p_str = f"更新中({self.done_count}/{all_index_num})"
-        self.window.write_event_value(self.E_PROGRESS, p_str)
+        # self.window.write_event_value(self.E_PROGRESS, p_str)
+        self.window["-INPUT2-"].update(value=p_str)
         logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
         return 0
 

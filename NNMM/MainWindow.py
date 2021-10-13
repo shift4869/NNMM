@@ -191,13 +191,13 @@ class MainWindow():
                 self.values = values
                 pb = self.ep_dict.get(event)()
 
-                if pb.log_sflag:
-                    logger.info(f'"{pb.process_name}" starting.')
+                # if pb.log_sflag:
+                #     logger.info(f'"{pb.process_name}" starting.')
 
                 pb.Run(self)
 
-                if pb.log_eflag:
-                    logger.info(f'"{pb.process_name}" finished.')
+                # if pb.log_eflag:
+                #     logger.info(f'"{pb.process_name}" finished.')
 
             if event == "-TAB_CHANGED-":
                 select_tab = values["-TAB_CHANGED-"]
