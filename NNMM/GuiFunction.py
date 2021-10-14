@@ -64,6 +64,41 @@ def IsMylistIncludeNewVideo(table_list: list):
     return False
 
 
+def IntervalTranslation(interval_str: str) -> int:
+    """インターバルを解釈する関数
+
+    Note:
+        次のいずれかにが想定されている
+        ["n分","n時間","n日","n週間","nヶ月"]
+
+    Args:
+        interval_str (str): インターバルを表す文字列
+
+    Returns:
+        int: 成功時 分[min]を表す数値、失敗時 -1
+    """
+    pattern = "^([0-9]+)分$"
+    if re.findall(pattern, interval_str):
+        return int(re.findall(pattern, interval_str)[0])
+
+    pattern = "^([0-9]+)時間$"
+    if re.findall(pattern, interval_str):
+        return int(re.findall(pattern, interval_str)[0]) * 60
+
+    pattern = "^([0-9]+)日$"
+    if re.findall(pattern, interval_str):
+        return int(re.findall(pattern, interval_str)[0]) * 60 * 24
+
+    pattern = "^([0-9]+)週間$"
+    if re.findall(pattern, interval_str):
+        return int(re.findall(pattern, interval_str)[0]) * 60 * 24 * 7
+
+    pattern = "^([0-9]+)ヶ月$"
+    if re.findall(pattern, interval_str):
+        return int(re.findall(pattern, interval_str)[0]) * 60 * 24 * 31  # 月は正確ではない28,29,30,31
+    return -1
+
+
 def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController):
     # 現在マイリストが選択中の場合indexを保存
     index = 0

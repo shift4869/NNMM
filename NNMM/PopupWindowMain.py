@@ -6,6 +6,7 @@ import PySimpleGUI as sg
 
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
+from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
 
 logger = getLogger("root")
@@ -186,6 +187,13 @@ class PopupMylistWindowSave(ProcessBase.ProcessBase):
         updated_at = self.window["-UPDATED_AT-"].get()
         checked_at = self.window["-CHECKED_AT-"].get()
         check_interval = self.window["-CHECK_INTERVAL-"].get()
+        interval_str = str(check_interval)
+        dt = IntervalTranslation(interval_str) - 1
+        if dt < -1:
+            # インターバル文字列解釈エラー
+            logger.error(f"update interval setting is invalid : {interval_str}")
+            sg.popup_ok("インターバル文字列が不正です。")
+            return -1
         is_include_new = str(self.window["-IS_INCLUDE_NEW-"].get()) == "True"
 
         self.mylist_db.Upsert(id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)

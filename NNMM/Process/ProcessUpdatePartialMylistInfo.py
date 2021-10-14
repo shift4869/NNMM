@@ -36,39 +36,18 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateAllMylistInfo):
         result = []
         m_list = self.mylist_db.Select()
 
-        # デバッグ用：すべてのマイリストを対象とする
-        # return m_list
-
-        # インターバルを解釈する関数
-        def IntervalTranslation(interval_str: str) -> int:
-            pattern = "^([0-9]+)分$"
-            if re.findall(pattern, interval_str):
-                return int(re.findall(pattern, interval_str)[0])
-
-            pattern = "^([0-9]+)時間$"
-            if re.findall(pattern, interval_str):
-                return int(re.findall(pattern, interval_str)[0]) * 60
-
-            pattern = "^([0-9]+)日$"
-            if re.findall(pattern, interval_str):
-                return int(re.findall(pattern, interval_str)[0]) * 60 * 24
-
-            pattern = "^([0-9]+)週間$"
-            if re.findall(pattern, interval_str):
-                return int(re.findall(pattern, interval_str)[0]) * 60 * 24 * 7
-
-            pattern = "^([0-9]+)ヶ月$"
-            if re.findall(pattern, interval_str):
-                return int(re.findall(pattern, interval_str)[0]) * 60 * 24 * 31  # 月は正確ではない28,29,30,31
-            return 0
-
         # 前回更新確認時からインターバル分だけ経過しているもののみ更新対象とする
         td_format = "%Y/%m/%d %H:%M"
         dts_format = "%Y-%m-%d %H:%M:%S"
         now_dst = datetime.now()
         for m in m_list:
             checked_dst = datetime.strptime(m["checked_at"], dts_format)
-            dt = IntervalTranslation(m["check_interval"]) - 1
+            interval_str = str(m["check_interval"])
+            dt = IntervalTranslation(interval_str) - 1
+            if dt < -1:
+                # インターバル文字列解釈エラー
+                logger.error(f"update interval setting is invalid : {interval_str}")
+                continue
             predict_dst = checked_dst + timedelta(minutes=dt)
             if predict_dst < now_dst:
                 result.append(m)
