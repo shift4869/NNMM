@@ -60,7 +60,8 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url"]
         # async
         loop = asyncio.new_event_loop()
-        now_video_list = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(mylist_url))
+        # pyppeteerが一時的にpython3.10で使えないためRSS経由としておく
+        now_video_list = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(mylist_url))
         s_record = now_video_list[0]
         self.window["-INPUT2-"].update(value="")
 

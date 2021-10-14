@@ -26,8 +26,8 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
 
     Notes:
         table_colsをキーとする情報を辞書で返す
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
         RSSは取得が速い代わりに最大30件までしか情報を取得できない
 
     Args:
@@ -76,8 +76,8 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
 
     # ループ脱出後はRSS取得が正常に行えたことが保証されている
     # 動画情報を集める
-    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
-    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
     mylist_url = url
 
     # 投稿者収集
@@ -90,6 +90,43 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     elif url_type == "mylist":
         pattern = "^(.*) さんの公開マイリスト‐ニコニコ動画$"
     username = re.findall(pattern, title_lx[0].text)[0]
+
+    # マイリスト名収集
+    showname = ""
+    myshowname = ""
+    if url_type == "uploaded":
+        showname = f"{username}さんの投稿動画"
+        myshowname = "投稿動画"
+    elif url_type == "mylist":
+        # マイリストRSSにはマイリスト名が存在しない？ため
+        # url(RSSではなくページそのもの)をもう一度リクエストしてタイトルから取得する
+        test_count = 0
+        while True:
+            # 失敗時は繰り返す（最大{MAX_TEST_NUM}回）
+            try:
+                response2 = await loop.run_in_executor(None, requests.get, url)
+                response2.raise_for_status()
+                soup2 = BeautifulSoup(response2.text, "lxml-xml")
+            except Exception:
+                pass
+
+            if soup2:
+                break  # 取得成功
+
+            if test_count > MAX_TEST_NUM:
+                break  # 取得失敗
+            test_count = test_count + 1
+            sleep(3)
+
+        # {MAX_TEST_NUM}回requests.getしても失敗した場合はエラー
+        if (test_count > MAX_TEST_NUM) or (soup2 is None):
+            return []
+
+        # タイトルからマイリスト名を取得する
+        title_lx = soup2.find_all("title")
+        pattern = f"^「(.*)」 {username}さんの公開マイリスト - ニコニコ$"
+        myshowname = re.findall(pattern, title_lx[0].text)[0]
+        showname = f"「{myshowname}」-{username}さんのマイリスト"
 
     # 投稿者ID
     userid = ""
@@ -153,7 +190,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
         if now_date < datetime.strptime(uploaded, dts_format):
             continue
 
-        value_list = [-1, video_id, title, username, "", uploaded, video_url, mylist_url]
+        value_list = [-1, video_id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
         res.append(dict(zip(table_cols, value_list)))
    
     # 重複処理
