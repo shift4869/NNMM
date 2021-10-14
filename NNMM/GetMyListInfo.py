@@ -100,6 +100,8 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     elif url_type == "mylist":
         # マイリストRSSにはマイリスト名が存在しない？ため
         # url(RSSではなくページそのもの)をもう一度リクエストしてタイトルから取得する
+        loop = asyncio.get_event_loop()
+        soup2 = []
         test_count = 0
         while True:
             # 失敗時は繰り返す（最大{MAX_TEST_NUM}回）
