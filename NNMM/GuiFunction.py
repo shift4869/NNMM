@@ -68,7 +68,7 @@ def IntervalTranslation(interval_str: str) -> int:
     """インターバルを解釈する関数
 
     Note:
-        次のいずれかにが想定されている
+        次のいずれかが想定されている
         ["n分","n時間","n日","n週間","nヶ月"]
 
     Args:

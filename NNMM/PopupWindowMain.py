@@ -95,6 +95,7 @@ class PopupMylistWindow(PopupWindowBase):
         horizontal_line = "-" * 132
         csize = (20, 1)
         tsize = (50, 1)
+        thsize = (5, 1)
 
         r = self.record
         id_index = r["id"]
@@ -106,8 +107,16 @@ class PopupMylistWindow(PopupWindowBase):
         created_at = r["created_at"]
         updated_at = r["updated_at"]
         checked_at = r["checked_at"]
-        check_interval = r["check_interval"]
         is_include_new = "True" if r["is_include_new"] else "False"
+
+        # インターバル文字列をパース
+        unit_list = ["分", "時間", "日", "週間", "ヶ月"]
+        check_interval = r["check_interval"]
+        t = str(check_interval)
+        for u in unit_list:
+            t = t.replace(u, "")
+        check_interval_num = int(t)
+        check_interval_unit = str(check_interval).replace(str(t), "")
 
         cf = [
             [sg.Text(horizontal_line)],
@@ -120,7 +129,9 @@ class PopupMylistWindow(PopupWindowBase):
             [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CREATED_AT-", readonly=True, size=tsize)],
             [sg.Text("更新日時", size=csize), sg.Input(f"{updated_at}", key="-UPDATED_AT-", readonly=True, size=tsize)],
             [sg.Text("更新確認日時", size=csize), sg.Input(f"{checked_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
-            [sg.Text("更新確認インターバル", size=csize), sg.Input(f"{check_interval}", key="-CHECK_INTERVAL-", background_color="light goldenrod", size=tsize)],
+            [sg.Text("更新確認インターバル", size=csize),
+                sg.InputCombo([i for i in range(1, 60)], default_value=check_interval_num, key="-CHECK_INTERVAL_NUM-", background_color="light goldenrod", size=thsize),
+                sg.InputCombo(unit_list, default_value=check_interval_unit, key="-CHECK_INTERVAL_UNIT-", background_color="light goldenrod", size=thsize)],
             [sg.Text("未視聴フラグ", size=csize), sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize)],
             [sg.Text(horizontal_line)],
             [sg.Text("")],
@@ -186,15 +197,19 @@ class PopupMylistWindowSave(ProcessBase.ProcessBase):
         created_at = self.window["-CREATED_AT-"].get()
         updated_at = self.window["-UPDATED_AT-"].get()
         checked_at = self.window["-CHECKED_AT-"].get()
-        check_interval = self.window["-CHECK_INTERVAL-"].get()
-        interval_str = str(check_interval)
+        is_include_new = str(self.window["-IS_INCLUDE_NEW-"].get()) == "True"
+
+        # インターバル文字列を結合して解釈できるかどうか確認する
+        check_interval_num = self.window["-CHECK_INTERVAL_NUM-"].get()
+        check_interval_unit = self.window["-CHECK_INTERVAL_UNIT-"].get()
+        check_interval = str(check_interval_num) + check_interval_unit
+        interval_str = check_interval
         dt = IntervalTranslation(interval_str) - 1
         if dt < -1:
             # インターバル文字列解釈エラー
             logger.error(f"update interval setting is invalid : {interval_str}")
             sg.popup_ok("インターバル文字列が不正です。")
             return -1
-        is_include_new = str(self.window["-IS_INCLUDE_NEW-"].get()) == "True"
 
         self.mylist_db.Upsert(id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)
 
