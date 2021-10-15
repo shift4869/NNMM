@@ -38,6 +38,26 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     """
     # 入力チェック
     url_type = GuiFunction.GetURLType(url)
+    if url_type == "":
+        return []
+
+    # 投稿者IDとマイリストID取得
+    userid = ""
+    mylistid = ""
+    if url_type == "uploaded":
+        pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
+        userid = re.findall(pattern, url)[0]
+        # mylistidは空白のまま
+    elif url_type == "mylist":
+        pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
+        userid, mylistid = re.findall(pattern, url)[0]
+
+    # マイリストのURLならRSSが取得できるURLに加工
+    request_url = url
+    if url_type == "mylist":
+        pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
+        request_url = re.sub("/user/[0-9]+", "", request_url)  # /user/{userid} 部分を削除
+        # "https://www.nicovideo.jp/mylist/[0-9]+/?rss=2.0" 形式でないとそのマイリストのRSSが取得できない
 
     # RSS取得
     loop = asyncio.get_event_loop()
@@ -48,7 +68,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
         # 失敗時は繰り返す（最大{MAX_TEST_NUM}回）
         try:
             # response = await loop.run_in_executor(None, requests.get, url + "?rss=atom")
-            response = await loop.run_in_executor(None, requests.get, url + "?rss=2.0")
+            response = await loop.run_in_executor(None, requests.get, request_url + "?rss=2.0")
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "lxml-xml")
         except Exception:
@@ -67,7 +87,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
         return []
 
     # RSS一時保存（DEBUG用）
-    # config = ConfigMain.global_config
+    # config = ConfigMain.ProcessConfigBase.GetConfig()
     # rd_str = config["general"].get("rss_save_path", "")
     # rd_path = Path(rd_str)
     # rd_path.mkdir(exist_ok=True, parents=True)
@@ -81,64 +101,30 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     mylist_url = url
 
     # 投稿者収集
-    # ひとまず投稿動画の投稿者のみ（単一）
     username = ""
-    title_lx = soup.find_all("title")
-    pattern = ""
     if url_type == "uploaded":
+        # 投稿動画の場合はタイトルからユーザー名を取得
+        title_lx = soup.find_all("title")
         pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
+        username = re.findall(pattern, title_lx[0].text)[0]
     elif url_type == "mylist":
-        pattern = "^(.*) さんの公開マイリスト‐ニコニコ動画$"
-    username = re.findall(pattern, title_lx[0].text)[0]
+        # マイリストの場合は作成者からユーザー名を取得
+        creator_lx = soup.find_all("dc:creator")
+        username = creator_lx[0].text
 
     # マイリスト名収集
     showname = ""
     myshowname = ""
     if url_type == "uploaded":
-        showname = f"{username}さんの投稿動画"
+        # 投稿動画の場合はマイリスト名がないのでユーザー名と合わせて便宜上の名前に設定
         myshowname = "投稿動画"
+        showname = f"{username}さんの投稿動画"
     elif url_type == "mylist":
-        # マイリストRSSにはマイリスト名が存在しない？ため
-        # url(RSSではなくページそのもの)をもう一度リクエストしてタイトルから取得する
-        loop = asyncio.get_event_loop()
-        soup2 = []
-        test_count = 0
-        while True:
-            # 失敗時は繰り返す（最大{MAX_TEST_NUM}回）
-            try:
-                response2 = await loop.run_in_executor(None, requests.get, url)
-                response2.raise_for_status()
-                soup2 = BeautifulSoup(response2.text, "lxml-xml")
-            except Exception:
-                pass
-
-            if soup2:
-                break  # 取得成功
-
-            if test_count > MAX_TEST_NUM:
-                break  # 取得失敗
-            test_count = test_count + 1
-            sleep(3)
-
-        # {MAX_TEST_NUM}回requests.getしても失敗した場合はエラー
-        if (test_count > MAX_TEST_NUM) or (soup2 is None):
-            return []
-
-        # タイトルからマイリスト名を取得する
-        title_lx = soup2.find_all("title")
-        pattern = f"^「(.*)」 {username}さんの公開マイリスト - ニコニコ$"
+        # マイリストの場合はタイトルから取得
+        title_lx = soup.find_all("title")
+        pattern = "^マイリスト (.*)‐ニコニコ動画$"
         myshowname = re.findall(pattern, title_lx[0].text)[0]
         showname = f"「{myshowname}」-{username}さんのマイリスト"
-
-    # 投稿者ID
-    userid = ""
-    mylistid = ""
-    if url_type == "uploaded":
-        pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
-        userid = re.findall(pattern, url)[0]
-    elif url_type == "mylist":
-        pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
-        userid, mylistid = re.findall(pattern, url)[0]
 
     # RSS保存
     config = ConfigMain.ProcessConfigBase.GetConfig()
@@ -345,7 +331,8 @@ if __name__ == "__main__":
     ConfigMain.ProcessConfigBase.SetConfig()
 
     # url = "https://www.nicovideo.jp/user/37896001/video"
-    url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
+    url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
 
     loop = asyncio.new_event_loop()
     video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))

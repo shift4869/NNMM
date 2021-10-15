@@ -1,5 +1,6 @@
 # coding: utf-8
 import asyncio
+import urllib.parse
 from logging import INFO, getLogger
 
 import PySimpleGUI as sg
@@ -37,6 +38,11 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
             mylist_url = self.values["-INPUT2-"]
             if mylist_url == "":
                 return
+
+        # クエリ除去
+        mylist_url = urllib.parse.urlunparse(
+            urllib.parse.urlparse(mylist_url)._replace(query=None)
+        )
 
         # 既存マイリストと重複していた場合何もしない
         prev_mylist = self.mylist_db.SelectFromURL(mylist_url)
