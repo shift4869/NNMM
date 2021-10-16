@@ -429,4 +429,6 @@ if __name__ == "__main__":
     db_fullpath = Path("test.db")
     mylist_info_db = MylistInfoDBController(db_fullpath=str(db_fullpath))
 
+    if db_fullpath.is_file():
+        db_fullpath.unlink()
     pass
