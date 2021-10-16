@@ -50,16 +50,21 @@ class MylistInfoDBController(DBControllerBase):
 
         try:
             q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
-            ex = q.one()
+            p = q.one()
         except NoResultFound:
             # INSERT
             session.add(r)
             res = 0
         else:
-            # UPDATEは実質DELETE->INSERTと同じとする
-            session.delete(ex)
-            session.commit()
-            session.add(r)
+            # UPDATE
+            p.video_id = r.video_id
+            p.title = r.title
+            p.username = r.username
+            p.status = r.status
+            p.uploaded_at = r.uploaded_at
+            p.video_url = r.video_url
+            p.mylist_url = r.mylist_url
+            p.created_at = r.created_at
             res = 1
 
         session.commit()
@@ -89,35 +94,11 @@ class MylistInfoDBController(DBControllerBase):
                     created_at (str): 作成日時
 
         Returns:
-            int: 0(成功,新規追加), 1(成功,更新), other(失敗)
+            int: 0(成功,すべて新規追加の場合), 1(成功,1つでも更新したレコードがある場合), other(失敗)
         """
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
-        res = -1
-
-        # 既に存在しているレコードは削除しておく
-        try:
-            for record in records:
-                video_id = record.get("video_id")
-                mylist_url = record.get("mylist_url")
-
-                try:
-                    q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url))
-                    ex = q.with_for_update().one()
-                except NoResultFound:
-                    pass
-                else:
-                    # UPDATEは実質DELETE->INSERTと同じとする
-                    session.delete(ex)
-                    res = 1
-
-            session.commit()
-        except Exception as e:
-            # commitに失敗した場合は何もしないで終了させる
-            # TODO::何かうまい処理を考える
-            time.sleep(1)
-            print(traceback.format_exc())
-            pass
+        r_res = []
 
         # レコード登録
         success = False
@@ -136,14 +117,22 @@ class MylistInfoDBController(DBControllerBase):
 
                 try:
                     q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
-                    ex = q.with_for_update().one()
+                    p = q.with_for_update().one()
                 except NoResultFound:
                     # INSERT
                     session.add(r)
-                    res = 0
+                    r_res.append(0)
                 else:
-                    res = -1
-                    raise SQLAlchemyError
+                    # UPDATE
+                    p.video_id = r.video_id
+                    p.title = r.title
+                    p.username = r.username
+                    p.status = r.status
+                    p.uploaded_at = r.uploaded_at
+                    p.video_url = r.video_url
+                    p.mylist_url = r.mylist_url
+                    p.created_at = r.created_at
+                    r_res.append(1)
 
             session.commit()
             success = true
@@ -156,6 +145,10 @@ class MylistInfoDBController(DBControllerBase):
 
         session.close()
 
+        if len(r_res) == 0:
+            return -1
+
+        res = 1 if r_res.count(1) > 0 else 0
         return res
 
     def UpdateStatus(self, video_id, mylist_url, status=""):
@@ -185,7 +178,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         record = session.query(MylistInfo).filter(
             and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url)
-        ).first()
+        ).with_for_update().first()
 
         # 存在しない場合はエラー
         if not record:
@@ -227,10 +220,10 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         records = session.query(MylistInfo).filter(
             MylistInfo.mylist_url == mylist_url
-        )
+        ).with_for_update()
 
         # 1件も存在しない場合はエラー
-        if not records:
+        if not records.first():
             session.close()
             return 1
 
@@ -252,7 +245,6 @@ class MylistInfoDBController(DBControllerBase):
 
         Note:
             "update MylistInfo set username = {username} where mylist_url = {mylist_url}"
-            shownameも更新する
 
         Args:
             mylist_url (str): マイリストURL
@@ -269,7 +261,7 @@ class MylistInfoDBController(DBControllerBase):
         ).with_for_update()
 
         # 1件も存在しない場合はエラー
-        if not records:
+        if not records.first():
             session.close()
             return 1
 
@@ -282,18 +274,29 @@ class MylistInfoDBController(DBControllerBase):
         return 0
 
     def DeleteFromMylistURL(self, mylist_url):
+        """MylistInfoについて特定のマイリストに含まれるレコードをすべて削除する
+
+        Note:
+            "delete from MylistInfo where mylist_url = {mylist_url}"
+
+        Args:
+            mylist_url (str): 削除対象のマイリストURL
+
+        Returns:
+            int: 削除成功した場合0, 1件も対象レコードが存在しなかった場合1, その他失敗時-1
+        """
         # DELETE対象をSELECT
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
-        records = session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).first()
+        records = session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).with_for_update()
 
         # 存在しない場合はエラー
-        if not records:
+        if not records.first():
             session.close()
             return 1
 
         # DELETEする
-        session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).delete()
+        session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).with_for_update().delete()
 
         session.commit()
         session.close()
@@ -314,7 +317,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
-        res = session.query(MylistInfo).order_by(asc(MylistInfo.created_at)).all()
+        res = session.query(MylistInfo).order_by(asc(MylistInfo.created_at)).with_for_update().all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
@@ -339,7 +342,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(video_id=video_id).all()
+        res = session.query(MylistInfo).filter_by(video_id=video_id).with_for_update().all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
@@ -363,7 +366,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(video_url=video_url).all()
+        res = session.query(MylistInfo).filter_by(video_url=video_url).with_for_update().all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
@@ -388,7 +391,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
 
         # res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).order_by(desc(MylistInfo.video_id)).all()
-        res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).all()
+        res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).with_for_update().all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
@@ -412,7 +415,7 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
-        res = session.query(MylistInfo).filter_by(username=username).all()
+        res = session.query(MylistInfo).filter_by(username=username).with_for_update().all()
         res_dict = [r.toDict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
@@ -423,12 +426,7 @@ class MylistInfoDBController(DBControllerBase):
 
 
 if __name__ == "__main__":
-    DEBUG = True
-    db_fullpath = Path("NNMM_DB.db")
+    db_fullpath = Path("test.db")
     mylist_info_db = MylistInfoDBController(db_fullpath=str(db_fullpath))
 
-    records = mylist_info_db.Select()
-    video_id = "sm38859846"
-    mylist_url = "https://www.nicovideo.jp/user/12899156/video"
-    res = mylist_info_db.UpdateStatus(video_id, mylist_url, "")
     pass

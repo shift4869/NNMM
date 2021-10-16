@@ -37,13 +37,16 @@ class MylistDBController(DBControllerBase):
             追加しようとしているレコードが既存テーブルに存在しなければINSERT
             存在しているならばUPDATE(DELETE->INSERT)
             一致しているかの判定はurlが一致している場合、とする
+            UPDATEの場合、idは更新しない
 
         Args:
+            id (int): ID
             username (str): 投稿者名
             mylistname (str): マイリスト名
             type (str): マイリストのタイプ({"uploaded", "mylist", "series"})
             showname (str): マイリストの一意名({username}_{type})
                             typeが"uploaded"の場合："{username}さんの投稿動画"
+                            typeが"mylist"の場合："「{mylistname}」-{username}さんのマイリスト"
             url (str): マイリストURL
             created_at (str): 作成日時
             updated_at (str): 更新日時
@@ -52,7 +55,7 @@ class MylistDBController(DBControllerBase):
             is_include_new (boolean): 未視聴動画を含むかどうか
 
         Returns:
-            int: 0(成功,新規追加), 1(成功,更新), other(失敗)
+            int: 0(成功,新規追加), 1(成功,更新), -1(失敗)
         """
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
@@ -61,17 +64,25 @@ class MylistDBController(DBControllerBase):
         r = Mylist(id, username, mylistname, type, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)
 
         try:
-            q = session.query(Mylist).filter(or_(Mylist.url == r.url))
-            ex = q.one()
+            q = session.query(Mylist).filter(or_(Mylist.url == r.url)).with_for_update()
+            p = q.one()
         except NoResultFound:
             # INSERT
             session.add(r)
             res = 0
         else:
-            # UPDATEは実質DELETE->INSERTと同じとする
-            session.delete(ex)
-            session.commit()
-            session.add(r)
+            # UPDATE
+            # id以外を更新する
+            p.username = r.username
+            p.mylistname = r.mylistname
+            p.type = r.type
+            p.showname = r.showname
+            p.url = r.url
+            p.created_at = r.created_at
+            p.updated_at = r.updated_at
+            p.checked_at = r.checked_at
+            p.check_interval = r.check_interval
+            p.is_include_new = r.is_include_new
             res = 1
 
         session.commit()
@@ -95,7 +106,7 @@ class MylistDBController(DBControllerBase):
         # UPDATE対象をSELECT
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
-        record = session.query(Mylist).filter(Mylist.url == mylist_url).first()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).with_for_update().first()
 
         # 存在しない場合はエラー
         if not record:
@@ -245,6 +256,17 @@ class MylistDBController(DBControllerBase):
         return res
 
     def DeleteFromURL(self, mylist_url):
+        """Mylistのレコードを削除する
+
+        Note:
+            "delete from Mylist where mylist_url = {}"
+
+        Args:
+            mylist_url (str): 削除対象のマイリストURL
+
+        Returns:
+            int: 削除成功時0, その他失敗時-1
+        """
         # DELETE対象をSELECT
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
@@ -253,7 +275,7 @@ class MylistDBController(DBControllerBase):
         # 存在しない場合はエラー
         if not record:
             session.close()
-            return 1
+            return -1
 
         # DELETEする
         session.delete(record)
@@ -327,19 +349,48 @@ class MylistDBController(DBControllerBase):
 
 
 if __name__ == "__main__":
-    DEBUG = True
-    db_fullpath = Path("NNMM_DB.db")
+    db_fullpath = Path("test.db")
     mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
 
-    # td_format = "%Y/%m/%d %H:%M"
-    # dts_format = "%Y-%m-%d %H:%M:%S"
-    # dst = datetime.now().strftime(dts_format)
-    url = "https://www.nicovideo.jp/user/12899156/video"
-    # mylist_db.Upsert(1, "willow8713", "uploaded", "willow8713さんの投稿動画", url, dst, dst, true)
+    url1 = "https://www.nicovideo.jp/user/12899156/video"
+    mylist_col = ["id", "username", "mylistname", "type", "showname", "url", "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
+    r1 = Mylist(1, "willow8713", "投稿動画", "uploaded", "willow8713さんの投稿動画",
+                url1, "2021-06-06 19:08:00", "2021-10-15 14:26:27", "2021-10-15 16:02:31",
+                "15分", False)
+    url2 = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
+    r2 = Mylist(2, "willow8713", "夜廻", "mylist", "「夜廻」-willow8713さんのマイリスト",
+                url2, "2021-10-15 14:50:08", "2021-10-15 14:50:08", "2021-10-15 16:02:59",
+                "15分", False)
+    # INSERT
+    res = mylist_db.Upsert(r1.id, r1.username, r1.mylistname, r1.type, r1.showname,
+                           r1.url, r1.created_at, r1.updated_at, r1.checked_at,
+                           r1.check_interval, r1.is_include_new)
+    res = mylist_db.Upsert(r2.id, r2.username, r2.mylistname, r2.type, r2.showname,
+                           r2.url, r2.created_at, r2.updated_at, r2.checked_at,
+                           r2.check_interval, r2.is_include_new)
 
-    # url = "https://www.nicovideo.jp/user/1594318/video"
-    # mylist_db.Upsert(2, "moco78", "uploaded", "moco78さんの投稿動画", url, dst, dst, true)
+    # UPDATE
+    r1.check_interval = "30分"
+    res = mylist_db.Upsert(r1.id, r1.username, r1.mylistname, r1.type, r1.showname,
+                           r1.url, r1.created_at, r1.updated_at, r1.checked_at,
+                           r1.check_interval, r1.is_include_new)
 
-    records = mylist_db.Select()
-    mylist_db.UpdateIncludeFlag(url, False)
+    res = mylist_db.UpdateIncludeFlag(url1, True)
+    res = mylist_db.UpdateUpdatedAt(url1, "2021-12-15 10:00:00")
+    res = mylist_db.UpdateCheckdAt(url1, "2021-12-16 11:59:59")
+    res = mylist_db.UpdateUsername(url1, "update_name1_willow8713")
+    res = mylist_db.UpdateUsername(url2, "update_name2_willow8713")
+    res = mylist_db.SwapId(1, 2)
+
+    res = mylist_db.DeleteFromURL(url2)
+    res = mylist_db.Upsert(1, r2.username, r2.mylistname, r2.type, r2.showname,
+                           r2.url, r2.created_at, r2.updated_at, r2.checked_at,
+                           r2.check_interval, r2.is_include_new)
+
+    res = mylist_db.Select()
+    res = mylist_db.SelectFromShowname("「夜廻」-willow8713さんのマイリスト")
+    res = mylist_db.SelectFromURL(url1)
+
+    if db_fullpath.is_file():
+        db_fullpath.unlink()
     pass
