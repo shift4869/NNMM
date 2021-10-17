@@ -32,12 +32,8 @@ TEST_DB_FULLPATH = "./test/test.db"
 
 
 class TestMylistInfoDBController(unittest.TestCase):
-    """テストメインクラス
-    """
 
     def setUp(self):
-        if Path(TEST_DB_FULLPATH).is_file():
-            Path(TEST_DB_FULLPATH).unlink()
         pass
 
     def tearDown(self):
@@ -45,7 +41,29 @@ class TestMylistInfoDBController(unittest.TestCase):
             Path(TEST_DB_FULLPATH).unlink()
         pass
 
-    def __MakeMylistInfoSample(self, id, mylist_id):
+    def __GetVideoInfoSet(self) -> list[tuple]:
+        """動画情報セットを返す（mylist_url以外）
+        """
+        video_info = [
+            ("sm11111111", "動画タイトル1", "投稿者1", "未視聴", "2021-05-29 22:00:11", "https://www.nicovideo.jp/watch/sm11111111", "2021-10-16 00:00:11"),
+            ("sm22222222", "動画タイトル2", "投稿者1", "未視聴", "2021-05-29 22:00:22", "https://www.nicovideo.jp/watch/sm22222222", "2021-10-16 00:00:22"),
+            ("sm33333333", "動画タイトル3", "投稿者1", "未視聴", "2021-05-29 22:00:33", "https://www.nicovideo.jp/watch/sm33333333", "2021-10-16 00:00:33"),
+            ("sm44444444", "動画タイトル4", "投稿者2", "未視聴", "2021-05-29 22:00:44", "https://www.nicovideo.jp/watch/sm44444444", "2021-10-16 00:00:44"),
+            ("sm55555555", "動画タイトル5", "投稿者2", "未視聴", "2021-05-29 22:00:55", "https://www.nicovideo.jp/watch/sm55555555", "2021-10-16 00:00:55"),
+        ]
+        return video_info
+
+    def __GetURLInfoSet(self) -> list[str]:
+        """mylist_urlの情報セットを返す
+        """
+        mylist_info = [
+            "https://www.nicovideo.jp/user/11111111/video",
+            "https://www.nicovideo.jp/user/11111111/mylist/12345678",
+            "https://www.nicovideo.jp/user/22222222/video",
+        ]
+        return mylist_info
+
+    def __MakeMylistInfoSample(self, id: int, mylist_id: int) -> MylistInfo:
         """MylistInfoオブジェクトを作成する
 
         Note:
@@ -67,23 +85,44 @@ class TestMylistInfoDBController(unittest.TestCase):
         Returns:
             MylistInfo: MylistInfoオブジェクト
         """
-        video_info = [
-            ("sm11111111", "動画タイトル1", "投稿者1", "未視聴", "2021-05-29 22:00:11", "https://www.nicovideo.jp/watch/sm11111111", "2021-10-16 00:00:11"),
-            ("sm22222222", "動画タイトル2", "投稿者1", "未視聴", "2021-05-29 22:00:22", "https://www.nicovideo.jp/watch/sm22222222", "2021-10-16 00:00:22"),
-            ("sm33333333", "動画タイトル3", "投稿者1", "未視聴", "2021-05-29 22:00:33", "https://www.nicovideo.jp/watch/sm33333333", "2021-10-16 00:00:33"),
-            ("sm44444444", "動画タイトル4", "投稿者2", "未視聴", "2021-05-29 22:00:44", "https://www.nicovideo.jp/watch/sm44444444", "2021-10-16 00:00:44"),
-            ("sm55555555", "動画タイトル5", "投稿者2", "未視聴", "2021-05-29 22:00:55", "https://www.nicovideo.jp/watch/sm55555555", "2021-10-16 00:00:55"),
-        ]
-        mylist_info = [
-            "https://www.nicovideo.jp/user/11111111/video",
-            "https://www.nicovideo.jp/user/11111111/mylist/12345678",
-            "https://www.nicovideo.jp/user/22222222/video",
-        ]
-
-        v = video_info[id]
-        mylist_url = mylist_info[mylist_id]
+        v = self.__GetVideoInfoSet()[id]
+        mylist_url = self.__GetURLInfoSet()[mylist_id]
         r = MylistInfo(v[0], v[1], v[2], v[3], v[4], v[5], mylist_url, v[6])
         return r
+
+    def __LoadToTable(self) -> list[dict]:
+        """テスト用の初期レコードを格納したテーブルを用意する
+
+        Returns:
+            expect (dict[]): 全SELECTした場合の予測値
+        """
+        if Path(TEST_DB_FULLPATH).is_file():
+            Path(TEST_DB_FULLPATH).unlink()
+
+        dbname = TEST_DB_FULLPATH
+        engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
+        Base.metadata.create_all(engine)
+
+        Session = sessionmaker(bind=engine, autoflush=False)
+        session = Session()
+
+        MAX_VIDEO_INFO_NUM = 5
+        MAX_URL_INFO_NUM = 3
+        expect = []
+        id_num = 1
+        for i in range(0, MAX_URL_INFO_NUM):
+            for j in range(0, MAX_VIDEO_INFO_NUM):
+                r = self.__MakeMylistInfoSample(j, i)
+                session.add(r)
+
+                d = r.toDict()
+                d["id"] = id_num
+                id_num = id_num + 1
+                expect.append(d)
+
+        session.commit()
+        session.close()
+        return expect
 
     def test_Upsert(self):
         """MylistInfoにUPSERTする機能のテスト
@@ -182,24 +221,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
             mi_cont = MylistInfoDBController(TEST_DB_FULLPATH)
-
-            # INSERT
-            expect = []
-            id_num = 1
-            for i in range(0, 3):
-                for j in range(0, 5):
-                    r = self.__MakeMylistInfoSample(j, i)
-                    res = mi_cont.Upsert(r.video_id, r.title, r.username, r.status, r.uploaded_at, r.video_url, r.mylist_url, r.created_at)
-                    self.assertEqual(res, 0)
-
-                    d = r.toDict()
-                    d["id"] = id_num
-                    id_num = id_num + 1
-                    expect.append(d)
-            actual = mi_cont.Select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+            expect = self.__LoadToTable()
 
             # UPDATE
             # idをランダムに選定し、statusを更新する
@@ -234,32 +256,11 @@ class TestMylistInfoDBController(unittest.TestCase):
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
             mi_cont = MylistInfoDBController(TEST_DB_FULLPATH)
-
-            # INSERT
-            expect = []
-            id_num = 1
-            for i in range(0, 3):
-                for j in range(0, 5):
-                    r = self.__MakeMylistInfoSample(j, i)
-                    res = mi_cont.Upsert(r.video_id, r.title, r.username, r.status, r.uploaded_at, r.video_url, r.mylist_url, r.created_at)
-                    self.assertEqual(res, 0)
-
-                    d = r.toDict()
-                    d["id"] = id_num
-                    id_num = id_num + 1
-                    expect.append(d)
-            actual = mi_cont.Select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+            expect = self.__LoadToTable()
 
             # UPDATE
             # 特定のマイリストに含まれるレコードのstatusを更新する
-            mylist_info = [
-                "https://www.nicovideo.jp/user/11111111/video",
-                "https://www.nicovideo.jp/user/11111111/mylist/12345678",
-                "https://www.nicovideo.jp/user/22222222/video",
-            ]
+            mylist_info = self.__GetURLInfoSet()
             t_id = random.randint(0, len(mylist_info) - 1)
             mylist_url = mylist_info[t_id]
             res = mi_cont.UpdateStatusInMylist(mylist_url, "")
@@ -290,32 +291,11 @@ class TestMylistInfoDBController(unittest.TestCase):
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
             mi_cont = MylistInfoDBController(TEST_DB_FULLPATH)
-
-            # INSERT
-            expect = []
-            id_num = 1
-            for i in range(0, 3):
-                for j in range(0, 5):
-                    r = self.__MakeMylistInfoSample(j, i)
-                    res = mi_cont.Upsert(r.video_id, r.title, r.username, r.status, r.uploaded_at, r.video_url, r.mylist_url, r.created_at)
-                    self.assertEqual(res, 0)
-
-                    d = r.toDict()
-                    d["id"] = id_num
-                    id_num = id_num + 1
-                    expect.append(d)
-            actual = mi_cont.Select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+            expect = self.__LoadToTable()
 
             # UPDATE
             # 特定のマイリストに含まれるレコードのusernameを更新する
-            mylist_info = [
-                "https://www.nicovideo.jp/user/11111111/video",
-                "https://www.nicovideo.jp/user/11111111/mylist/12345678",
-                "https://www.nicovideo.jp/user/22222222/video",
-            ]
+            mylist_info = self.__GetURLInfoSet()
             t_id = random.randint(0, len(mylist_info) - 1)
             mylist_url = mylist_info[t_id]
             username = "新しい投稿者"
@@ -342,32 +322,11 @@ class TestMylistInfoDBController(unittest.TestCase):
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
             mi_cont = MylistInfoDBController(TEST_DB_FULLPATH)
-
-            # INSERT
-            expect = []
-            id_num = 1
-            for i in range(0, 3):
-                for j in range(0, 5):
-                    r = self.__MakeMylistInfoSample(j, i)
-                    res = mi_cont.Upsert(r.video_id, r.title, r.username, r.status, r.uploaded_at, r.video_url, r.mylist_url, r.created_at)
-                    self.assertEqual(res, 0)
-
-                    d = r.toDict()
-                    d["id"] = id_num
-                    id_num = id_num + 1
-                    expect.append(d)
-            actual = mi_cont.Select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+            expect = self.__LoadToTable()
 
             # DELETE
             # 特定のマイリストに含まれるレコードを削除する
-            mylist_info = [
-                "https://www.nicovideo.jp/user/11111111/video",
-                "https://www.nicovideo.jp/user/11111111/mylist/12345678",
-                "https://www.nicovideo.jp/user/22222222/video",
-            ]
+            mylist_info = self.__GetURLInfoSet()
             t_id = random.randint(0, len(mylist_info) - 1)
             mylist_url = mylist_info[t_id]
             res = mi_cont.DeleteFromMylistURL(mylist_url)
@@ -391,20 +350,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
             mi_cont = MylistInfoDBController(TEST_DB_FULLPATH)
-
-            # INSERT
-            expect = []
-            id_num = 1
-            for i in range(0, 3):
-                for j in range(0, 5):
-                    r = self.__MakeMylistInfoSample(j, i)
-                    res = mi_cont.Upsert(r.video_id, r.title, r.username, r.status, r.uploaded_at, r.video_url, r.mylist_url, r.created_at)
-                    self.assertEqual(res, 0)
-
-                    d = r.toDict()
-                    d["id"] = id_num
-                    id_num = id_num + 1
-                    expect.append(d)
+            expect = self.__LoadToTable()
             actual = mi_cont.Select()
             expect = sorted(expect, key=lambda x: x["id"])
             actual = sorted(actual, key=lambda x: x["id"])
@@ -417,34 +363,13 @@ class TestMylistInfoDBController(unittest.TestCase):
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
             mi_cont = MylistInfoDBController(TEST_DB_FULLPATH)
+            expect = self.__LoadToTable()
 
-            # INSERT
-            expect = []
-            id_num = 1
-            for i in range(0, 3):
-                for j in range(0, 5):
-                    r = self.__MakeMylistInfoSample(j, i)
-                    res = mi_cont.Upsert(r.video_id, r.title, r.username, r.status, r.uploaded_at, r.video_url, r.mylist_url, r.created_at)
-                    self.assertEqual(res, 0)
-
-                    d = r.toDict()
-                    d["id"] = id_num
-                    id_num = id_num + 1
-                    expect.append(d)
-            actual = mi_cont.Select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+            video_info = self.__GetVideoInfoSet()
+            video_id_info = [v[0] for v in video_info]
 
             # SELECT条件となるvideo_idを選定する
             # 特定のマイリストに含まれるレコードを削除する
-            video_id_info = [
-                "sm11111111",
-                "sm22222222",
-                "sm33333333",
-                "sm44444444",
-                "sm55555555",
-            ]
             t_id = random.randint(0, len(video_id_info) - 1)
             video_id = video_id_info[t_id]
             actual = mi_cont.SelectFromVideoID(video_id)
@@ -466,33 +391,12 @@ class TestMylistInfoDBController(unittest.TestCase):
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
             mi_cont = MylistInfoDBController(TEST_DB_FULLPATH)
+            expect = self.__LoadToTable()
 
-            # INSERT
-            expect = []
-            id_num = 1
-            for i in range(0, 3):
-                for j in range(0, 5):
-                    r = self.__MakeMylistInfoSample(j, i)
-                    res = mi_cont.Upsert(r.video_id, r.title, r.username, r.status, r.uploaded_at, r.video_url, r.mylist_url, r.created_at)
-                    self.assertEqual(res, 0)
-
-                    d = r.toDict()
-                    d["id"] = id_num
-                    id_num = id_num + 1
-                    expect.append(d)
-            actual = mi_cont.Select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+            video_info = self.__GetVideoInfoSet()
+            video_url_info = [v[5] for v in video_info]
 
             # SELECT条件となるvideo_urlを選定する
-            video_url_info = [
-                "https://www.nicovideo.jp/watch/sm11111111",
-                "https://www.nicovideo.jp/watch/sm22222222",
-                "https://www.nicovideo.jp/watch/sm33333333",
-                "https://www.nicovideo.jp/watch/sm44444444",
-                "https://www.nicovideo.jp/watch/sm55555555",
-            ]
             t_id = random.randint(0, len(video_url_info) - 1)
             video_url = video_url_info[t_id]
             actual = mi_cont.SelectFromVideoURL(video_url)
@@ -514,24 +418,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
             mi_cont = MylistInfoDBController(TEST_DB_FULLPATH)
-
-            # INSERT
-            expect = []
-            id_num = 1
-            for i in range(0, 3):
-                for j in range(0, 5):
-                    r = self.__MakeMylistInfoSample(j, i)
-                    res = mi_cont.Upsert(r.video_id, r.title, r.username, r.status, r.uploaded_at, r.video_url, r.mylist_url, r.created_at)
-                    self.assertEqual(res, 0)
-
-                    d = r.toDict()
-                    d["id"] = id_num
-                    id_num = id_num + 1
-                    expect.append(d)
-            actual = mi_cont.Select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+            expect = self.__LoadToTable()
 
             # SELECT条件となるusernameを選定する
             username_info = [
@@ -549,7 +436,7 @@ class TestMylistInfoDBController(unittest.TestCase):
             self.assertEqual(expect, actual)
 
             # 存在しないusernameを指定する
-            actual = mi_cont.SelectFromUsername("投稿者9")
+            actual = mi_cont.SelectFromUsername("存在しない投稿者")
             self.assertEqual(actual, [])
             pass
 

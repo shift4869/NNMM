@@ -41,7 +41,7 @@ class TestMylistDBController(unittest.TestCase):
             Path(TEST_DB_FULLPATH).unlink()
         pass
 
-    def __GetMylistInfoSet(self):
+    def __GetMylistInfoSet(self) -> list[tuple]:
         """Mylistオブジェクトの情報セットを返す（mylist_url以外）
         """
         mylist_info = [
@@ -53,7 +53,7 @@ class TestMylistDBController(unittest.TestCase):
         ]
         return mylist_info
 
-    def __GetURLInfoSet(self):
+    def __GetURLInfoSet(self) -> list[str]:
         """mylist_urlの情報セットを返す
         """
         url_info = [
@@ -65,7 +65,7 @@ class TestMylistDBController(unittest.TestCase):
         ]
         return url_info
 
-    def __MakeMylistSample(self, id):
+    def __MakeMylistSample(self, id: str) -> Mylist:
         """Mylistオブジェクトを作成する
 
         Note:
@@ -95,7 +95,7 @@ class TestMylistDBController(unittest.TestCase):
         r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9])
         return r
 
-    def __LoadToTable(self):
+    def __LoadToTable(self) -> list[dict]:
         """テスト用の初期レコードを格納したテーブルを用意する
 
         Returns:
