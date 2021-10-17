@@ -21,7 +21,8 @@ class MylistInfoDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def Upsert(self, video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at):
+    def Upsert(self, video_id: str, title: str, username: str, status: str,
+               uploaded_at: str, video_url: str, mylist_url: str, created_at: str) -> int:
         """MylistInfoにUPSERTする
 
         Notes:
@@ -72,7 +73,7 @@ class MylistInfoDBController(DBControllerBase):
 
         return res
 
-    def UpsertFromList(self, records):
+    def UpsertFromList(self, records: list[dict]) -> int:
         """MylistInfoにUPSERTする
 
         Notes:
@@ -151,7 +152,7 @@ class MylistInfoDBController(DBControllerBase):
         res = 1 if r_res.count(1) > 0 else 0
         return res
 
-    def UpdateStatus(self, video_id, mylist_url, status=""):
+    def UpdateStatus(self, video_id: str, mylist_url: str, status: str = "") -> int:
         """MylistInfoの特定のレコードについてstatusを更新する
 
         Note:
@@ -198,7 +199,7 @@ class MylistInfoDBController(DBControllerBase):
 
         return 0
 
-    def UpdateStatusInMylist(self, mylist_url, status=""):
+    def UpdateStatusInMylist(self, mylist_url: str, status: str = "") -> int:
         """MylistInfoについて特定のマイリストに含まれるレコードのstatusをすべて更新する
 
         Note:
@@ -240,7 +241,7 @@ class MylistInfoDBController(DBControllerBase):
 
         return 0
 
-    def UpdateUsernameInMylist(self, mylist_url, username):
+    def UpdateUsernameInMylist(self, mylist_url: str, username: str) -> int:
         """MylistInfoについて特定のマイリストに含まれるレコードのusernameをすべて更新する
 
         Note:
@@ -273,7 +274,7 @@ class MylistInfoDBController(DBControllerBase):
 
         return 0
 
-    def DeleteFromMylistURL(self, mylist_url):
+    def DeleteFromMylistURL(self, mylist_url: str) -> int:
         """MylistInfoについて特定のマイリストに含まれるレコードをすべて削除する
 
         Note:
@@ -302,7 +303,7 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return 0
 
-    def Select(self):
+    def Select(self) -> list[dict]:
         """MylistInfoからSELECTする
 
         Note:
@@ -326,7 +327,7 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromVideoID(self, video_id):
+    def SelectFromVideoID(self, video_id: str) -> list[dict]:
         """MylistInfoからvideo_idを条件としてSELECTする
 
         Note:
@@ -351,7 +352,7 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromVideoURL(self, video_url):
+    def SelectFromVideoURL(self, video_url: str) -> list[dict]:
         """MylistInfoからvideo_urlを条件としてSELECTする
 
         Note:
@@ -375,7 +376,7 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromMylistURL(self, mylist_url):
+    def SelectFromMylistURL(self, mylist_url: str) -> list[dict]:
         """MylistInfoからmylist_urlを条件としてSELECTする
 
         Note:
@@ -400,7 +401,7 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromUsername(self, username):
+    def SelectFromUsername(self, username: str) -> list[dict]:
         """MylistInfoからusernameを条件としてSELECTする
 
         Note:
