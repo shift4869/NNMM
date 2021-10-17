@@ -315,6 +315,122 @@ class TestMylistDBController(unittest.TestCase):
             self.assertEqual(res, -1)
             pass
 
+    def test_SwapId(self):
+        """idを交換する機能のテスト
+        """
+        with ExitStack() as stack:
+            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
+            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            expect = self.__LoadToTable()
+
+            # 交換元と交換先のidを選定する
+            t_id = random.sample(range(0, len(expect)), 2)
+            src_id = t_id[0] + 1
+            dst_id = t_id[1] + 1
+
+            actual = m_cont.SwapId(src_id, dst_id)
+            expect_src = expect[src_id - 1]
+            expect_dst = expect[dst_id - 1]
+            expect_src["id"], expect_dst["id"] = expect_dst["id"], expect_src["id"]
+            self.assertEqual((expect_src, expect_dst), actual)
+
+            expect = sorted(expect, key=lambda x: x["id"])
+
+            actual = m_cont.Select()
+            actual = sorted(actual, key=lambda x: x["id"])
+            self.assertEqual(expect, actual)
+
+            # 交換元と交換先に同じidを指定する
+            actual = m_cont.SwapId(src_id, src_id)
+            self.assertEqual((None, None), actual)
+
+            # 交換元と交換先に存在しないidを指定する
+            actual = m_cont.SwapId(-src_id, -dst_id)
+            self.assertEqual((None, None), actual)
+
+    def test_DeleteFromURL(self):
+        """Mylistのレコードを削除する機能のテスト
+        """
+        with ExitStack() as stack:
+            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
+            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            expect = self.__LoadToTable()
+
+            url_info = self.__GetURLInfoSet()
+            t_id = random.randint(0, len(url_info) - 1)
+            mylist_url = url_info[t_id]
+            res = m_cont.DeleteFromURL(mylist_url)
+            self.assertEqual(res, 0)
+
+            expect = [e for e in expect if e["url"] != mylist_url]
+            expect = sorted(expect, key=lambda x: x["id"])
+
+            actual = m_cont.Select()
+            actual = sorted(actual, key=lambda x: x["id"])
+            self.assertEqual(expect, actual)
+
+            # 存在しないマイリストを指定する
+            res = m_cont.DeleteFromURL("https://www.nicovideo.jp/user/99999999/video")
+            self.assertEqual(res, -1)
+            pass
+
+    def test_Select(self):
+        """MylistからSELECTする
+        """
+        with ExitStack() as stack:
+            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
+            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            expect = self.__LoadToTable()
+            expect = sorted(expect, key=lambda x: x["id"])
+
+            actual = m_cont.Select()
+            actual = sorted(actual, key=lambda x: x["id"])
+            self.assertEqual(expect, actual)
+            pass
+
+    def test_SelectFromShowname(self):
+        """Mylistからshownameを条件としてSELECTする機能のテスト
+        """
+        with ExitStack() as stack:
+            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
+            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            expect = self.__LoadToTable()
+
+            t_id = random.randint(0, len(expect) - 1)
+            showname = expect[t_id]["showname"]
+            actual = m_cont.SelectFromShowname(showname)
+
+            expect = [e for e in expect if e["showname"] == showname]
+            self.assertEqual(1, len(actual))
+            self.assertEqual(expect, actual)
+
+            # 存在しないshownameを指定する
+            actual = m_cont.SelectFromShowname("存在しないマイリストshowname")
+            self.assertEqual([], actual)
+            pass
+
+    def test_SelectFromURL(self):
+        """Mylistからurlを条件としてSELECTする機能のテスト
+        """
+        with ExitStack() as stack:
+            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
+            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            expect = self.__LoadToTable()
+
+            url_info = self.__GetURLInfoSet()
+            t_id = random.randint(0, len(url_info) - 1)
+            mylist_url = url_info[t_id]
+            actual = m_cont.SelectFromURL(mylist_url)
+
+            expect = [e for e in expect if e["url"] == mylist_url]
+            self.assertEqual(1, len(actual))
+            self.assertEqual(expect, actual)
+
+            # 存在しないurlを指定する
+            actual = m_cont.SelectFromURL("存在しないマイリストurl")
+            self.assertEqual([], actual)
+            pass
+
 
 if __name__ == "__main__":
     if sys.argv:

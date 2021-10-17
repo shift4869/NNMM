@@ -2,6 +2,7 @@
 import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Tuple
 
 from sqlalchemy import *
 from sqlalchemy.orm import *
@@ -15,10 +16,10 @@ DEBUG = False
 
 
 class MylistDBController(DBControllerBase):
-    def __init__(self, db_fullpath="NNMM_DB.db"):
+    def __init__(self, db_fullpath: str = "NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def GetListname(self, url, username, old_showname) -> str:
+    def GetListname(self, url: str, username: str, old_showname: str) -> str:
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
         if re.search(pattern, url):
             return f"{username}さんの投稿動画"
@@ -30,7 +31,8 @@ class MylistDBController(DBControllerBase):
             return res_str
         return ""
 
-    def Upsert(self, id, username, mylistname, type, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new):
+    def Upsert(self, id: int, username: str, mylistname: str, type: str, showname: str, url: str,
+               created_at: str, updated_at: str, checked_at: str, check_interval: str, is_include_new: bool) -> int:
         """MylistにUPSERTする
 
         Notes:
@@ -48,9 +50,9 @@ class MylistDBController(DBControllerBase):
                             typeが"uploaded"の場合："{username}さんの投稿動画"
                             typeが"mylist"の場合："「{mylistname}」-{username}さんのマイリスト"
             url (str): マイリストURL
-            created_at (str): 作成日時
-            updated_at (str): 更新日時
-            checked_at (str): 更新確認日時
+            created_at (str): 作成日時("%Y-%m-%d %H:%M:%S")
+            updated_at (str): 更新日時("%Y-%m-%d %H:%M:%S")
+            checked_at (str): 更新確認日時("%Y-%m-%d %H:%M:%S")
             check_interval (str): 最低更新間隔
             is_include_new (boolean): 未視聴動画を含むかどうか
 
@@ -90,7 +92,7 @@ class MylistDBController(DBControllerBase):
 
         return res
 
-    def UpdateIncludeFlag(self, mylist_url, is_include_new=False):
+    def UpdateIncludeFlag(self, mylist_url: str, is_include_new: bool = False) -> int:
         """Mylistの特定のレコードについて新着フラグを更新する
 
         Note:
@@ -126,7 +128,7 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
-    def UpdateUpdatedAt(self, mylist_url, updated_at):
+    def UpdateUpdatedAt(self, mylist_url: str, updated_at: str) -> int:
         """Mylistの特定のレコードについて更新日時を更新する
 
         Note:
@@ -157,7 +159,7 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
-    def UpdateCheckdAt(self, mylist_url, checked_at):
+    def UpdateCheckdAt(self, mylist_url: str, checked_at: str) -> int:
         """Mylistの特定のレコードについて更新確認日時を更新する
 
         Note:
@@ -188,7 +190,7 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
-    def UpdateUsername(self, mylist_url, now_username):
+    def UpdateUsername(self, mylist_url: str, now_username: str) -> int:
         """Mylistの特定のレコードについてusernameを更新する
 
         Note:
@@ -217,7 +219,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return 0
 
-    def SwapId(self, src_id, dst_id):
+    def SwapId(self, src_id: int, dst_id: int) -> tuple[dict, dict]:
         """idを交換する
 
         Note:
@@ -228,15 +230,26 @@ class MylistDBController(DBControllerBase):
             dst_id (int): 交換先レコードのid
 
         Returns:
-            (Mylist, Mylist): 交換後のレコード（交換元レコード, 交換先レコード）
+            (Mylist, Mylist): 交換後のレコード(交換元レコード, 交換先レコード)、エラー時(None, None)
         """
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
+
+        # 交換元と交換先が同じだった場合は処理を行わない(エラー扱い)
+        if src_id == dst_id:
+            session.close()
+            return (None, None)
 
         # 交換元レコード
         src_record = session.query(Mylist).filter(Mylist.id == src_id).first()
         # 交換先レコード
         dst_record = session.query(Mylist).filter(Mylist.id == dst_id).first()
+
+        # 交換元か交換先のレコードがどちらかでも存在していなかった場合はエラー
+        # idが[0, Mylistの総レコード数]の範囲外にある場合もこの条件に当てはまる
+        if (src_record is None) or (dst_record is None):
+            session.close()
+            return (None, None)
 
         # 一旦idを重複しないものに変更する（マイナス）
         src_record.id = -src_id
@@ -255,7 +268,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return res
 
-    def DeleteFromURL(self, mylist_url):
+    def DeleteFromURL(self, mylist_url: str) -> int:
         """Mylistのレコードを削除する
 
         Note:
@@ -284,7 +297,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return 0
 
-    def Select(self):
+    def Select(self) -> list[dict]:
         """MylistからSELECTする
 
         Note:
@@ -305,7 +318,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromShowname(self, showname):
+    def SelectFromShowname(self, showname: str) -> list[dict]:
         """Mylistからshownameを条件としてSELECTする
 
         Note:
@@ -326,7 +339,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromURL(self, url):
+    def SelectFromURL(self, url: str) -> list[dict]:
         """Mylistからurlを条件としてSELECTする
 
         Note:
@@ -351,45 +364,6 @@ class MylistDBController(DBControllerBase):
 if __name__ == "__main__":
     db_fullpath = Path("test.db")
     mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
-
-    url1 = "https://www.nicovideo.jp/user/12899156/video"
-    mylist_col = ["id", "username", "mylistname", "type", "showname", "url", "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-    r1 = Mylist(1, "willow8713", "投稿動画", "uploaded", "willow8713さんの投稿動画",
-                url1, "2021-06-06 19:08:00", "2021-10-15 14:26:27", "2021-10-15 16:02:31",
-                "15分", False)
-    url2 = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
-    r2 = Mylist(2, "willow8713", "夜廻", "mylist", "「夜廻」-willow8713さんのマイリスト",
-                url2, "2021-10-15 14:50:08", "2021-10-15 14:50:08", "2021-10-15 16:02:59",
-                "15分", False)
-    # INSERT
-    res = mylist_db.Upsert(r1.id, r1.username, r1.mylistname, r1.type, r1.showname,
-                           r1.url, r1.created_at, r1.updated_at, r1.checked_at,
-                           r1.check_interval, r1.is_include_new)
-    res = mylist_db.Upsert(r2.id, r2.username, r2.mylistname, r2.type, r2.showname,
-                           r2.url, r2.created_at, r2.updated_at, r2.checked_at,
-                           r2.check_interval, r2.is_include_new)
-
-    # UPDATE
-    r1.check_interval = "30分"
-    res = mylist_db.Upsert(r1.id, r1.username, r1.mylistname, r1.type, r1.showname,
-                           r1.url, r1.created_at, r1.updated_at, r1.checked_at,
-                           r1.check_interval, r1.is_include_new)
-
-    res = mylist_db.UpdateIncludeFlag(url1, True)
-    res = mylist_db.UpdateUpdatedAt(url1, "2021-12-15 10:00:00")
-    res = mylist_db.UpdateCheckdAt(url1, "2021-12-16 11:59:59")
-    res = mylist_db.UpdateUsername(url1, "update_name1_willow8713")
-    res = mylist_db.UpdateUsername(url2, "update_name2_willow8713")
-    res = mylist_db.SwapId(1, 2)
-
-    res = mylist_db.DeleteFromURL(url2)
-    res = mylist_db.Upsert(1, r2.username, r2.mylistname, r2.type, r2.showname,
-                           r2.url, r2.created_at, r2.updated_at, r2.checked_at,
-                           r2.check_interval, r2.is_include_new)
-
-    res = mylist_db.Select()
-    res = mylist_db.SelectFromShowname("「夜廻」-willow8713さんのマイリスト")
-    res = mylist_db.SelectFromURL(url1)
 
     if db_fullpath.is_file():
         db_fullpath.unlink()
