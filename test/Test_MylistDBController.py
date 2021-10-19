@@ -28,7 +28,7 @@ from NNMM.MylistDBController import *
 
 logger = getLogger("root")
 logger.setLevel(WARNING)
-TEST_DB_FULLPATH = "./test/test.db"
+TEST_DB_PATH = "./test/test.db"
 
 
 class TestMylistDBController(unittest.TestCase):
@@ -37,8 +37,8 @@ class TestMylistDBController(unittest.TestCase):
         pass
 
     def tearDown(self):
-        if Path(TEST_DB_FULLPATH).is_file():
-            Path(TEST_DB_FULLPATH).unlink()
+        if Path(TEST_DB_PATH).is_file():
+            Path(TEST_DB_PATH).unlink()
         pass
 
     def __GetMylistInfoSet(self) -> list[tuple]:
@@ -101,10 +101,10 @@ class TestMylistDBController(unittest.TestCase):
         Returns:
             expect (dict[]): 全SELECTした場合の予測値
         """
-        if Path(TEST_DB_FULLPATH).is_file():
-            Path(TEST_DB_FULLPATH).unlink()
+        if Path(TEST_DB_PATH).is_file():
+            Path(TEST_DB_PATH).unlink()
 
-        dbname = TEST_DB_FULLPATH
+        dbname = TEST_DB_PATH
         engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
         Base.metadata.create_all(engine)
 
@@ -132,7 +132,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             def GetListname(url, username, old_showname) -> str:
@@ -160,7 +160,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
 
             # INSERT
             MAX_RECORD_NUM = 5
@@ -200,7 +200,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             url_info = self.__GetURLInfoSet()
@@ -228,7 +228,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             url_info = self.__GetURLInfoSet()
@@ -259,7 +259,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             url_info = self.__GetURLInfoSet()
@@ -290,7 +290,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             url_info = self.__GetURLInfoSet()
@@ -320,7 +320,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             # 交換元と交換先のidを選定する
@@ -353,7 +353,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             url_info = self.__GetURLInfoSet()
@@ -379,7 +379,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
             expect = sorted(expect, key=lambda x: x["id"])
 
@@ -393,7 +393,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             t_id = random.randint(0, len(expect) - 1)
@@ -414,7 +414,7 @@ class TestMylistDBController(unittest.TestCase):
         """
         with ExitStack() as stack:
             # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_FULLPATH)
+            m_cont = MylistDBController(TEST_DB_PATH)
             expect = self.__LoadToTable()
 
             url_info = self.__GetURLInfoSet()
