@@ -1,99 +1,86 @@
 # coding: utf-8
 import logging.config
 import re
-from bs4 import BeautifulSoup
 from logging import INFO, getLogger
 from pathlib import Path
-
-import emoji
-from sqlalchemy.sql.functions import user
 
 from NNMM.MylistDBController import *
 
 
-def SaveMylist(mylist_db, save_file_path):
+def SaveMylist(mylist_db: MylistDBController, save_file_path: str) -> int:
+    """MylistDBの内容をcsvファイルに書き出す
+
+    Args:
+        mylist_db (MylistDBController): 書き出す対象のマイリストDB
+        save_file_path (str): 保存先パス
+
+    Returns:
+        int: 成功時0
+    """
     sd_path = Path(save_file_path)
     records = mylist_db.Select()
-    mylist_cols = ["id", "username", "type", "showname", "url", "created_at", "is_include_new"]
+    mylist_cols = Mylist.__table__.c.keys()
     param_list = []
-    with sd_path.open("w", encoding="utf-8") as fout:
-        fout.write(",".join(mylist_cols) + "\n")
+
+    # BOMつきutf-8で書き込むことによりExcelでも開けるcsvを出力する
+    with sd_path.open("w", encoding="utf_8_sig") as fout:
+        fout.write(",".join(mylist_cols) + "\n")  # 項目行書き込み
         for r in records:
             param_list = [str(r.get(s)) for s in mylist_cols]
             fout.write(",".join(param_list) + "\n")
     return 0
 
 
-def SaveXML(directory_path):
-    sd_path = Path(directory_path)
-    r_path = sd_path.parent / "res.csv"
-    mylist_cols = ["id", "username", "type", "showname", "url", "created_at", "is_include_new"]
+def LoadMylist(mylist_db: MylistDBController, load_file_path: str) -> int:
+    """書き出したcsvファイルからMylistDBへレコードを反映させる
 
-    with r_path.open("w", encoding="utf-8") as fout:
-        fout.write(",".join(mylist_cols) + "\n")
-        file_list = list(sd_path.glob("**/*.xml"))
-        sorted(file_list)
-        for s in file_list:
-            with s.open("r", encoding="utf-8") as fin:
-                soup = BeautifulSoup(fin.read(), "lxml-xml")
-                xml_channel = soup.find("channel")
-                xml_title = xml_channel.find("title")
-                xml_link = xml_channel.find("link")
-                title = xml_title.text
-                url = xml_link.text
+    Args:
+        mylist_db (MylistDBController): 反映させる対象のマイリストDB
+        load_file_path (str): 入力ファイルパス
 
-                pattern = "^(.*)さんの投稿動画‐ニコニコ動画"
-                username = re.findall(pattern, title)[0]
-                username = re.sub(r'[\\/:*?"<>|]', "", username)
-                username = emoji.get_emoji_regexp().sub("", username)
-
-                td_format = "%Y/%m/%d %H:%M"
-                dts_format = "%Y-%m-%d %H:%M:%S"
-                dst = datetime.now().strftime(dts_format)
-                param_list = ["", username, "uploaded", f"{username}さんの投稿動画", url, dst, "TRUE"]
-
-                fout.write(",".join(param_list) + "\n")
-    pass
-
-
-def LoadMylist(mylist_db, load_file_path):
+    Returns:
+        int: 成功時0, データ不整合-1
+    """
     sd_path = Path(load_file_path)
-    mylist_cols = ["id", "username", "type", "showname", "url", "created_at", "is_include_new"]
-    param_dict = {}
-    with sd_path.open("r", encoding="utf-8") as fin:
-        fin.readline()
+    mylist_cols = Mylist.__table__.c.keys()
+
+    records = []
+    with sd_path.open("r", encoding="utf_8_sig") as fin:
+        fin.readline()  # 項目行読み飛ばし
         for line in fin:
             if line == "":
                 break
 
             elements = re.split("[,\n]", line)[:-1]
+
+            # データ列の個数が不整合
+            if len(mylist_cols) != len(elements):
+                return -1
+
             param_dict = dict(zip(mylist_cols, elements))
             r = mylist_db.SelectFromURL(param_dict["url"])
             if r:
-                continue
+                continue  # 既に存在しているなら登録せずに処理続行
 
-            id_index = param_dict["id"]
-            username = param_dict["username"]
-            type = param_dict["type"]
-            showname = param_dict["showname"]
-            url = param_dict["url"]
-            created_at = param_dict["created_at"]
-            # td_format = "%Y/%m/%d %H:%M"
-            # dts_format = "%Y-%m-%d %H:%M:%S"
-            # dst = datetime.strptime(created_at, td_format).strftime(dts_format)
-            dst = created_at
-            is_include_new = param_dict["is_include_new"]
-            mylist_db.Upsert(id_index, username, type, showname, url, dst, dst, False)
+            # 型変換
+            param_dict["id"] = int(param_dict["id"])
+            param_dict["is_include_new"] = True if param_dict["is_include_new"] == "True" else False
+            records.append(param_dict)
+
+    # THINK::Mylistにもrecords一括Upsertのメソッドを作る？
+    for r in records:
+        mylist_db.Upsert(r["id"], r["username"], r["mylistname"], r["type"], r["showname"], r["url"],
+                         r["created_at"], r["updated_at"], r["checked_at"], r["check_interval"], r["is_include_new"])
+  
     return 0
 
 
 if __name__ == "__main__":
     db_fullpath = Path("NNMM_DB.db")
     mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
-    file_path = Path("mylist.csv")
+    file_path = Path("result.csv")
+
     # SaveMylist(mylist_db, file_path)
     LoadMylist(mylist_db, file_path)
 
-    sd_path = Path("./sample/user/")
-    # SaveXML(sd_path)
     pass
