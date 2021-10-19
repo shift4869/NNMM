@@ -64,10 +64,10 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         self.window["-INPUT2-"].update(value="ロード中")
         self.window.refresh()
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url"]
-        # async
+        # asyncでマイリスト情報を収集する
+        # pyppeteerでページをレンダリングしてhtmlからスクレイピングする
         loop = asyncio.new_event_loop()
-        # pyppeteerが一時的にpython3.10で使えないためRSS経由としておく
-        now_video_list = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(mylist_url))
+        now_video_list = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(mylist_url))
         s_record = now_video_list[0]
         self.window["-INPUT2-"].update(value="")
 
