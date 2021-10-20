@@ -25,11 +25,8 @@ class TestCSVSaveLoad(unittest.TestCase):
         pass
 
     def tearDown(self):
-        if Path(TEST_DB_PATH).is_file():
-            Path(TEST_DB_PATH).unlink()
-
-        if Path(CSV_PATH).is_file():
-            Path(CSV_PATH).unlink()
+        Path(TEST_DB_PATH).unlink(missing_ok=True)
+        Path(CSV_PATH).unlink(missing_ok=True)
         pass
 
     def __GetMylistInfoSet(self) -> list[tuple]:
@@ -92,8 +89,7 @@ class TestCSVSaveLoad(unittest.TestCase):
         Returns:
             expect (dict[]): 全SELECTした場合の予測値
         """
-        if Path(TEST_DB_PATH).is_file():
-            Path(TEST_DB_PATH).unlink()
+        Path(TEST_DB_PATH).unlink(missing_ok=True)
 
         dbname = TEST_DB_PATH
         engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
@@ -174,10 +170,21 @@ class TestCSVSaveLoad(unittest.TestCase):
             # DB初期化
             for r in records:
                 m_cont.DeleteFromURL(r["url"])
+            self.assertEqual(m_cont.Select(), [])
 
             # ロード呼び出し
             res = CSVSaveLoad.LoadMylist(m_cont, CSV_PATH)
             self.assertEqual(res, 0)
+
+            # open呼び出し予測値
+            expect = (("r", ), {"encoding": "utf_8_sig"})
+
+            # open呼び出しチェック
+            ocal = mockio.call_args_list
+            actual = [(ca[0], ca[1]) for ca in ocal]
+            self.assertEqual(len(actual), 1)
+            actual = actual[0]
+            self.assertEqual(expect, actual)
 
             # 実行後DBチェック
             expect = copy.deepcopy(records)
