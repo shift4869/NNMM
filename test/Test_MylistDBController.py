@@ -37,8 +37,7 @@ class TestMylistDBController(unittest.TestCase):
         pass
 
     def tearDown(self):
-        if Path(TEST_DB_PATH).is_file():
-            Path(TEST_DB_PATH).unlink()
+        Path(TEST_DB_PATH).unlink(missing_ok=True)
         pass
 
     def __GetMylistInfoSet(self) -> list[tuple]:
@@ -101,8 +100,7 @@ class TestMylistDBController(unittest.TestCase):
         Returns:
             expect (dict[]): 全SELECTした場合の予測値
         """
-        if Path(TEST_DB_PATH).is_file():
-            Path(TEST_DB_PATH).unlink()
+        Path(TEST_DB_PATH).unlink(missing_ok=True)
 
         dbname = TEST_DB_PATH
         engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
