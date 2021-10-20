@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession
 
 from NNMM import ConfigMain, GuiFunction
+from NNMM.Model import MylistInfo
 
 
 logger = getLogger("root")
@@ -71,7 +72,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
             response = await loop.run_in_executor(None, requests.get, request_url + "?rss=2.0")
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "lxml-xml")
-        except Exception:
+        except Exception as e:
             pass
 
         if soup:
@@ -171,16 +172,16 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     res = []
     now_date = datetime.now()
     items_lx = soup.find_all("item")
-    for item in items_lx:
+    for i, item in enumerate(items_lx):
         video_id, title, uploaded, video_url = GetItemInfo(item)
 
         # 投稿日時が未来日の場合、登録しない（投稿予約など）
         if now_date < datetime.strptime(uploaded, dts_format):
             continue
 
-        value_list = [-1, video_id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
+        value_list = [i + 1, video_id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
         res.append(dict(zip(table_cols, value_list)))
-   
+
     # 重複処理
     seen = []
     res = [x for x in res if x["video_id"] not in seen and not seen.append(x["video_id"])]
@@ -210,9 +211,6 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     if url_type == "":
         return
 
-    new_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(new_loop)
-
     # セッション開始
     session = AsyncHTMLSession()
     browser = await pyppeteer.launch({
@@ -240,7 +238,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
             all_links_list = list(all_links_set)  # setをlistにキャストするとvalueのみのリストになる
             pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+$"  # ニコニコ動画URLの形式
             video_list = [s for s in all_links_list if re.search(pattern, s)]
-        except Exception:
+        except Exception as e:
             pass
 
         if video_list or (test_count > MAX_TEST_NUM):
@@ -335,7 +333,8 @@ if __name__ == "__main__":
     url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
 
     loop = asyncio.new_event_loop()
-    video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
+    video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
+    # video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
     pprint.pprint(video_list)
 
     pass

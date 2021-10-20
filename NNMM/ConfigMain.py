@@ -69,6 +69,8 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
     def GetConfig(cls):
         # クラス変数configを返す
         # 外部からもグローバルに参照される
+        if not cls.config:
+            ProcessConfigBase.SetConfig()
         return cls.config
 
     @classmethod
