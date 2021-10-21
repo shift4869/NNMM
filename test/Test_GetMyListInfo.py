@@ -10,6 +10,7 @@ import shutil
 import sys
 import unittest
 import urllib.parse
+import warnings
 from contextlib import ExitStack
 from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
@@ -23,6 +24,8 @@ RSS_PATH = "./test/rss/"
 class TestGetMyListInfo(unittest.TestCase):
 
     def setUp(self):
+        # requestsのResourceWarning抑制
+        warnings.simplefilter("ignore", ResourceWarning)
         pass
 
     def tearDown(self):
