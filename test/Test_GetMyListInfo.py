@@ -470,30 +470,48 @@ class TestGetMyListInfo(unittest.TestCase):
         """AsyncGetMyListInfoLightWeightのテスト
         """
         with ExitStack() as stack:
+            mockle = stack.enter_context(patch("NNMM.GetMyListInfo.logger.error"))
+            mocklw = stack.enter_context(patch("NNMM.GetMyListInfo.logger.warning"))
             mockelm = stack.enter_context(patch("asyncio.get_event_loop", self.__MakeEventLoopMock))
             mockcpb = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", self.__MakeConfigMock))
 
+            # 正常系
             urls = self.__GetURLSet()
             for url in urls:
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
                 expect = self.__MakeExpectResult(url)
                 self.assertEqual(expect, actual)
+
+            # 異常系
+            # 入力URLが不正
+            url = "https://不正なURL/user/11111111/video"
+            actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+            self.assertEqual([], actual)
             pass
 
     def test_AsyncGetMyListInfo(self):
         """AsyncGetMyListInfoのテスト
         """
         with ExitStack() as stack:
+            mockle = stack.enter_context(patch("NNMM.GetMyListInfo.logger.error"))
+            mocklw = stack.enter_context(patch("NNMM.GetMyListInfo.logger.warning"))
             mockses = stack.enter_context(patch("NNMM.GetMyListInfo.AsyncHTMLSession", self.__MakeSessionMock))
             mockpyp = stack.enter_context(patch("pyppeteer.launch", self.__MakePyppeteerMock))
 
+            # 正常系
             urls = self.__GetURLSet()
             for url in urls:
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
                 expect = self.__MakeExpectResult(url)
                 self.assertEqual(expect, actual)
+
+            # 異常系
+            # 入力URLが不正
+            url = "https://不正なURL/user/11111111/video"
+            actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
+            self.assertEqual([], actual)
             pass
 
 
