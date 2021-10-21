@@ -2,6 +2,7 @@
 import logging.config
 import pprint
 import re
+import traceback
 import urllib.parse
 from datetime import datetime
 from logging import INFO, getLogger
@@ -38,26 +39,32 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     """
     # 入力チェック
     url_type = GuiFunction.GetURLType(url)
-    if url_type == "":
+    if url_type not in ["uploaded", "mylist"]:
+        logger.error("url_type is invalid , not target url.")
         return []
 
     # 投稿者IDとマイリストID取得
     userid = ""
     mylistid = ""
-    if url_type == "uploaded":
-        pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
-        userid = re.findall(pattern, url)[0]
-        # mylistidは空白のまま
-    elif url_type == "mylist":
-        pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
-        userid, mylistid = re.findall(pattern, url)[0]
+    try:
+        if url_type == "uploaded":
+            pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
+            userid = re.findall(pattern, url)[0]
+            # mylistidは空白のまま
+        elif url_type == "mylist":
+            pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
+            userid, mylistid = re.findall(pattern, url)[0]
+    except IndexError as e:
+        logger.error("url parse failed.")
+        logger.error(traceback.format_exc())
+        return []
 
     # マイリストのURLならRSSが取得できるURLに加工
     request_url = url
     if url_type == "mylist":
+        # "https://www.nicovideo.jp/mylist/[0-9]+/?rss=2.0" 形式でないとそのマイリストのRSSが取得できない
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
         request_url = re.sub("/user/[0-9]+", "", request_url)  # /user/{userid} 部分を削除
-        # "https://www.nicovideo.jp/mylist/[0-9]+/?rss=2.0" 形式でないとそのマイリストのRSSが取得できない
 
     # RSS取得
     loop = asyncio.get_event_loop()
@@ -72,6 +79,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "lxml-xml")
         except Exception as e:
+            logger.error(traceback.format_exc())
             pass
 
         if soup:
@@ -84,7 +92,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
 
     # {MAX_TEST_NUM}回requests.getしても失敗した場合はエラー
     if (test_count > MAX_TEST_NUM) or (soup is None):
-        logger.error("Request RSS failed.")
+        logger.error("RSS request failed.")
         return []
 
     # RSS一時保存（DEBUG用）
@@ -103,68 +111,98 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
 
     # 投稿者収集
     username = ""
-    if url_type == "uploaded":
-        # 投稿動画の場合はタイトルからユーザー名を取得
-        title_lx = soup.find_all("title")
-        pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
-        username = re.findall(pattern, title_lx[0].text)[0]
-    elif url_type == "mylist":
-        # マイリストの場合は作成者からユーザー名を取得
-        creator_lx = soup.find_all("dc:creator")
-        username = creator_lx[0].text
+    try:
+        if url_type == "uploaded":
+            # 投稿動画の場合はタイトルからユーザー名を取得
+            title_lx = soup.find_all("title")
+            pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
+            username = re.findall(pattern, title_lx[0].text)[0]
+        elif url_type == "mylist":
+            # マイリストの場合は作成者からユーザー名を取得
+            creator_lx = soup.find_all("dc:creator")
+            username = creator_lx[0].text
+    except IndexError as e:
+        logger.error("getting username failed.")
+        logger.error(traceback.format_exc())
+        return []
 
     # マイリスト名収集
     showname = ""
     myshowname = ""
-    if url_type == "uploaded":
-        # 投稿動画の場合はマイリスト名がないのでユーザー名と合わせて便宜上の名前に設定
-        myshowname = "投稿動画"
-        showname = f"{username}さんの投稿動画"
-    elif url_type == "mylist":
-        # マイリストの場合はタイトルから取得
-        title_lx = soup.find_all("title")
-        pattern = "^マイリスト (.*)‐ニコニコ動画$"
-        myshowname = re.findall(pattern, title_lx[0].text)[0]
-        showname = f"「{myshowname}」-{username}さんのマイリスト"
+    try:
+        if url_type == "uploaded":
+            # 投稿動画の場合はマイリスト名がないのでユーザー名と合わせて便宜上の名前に設定
+            myshowname = "投稿動画"
+            showname = f"{username}さんの投稿動画"
+        elif url_type == "mylist":
+            # マイリストの場合はタイトルから取得
+            title_lx = soup.find_all("title")
+            pattern = "^マイリスト (.*)‐ニコニコ動画$"
+            myshowname = re.findall(pattern, title_lx[0].text)[0]
+            showname = f"「{myshowname}」-{username}さんのマイリスト"
+    except IndexError as e:
+        logger.error("getting showname failed.")
+        logger.error(traceback.format_exc())
+        return []
+
+    # config取得
+    config = ConfigMain.ProcessConfigBase.GetConfig()
+    if not config:
+        logger.error("config read failed.")
+        return []
 
     # RSS保存
-    config = ConfigMain.ProcessConfigBase.GetConfig()
     rd_str = config["general"].get("rss_save_path", "")
     rd_path = Path(rd_str)
     rd_path.mkdir(exist_ok=True, parents=True)
     rss_file_name = f"{userid}.xml"
     if mylistid != "":
         rss_file_name = f"{userid}_{mylistid}.xml"
-    with (rd_path / rss_file_name).open("w", encoding="utf-8") as fout:
-        fout.write(response.text)
+    try:
+        with (rd_path / rss_file_name).open("w", encoding="utf-8") as fout:
+            fout.write(response.text)
+    except Exception as e:
+        logger.error("RSS file save failed , but continue process.")
+        logger.error(traceback.format_exc())
+        pass  # 仮に書き込みに失敗しても以降の処理は続行する
 
-    # td_format = "%Y-%m-%dT%H:%M:%S%z"
+    # td_format: RSSに記載されている日付形式
+    # dts_format: NNMMで扱う日付形式
     td_format = "%a, %d %b %Y %H:%M:%S %z"
     dts_format = "%Y-%m-%d %H:%M:%S"
 
-    # 一つのentryから動画ID, 動画名, 投稿日時, URLを抽出する関数
+    # 一つのentryから動画ID, 動画タイトル, 投稿日時, 動画URLを抽出する関数
     def GetItemInfo(item_lx) -> tuple[str, str, str, str]:
-        # 動画ID, 動画名, 投稿日時, URL
+        # 動画ID, 動画タイトル, 投稿日時, 動画URL
         video_id = ""
         title = ""
         uploaded = ""
         video_url = ""
 
-        title = item_lx.find("title").text
+        try:
+            title = item_lx.find("title").text
 
-        link_lx = item_lx.find("link")
-        pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+"
-        if re.findall(pattern, link_lx.text):
-            # クエリ除去してURL部分のみ保持
-            video_url = urllib.parse.urlunparse(
-                urllib.parse.urlparse(link_lx.text)._replace(query=None)
-            )
+            link_lx = item_lx.find("link")
+            pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+"
+            if re.findall(pattern, link_lx.text):
+                # クエリ除去してURL部分のみ保持
+                video_url = urllib.parse.urlunparse(
+                    urllib.parse.urlparse(link_lx.text)._replace(query=None)
+                )
 
-        pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-        video_id = re.findall(pattern, video_url)[0]
+            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
+            video_id = re.findall(pattern, video_url)[0]
 
-        pubDate_lx = item_lx.find("pubDate")
-        uploaded = datetime.strptime(pubDate_lx.text, td_format).strftime(dts_format)
+            pubDate_lx = item_lx.find("pubDate")
+            uploaded = datetime.strptime(pubDate_lx.text, td_format).strftime(dts_format)
+        except IndexError as e:
+            logger.error("item parse failed.")
+            logger.error(traceback.format_exc())
+            return ("", "", "", "")
+        except ValueError as e:
+            logger.error("item date parse failed.")
+            logger.error(traceback.format_exc())
+            return ("", "", "", "")
 
         return (video_id, title, uploaded, video_url)
 
@@ -173,12 +211,18 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
     now_date = datetime.now()
     items_lx = soup.find_all("item")
     for i, item in enumerate(items_lx):
+        # 動画エントリパース
         video_id, title, uploaded, video_url = GetItemInfo(item)
+
+        # パース結果チェック
+        if (video_id == "") or (title == "") or (uploaded == "") or (video_url == ""):
+            continue
 
         # 投稿日時が未来日の場合、登録しない（投稿予約など）
         if now_date < datetime.strptime(uploaded, dts_format):
             continue
 
+        # 登録
         value_list = [i + 1, video_id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
         res.append(dict(zip(table_cols, value_list)))
 
@@ -204,12 +248,13 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
         url (str): 投稿動画ページのアドレス
 
     Returns:
-        video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照
+        video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照, エラー時 空リスト
     """
     # 入力チェック
     url_type = GuiFunction.GetURLType(url)
-    if url_type == "":
-        return
+    if url_type not in ["uploaded", "mylist"]:
+        logger.error("url_type is invalid , not target url.")
+        return []
 
     # セッション開始
     session = AsyncHTMLSession()
@@ -222,7 +267,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     })
     session._browser = browser
 
-    video_list = []
+    video_list = None
     test_count = 0
     MAX_TEST_NUM = 5
     while True:
@@ -239,16 +284,25 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
             pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+$"  # ニコニコ動画URLの形式
             video_list = [s for s in all_links_list if re.search(pattern, s)]
         except Exception as e:
+            logger.error(traceback.format_exc())
             pass
 
-        if video_list or (test_count > MAX_TEST_NUM):
+        if (video_list is not None) or (test_count > MAX_TEST_NUM):
             break
         test_count = test_count + 1
         sleep(3)
 
+    # responseの取得成否に関わらずセッションは閉じる
+    await session.close()
+
     # {MAX_TEST_NUM}回レンダリングしても失敗した場合はエラー
     if test_count > MAX_TEST_NUM:
-        logger.error("Request HTML pages failed.")
+        logger.error("HTML pages request failed.")
+        return []
+
+    # 動画リンクが1つもない場合は空リストを返して終了
+    if video_list == []:
+        logger.warning("HTML pages request is success , but video info is nothing.")
         return []
 
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
@@ -262,23 +316,42 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # 動画名収集
     # 全角スペースは\u3000(unicode-escape)となっている
-    # lx = r.html.lxml.find_class("NC-MediaObject-main")
-    title_lx = response.html.lxml.find_class("NC-MediaObjectTitle")
-    title_list = [str(t.text) for t in title_lx]
+    try:
+        title_lx = response.html.lxml.find_class("NC-MediaObjectTitle")
+        if title_lx == []:
+            raise AttributeError
+        title_list = [str(t.text) for t in title_lx]
+    except AttributeError as e:
+        logger.error("title parse failed.")
+        logger.error(traceback.format_exc())
+        return []
 
     # 投稿日時収集
+    # td_format: HTMLページに記載されている日付形式
+    # dts_format: NNMMで扱う日付形式
     td_format = "%Y/%m/%d %H:%M"
     dts_format = "%Y-%m-%d %H:%M:00"
-    # uploaded_lx = response.html.lxml.find_class("NC-VideoMediaObject-metaAdditionalRegisteredAt")
-    uploaded_lx = response.html.lxml.find_class("NC-VideoRegisteredAtText-text")
-    uploaded_list = []
-    for t in uploaded_lx:
-        tca = str(t.text)
-        if "前" in tca or "今" in tca:
-            uploaded_list.append(tca)
-        else:
-            dst = datetime.strptime(tca, td_format)
-            uploaded_list.append(dst.strftime(dts_format))
+    try:
+        uploaded_lx = response.html.lxml.find_class("NC-VideoRegisteredAtText-text")
+        if uploaded_lx == []:
+            raise AttributeError
+
+        uploaded_list = []
+        for t in uploaded_lx:
+            tca = str(t.text)
+            if "前" in tca or "今" in tca:
+                uploaded_list.append(tca)
+            else:
+                dst = datetime.strptime(tca, td_format)
+                uploaded_list.append(dst.strftime(dts_format))
+    except AttributeError as e:
+        logger.error("uploaded parse failed.")
+        logger.error(traceback.format_exc())
+        return []
+    except ValueError as e:
+        logger.error("uploaded date parse failed.")
+        logger.error(traceback.format_exc())
+        return []
 
     # 動画ID収集
     pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"  # ニコニコ動画URLの形式
@@ -287,6 +360,9 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     # 投稿者収集
     # ひとまず投稿動画の投稿者のみ（単一）
     username_lx = response.html.lxml.find_class("UserDetailsHeader-nickname")
+    if username_lx == []:
+        logger.error("username parse failed.")
+        return []
     username = username_lx[0].text
 
     # マイリスト名収集
@@ -297,6 +373,9 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
         myshowname = "投稿動画"
     elif url_type == "mylist":
         myshowname_lx = response.html.lxml.find_class("MylistHeader-name")
+        if myshowname_lx == []:
+            logger.error("myshowname parse failed.")
+            return []
         myshowname = myshowname_lx[0].text
         showname = f"「{myshowname}」-{username}さんのマイリスト"
 
@@ -309,18 +388,18 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     uploaded_list = uploaded_list[:list_num_min]
     video_id_list = video_id_list[:list_num_min]
     if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(video_id_list):
+        logger.error("getting video info list length is invalid.")
         return []
     for id, title, uploaded, video_url in zip(video_id_list, title_list, uploaded_list, video_list):
         value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
         res.append(dict(zip(table_cols, value_list)))
 
     # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
+    # video_idで降順ソートする
     # No.も付記する
     res.sort(key=lambda t: t["video_id"], reverse=True)
     for i, r in enumerate(res):
         res[i]["no"] = i + 1
-
-    await session.close()
 
     return res
 
@@ -332,10 +411,11 @@ if __name__ == "__main__":
     # url = "https://www.nicovideo.jp/user/37896001/video"
     # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
     url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
+    # url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"
 
     loop = asyncio.new_event_loop()
-    # video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
-    video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
+    video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
+    # video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
     pprint.pprint(video_list)
 
     pass
