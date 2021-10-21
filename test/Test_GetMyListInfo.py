@@ -298,6 +298,79 @@ class TestGetMyListInfo(unittest.TestCase):
         res = [myshowname]
         return res
 
+    def __MakeReturnHtml(self, url: str) -> AsyncMock:
+        """html以下のプロパティ,メソッドを模倣するモックを返す
+
+        Notes:
+            以下のプロパティ,メソッドを模倣するモックを返す
+            html
+                aync arender()
+                links
+                lxml
+                    find_class()
+                        [text]
+        Returns:
+            AsyncMock: html を模倣するモック
+        """
+        r_html = AsyncMock()
+
+        async def ReturnARender(s):
+            return None
+        type(r_html).arender = ReturnARender
+
+        # クエリ除去
+        mylist_url = urllib.parse.urlunparse(
+            urllib.parse.urlparse(url)._replace(query=None)
+        )
+
+        # マイリストのURLならRSSが取得できるURLに加工
+        pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
+        if re.search(pattern, mylist_url):
+            mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
+
+        type(r_html).links = self.__MakeLinks(mylist_url)
+
+        def ReturnLxml():
+            r_lxml = MagicMock()
+
+            def ReturnFindClass(s, id):
+                r_finds = []
+                value_list = []
+
+                # 呼び出し時のパラメータで分岐
+                if id == "NC-MediaObjectTitle":
+                    # title
+                    value_list = self.__MakeTitles(mylist_url)
+                elif id == "NC-VideoRegisteredAtText-text":
+                    # uploaded date
+                    # THINK::"n分前" とか "たった今" も入れる
+                    value_list = self.__MakeUploads(mylist_url)
+                    td_format = "%a, %d %b %Y %H:%M:%S %z"
+                    dts_format = "%Y/%m/%d %H:%M"
+                    value_list = [
+                        datetime.strptime(v, td_format).strftime(dts_format)
+                        for v in value_list
+                    ]
+                elif id == "UserDetailsHeader-nickname":
+                    # username
+                    value_list = self.__MakeUsername(mylist_url)
+                elif id == "MylistHeader-name":
+                    # myshowname
+                    value_list = self.__MakeMyshowname(mylist_url)
+
+                # textプロパティで取り出せるようにパッキング
+                for v in value_list:
+                    r_p = MagicMock()
+                    type(r_p).text = v
+                    r_finds.append(r_p)
+                return r_finds
+
+            type(r_lxml).find_class = ReturnFindClass
+            return r_lxml
+
+        type(r_html).lxml = ReturnLxml()
+        return r_html
+
     def __MakeSessionMock(self) -> AsyncMock:
         """session を模倣するモック
 
@@ -305,11 +378,7 @@ class TestGetMyListInfo(unittest.TestCase):
             以下のプロパティ,メソッドを模倣するモックを返す
             session
                 aync get()
-                    html
-                        aync arender()
-                        links
-                        lxml
-                            find_class()
+                    html: __MakeReturnHtml()を参照
                 aync close()
 
         Returns:
@@ -319,69 +388,8 @@ class TestGetMyListInfo(unittest.TestCase):
 
         async def ReturnGet(s, url):
             r_get = MagicMock()
-
-            def ReturnHtml():
-                r_html = AsyncMock()
-
-                async def ReturnARender(s):
-                    return None
-                type(r_html).arender = ReturnARender
-
-                # クエリ除去
-                mylist_url = urllib.parse.urlunparse(
-                    urllib.parse.urlparse(url)._replace(query=None)
-                )
-
-                # マイリストのURLならRSSが取得できるURLに加工
-                pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-                if re.search(pattern, mylist_url):
-                    mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
-
-                type(r_html).links = self.__MakeLinks(mylist_url)
-
-                def ReturnLxml():
-                    r_lxml = MagicMock()
-
-                    def ReturnFindClass(s, id):
-                        r_finds = []
-                        value_list = []
-
-                        # 呼び出し時のパラメータで分岐
-                        if id == "NC-MediaObjectTitle":
-                            # title
-                            value_list = self.__MakeTitles(mylist_url)
-                        elif id == "NC-VideoRegisteredAtText-text":
-                            # uploaded
-                            # THINK::"n分前" とか "たった今" も入れる
-                            value_list = self.__MakeUploads(mylist_url)
-                            td_format = "%a, %d %b %Y %H:%M:%S %z"
-                            dts_format = "%Y/%m/%d %H:%M"
-                            value_list = [
-                                datetime.strptime(v, td_format).strftime(dts_format)
-                                for v in value_list
-                            ]
-                        elif id == "UserDetailsHeader-nickname":
-                            # username
-                            value_list = self.__MakeUsername(mylist_url)
-                        elif id == "MylistHeader-name":
-                            # myshowname
-                            value_list = self.__MakeMyshowname(mylist_url)
-
-                        for v in value_list:
-                            r_p = MagicMock()
-                            type(r_p).text = v
-                            r_finds.append(r_p)
-                        return r_finds
-
-                    type(r_lxml).find_class = ReturnFindClass
-                    return r_lxml
-
-                type(r_html).lxml = ReturnLxml()
-                return r_html
-
-            type(r_get).html = ReturnHtml()
+            type(r_get).html = self.__MakeReturnHtml(url)
             return r_get
-
         type(r_response).get = ReturnGet
 
         async def ReturnClose(s):
