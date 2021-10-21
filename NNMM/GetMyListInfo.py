@@ -15,7 +15,6 @@ from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession
 
 from NNMM import ConfigMain, GuiFunction
-from NNMM.Model import MylistInfo
 
 
 logger = getLogger("root")
@@ -35,7 +34,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
         url (str): 投稿動画ページのアドレス
 
     Returns:
-        video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照
+        video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照, エラー時 空リスト
     """
     # 入力チェック
     url_type = GuiFunction.GetURLType(url)
@@ -85,6 +84,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
 
     # {MAX_TEST_NUM}回requests.getしても失敗した場合はエラー
     if (test_count > MAX_TEST_NUM) or (soup is None):
+        logger.error("Request RSS failed.")
         return []
 
     # RSS一時保存（DEBUG用）
@@ -248,6 +248,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # {MAX_TEST_NUM}回レンダリングしても失敗した場合はエラー
     if test_count > MAX_TEST_NUM:
+        logger.error("Request HTML pages failed.")
         return []
 
     # ループ脱出後はレンダリングが正常に行えたことが保証されている
@@ -333,8 +334,8 @@ if __name__ == "__main__":
     url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
 
     loop = asyncio.new_event_loop()
-    video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
-    # video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
+    # video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
+    video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
     pprint.pprint(video_list)
 
     pass
