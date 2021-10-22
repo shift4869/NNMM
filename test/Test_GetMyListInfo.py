@@ -5,13 +5,13 @@ GetMyListInfoの各種機能をテストする
 """
 
 import asyncio
-import re
 import shutil
 import sys
 import unittest
 import urllib.parse
 import warnings
 from contextlib import ExitStack
+from re import findall
 from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
 
@@ -481,6 +481,7 @@ class TestGetMyListInfo(unittest.TestCase):
         """AsyncGetMyListInfoLightWeightのテスト
         """
         with ExitStack() as stack:
+            mockslp = stack.enter_context(patch("NNMM.GetMyListInfo.sleep"))
             mockle = stack.enter_context(patch("NNMM.GetMyListInfo.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.GetMyListInfo.logger.warning"))
             mockelm = stack.enter_context(patch("asyncio.get_event_loop", self.__MakeEventLoopMock))
@@ -499,6 +500,47 @@ class TestGetMyListInfo(unittest.TestCase):
             url = "https://不正なURL/user/11111111/video"
             actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
             self.assertEqual([], actual)
+
+            # urlパース失敗
+            with patch("NNMM.GuiFunction.GetURLType", lambda x: "mylist"):
+                url = "https://不正なURL/user/11111111/video"
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                self.assertEqual([], actual)
+
+            # RSS取得が常に失敗
+            with patch("NNMM.GetMyListInfo.BeautifulSoup", lambda t, p: None):
+                url = urls[0]
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                self.assertEqual([], actual)
+
+            # 投稿者名取得に失敗
+            pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
+            with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
+                url = urls[0]
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                self.assertEqual([], actual)
+
+            # マイリスト名取得に失敗
+            pattern = "^マイリスト (.*)‐ニコニコ動画$"
+            with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
+                url = urls[2]
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                self.assertEqual([], actual)
+
+            # config取得に失敗
+            # 二重にパッチを当てても想定どおりの挙動をしてくれる
+            # withの間だけconfigを返す関数を無効化する
+            with patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", lambda: None):
+                url = urls[0]
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                self.assertEqual([], actual)
+
+            # RSS保存に失敗
+            with patch("pathlib.Path.open", lambda: None):
+                url = urls[0]
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                self.assertEqual([], actual)
+
             pass
 
     def test_AsyncGetMyListInfo(self):

@@ -121,7 +121,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
             # マイリストの場合は作成者からユーザー名を取得
             creator_lx = soup.find_all("dc:creator")
             username = creator_lx[0].text
-    except IndexError as e:
+    except (IndexError, TypeError) as e:
         logger.error("getting username failed.")
         logger.error(traceback.format_exc())
         return []
@@ -140,7 +140,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
             pattern = "^マイリスト (.*)‐ニコニコ動画$"
             myshowname = re.findall(pattern, title_lx[0].text)[0]
             showname = f"「{myshowname}」-{username}さんのマイリスト"
-    except IndexError as e:
+    except (IndexError, TypeError) as e:
         logger.error("getting showname failed.")
         logger.error(traceback.format_exc())
         return []
