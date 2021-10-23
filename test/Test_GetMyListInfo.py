@@ -70,7 +70,7 @@ class TestGetMyListInfo(unittest.TestCase):
             mylist_url_info[3]: ("マイリスト 投稿者1のマイリスト2‐ニコニコ動画", "Wed, 19 Oct 2021 01:00:02 +0900", "投稿者1"),
             mylist_url_info[4]: ("マイリスト 投稿者3のマイリスト1‐ニコニコ動画", "Wed, 19 Oct 2021 03:00:01 +0900", "投稿者3"),
         }
-        res = mylist_info.get(mylist_url)
+        res = mylist_info.get(mylist_url, ("", "", ""))
         return res
 
     def __GetVideoInfoSet(self, mylist_url: str) -> list[tuple[str, str, str]]:
@@ -87,7 +87,7 @@ class TestGetMyListInfo(unittest.TestCase):
             mylist_url_info[3]: [(title_t.format(1, i), video_url_t.format(1, i), uploaded_t.format(1, i)) for i in range(5, 10)],
             mylist_url_info[4]: [(title_t.format(3, i), video_url_t.format(3, i), uploaded_t.format(3, i)) for i in range(1, 10)],
         }
-        res = video_info.get(mylist_url)
+        res = video_info.get(mylist_url, [("", "", "")])
         return res
 
     def __GetURLType(self, url: str) -> str:
@@ -303,7 +303,7 @@ class TestGetMyListInfo(unittest.TestCase):
         res = [myshowname]
         return res
 
-    def __MakeReturnHtml(self, url: str) -> AsyncMock:
+    def __MakeReturnHtml(self, url: str, error_target: str) -> AsyncMock:
         """html以下のプロパティ,メソッドを模倣するモックを返す
 
         Notes:
@@ -314,6 +314,10 @@ class TestGetMyListInfo(unittest.TestCase):
                 lxml
                     find_class()
                         [text]
+        Args:
+            url (str): 対象URL
+            error_target (str): html.lxml.find_class においてエラーとするid
+
         Returns:
             AsyncMock: html を模倣するモック
         """
@@ -341,6 +345,13 @@ class TestGetMyListInfo(unittest.TestCase):
             def ReturnFindClass(s, id):
                 r_finds = []
                 value_list = []
+
+                # エラーとする指定があるなら空リストを返す
+                if error_target != "":
+                    if id in error_target and "ValueError" in error_target:
+                        raise ValueError
+                    if id == error_target:
+                        return []
 
                 # 呼び出し時のパラメータで分岐
                 if id == "NC-MediaObjectTitle":
@@ -376,7 +387,7 @@ class TestGetMyListInfo(unittest.TestCase):
         type(r_html).lxml = ReturnLxml()
         return r_html
 
-    def __MakeSessionMock(self) -> AsyncMock:
+    def __MakeSessionMock(self, return_status: int = 200, error_target: str = "") -> AsyncMock:
         """session を模倣するモック
 
         Notes:
@@ -386,16 +397,24 @@ class TestGetMyListInfo(unittest.TestCase):
                     html: __MakeReturnHtml()を参照
                 aync close()
 
+        Args:
+            return_status (str): 想定リクエストステータス
+            error_target (str): html.lxml.find_class においてエラーとするid
+
         Returns:
-            AsyncMock: session を模倣するモック
+            AsyncMock: 以下のモックを返却する
+                        return_statusが200のとき,session を模倣するモック
+                            error_target が空文字列ならば正常なモック
+                            error_target が空文字列でないならばhtml.lxml.find_class に失敗するモック
+                        return_statusが200でないとき, session.getに失敗するモック
         """
         r_response = AsyncMock()
 
         async def ReturnGet(s, url):
             r_get = MagicMock()
-            type(r_get).html = self.__MakeReturnHtml(url)
+            type(r_get).html = self.__MakeReturnHtml(url, error_target)
             return r_get
-        type(r_response).get = ReturnGet
+        type(r_response).get = ReturnGet if return_status == 200 else None
 
         async def ReturnClose(s):
             return None
@@ -545,7 +564,7 @@ class TestGetMyListInfo(unittest.TestCase):
                 expect = self.__MakeExpectResult(url)
                 self.assertEqual(expect, actual)
 
-            # エントリ保存に失敗(IndexError)
+            # エントリ保存に失敗(TypeError)
             # エントリのvideo_idの切り出しに失敗
             pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
             with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
@@ -575,9 +594,10 @@ class TestGetMyListInfo(unittest.TestCase):
         """AsyncGetMyListInfoのテスト
         """
         with ExitStack() as stack:
+            mockslp = stack.enter_context(patch("NNMM.GetMyListInfo.sleep"))
             mockle = stack.enter_context(patch("NNMM.GetMyListInfo.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.GetMyListInfo.logger.warning"))
-            mockses = stack.enter_context(patch("NNMM.GetMyListInfo.AsyncHTMLSession", self.__MakeSessionMock))
+            mockses = stack.enter_context(patch("NNMM.GetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200)))
             mockpyp = stack.enter_context(patch("pyppeteer.launch", self.__MakePyppeteerMock))
 
             # 正常系
@@ -593,6 +613,51 @@ class TestGetMyListInfo(unittest.TestCase):
             url = "https://不正なURL/user/11111111/video"
             actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
+ 
+            # session.getが常に失敗
+            with patch("NNMM.GetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(503)):
+                url = urls[0]
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
+                self.assertEqual([], actual)
+
+            # 動画リンクが1つもないマイリストを指定
+            # 正確にはエラーではない(warning)が結果として空リストが返ってくる
+            with patch("NNMM.GuiFunction.GetURLType", lambda x: "mylist"):
+                url = "https://www.nicovideo.jp/user/99999999/mylist/99999999"
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
+                self.assertEqual([], actual)
+
+            # 動画名収集に失敗(AttributeError)
+            url = urls[0]
+            error_target = "NC-MediaObjectTitle"
+            with patch("NNMM.GetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
+                self.assertEqual([], actual)
+
+            # 投稿日時収集に失敗(AttributeError)
+            error_target = "NC-VideoRegisteredAtText-text"
+            with patch("NNMM.GetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
+                self.assertEqual([], actual)
+
+            # 投稿日時収集に失敗(ValueError)
+            error_target = "NC-VideoRegisteredAtText-text__ValueError"
+            with patch("NNMM.GetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
+                self.assertEqual([], actual)
+
+            # 投稿者収集に失敗(AttributeError)
+            error_target = "UserDetailsHeader-nickname"
+            with patch("NNMM.GetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
+                self.assertEqual([], actual)
+
+            # マイリスト名収集に失敗(AttributeError)
+            url = urls[2]
+            error_target = "MylistHeader-name"
+            with patch("NNMM.GetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(url))
+                self.assertEqual([], actual)
             pass
 
 
