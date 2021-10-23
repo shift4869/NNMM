@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 import logging.config
 import pprint
 import re
@@ -9,7 +10,6 @@ from logging import INFO, getLogger
 from pathlib import Path
 from time import sleep
 
-import asyncio
 import pyppeteer
 import requests
 from bs4 import BeautifulSoup
@@ -195,7 +195,7 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
 
             pubDate_lx = item_lx.find("pubDate")
             uploaded = datetime.strptime(pubDate_lx.text, td_format).strftime(dts_format)
-        except IndexError as e:
+        except (IndexError, TypeError) as e:
             logger.error("item parse failed.")
             logger.error(traceback.format_exc())
             return ("", "", "", "")
@@ -222,11 +222,15 @@ async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
         if now_date < datetime.strptime(uploaded, dts_format):
             continue
 
-        # 登録
+        # 出力インターフェイスチェック
         value_list = [i + 1, video_id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
+        if len(table_cols) != len(value_list):
+            continue
+
+        # 登録
         res.append(dict(zip(table_cols, value_list)))
 
-    # 重複処理
+    # 重複削除
     seen = []
     res = [x for x in res if x["video_id"] not in seen and not seen.append(x["video_id"])]
 

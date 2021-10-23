@@ -15,6 +15,8 @@ from re import findall
 from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
 
+import bs4
+
 from NNMM.MylistDBController import *
 from NNMM import GetMyListInfo
 
@@ -536,7 +538,33 @@ class TestGetMyListInfo(unittest.TestCase):
                 self.assertEqual([], actual)
 
             # RSS保存に失敗
+            # RSS保存は失敗しても返り値は正常となる
             with patch("pathlib.Path.open", lambda: None):
+                url = urls[0]
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                expect = self.__MakeExpectResult(url)
+                self.assertEqual(expect, actual)
+
+            # エントリ保存に失敗(IndexError)
+            # エントリのvideo_idの切り出しに失敗
+            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
+            with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
+                url = urls[0]
+                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                self.assertEqual([], actual)
+
+            # エントリ保存に失敗(ValueError)
+            # エントリのuploadedの切り出しに失敗
+            # datetime.strptimeはビルトイン関数のためモックを当てるのが面倒
+            # BeautifulSoupのfindメソッドを置き換える
+            real_func = bs4.element.Tag.find
+
+            def mock_func(s, t):
+                r = real_func(s, t)
+                type(r).text = r.text + "不正なpubDate"
+                return r
+
+            with patch("bs4.element.Tag.find", lambda s, t: real_func(s, t) if t != "pubDate" else mock_func(s, t)):
                 url = urls[0]
                 actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
                 self.assertEqual([], actual)
