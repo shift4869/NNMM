@@ -9,13 +9,22 @@ import re
 import random
 import sys
 import unittest
+from contextlib import ExitStack
 from datetime import date, datetime, timedelta
 from logging import INFO, getLogger
 from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
 
 import freezegun
+from sqlalchemy import *
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import *
+from sqlalchemy.orm.exc import *
+
 from NNMM import GuiFunction
+from NNMM.MylistDBController import *
+
+TEST_DB_PATH = "./test/test.db"
 
 
 class TestGetMyListInfo(unittest.TestCase):
@@ -24,7 +33,91 @@ class TestGetMyListInfo(unittest.TestCase):
         pass
 
     def tearDown(self):
+        Path(TEST_DB_PATH).unlink(missing_ok=True)
         pass
+
+    def __GetMylistInfoSet(self) -> list[tuple]:
+        """Mylistオブジェクトの情報セットを返す（mylist_url以外）
+        """
+        mylist_info = [
+            (1, "投稿者1", "投稿動画", "uploaded", "投稿者1さんの投稿動画", "2021-05-29 00:00:11", "2021-10-16 00:00:11", "2021-10-17 00:00:11", "15分", False),
+            (2, "投稿者2", "投稿動画", "uploaded", "投稿者2さんの投稿動画", "2021-05-29 00:00:22", "2021-10-16 00:00:22", "2021-10-17 00:00:22", "15分", False),
+            (3, "投稿者1", "マイリスト1", "mylist", "「マイリスト1」-投稿者1さんのマイリスト", "2021-05-29 00:11:11", "2021-10-16 00:11:11", "2021-10-17 00:11:11", "15分", False),
+            (4, "投稿者1", "マイリスト2", "mylist", "「マイリスト2」-投稿者1さんのマイリスト", "2021-05-29 00:22:11", "2021-10-16 00:22:11", "2021-10-17 00:22:11", "15分", False),
+            (5, "投稿者3", "マイリスト3", "mylist", "「マイリスト3」-投稿者3さんのマイリスト", "2021-05-29 00:11:33", "2021-10-16 00:11:33", "2021-10-17 00:11:33", "15分", False),
+        ]
+        return mylist_info
+
+    def __GetURLInfoSet(self) -> list[str]:
+        """mylist_urlの情報セットを返す
+        """
+        url_info = [
+            "https://www.nicovideo.jp/user/11111111/video",
+            "https://www.nicovideo.jp/user/22222222/video",
+            "https://www.nicovideo.jp/user/11111111/mylist/00000011",
+            "https://www.nicovideo.jp/user/11111111/mylist/00000012",
+            "https://www.nicovideo.jp/user/33333333/mylist/00000031",
+        ]
+        return url_info
+
+    def __MakeMylistSample(self, id: str) -> Mylist:
+        """Mylistオブジェクトを作成する
+
+        Note:
+            マイリスト情報セット
+                id (int): ID
+                username (str): 投稿者名
+                mylistname (str): マイリスト名
+                type (str): マイリストのタイプ({"uploaded", "mylist"})
+                showname (str): マイリストの一意名({username}_{type})
+                                typeが"uploaded"の場合："{username}さんの投稿動画"
+                                typeが"mylist"の場合："「{mylistname}」-{username}さんのマイリスト"
+                url (str): マイリストURL
+                created_at (str): 作成日時
+                updated_at (str): 更新日時
+                checked_at (str): 更新確認日時
+                check_interval (str): 最低更新間隔
+                is_include_new (boolean): 未視聴動画を含むかどうか
+
+        Args:
+            id (int): マイリストとURL情報セットのid
+
+        Returns:
+            Mylist: Mylistオブジェクト
+        """
+        ml = self.__GetMylistInfoSet()[id]
+        mylist_url = self.__GetURLInfoSet()[id]
+        r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9])
+        return r
+
+    def __LoadToTable(self, records) -> list[dict]:
+        """テスト用の初期レコードを格納したテーブルを用意する
+
+        Args:
+            records (list[Mylist]): 格納するレコードの配列
+        """
+        Path(TEST_DB_PATH).unlink(missing_ok=True)
+
+        dbname = TEST_DB_PATH
+        engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
+        Base.metadata.create_all(engine)
+
+        Session = sessionmaker(bind=engine, autoflush=False)
+        session = Session()
+
+        for r in records:
+            session.add(r)
+
+        session.commit()
+        session.close()
+        return 0
+
+    def __MakeWindowMock(self):
+        r_response = MagicMock()
+
+        type(r_response).get_indexes = lambda s: [1, 2, 3]
+
+        return {"-LIST-": r_response}
 
     def test_GetURLType(self):
         """マイリストのタイプを返す機能のテスト
@@ -177,6 +270,45 @@ class TestGetMyListInfo(unittest.TestCase):
         expect = -1
         self.assertEqual(expect, actual)
         pass
+
+    def test_UpdateMylistShow(self):
+        """マイリストペインを更新する機能のテスト
+        """
+        with ExitStack() as stack:
+            # mockcpb = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", self.__MakeWindowMock))
+
+            MAX_RECORD_NUM = 5
+            records = []
+            id_num = 1
+            for i in range(0, MAX_RECORD_NUM):
+                r = self.__MakeMylistSample(i)
+                records.append(r)
+
+            t_id = random.sample(range(0, len(records) - 1), 2)
+            for i in t_id:
+                records[i].is_include_new = True
+            self.__LoadToTable(records)
+
+            m_cont = MylistDBController(TEST_DB_PATH)
+
+            # mock作成
+            r_response = MagicMock()
+            type(r_response).get_indexes = lambda s: [random.randint(0, len(records) - 1)]
+            type(r_response).Values = []
+
+            r_update = MagicMock()
+            type(r_response).update = r_update
+
+            r_widget = MagicMock()
+            r_itemconfig = MagicMock()
+            r_see = MagicMock()
+            type(r_widget).itemconfig = r_itemconfig
+            type(r_widget).see = r_see
+
+            type(r_response).Widget = r_widget
+            mockwin = {"-LIST-": r_response}
+            actual = GuiFunction.UpdateMylistShow(mockwin, m_cont)
+            self.assertEqual(0, actual)
 
 
 if __name__ == "__main__":
