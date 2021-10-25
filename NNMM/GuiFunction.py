@@ -21,7 +21,7 @@ def GetURLType(url: str) -> str:
         url (str): 判定対象URL
 
     Returns:
-        str: マイリストのタイプ
+        str: マイリストのタイプ 以下のタイプのいずれでもない場合、空文字列を返す
              "uploaded": 投稿動画
              "mylist": 通常のマイリスト
     """
@@ -48,20 +48,33 @@ def GetNowDatetime() -> str:
     return dst
 
 
-def IsMylistIncludeNewVideo(table_list: list):
+def IsMylistIncludeNewVideo(table_list: list[list]) -> bool | KeyError:
     """現在のテーブルリスト内に状況が未視聴のものが一つでも含まれているかを返す
 
     Args:
-        table_list (list[list]): 現在のテーブルリスト
+        table_list (list[list]): テーブルリスト
 
     Returns:
-        boolean: 一つでも未視聴のものがあればTrue, そうでないならFalse
+        bool: 一つでも未視聴のものがあればTrue, そうでないならFalse
+        KeyError: 引数のリストが不正
     """
-    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "URL"]
-    for t in table_list:
-        if t[4] == "未視聴":
-            return True
-    return False
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+    STATUS_INDEX = 4
+
+    # 空リストならFalse
+    if len(table_list) == 0:
+        return False
+
+    # リスト内のリストの要素数が少ないならKeyError
+    if len(table_list[0]) < STATUS_INDEX + 1:
+        raise KeyError
+
+    # 状況部分が想定ステータスでない場合 -> 項目名の並びが不正の場合KeyError
+    if not all([v[STATUS_INDEX] in ["", "未視聴"] for v in table_list]):
+        raise KeyError
+
+    # 一つでも未視聴のものがあればTrue, そうでないならFalse
+    return any([v[STATUS_INDEX] == "未視聴" for v in table_list])
 
 
 def IntervalTranslation(interval_str: str) -> int:
