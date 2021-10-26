@@ -274,41 +274,71 @@ class TestGetMyListInfo(unittest.TestCase):
     def test_UpdateMylistShow(self):
         """マイリストペインを更新する機能のテスト
         """
-        with ExitStack() as stack:
-            # mockcpb = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", self.__MakeWindowMock))
+        MAX_RECORD_NUM = 5
+        records = []
+        id_num = 1
+        for i in range(0, MAX_RECORD_NUM):
+            r = self.__MakeMylistSample(i)
+            records.append(r)
 
-            MAX_RECORD_NUM = 5
-            records = []
-            id_num = 1
-            for i in range(0, MAX_RECORD_NUM):
-                r = self.__MakeMylistSample(i)
-                records.append(r)
+        t_id = random.sample(range(0, len(records) - 1), 2)
+        for i in t_id:
+            records[i].is_include_new = True
+        self.__LoadToTable(records)
 
-            t_id = random.sample(range(0, len(records) - 1), 2)
-            for i in t_id:
-                records[i].is_include_new = True
-            self.__LoadToTable(records)
+        m_cont = MylistDBController(TEST_DB_PATH)
 
-            m_cont = MylistDBController(TEST_DB_PATH)
+        # mock作成
+        e_index = random.randint(0, len(records) - 1)
+        r_response = MagicMock()
+        type(r_response).get_indexes = lambda s: [e_index]
+        type(r_response).Values = []
 
-            # mock作成
-            r_response = MagicMock()
-            type(r_response).get_indexes = lambda s: [random.randint(0, len(records) - 1)]
-            type(r_response).Values = []
+        r_update = MagicMock()
+        type(r_response).update = r_update
 
-            r_update = MagicMock()
-            type(r_response).update = r_update
+        r_widget = MagicMock()
+        r_itemconfig = MagicMock()
+        r_see = MagicMock()
+        type(r_widget).itemconfig = r_itemconfig
+        type(r_widget).see = r_see
+        type(r_response).Widget = r_widget
 
-            r_widget = MagicMock()
-            r_itemconfig = MagicMock()
-            r_see = MagicMock()
-            type(r_widget).itemconfig = r_itemconfig
-            type(r_widget).see = r_see
+        mockwin = {"-LIST-": r_response}
 
-            type(r_response).Widget = r_widget
-            mockwin = {"-LIST-": r_response}
-            actual = GuiFunction.UpdateMylistShow(mockwin, m_cont)
-            self.assertEqual(0, actual)
+        # 実行
+        actual = GuiFunction.UpdateMylistShow(mockwin, m_cont)
+        self.assertEqual(0, actual)
+
+        # mock呼び出し確認
+        NEW_MARK = "*:"
+        m_list = m_cont.Select()
+        e_include_new_index_list = []
+        expect = []
+        for i, m in enumerate(m_list):
+            if m["is_include_new"]:
+                m["showname"] = NEW_MARK + m["showname"]
+                e_include_new_index_list.append(i)
+        expect = [m["showname"] for m in m_list]
+
+        # ucal[{n回目の呼び出し}][kwargs=1]
+        ucal = r_update.call_args_list
+        self.assertEqual(len(ucal), 2)
+        self.assertEqual({"values": expect}, ucal[0][1])
+        self.assertEqual({"set_to_index": e_index}, ucal[1][1])
+
+        # ical[{n回目の呼び出し}][args=0]
+        # ical[{n回目の呼び出し}][kwargs=1]
+        ical = r_itemconfig.call_args_list
+        self.assertEqual(len(ical), len(e_include_new_index_list))
+        for c, i in zip(ical, e_include_new_index_list):
+            self.assertEqual((i, ), c[0])
+            self.assertEqual({"fg": "black", "bg": "light pink"}, c[1])
+
+        # scal[{n回目の呼び出し}][args=0]
+        scal = r_see.call_args_list
+        self.assertEqual(len(scal), 1)
+        self.assertEqual((e_index, ), scal[0][0])
 
 
 if __name__ == "__main__":
