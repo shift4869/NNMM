@@ -23,6 +23,7 @@ from sqlalchemy.orm.exc import *
 
 from NNMM import GuiFunction
 from NNMM.MylistDBController import *
+from NNMM.MylistInfoDBController import *
 
 TEST_DB_PATH = "./test/test.db"
 
@@ -30,6 +31,7 @@ TEST_DB_PATH = "./test/test.db"
 class TestGetMyListInfo(unittest.TestCase):
 
     def setUp(self):
+        Path(TEST_DB_PATH).unlink(missing_ok=True)
         pass
 
     def tearDown(self):
@@ -90,14 +92,12 @@ class TestGetMyListInfo(unittest.TestCase):
         r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9])
         return r
 
-    def __LoadToTable(self, records) -> list[dict]:
-        """テスト用の初期レコードを格納したテーブルを用意する
+    def __LoadToMylistTable(self, records) -> list[dict]:
+        """テスト用のMylist初期レコードを格納したテーブルを用意する
 
         Args:
             records (list[Mylist]): 格納するレコードの配列
         """
-        Path(TEST_DB_PATH).unlink(missing_ok=True)
-
         dbname = TEST_DB_PATH
         engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
         Base.metadata.create_all(engine)
@@ -112,12 +112,66 @@ class TestGetMyListInfo(unittest.TestCase):
         session.close()
         return 0
 
-    def __MakeWindowMock(self):
-        r_response = MagicMock()
+    def __GetVideoInfoSet(self) -> list[tuple]:
+        """動画情報セットを返す（mylist_url以外）
+        """
+        video_info = [
+            ("sm11111111", "動画タイトル1", "投稿者1", "未視聴", "2021-05-29 22:00:11", "https://www.nicovideo.jp/watch/sm11111111", "2021-10-16 00:00:11"),
+            ("sm22222222", "動画タイトル2", "投稿者1", "未視聴", "2021-05-29 22:00:22", "https://www.nicovideo.jp/watch/sm22222222", "2021-10-16 00:00:22"),
+            ("sm33333333", "動画タイトル3", "投稿者1", "未視聴", "2021-05-29 22:00:33", "https://www.nicovideo.jp/watch/sm33333333", "2021-10-16 00:00:33"),
+            ("sm44444444", "動画タイトル4", "投稿者2", "未視聴", "2021-05-29 22:00:44", "https://www.nicovideo.jp/watch/sm44444444", "2021-10-16 00:00:44"),
+            ("sm55555555", "動画タイトル5", "投稿者2", "未視聴", "2021-05-29 22:00:55", "https://www.nicovideo.jp/watch/sm55555555", "2021-10-16 00:00:55"),
+        ]
+        return video_info
 
-        type(r_response).get_indexes = lambda s: [1, 2, 3]
+    def __MakeMylistInfoSample(self, id: int, mylist_id: int) -> MylistInfo:
+        """MylistInfoオブジェクトを作成する
 
-        return {"-LIST-": r_response}
+        Note:
+            動画情報セット
+                video_id (str): 動画ID(smxxxxxxxx)
+                title (str): 動画タイトル
+                username (str): 投稿者名
+                status (str): 視聴状況({"未視聴", ""})
+                uploaded_at (str): 動画投稿日時
+                video_url (str): 動画URL
+                created_at (str): 作成日時
+            マイリスト情報セット
+                mylist_url (str): 所属マイリストURL
+
+        Args:
+            id (int): 動画情報セットのid
+            mylist_id (int): マイリスト情報セットのid
+
+        Returns:
+            MylistInfo: MylistInfoオブジェクト
+        """
+        v = self.__GetVideoInfoSet()[id]
+        mylist_url = self.__GetURLInfoSet()[mylist_id]
+        r = MylistInfo(v[0], v[1], v[2], v[3], v[4], v[5], mylist_url, v[6])
+        return r
+
+    def __LoadToMylistInfoTable(self) -> list[dict]:
+        """テスト用の初期レコードを格納したテーブルを用意する
+        """
+
+        dbname = TEST_DB_PATH
+        engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
+        Base.metadata.create_all(engine)
+
+        Session = sessionmaker(bind=engine, autoflush=False)
+        session = Session()
+
+        MAX_VIDEO_INFO_NUM = 5
+        MAX_URL_INFO_NUM = 5
+        for i in range(0, MAX_URL_INFO_NUM):
+            for j in range(0, MAX_VIDEO_INFO_NUM):
+                r = self.__MakeMylistInfoSample(j, i)
+                session.add(r)
+
+        session.commit()
+        session.close()
+        return 0
 
     def test_GetURLType(self):
         """マイリストのタイプを返す機能のテスト
@@ -272,11 +326,10 @@ class TestGetMyListInfo(unittest.TestCase):
         pass
 
     def test_UpdateMylistShow(self):
-        """マイリストペインを更新する機能のテスト
+        """マイリストペインの表示を更新する機能のテスト
         """
         MAX_RECORD_NUM = 5
         records = []
-        id_num = 1
         for i in range(0, MAX_RECORD_NUM):
             r = self.__MakeMylistSample(i)
             records.append(r)
@@ -284,7 +337,7 @@ class TestGetMyListInfo(unittest.TestCase):
         t_id = random.sample(range(0, len(records) - 1), 2)
         for i in t_id:
             records[i].is_include_new = True
-        self.__LoadToTable(records)
+        self.__LoadToMylistTable(records)
 
         m_cont = MylistDBController(TEST_DB_PATH)
 
@@ -339,6 +392,47 @@ class TestGetMyListInfo(unittest.TestCase):
         scal = r_see.call_args_list
         self.assertEqual(len(scal), 1)
         self.assertEqual((e_index, ), scal[0][0])
+
+    def test_UpdateTableShow(self):
+        """テーブルリストペインの表示を更新する機能のテスト
+        """
+        MAX_RECORD_NUM = 5
+        records = []
+        for i in range(0, MAX_RECORD_NUM):
+            r = self.__MakeMylistSample(i)
+            records.append(r)
+        self.__LoadToMylistTable(records)
+        self.__LoadToMylistInfoTable()
+
+        m_cont = MylistDBController(TEST_DB_PATH)
+        mb_cont = MylistInfoDBController(TEST_DB_PATH)
+
+        # mock作成
+        e_index = random.randint(0, len(records) - 1)
+        mylist_url = self.__GetURLInfoSet()[e_index]
+        r_list = MagicMock()
+        r_listupdate = MagicMock()
+        type(r_list).update = r_listupdate
+
+        r_input = MagicMock()
+        type(r_input).get = lambda s: mylist_url
+
+        r_table = MagicMock()
+        r_tableupdate = MagicMock()
+        type(r_table).update = r_tableupdate
+
+        mockwin = {
+            "-INPUT1-": r_input,
+            "-LIST-": r_list,
+            "-TABLE-": r_table,
+        }
+
+        # 実行
+        actual = GuiFunction.UpdateTableShow(mockwin, m_cont, mb_cont)
+        self.assertEqual(0, actual)
+
+        # mock呼び出し確認
+        pass
 
 
 if __name__ == "__main__":

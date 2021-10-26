@@ -112,8 +112,17 @@ def IntervalTranslation(interval_str: str) -> int:
     return -1
 
 
-def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController):
-    # 現在マイリストが選択中の場合indexを保存
+def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController) -> int:
+    """マイリストペインの表示を更新する
+
+    Args:
+        window (sg.Window): pysimpleguiのwindowオブジェクト
+        mylist_db (MylistDBController): マイリストDBコントローラー
+
+    Returns:
+        int: 成功時0
+    """
+    # 現在選択中のマイリストがある場合そのindexを保存
     index = 0
     if window["-LIST-"].get_indexes():
         index = window["-LIST-"].get_indexes()[0]
@@ -144,9 +153,20 @@ def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController):
     return 0
 
 
-def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController, mylist_url: str = ""):
-    # 右上のテキストボックスにマイリストのURLがあるとき限定(window["-INPUT1-"])
-    # 現在のマイリストURL
+def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController, mylist_url: str = "") -> int:
+    """テーブルリストペインの表示を更新する
+
+    Args:
+        window (sg.Window): pysimpleguiのwindowオブジェクト
+        mylist_db (MylistDBController): マイリストDBコントローラー
+        mylist_info_db (MylistInfoDBController): 動画情報DBコントローラー
+        mylist_url (str): 表示対象マイリスト
+
+    Returns:
+        int: 成功時0, エラー時-1
+    """
+    # 表示対象マイリストが空白の場合は
+    # 右上のテキストボックスに表示されている現在のマイリストURLを設定する(window["-INPUT1-"])
     if mylist_url == "":
         mylist_url = window["-INPUT1-"].get()
 
@@ -176,6 +196,7 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
         window["-TABLE-"].update(select_rows=[0])
     # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き
     window["-TABLE-"].update(row_colors=[(0, "", "")])
+    return 0
 
 
 if __name__ == "__main__":
