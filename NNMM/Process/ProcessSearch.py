@@ -170,9 +170,9 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
         self.mylist_info_db = mw.mylist_info_db
 
         # マイリストURL取得
-        mylist_url = self.window["-INPUT1-"].get()
-        if mylist_url == "":
-            return 0
+        # mylist_url = self.window["-INPUT1-"].get()
+        # if mylist_url == "":
+        #     return 0
 
         # 検索対象ワードをユーザーに問い合わせる
         pattern = sg.popup_get_text("動画名検索（正規表現可）")
@@ -187,10 +187,12 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
             index = min([int(v) for v in self.values["-TABLE-"]])
 
         # マイリスト内の動画情報を探索
-        records = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+        # records = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded"]
+        records = self.window["-TABLE-"].Values  # 現在のtableの全リスト
         match_index_list = []
         for i, r in enumerate(records):
-            if re.search(pattern, r["title"]):
+            if re.search(pattern, r[2]):
                 match_index_list.append(i)
                 index = i  # 更新後にスクロールするインデックスを更新
 
@@ -208,10 +210,10 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
 
         # 検索結果表示
         if len(match_index_list) > 0:
-            logger.info(f"search result -> {len(match_index_list)} mylist(s) found.")
+            logger.info(f"search result -> {len(match_index_list)} record(s) found.")
             self.window["-INPUT2-"].update(value=f"{len(match_index_list)}件ヒット！")
         else:
-            logger.info(f"search result -> Nothing mylist(s) found.")
+            logger.info(f"search result -> Nothing record found.")
             self.window["-INPUT2-"].update(value="該当なし")
 
         return 0
@@ -245,8 +247,8 @@ class ProcessVideoSearchClear(ProcessBase.ProcessBase):
 
         # マイリストURL取得
         mylist_url = self.window["-INPUT1-"].get()
-        if mylist_url == "":
-            return 0
+        # if mylist_url == "":
+        #     return 0
 
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 

@@ -286,8 +286,14 @@ class PopupVideoWindow(PopupWindowBase):
         # 選択されたテーブル行
         selected = def_data[row]
 
+        # 動画情報を取得する
         records = self.mylist_info_db.SelectFromVideoID(selected[1])
-        record = [r for r in records if r["mylist_url"] == mylist_url]
+        record = []
+        # 可能ならマイリストURLを照合する
+        if mylist_url != "":
+            record = [r for r in records if r["mylist_url"] == mylist_url]
+        else:
+            record = records[0:1]
 
         if record and len(record) == 1:
             record = record[0]

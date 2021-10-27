@@ -2,6 +2,7 @@ from . import ProcessWatched
 from . import ProcessNotWatched
 from . import ProcessVideoPlay
 from . import ProcessShowMylistInfo
+from . import ProcessShowMylistInfoAll
 from . import ProcessCreateMylist
 from . import ProcessDeleteMylist
 from . import ProcessUpdateMylistInfo

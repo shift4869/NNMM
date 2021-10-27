@@ -70,6 +70,7 @@ class MainWindow():
             "検索（動画名）::-MR-": ProcessSearch.ProcessMylistSearchFromVideo,
             "強調表示を解除::-MR-": ProcessSearch.ProcessMylistSearchClear,
             "情報表示::-MR-": PopupWindowMain.PopupMylistWindow,
+            "全動画表示::-MR-": ProcessShowMylistInfoAll.ProcessShowMylistInfoAll,
             "-LIST-+DOUBLE CLICK+": ProcessShowMylistInfo.ProcessShowMylistInfo,
             "-CREATE-": ProcessCreateMylist.ProcessCreateMylist,
             "-CREATE_THREAD_DONE-": ProcessCreateMylist.ProcessCreateMylistThreadDone,
@@ -107,6 +108,7 @@ class MainWindow():
                 "強調表示を解除::-MR-",
                 "---",
                 "情報表示::-MR-",
+                "全動画表示::-MR-",
             ]
         ]
         l_pane = [
