@@ -170,24 +170,26 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
     if mylist_url == "":
         mylist_url = window["-INPUT1-"].get()
 
-    if mylist_url == "":
-        return -1
-
-    # 現在のマイリストURLからlistboxのindexを求める
     index = 0
-    m_list = mylist_db.Select()
-    mylist_url_list = [m["url"] for m in m_list]
-    for i, url in enumerate(mylist_url_list):
-        if mylist_url == url:
-            index = i
-            break
-
-    # 現在のマイリストURLからテーブル情報を求める
-    records = mylist_info_db.SelectFromMylistURL(mylist_url)
     def_data = []
-    for i, m in enumerate(records):
-        a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
-        def_data.append(a)
+    if mylist_url == "":
+        # 引数も右上のテキストボックスも空白の場合
+        # 現在表示しているテーブルの表示をリフレッシュする処理のみ行う
+        def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
+    else:
+        # 現在のマイリストURLからlistboxのindexを求める
+        m_list = mylist_db.Select()
+        mylist_url_list = [m["url"] for m in m_list]
+        for i, url in enumerate(mylist_url_list):
+            if mylist_url == url:
+                index = i
+                break
+
+        # 現在のマイリストURLからテーブル情報を求める
+        records = mylist_info_db.SelectFromMylistURL(mylist_url)
+        for i, m in enumerate(records):
+            a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
+            def_data.append(a)
 
     # 画面更新
     window["-LIST-"].update(set_to_index=index)

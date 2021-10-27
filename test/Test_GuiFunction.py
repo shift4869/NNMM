@@ -421,7 +421,10 @@ class TestGetMyListInfo(unittest.TestCase):
 
         r_table = MagicMock()
         r_tableupdate = MagicMock()
+        r_values = MagicMock()
+        r_values.return_value = "values"
         type(r_table).update = r_tableupdate
+        type(r_table).Values = r_values.return_value
 
         mockwin = {
             "-INPUT1-": r_input,
@@ -457,7 +460,7 @@ class TestGetMyListInfo(unittest.TestCase):
 
         # 2回目の実行 -> 失敗想定
         actual = GuiFunction.UpdateTableShow(mockwin, m_cont, mb_cont)
-        self.assertEqual(-1, actual)
+        self.assertEqual(0, actual)
 
         # window["-INPUT1-"].get()が呼び出されていることを確認
         self.assertEqual(r_inputget.call_count, 2)
