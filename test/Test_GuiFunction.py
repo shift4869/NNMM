@@ -12,7 +12,7 @@ import unittest
 from contextlib import ExitStack
 from datetime import date, datetime, timedelta
 from logging import INFO, getLogger
-from mock import MagicMock, patch, AsyncMock
+from mock import MagicMock, patch, AsyncMock, PropertyMock
 from pathlib import Path
 
 import freezegun
@@ -413,6 +413,7 @@ class TestGetMyListInfo(unittest.TestCase):
         r_list = MagicMock()
         r_listupdate = MagicMock()
         type(r_list).update = r_listupdate
+        type(r_list).get_indexes = lambda s: [e_index]
 
         r_input = MagicMock()
         r_inputget = MagicMock()
@@ -421,10 +422,10 @@ class TestGetMyListInfo(unittest.TestCase):
 
         r_table = MagicMock()
         r_tableupdate = MagicMock()
-        r_values = MagicMock()
-        r_values.return_value = "values"
         type(r_table).update = r_tableupdate
-        type(r_table).Values = r_values.return_value
+        r_values = PropertyMock()
+        r_values.return_value = ["values"]
+        type(r_table).Values = r_values
 
         mockwin = {
             "-INPUT1-": r_input,
@@ -432,7 +433,7 @@ class TestGetMyListInfo(unittest.TestCase):
             "-TABLE-": r_table,
         }
 
-        # 1回目の実行 -> 成功想定
+        # 1回目の実行
         actual = GuiFunction.UpdateTableShow(mockwin, m_cont, mb_cont)
         self.assertEqual(0, actual)
 
@@ -440,16 +441,18 @@ class TestGetMyListInfo(unittest.TestCase):
         expect = []
         records = mb_cont.SelectFromMylistURL(mylist_url)
         for i, m in enumerate(records):
-            a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
+            a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"], m["video_url"], m["mylist_url"]]
             expect.append(a)
 
         # window["-INPUT1-"].get()の呼び出し確認
         self.assertEqual(r_inputget.call_count, 1)
+        r_inputget.reset_mock()
 
         # lucal[{n回目の呼び出し}][kwargs=1]
         lucal = r_listupdate.call_args_list
         self.assertEqual(len(lucal), 1)
         self.assertEqual({"set_to_index": e_index}, lucal[0][1])
+        r_listupdate.reset_mock()
 
         # tucal[{n回目の呼び出し}][kwargs=1]
         tucal = r_tableupdate.call_args_list
@@ -457,13 +460,33 @@ class TestGetMyListInfo(unittest.TestCase):
         self.assertEqual({"values": expect}, tucal[0][1])
         self.assertEqual({"select_rows": [0]}, tucal[1][1])
         self.assertEqual({"row_colors": [(0, "", "")]}, tucal[2][1])
+        r_tableupdate.reset_mock()
 
-        # 2回目の実行 -> 失敗想定
+        # 2回目の実行
         actual = GuiFunction.UpdateTableShow(mockwin, m_cont, mb_cont)
         self.assertEqual(0, actual)
 
         # window["-INPUT1-"].get()が呼び出されていることを確認
-        self.assertEqual(r_inputget.call_count, 2)
+        self.assertEqual(r_inputget.call_count, 1)
+        r_inputget.reset_mock()
+
+        # window["-TABLE-"].Valuesが呼び出されていることを確認
+        self.assertEqual(r_values.call_count, 1)
+        r_values.reset_mock()
+
+        # lical[{n回目の呼び出し}][kwargs=1]
+        lucal = r_listupdate.call_args_list
+        self.assertEqual(len(lucal), 1)
+        self.assertEqual({"set_to_index": e_index}, lucal[0][1])
+        r_listupdate.reset_mock()
+
+        # tucal[{n回目の呼び出し}][kwargs=1]
+        tucal = r_tableupdate.call_args_list
+        self.assertEqual(len(tucal), 3)
+        self.assertEqual({"values": ["values"]}, tucal[0][1])
+        self.assertEqual({"select_rows": [0]}, tucal[1][1])
+        self.assertEqual({"row_colors": [(0, "", "")]}, tucal[2][1])
+        r_tableupdate.reset_mock()
 
 
 if __name__ == "__main__":

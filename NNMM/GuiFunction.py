@@ -177,6 +177,11 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
         # 引数も右上のテキストボックスも空白の場合
         # 現在表示しているテーブルの表示をリフレッシュする処理のみ行う
         def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
+
+        # 現在選択中のマイリストがある場合そのindexを保存
+        index = 0
+        if window["-LIST-"].get_indexes():
+            index = window["-LIST-"].get_indexes()[0]
     else:
         # 現在のマイリストURLからlistboxのindexを求める
         m_list = mylist_db.Select()
