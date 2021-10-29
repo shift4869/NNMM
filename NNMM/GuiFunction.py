@@ -172,6 +172,7 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
 
     index = 0
     def_data = []
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
     if mylist_url == "":
         # 引数も右上のテキストボックスも空白の場合
         # 現在表示しているテーブルの表示をリフレッシュする処理のみ行う
@@ -188,7 +189,7 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
         # 現在のマイリストURLからテーブル情報を求める
         records = mylist_info_db.SelectFromMylistURL(mylist_url)
         for i, m in enumerate(records):
-            a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"]]
+            a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"], m["video_url"], m["mylist_url"]]
             def_data.append(a)
 
     # 画面更新

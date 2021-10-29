@@ -117,7 +117,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         """
         result = []
         all_index_num = len(m_list)
-        with ThreadPoolExecutor(max_workers=8, thread_name_prefix="ap_thread") as executor:
+        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
             futures = []
             for func, record in zip(func_list, m_list):
                 mylist_url = record.get("url")
@@ -202,12 +202,13 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
         # 右ペインのテーブルに表示するマイリスト情報を取得
         def_data = []
-        table_cols = ["no", "id", "title", "username", "status", "uploaded", "video_url"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        table_cols = ["no", "id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
 
         # 右ペインのテーブルにマイリスト情報を表示
         for m, s in zip(now_video_list, status_check_list):
             m["status"] = s
-            a = [m["no"], m["video_id"], m["title"], m["username"], m["status"], m["uploaded"]]
+            a = [m["no"], m["video_id"], m["title"], m["username"], m["status"], m["uploaded"], m["video_url"], m["mylist_url"]]
             def_data.append(a)
         if self.window["-INPUT1-"].get() == mylist_url:
             now_show_table_data = list[def_data]
@@ -337,10 +338,10 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
             username = m["username"]
             mylist_url = m["url"]
             video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
             def_data = []
             for i, t in enumerate(video_list):
-                a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"]]
+                a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"], t["video_url"], t["mylist_url"]]
                 def_data.append(a)
 
             # 左のマイリストlistboxの表示を更新する

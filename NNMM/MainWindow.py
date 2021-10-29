@@ -118,9 +118,9 @@ class MainWindow():
         ]
 
         # 右ペイン
-        table_cols_name = [" No. ", "   動画ID   ", "               動画名               ", "    投稿者    ", "  状況  ", "     投稿日時     "]
-        cols_width = [20, 20, 20, 20, 80, 100]
-        def_data = [["", "", "", "", "", ""]]
+        table_cols_name = [" No. ", "   動画ID   ", "               動画名               ", "    投稿者    ", "  状況  ", "     投稿日時      ", "動画URL", "所属マイリストURL"]
+        cols_width = [20, 20, 20, 20, 80, 100, 0, 0]
+        def_data = [["", "", "", "", "", "", "", ""]]
         table_right_click_menu = [
             "-TABLE_RIGHT_CLICK_MENU-", [
                 "! ",

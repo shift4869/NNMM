@@ -41,7 +41,7 @@ class ProcessWatched(ProcessBase.ProcessBase):
             row = int(v)
 
             # マイリスト情報ステータスDB更新
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
             selected = def_data[row]
             res = self.mylist_info_db.UpdateStatus(selected[1], mylist_url, "")
             if res == 0:

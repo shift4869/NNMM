@@ -74,7 +74,8 @@ class ProcessUpdateMylistInfo(ProcessBase.ProcessBase):
 
         # 右ペインのテーブルに表示するマイリスト情報を取得
         def_data = []
-        table_cols = ["no", "id", "title", "username", "status", "uploaded", "video_url"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        table_cols = ["no", "id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
 
         # マルチスレッド開始
         loop = asyncio.new_event_loop()
@@ -97,7 +98,7 @@ class ProcessUpdateMylistInfo(ProcessBase.ProcessBase):
         # 右ペインのテーブルにマイリスト情報を表示
         for m, s in zip(now_video_list, status_check_list):
             m["status"] = s
-            a = [m["no"], m["video_id"], m["title"], m["username"], m["status"], m["uploaded"]]
+            a = [m["no"], m["video_id"], m["title"], m["username"], m["status"], m["uploaded"], m["video_url"], m["mylist_url"]]
             def_data.append(a)
         if self.window["-INPUT1-"].get() == mylist_url:
             now_show_table_data = list[def_data]

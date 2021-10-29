@@ -55,11 +55,12 @@ class ProcessVideoPlay(ProcessBase.ProcessBase):
             logger.info(f"{video_url} -> browser open failed.")
         
         # 視聴済にする
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        STATUS_INDEX = 4
         mylist_url = self.values["-INPUT1-"]
         # 状況を更新
-        if def_data[row][4] != "":
-            def_data[row][4] = ""
+        if def_data[row][STATUS_INDEX] != "":
+            def_data[row][STATUS_INDEX] = ""
             self.window["-TABLE-"].update(values=def_data)
 
         # 視聴済にする

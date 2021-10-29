@@ -241,7 +241,7 @@ class PopupVideoWindow(PopupWindowBase):
         video_url = r["video_url"]
         mylist_url = r["mylist_url"]
         created_at = r["created_at"]
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
 
         cf = [
             [sg.Text(horizontal_line)],
