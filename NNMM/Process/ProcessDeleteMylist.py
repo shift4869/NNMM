@@ -42,9 +42,12 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
             return
 
         # 確認
-        # res = sg.popup_ok_cancel(mylist_url + "\nマイリスト削除しますか？")
-        # if res == "Cancel":
-        #     return
+        showname = prev_mylist.get("showname", "")
+        msg = f"{showname}\n{mylist_url}\nマイリスト削除します"
+        res = sg.popup_ok_cancel(msg, title="削除確認")
+        if res == "Cancel":
+            self.window["-INPUT2-"].update(value="マイリスト削除キャンセル")
+            return
 
         # マイリスト情報から対象動画の情報を削除する
         self.mylist_info_db.DeleteFromMylistURL(mylist_url)
@@ -57,6 +60,8 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
 
         # マイリスト情報テーブルの表示を初期化する
         self.window["-TABLE-"].update(values=[[]])
+
+        self.window["-INPUT2-"].update(value="マイリスト削除完了")
 
 
 if __name__ == "__main__":
