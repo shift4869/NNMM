@@ -26,6 +26,10 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
         self.mylist_db = mw.mylist_db
         self.mylist_info_db = mw.mylist_info_db
 
+        # マイリストが選択されていない場合は何もしない
+        if not self.values["-LIST-"]:
+            return
+
         v = self.values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
 
         if v[:2] == "*:":
@@ -45,7 +49,10 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)
         # テーブル画面表示更新
+        # 現在表示されているマイリストの内容で更新する
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db)
+        # 選択されているマイリストの内容を表示する
+        # UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
     
