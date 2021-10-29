@@ -26,9 +26,12 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def GetConfigLayout(cls):
-        # 設定画面のレイアウト
+    def GetConfigLayout(cls) -> list[list[sg.Frame]]:
+        """設定画面のレイアウトを作成する
 
+        Returns:
+            sg.Frame: PySimpleGUIのレイアウトオブジェクト
+        """
         # オートリロード間隔
         auto_reload_combo_box = sg.InputCombo(
             ("(使用しない)", "15分毎", "30分毎", "60分毎"), default_value="(使用しない)", key="-C_AUTO_RELOAD-", size=(20, 10)
@@ -77,8 +80,8 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
     def SetConfig(cls):
         # config.iniをロードしてプラグラム内で用いる変数に適用する
         cls.config = configparser.ConfigParser()
-        res = cls.config.read(cls.CONFIG_FILE_PATH, encoding="utf-8")
-        return res
+        cls.config.read(cls.CONFIG_FILE_PATH, encoding="utf-8")
+        return cls.config
 
 
 class ProcessMylistLoadCSV(ProcessConfigBase):
