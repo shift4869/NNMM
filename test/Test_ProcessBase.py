@@ -19,7 +19,7 @@ class ConcreteProcessBase(ProcessBase.ProcessBase):
         return 0
 
 
-class TestGetMyListInfo(unittest.TestCase):
+class TestProcessBase(unittest.TestCase):
 
     def setUp(self):
         pass
