@@ -16,7 +16,7 @@ class ProcessBase(ABC):
         self.main_window = None
 
     @abstractmethod
-    def Run(self, mw):
+    def Run(self, mw) -> int:
         # mwはMainWindowクラスを想定
         # アノテーションで記述すると循環参照になるため記述無し
-        pass
+        return 0
