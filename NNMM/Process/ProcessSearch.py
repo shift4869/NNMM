@@ -188,7 +188,8 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
 
         # マイリスト内の動画情報を探索
         # records = self.mylist_info_db.SelectFromMylistURL(mylist_url)
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
         records = self.window["-TABLE-"].Values  # 現在のtableの全リスト
         match_index_list = []
         for i, r in enumerate(records):

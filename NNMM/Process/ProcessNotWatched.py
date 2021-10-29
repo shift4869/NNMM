@@ -29,7 +29,7 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
         # 現在のtableの全リスト
         def_data = self.window["-TABLE-"].Values
         # 現在のマイリストURL
-        mylist_url = self.values["-INPUT1-"]
+        # mylist_url = self.values["-INPUT1-"]
 
         # 行が選択されていないなら何もしない
         if not self.values["-TABLE-"]:
@@ -43,7 +43,7 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
             # マイリスト情報ステータスDB更新
             table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
             selected = def_data[row]
-            res = self.mylist_info_db.UpdateStatus(selected[1], mylist_url, "未視聴")
+            res = self.mylist_info_db.UpdateStatus(selected[1], selected[7], "未視聴")
             if res == 0:
                 logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "non-watched".')
             else:
@@ -51,16 +51,17 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
 
             # テーブル更新
             def_data[row][4] = "未視聴"
+
+            # 未視聴になったことでマイリストの新着表示を表示する
+            # 未視聴にしたので必ず新着あり扱いになる
+            # マイリストDB新着フラグ更新
+            self.mylist_db.UpdateIncludeFlag(selected[7], True)
         self.window["-TABLE-"].update(values=def_data)
 
         # テーブルの表示を更新する
+        mylist_url = self.values["-INPUT1-"]
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
         self.window["-TABLE-"].update(select_rows=[row])
-
-        # 未視聴になったことでマイリストの新着表示を表示する
-        # 未視聴にしたので必ず新着あり扱いになる
-        # マイリストDB新着フラグ更新
-        self.mylist_db.UpdateIncludeFlag(mylist_url, True)
 
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)

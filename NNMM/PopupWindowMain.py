@@ -272,7 +272,7 @@ class PopupVideoWindow(PopupWindowBase):
         self.mylist_db = mw.mylist_db
         self.mylist_info_db = mw.mylist_info_db
 
-        mylist_url = values["-INPUT1-"]
+        # mylist_url = values["-INPUT1-"]
 
         # テーブルの行が選択されていなかったら何もしない
         if not values["-TABLE-"]:
@@ -289,6 +289,7 @@ class PopupVideoWindow(PopupWindowBase):
         # 動画情報を取得する
         records = self.mylist_info_db.SelectFromVideoID(selected[1])
         record = []
+        mylist_url = selected[7]
         # 可能ならマイリストURLを照合する
         if mylist_url != "":
             record = [r for r in records if r["mylist_url"] == mylist_url]
