@@ -70,15 +70,28 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
 
     @classmethod
     def GetConfig(cls):
-        # クラス変数configを返す
-        # 外部からもグローバルに参照される
+        """クラス変数configを返す
+
+        Notes:
+            外部からもグローバルに参照される
+
+        Returns:
+            ConfigParser: クラス変数config
+        """
         if not cls.config:
             ProcessConfigBase.SetConfig()
         return cls.config
 
     @classmethod
     def SetConfig(cls):
-        # config.iniをロードしてプラグラム内で用いる変数に適用する
+        """クラス変数configを設定する
+
+        Notes:
+            config.iniをロードしてプラグラム内で用いる変数に適用する
+
+        Returns:
+            ConfigParser: クラス変数config
+        """
         cls.config = configparser.ConfigParser()
         cls.config.read(cls.CONFIG_FILE_PATH, encoding="utf-8")
         return cls.config
@@ -90,10 +103,18 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
         super().__init__(True, True, "マイリスト一覧入力")
 
     def Run(self, mw) -> int:
-        # "-C_MYLIST_LOAD-"
-        # マイリスト一覧読込ボタンが押されたときの処理
-        # csvを読み込んで現在のマイリストに追加する
+        """マイリスト一覧読込ボタンが押されたときの処理
 
+        Notes:
+            "-C_MYLIST_LOAD-"
+            csvを読み込んで現在のマイリストに追加する
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 成功時0, キャンセル時1, エラー時-1
+        """
         # 読込ファイルパスをユーザーから取得する
         default_path = Path("") / "input.csv"
         sd_path_str = sg.popup_get_file(
@@ -126,10 +147,18 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
         super().__init__(True, True, "マイリスト一覧出力")
 
     def Run(self, mw) -> int:
-        # "-C_MYLIST_SAVE-"
-        # マイリスト一覧保存ボタンが押されたときの処理
-        # 現在のマイリストをcsvとして保存する
+        """マイリスト一覧保存ボタンが押されたときの処理
 
+        Notes:
+            "-C_MYLIST_SAVE-"
+            現在のマイリストをcsvとして保存する
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 成功時0, キャンセル時1, エラー時-1
+        """
         # 保存先ファイルパスをユーザーから取得する
         default_path = Path("") / "result.csv"
         sd_path_str = sg.popup_get_file(
@@ -162,8 +191,18 @@ class ProcessConfigLoad(ProcessConfigBase):
         super().__init__(False, False, "設定読込")
 
     def Run(self, mw):
-        # 設定タブを開いたときの処理
-        # config.iniをロードして現在の設定値をレイアウトに表示する
+        """設定タブを開いたときの処理
+
+        Notes:
+            "-TAB_CHANGED-" -> select_tab == "設定"
+            config.iniをロードして現在の設定値をレイアウトに表示する
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 成功時0
+        """
         ProcessConfigBase.SetConfig()
         c = ProcessConfigBase.GetConfig()
         window = mw.window
@@ -182,6 +221,7 @@ class ProcessConfigLoad(ProcessConfigBase):
 
         # 選択された状態になるので外す
         window["-C_BROWSER_PATH-"].update(select=False)
+        return 0
 
 
 class ProcessConfigSave(ProcessConfigBase):
@@ -190,9 +230,18 @@ class ProcessConfigSave(ProcessConfigBase):
         super().__init__(True, True, "設定保存")
 
     def Run(self, mw):
-        # "-C_CONFIG_SAVE-"
-        # 設定保存ボタンが押されたときの処理
-        # GUIで設定された値をconfig.iniに保存する
+        """設定保存ボタンが押されたときの処理
+
+        Notes:
+            "-C_CONFIG_SAVE-"
+            GUIで設定された値をconfig.iniに保存する
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 成功時0
+        """
         c = configparser.ConfigParser()
         c.read(ProcessConfigBase.CONFIG_FILE_PATH, encoding="utf-8")
         window = mw.window

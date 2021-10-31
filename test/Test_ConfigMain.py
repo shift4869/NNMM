@@ -8,7 +8,7 @@ import sys
 import unittest
 from contextlib import ExitStack
 from logging import INFO, getLogger
-from mock import MagicMock, patch, AsyncMock, PropertyMock
+from mock import MagicMock, patch, mock_open
 from pathlib import Path
 
 import PySimpleGUI as sg
@@ -342,6 +342,71 @@ class TestConfigMain(unittest.TestCase):
             self.assertEqual(len(pucal), 1)
             self.assertEqual(("保存失敗", ), pucal[0][0])
             mockpu.reset_mock()
+        pass
+
+    def test_PCLConfigLoad(self):
+        """設定タブを開いたときの処理のテスト
+        """
+        with ExitStack() as stack:
+            mocksc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.SetConfig"))
+            mockgc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
+
+            expect_dict = {
+                "general": {
+                    "browser_path": "browser_path",
+                    "auto_reload": "auto_reload",
+                    "rss_save_path": "rss_save_path",
+                },
+                "db": {
+                    "save_path": "save_path",
+                },
+                "niconico": {
+                    "email": "email",
+                    "password": "password",
+                },
+            }
+
+            mockgc.side_effect = [expect_dict]
+
+            mockup = MagicMock()
+            mockd = MagicMock()
+            type(mockd).update = mockup
+            mock_dict = {
+                "-C_BROWSER_PATH-": mockd,
+                "-C_AUTO_RELOAD-": mockd,
+                "-C_RSS_PATH-": mockd,
+                "-C_DB_PATH-": mockd,
+                "-C_ACCOUNT_EMAIL-": mockd,
+                "-C_ACCOUNT_PASSWORD-": mockd,
+                "-C_BROWSER_PATH-": mockd,
+            }
+
+            mw = MagicMock()
+            type(mw).window = mock_dict
+
+            pcl = ProcessConfigLoad()
+            actual = pcl.Run(mw)
+            self.assertEqual(0, actual)
+
+            # ucal[{n回目の呼び出し}][args=0]
+            # ucal[{n回目の呼び出し}][kwargs=1]
+            ucal = mockup.call_args_list
+            self.assertEqual(len(ucal), 7)
+            self.assertEqual({"value": expect_dict["general"]["browser_path"]}, ucal[0][1])
+            self.assertEqual({"value": expect_dict["general"]["auto_reload"]}, ucal[1][1])
+            self.assertEqual({"value": expect_dict["general"]["rss_save_path"]}, ucal[2][1])
+            self.assertEqual({"value": expect_dict["db"]["save_path"]}, ucal[3][1])
+            self.assertEqual({"value": expect_dict["niconico"]["email"]}, ucal[4][1])
+            self.assertEqual({"value": expect_dict["niconico"]["password"]}, ucal[5][1])
+            self.assertEqual({"select": False}, ucal[6][1])
+            mockup.reset_mock()
+        pass
+
+    def test_PCSConfigSave(self):
+        """設定タブを開いたときの処理のテスト
+        """
+        with ExitStack() as stack:
+            mockfp = stack.enter_context(patch("pathlib.open", mock_open()))
         pass
 
 
