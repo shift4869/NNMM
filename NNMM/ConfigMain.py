@@ -286,6 +286,7 @@ class ProcessConfigSave(ProcessConfigBase):
         with Path(ProcessConfigBase.CONFIG_FILE_PATH).open("w", encoding="utf-8") as fout:
             c.write(fout)
         ProcessConfigBase.SetConfig()
+        return 0
 
 
 if __name__ == "__main__":

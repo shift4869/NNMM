@@ -378,7 +378,6 @@ class TestConfigMain(unittest.TestCase):
                 "-C_DB_PATH-": mockd,
                 "-C_ACCOUNT_EMAIL-": mockd,
                 "-C_ACCOUNT_PASSWORD-": mockd,
-                "-C_BROWSER_PATH-": mockd,
             }
 
             mw = MagicMock()
@@ -406,7 +405,74 @@ class TestConfigMain(unittest.TestCase):
         """設定タブを開いたときの処理のテスト
         """
         with ExitStack() as stack:
+            mockcp = stack.enter_context(patch("configparser.ConfigParser"))
             mockfp = stack.enter_context(patch("pathlib.open", mock_open()))
+
+            mockread = MagicMock()
+            TEST_PREV_SAVE_PATH = "./test/p_test.db"
+            TEST_NEXT_SAVE_PATH = "./test/n_test.db"
+            expect_prev_dict = {
+                "general": {
+                    "browser_path": "p_browser_path",
+                    "auto_reload": "p_auto_reload",
+                    "rss_save_path": "p_rss_save_path",
+                },
+                "db": {
+                    "save_path": TEST_PREV_SAVE_PATH,
+                },
+                "niconico": {
+                    "email": "p_email",
+                    "password": "p_password",
+                },
+            }
+            mockccp = MagicMock()
+            mockread.side_effect = [expect_prev_dict]
+            type(mockccp).read = mockread
+            mockccp.__getitem__.side_effect = expect_prev_dict.__getitem__
+            mockccp.__iter__.side_effect = expect_prev_dict.__iter__
+            mockccp.__contains__.side_effect = expect_prev_dict.__contains__
+
+            mockcp.side_effect = [mockccp]
+
+            def getmock(str):
+                r = MagicMock()
+                type(r).get = lambda s: str
+                return r
+            expect_next_dict = {
+                "general": {
+                    "browser_path": "n_browser_path",
+                    "auto_reload": "n_auto_reload",
+                    "rss_save_path": "n_rss_save_path",
+                },
+                "db": {
+                    "save_path": TEST_NEXT_SAVE_PATH,
+                },
+                "niconico": {
+                    "email": "n_email",
+                    "password": "n_password",
+                },
+            }
+            mock_dict = {
+                "-C_BROWSER_PATH-": getmock(expect_next_dict["general"]["browser_path"]),
+                "-C_AUTO_RELOAD-": getmock(expect_next_dict["general"]["auto_reload"]),
+                "-C_RSS_PATH-": getmock(expect_next_dict["general"]["rss_save_path"]),
+                "-C_DB_PATH-": getmock(expect_next_dict["db"]["save_path"]),
+                "-C_ACCOUNT_EMAIL-": getmock(expect_next_dict["niconico"]["email"]),
+                "-C_ACCOUNT_PASSWORD-": getmock(expect_next_dict["niconico"]["password"]),
+            }
+            mockwin = MagicMock()
+            mockwev = MagicMock()
+            type(mockwin).write_event_value = mockwev
+            mockwin.__getitem__.side_effect = mock_dict.__getitem__
+            mockwin.__iter__.side_effect = mock_dict.__iter__
+            mockwin.__contains__.side_effect = mock_dict.__contains__
+
+            mw = MagicMock()
+            type(mw).window = mockwin
+
+            pcs = ProcessConfigSave()
+            actual = pcs.Run(mw)
+            self.assertEqual(0, actual)
         pass
 
 
