@@ -38,6 +38,7 @@ class TestConfigMain(unittest.TestCase):
         pass
 
     def tearDown(self):
+        ProcessConfigBase.config = None
         pass
 
     def test_ProcessConfigBaseInit(self):
@@ -148,7 +149,7 @@ class TestConfigMain(unittest.TestCase):
         self.assertTrue("password" in actual["niconico"])
         pass
 
-    def test_SetConfig(self):
+    def test_GetConfig(self):
         """設定iniの取得をテストする
         """
         with ExitStack() as stack:
@@ -169,22 +170,178 @@ class TestConfigMain(unittest.TestCase):
             mock.reset_mock()
         pass
 
-    def test_SetConfig(self):
+    def test_PMLLoadMylist(self):
         """マイリスト一覧読込ボタンのテスト
         """
         with ExitStack() as stack:
             mockpgf = stack.enter_context(patch("PySimpleGUI.popup_get_file"))
             mocklml = stack.enter_context(patch("NNMM.ConfigMain.LoadMylist"))
+            mockpu = stack.enter_context(patch("PySimpleGUI.popup"))
 
-            mockpgf.return_value = "./test/input.csv"
+            TEST_INPUT_PATH = "./test/input.csv"
+            mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH]
             mocklml.side_effect = [0, -1]
 
             mw = MagicMock()
             type(mw).mylist_db = "mylist_db"
 
             pml = ProcessMylistLoadCSV()
+
+            # 正常系
+            # 実行
             actual = pml.Run(mw)
             self.assertEqual(0, actual)
+
+            # 呼び出し確認
+            default_path = Path("") / "input.csv"
+            expect_kwargs = {
+                "default_path": default_path.absolute(),
+                "default_extension": "csv",
+                "save_as": False
+            }
+
+            # pgfcal[{n回目の呼び出し}][args=0]
+            # pgfcal[{n回目の呼び出し}][kwargs=1]
+            pgfcal = mockpgf.call_args_list
+            self.assertEqual(len(pgfcal), 1)
+            self.assertEqual(("読込ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(expect_kwargs, pgfcal[0][1])
+            mockpgf.reset_mock()
+
+            # lmlcal[{n回目の呼び出し}][args=0]
+            lmlcal = mocklml.call_args_list
+            self.assertEqual(len(lmlcal), 1)
+            self.assertEqual((mw.mylist_db, str(Path(TEST_INPUT_PATH))), lmlcal[0][0])
+            mocklml.reset_mock()
+
+            # pucal[{n回目の呼び出し}][args=0]
+            pucal = mockpu.call_args_list
+            self.assertEqual(len(pucal), 1)
+            self.assertEqual(("読込完了", ), pucal[0][0])
+            mockpu.reset_mock()
+
+            # 異常系
+            # ファイル選択をキャンセルされた
+            actual = pml.Run(mw)
+            self.assertEqual(1, actual)
+
+            # 呼び出し確認
+            pgfcal = mockpgf.call_args_list
+            self.assertEqual(len(pgfcal), 1)
+            self.assertEqual(("読込ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(expect_kwargs, pgfcal[0][1])
+            mockpgf.reset_mock()
+
+            mocklml.assert_not_called()
+            mockpu.assert_not_called()
+
+            # マイリスト読込に失敗
+            actual = pml.Run(mw)
+            self.assertEqual(-1, actual)
+
+            # 呼び出し確認
+            pgfcal = mockpgf.call_args_list
+            self.assertEqual(len(pgfcal), 1)
+            self.assertEqual(("読込ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(expect_kwargs, pgfcal[0][1])
+            mockpgf.reset_mock()
+
+            lmlcal = mocklml.call_args_list
+            self.assertEqual(len(lmlcal), 1)
+            self.assertEqual((mw.mylist_db, str(Path(TEST_INPUT_PATH))), lmlcal[0][0])
+            mocklml.reset_mock()
+
+            pucal = mockpu.call_args_list
+            self.assertEqual(len(pucal), 1)
+            self.assertEqual(("読込失敗", ), pucal[0][0])
+            mockpu.reset_mock()
+        pass
+
+    def test_PMSSaveMylist(self):
+        """マイリスト一覧保存ボタンのテスト
+        """
+        with ExitStack() as stack:
+            mockpgf = stack.enter_context(patch("PySimpleGUI.popup_get_file"))
+            mocksml = stack.enter_context(patch("NNMM.ConfigMain.SaveMylist"))
+            mockpu = stack.enter_context(patch("PySimpleGUI.popup"))
+
+            TEST_RESULT_PATH = "./test/result.csv"
+            mockpgf.side_effect = [TEST_RESULT_PATH, None, TEST_RESULT_PATH]
+            mocksml.side_effect = [0, -1]
+
+            mw = MagicMock()
+            type(mw).mylist_db = "mylist_db"
+
+            pms = ProcessMylistSaveCSV()
+
+            # 正常系
+            # 実行
+            actual = pms.Run(mw)
+            self.assertEqual(0, actual)
+
+            # 呼び出し確認
+            default_path = Path("") / "result.csv"
+            expect_kwargs = {
+                "default_path": default_path.absolute(),
+                "default_extension": "csv",
+                "save_as": True
+            }
+
+            # pgfcal[{n回目の呼び出し}][args=0]
+            # pgfcal[{n回目の呼び出し}][kwargs=1]
+            pgfcal = mockpgf.call_args_list
+            self.assertEqual(len(pgfcal), 1)
+            self.assertEqual(("保存先ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(expect_kwargs, pgfcal[0][1])
+            mockpgf.reset_mock()
+
+            # lmlcal[{n回目の呼び出し}][args=0]
+            lmlcal = mocksml.call_args_list
+            self.assertEqual(len(lmlcal), 1)
+            self.assertEqual((mw.mylist_db, str(Path(TEST_RESULT_PATH))), lmlcal[0][0])
+            mocksml.reset_mock()
+
+            # pucal[{n回目の呼び出し}][args=0]
+            pucal = mockpu.call_args_list
+            self.assertEqual(len(pucal), 1)
+            self.assertEqual(("保存完了", ), pucal[0][0])
+            mockpu.reset_mock()
+
+            # 異常系
+            # ファイル選択をキャンセルされた
+            actual = pms.Run(mw)
+            self.assertEqual(1, actual)
+
+            # 呼び出し確認
+            pgfcal = mockpgf.call_args_list
+            self.assertEqual(len(pgfcal), 1)
+            self.assertEqual(("保存先ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(expect_kwargs, pgfcal[0][1])
+            mockpgf.reset_mock()
+
+            mocksml.assert_not_called()
+            mockpu.assert_not_called()
+
+            # マイリスト保存に失敗
+            actual = pms.Run(mw)
+            self.assertEqual(-1, actual)
+
+            # 呼び出し確認
+            pgfcal = mockpgf.call_args_list
+            self.assertEqual(len(pgfcal), 1)
+            self.assertEqual(("保存先ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(expect_kwargs, pgfcal[0][1])
+            mockpgf.reset_mock()
+
+            lmlcal = mocksml.call_args_list
+            self.assertEqual(len(lmlcal), 1)
+            self.assertEqual((mw.mylist_db, str(Path(TEST_RESULT_PATH))), lmlcal[0][0])
+            mocksml.reset_mock()
+
+            pucal = mockpu.call_args_list
+            self.assertEqual(len(pucal), 1)
+            self.assertEqual(("保存失敗", ), pucal[0][0])
+            mockpu.reset_mock()
         pass
 
 

@@ -89,7 +89,7 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
     def __init__(self):
         super().__init__(True, True, "マイリスト一覧入力")
 
-    def Run(self, mw):
+    def Run(self, mw) -> int:
         # "-C_MYLIST_LOAD-"
         # マイリスト一覧読込ボタンが押されたときの処理
         # csvを読み込んで現在のマイリストに追加する
@@ -125,7 +125,7 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
     def __init__(self):
         super().__init__(True, True, "マイリスト一覧出力")
 
-    def Run(self, mw):
+    def Run(self, mw) -> int:
         # "-C_MYLIST_SAVE-"
         # マイリスト一覧保存ボタンが押されたときの処理
         # 現在のマイリストをcsvとして保存する
