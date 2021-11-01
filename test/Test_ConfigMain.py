@@ -3,6 +3,7 @@
 """
 
 import configparser
+import copy
 import shutil
 import sys
 import unittest
@@ -406,7 +407,8 @@ class TestConfigMain(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockcp = stack.enter_context(patch("configparser.ConfigParser"))
-            mockfp = stack.enter_context(patch("pathlib.open", mock_open()))
+            mockfp = stack.enter_context(patch("pathlib.Path.open", mock_open()))
+            mocksc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.SetConfig"))
 
             mockread = MagicMock()
             TEST_PREV_SAVE_PATH = "./test/p_test.db"
@@ -469,10 +471,46 @@ class TestConfigMain(unittest.TestCase):
 
             mw = MagicMock()
             type(mw).window = mockwin
+            type(mw).db_fullpath = None
+            type(mw).mylist_db = None
+            type(mw).mylist_info_db = None
 
+            # dbのパス先にダミーファイルを作っておく
+            Path(TEST_PREV_SAVE_PATH).touch()
+
+            # 実行
             pcs = ProcessConfigSave()
             actual = pcs.Run(mw)
             self.assertEqual(0, actual)
+
+            # 呼び出し確認
+            # rcal[{n回目の呼び出し}][args=0]
+            # rcal[{n回目の呼び出し}][kwargs=1]
+            rcal = mockread.call_args_list
+            self.assertEqual(len(rcal), 1)
+            self.assertEqual((CONFIG_FILE_PATH, ), rcal[0][0])
+            self.assertEqual({"encoding": "utf-8"}, rcal[0][1])
+
+            # wcal[{n回目の呼び出し}][args=0]
+            wcal = mockwev.call_args_list
+            self.assertEqual(len(wcal), 1)
+            self.assertEqual(("-TIMER_SET-", "-FIRST_SET-"), wcal[0][0])
+
+            mockfp.assert_called()
+            mocksc.assert_called()
+
+            # 設定更新結果比較
+            actual_next_dict = copy.deepcopy(expect_next_dict)
+            self.assertEqual(expect_prev_dict, actual_next_dict)
+
+            # 新しい場所のDBへ繋ぎ変えができているか
+            self.assertIsNotNone(mw.db_fullpath)
+            self.assertIsNotNone(mw.mylist_db)
+            self.assertIsNotNone(mw.mylist_info_db)
+
+            # 後始末
+            Path(TEST_PREV_SAVE_PATH).unlink(missing_ok=True)
+            Path(TEST_NEXT_SAVE_PATH).unlink(missing_ok=True)
         pass
 
 
