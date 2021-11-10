@@ -85,10 +85,10 @@ class TestConfigMain(unittest.TestCase):
                 [sg.Text("・マイリスト・動画情報保存DBのパス")],
                 [sg.Input(key="-C_DB_PATH-"), sg.FileBrowse()],
                 [sg.Text(horizontal_line)],
-                [sg.Text("・ニコニコアカウント")],
-                [sg.Text("email:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_EMAIL-")],
-                [sg.Text("password:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_PASSWORD-", password_char="*")],
-                [sg.Text(horizontal_line)],
+                # [sg.Text("・ニコニコアカウント")],
+                # [sg.Text("email:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_EMAIL-")],
+                # [sg.Text("password:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_PASSWORD-", password_char="*")],
+                # [sg.Text(horizontal_line)],
                 [sg.Text("")],
                 [sg.Text("")],
                 [sg.Column([[sg.Button("設定保存", key="-C_CONFIG_SAVE-")]], justification="right")],
@@ -361,10 +361,10 @@ class TestConfigMain(unittest.TestCase):
                 "db": {
                     "save_path": "save_path",
                 },
-                "niconico": {
-                    "email": "email",
-                    "password": "password",
-                },
+                # "niconico": {
+                #     "email": "email",
+                #     "password": "password",
+                # },
             }
 
             mockgc.side_effect = [expect_dict]
@@ -391,14 +391,14 @@ class TestConfigMain(unittest.TestCase):
             # ucal[{n回目の呼び出し}][args=0]
             # ucal[{n回目の呼び出し}][kwargs=1]
             ucal = mockup.call_args_list
-            self.assertEqual(len(ucal), 7)
+            self.assertEqual(len(ucal), 5)
             self.assertEqual({"value": expect_dict["general"]["browser_path"]}, ucal[0][1])
             self.assertEqual({"value": expect_dict["general"]["auto_reload"]}, ucal[1][1])
             self.assertEqual({"value": expect_dict["general"]["rss_save_path"]}, ucal[2][1])
             self.assertEqual({"value": expect_dict["db"]["save_path"]}, ucal[3][1])
-            self.assertEqual({"value": expect_dict["niconico"]["email"]}, ucal[4][1])
-            self.assertEqual({"value": expect_dict["niconico"]["password"]}, ucal[5][1])
-            self.assertEqual({"select": False}, ucal[6][1])
+            # self.assertEqual({"value": expect_dict["niconico"]["email"]}, ucal[4][1])
+            # self.assertEqual({"value": expect_dict["niconico"]["password"]}, ucal[5][1])
+            self.assertEqual({"select": False}, ucal[4][1])
             mockup.reset_mock()
         pass
 
@@ -422,10 +422,10 @@ class TestConfigMain(unittest.TestCase):
                 "db": {
                     "save_path": TEST_PREV_SAVE_PATH,
                 },
-                "niconico": {
-                    "email": "p_email",
-                    "password": "p_password",
-                },
+                # "niconico": {
+                #     "email": "p_email",
+                #     "password": "p_password",
+                # },
             }
             mockccp = MagicMock()
             mockread.side_effect = [expect_prev_dict]
@@ -449,18 +449,18 @@ class TestConfigMain(unittest.TestCase):
                 "db": {
                     "save_path": TEST_NEXT_SAVE_PATH,
                 },
-                "niconico": {
-                    "email": "n_email",
-                    "password": "n_password",
-                },
+                # "niconico": {
+                #     "email": "n_email",
+                #     "password": "n_password",
+                # },
             }
             mock_dict = {
                 "-C_BROWSER_PATH-": getmock(expect_next_dict["general"]["browser_path"]),
                 "-C_AUTO_RELOAD-": getmock(expect_next_dict["general"]["auto_reload"]),
                 "-C_RSS_PATH-": getmock(expect_next_dict["general"]["rss_save_path"]),
                 "-C_DB_PATH-": getmock(expect_next_dict["db"]["save_path"]),
-                "-C_ACCOUNT_EMAIL-": getmock(expect_next_dict["niconico"]["email"]),
-                "-C_ACCOUNT_PASSWORD-": getmock(expect_next_dict["niconico"]["password"]),
+                # "-C_ACCOUNT_EMAIL-": getmock(expect_next_dict["niconico"]["email"]),
+                # "-C_ACCOUNT_PASSWORD-": getmock(expect_next_dict["niconico"]["password"]),
             }
             mockwin = MagicMock()
             mockwev = MagicMock()

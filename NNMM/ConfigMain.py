@@ -16,9 +16,11 @@ logger.setLevel(INFO)
 
 
 class ProcessConfigBase(ProcessBase.ProcessBase):
-    # コンフィグ機能のベースクラス
-    # 派生クラスと外部から使用されるクラス変数とクラスメソッドを定義する
-    # このベースクラス自体は抽象メソッドであるRunを実装していないためインスタンスは作成できない
+    """コンフィグ機能のベースクラス
+
+    派生クラスと外部から使用されるクラス変数とクラスメソッドを定義する
+    このベースクラス自体は抽象メソッドであるRunを実装していないためインスタンスは作成できない
+    """
     CONFIG_FILE_PATH = "./config/config.ini"
     config = None
 
@@ -30,7 +32,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
         """設定画面のレイアウトを作成する
 
         Returns:
-            sg.Frame: PySimpleGUIのレイアウトオブジェクト
+            list[list[sg.Frame]]: PySimpleGUIのレイアウトオブジェクト
         """
         # オートリロード間隔
         auto_reload_combo_box = sg.InputCombo(
@@ -55,10 +57,10 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
             [sg.Text("・マイリスト・動画情報保存DBのパス")],
             [sg.Input(key="-C_DB_PATH-"), sg.FileBrowse()],
             [sg.Text(horizontal_line)],
-            [sg.Text("・ニコニコアカウント")],
-            [sg.Text("email:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_EMAIL-")],
-            [sg.Text("password:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_PASSWORD-", password_char="*")],
-            [sg.Text(horizontal_line)],
+            # [sg.Text("・ニコニコアカウント")],
+            # [sg.Text("email:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_EMAIL-")],
+            # [sg.Text("password:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_PASSWORD-", password_char="*")],
+            # [sg.Text(horizontal_line)],
             [sg.Text("")],
             [sg.Text("")],
             [sg.Column([[sg.Button("設定保存", key="-C_CONFIG_SAVE-")]], justification="right")],
@@ -216,8 +218,8 @@ class ProcessConfigLoad(ProcessConfigBase):
         window["-C_DB_PATH-"].update(value=c["db"]["save_path"])
 
         # Niconico
-        window["-C_ACCOUNT_EMAIL-"].update(value=c["niconico"]["email"])
-        window["-C_ACCOUNT_PASSWORD-"].update(value=c["niconico"]["password"])
+        # window["-C_ACCOUNT_EMAIL-"].update(value=c["niconico"]["email"])
+        # window["-C_ACCOUNT_PASSWORD-"].update(value=c["niconico"]["password"])
 
         # 選択された状態になるので外す
         window["-C_BROWSER_PATH-"].update(select=False)
@@ -279,8 +281,8 @@ class ProcessConfigSave(ProcessConfigBase):
             c["db"]["save_path"] = window["-C_DB_PATH-"].get()
 
         # Niconico
-        c["niconico"]["email"] = window["-C_ACCOUNT_EMAIL-"].get()
-        c["niconico"]["password"] = window["-C_ACCOUNT_PASSWORD-"].get()
+        # c["niconico"]["email"] = window["-C_ACCOUNT_EMAIL-"].get()
+        # c["niconico"]["password"] = window["-C_ACCOUNT_PASSWORD-"].get()
 
         # ファイルを保存する
         with Path(ProcessConfigBase.CONFIG_FILE_PATH).open("w", encoding="utf-8") as fout:
