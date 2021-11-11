@@ -14,11 +14,25 @@ logger.setLevel(INFO)
 
 
 class PopupWindowBase(ProcessBase.ProcessBase):
-    # 情報ウィンドウのベースクラス
-    # 派生クラスと外部から使用されるクラス変数とクラスメソッドを定義する
-    # このベースクラス自体は抽象クラスのためインスタンスは作成できない
+    """情報ウィンドウのベースクラス
 
+    派生クラスと外部から使用されるクラス変数とクラスメソッドを定義する
+    このベースクラス自体は抽象クラスのためインスタンスは作成できない
+    """
     def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
+        """コンストラクタ
+
+        Args:
+            log_sflag (bool): 開始時ログ出力フラグ
+            log_eflag (bool): 終了時時ログ出力フラグ
+            process_name (str): 処理名
+
+        Atributes:
+            window (sg.Window|None): 子window
+            title (str): windowタイトル
+            size (tuple[str,str]): windowサイズ
+            ep_dict (dict): イベント処理の対応辞書
+        """
         # 派生クラスの生成時は引数ありで呼び出される
         if process_name:
             super().__init__(log_sflag, log_eflag, process_name)
@@ -31,16 +45,38 @@ class PopupWindowBase(ProcessBase.ProcessBase):
         self.ep_dict = {}
 
     @abstractmethod
-    def MakeWindowLayout(self, mw):
-        # 画面のレイアウトを作成する
+    def MakeWindowLayout(self, mw) -> list[list[sg.Frame]] | None:
+        """画面のレイアウトを作成する
+
+        Args:
+            mw (sg.Window): 親windowの情報
+
+        Returns:
+            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
+        """
         return None
 
     @abstractmethod
-    def Init(self, mw):
-        # 初期化
-        pass
+    def Init(self, mw) -> int:
+        """初期化
 
-    def Run(self, mw):
+        Args:
+            mw (sg.Window): 親windowの情報
+
+        Returns:
+            int: 成功時0
+        """
+        return 0
+
+    def Run(self, mw) -> int:
+        """子windowイベントループ
+
+        Args:
+            mw (sg.Window): 親windowの情報
+
+        Returns:
+            int: 正常終了時0、エラー時-1
+        """
         # 初期化
         self.Init(mw)
 
@@ -171,6 +207,7 @@ class PopupMylistWindow(PopupWindowBase):
         self.ep_dict = {
             "-SAVE-": PopupMylistWindowSave,
         }
+        return 0
 
 
 class PopupMylistWindowSave(ProcessBase.ProcessBase):
@@ -304,6 +341,7 @@ class PopupVideoWindow(PopupWindowBase):
         # 子ウィンドウの初期値
         self.title = "動画情報"
         self.size = (580, 400)
+        return 0
 
 
 if __name__ == "__main__":
