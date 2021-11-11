@@ -98,13 +98,13 @@ class TestConfigMain(unittest.TestCase):
             ]]
             return layout
 
-        expext = ExpectConfigLayout()
+        expect = ExpectConfigLayout()
         actual = ProcessConfigBase.GetConfigLayout()
 
         # self.assertEqual(expext, actual)
-        self.assertEqual(type(expext), type(actual))
-        self.assertEqual(len(expext), len(actual))
-        for e1, a1 in zip(expext, actual):
+        self.assertEqual(type(expect), type(actual))
+        self.assertEqual(len(expect), len(actual))
+        for e1, a1 in zip(expect, actual):
             self.assertEqual(len(e1), len(a1))
             for e2, a2 in zip(e1, a1):
                 for e3, a3 in zip(e2.Rows, a2.Rows):

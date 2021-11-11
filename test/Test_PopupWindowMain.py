@@ -96,6 +96,125 @@ class TestPopupWindowMain(unittest.TestCase):
             self.assertEqual(-1, res)
         pass
 
+    def test_PMWMakeWindowLayout(self):
+        """マイリスト情報windowのレイアウトをテストする
+        """
+        pmw = PopupMylistWindow()
+
+        e_record = {
+            "id": 0,
+            "username": "投稿者1",
+            "mylistname": "マイリスト名1",
+            "type": "mylist",
+            "showname": "「マイリスト名1」-投稿者1さんのマイリスト",
+            "url": "https://www.nicovideo.jp/user/11111111/mylist/10000011",
+            "created_at": "21-11-11 01:00:00",
+            "updated_at": "21-11-11 01:00:20",
+            "checked_at": "21-11-11 01:00:10",
+            "check_interval": "15分",
+            "is_include_new": True,
+        }
+        pmw.record = copy.deepcopy(e_record)
+
+        title = "マイリスト情報"
+        pmw.title = title
+
+        def ExpectMakeWindowLayout(mw):
+            # 画面のレイアウトを作成する
+            horizontal_line = "-" * 132
+            csize = (20, 1)
+            tsize = (50, 1)
+            thsize = (5, 1)
+
+            r = e_record
+            id_index = r["id"]
+            username = r["username"]
+            mylistname = r["mylistname"]
+            typename = r["type"]
+            showname = r["showname"]
+            url = r["url"]
+            created_at = r["created_at"]
+            updated_at = r["updated_at"]
+            checked_at = r["checked_at"]
+            is_include_new = "True" if r["is_include_new"] else "False"
+
+            # インターバル文字列をパース
+            unit_list = ["分", "時間", "日", "週間", "ヶ月"]
+            check_interval = r["check_interval"]
+            t = str(check_interval)
+            for u in unit_list:
+                t = t.replace(u, "")
+            check_interval_num = int(t)
+            check_interval_unit = str(check_interval).replace(str(t), "")
+
+            cf = [
+                [sg.Text(horizontal_line)],
+                [sg.Text("ID", size=csize, visible=False), sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize)],
+                [sg.Text("ユーザー名", size=csize), sg.Input(f"{username}", key="-USERNAME-", readonly=True, size=tsize)],
+                [sg.Text("マイリスト名", size=csize), sg.Input(f"{mylistname}", key="-MYLISTNAME-", readonly=True, size=tsize)],
+                [sg.Text("種別", size=csize), sg.Input(f"{typename}", key="-TYPE-", readonly=True, size=tsize)],
+                [sg.Text("表示名", size=csize), sg.Input(f"{showname}", key="-SHOWNAME-", readonly=True, size=tsize)],
+                [sg.Text("URL", size=csize), sg.Input(f"{url}", key="-URL-", readonly=True, size=tsize)],
+                [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CREATED_AT-", readonly=True, size=tsize)],
+                [sg.Text("更新日時", size=csize), sg.Input(f"{updated_at}", key="-UPDATED_AT-", readonly=True, size=tsize)],
+                [sg.Text("更新確認日時", size=csize), sg.Input(f"{checked_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
+                [sg.Text("更新確認インターバル", size=csize),
+                    sg.InputCombo([i for i in range(1, 60)], default_value=check_interval_num, key="-CHECK_INTERVAL_NUM-", background_color="light goldenrod", size=thsize),
+                    sg.InputCombo(unit_list, default_value=check_interval_unit, key="-CHECK_INTERVAL_UNIT-", background_color="light goldenrod", size=thsize)],
+                [sg.Text("未視聴フラグ", size=csize), sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize)],
+                [sg.Text(horizontal_line)],
+                [sg.Text("")],
+                [sg.Text("")],
+                [sg.Column([[sg.Button("保存", key="-SAVE-"), sg.Button("閉じる", key="-EXIT-")]], justification="right")],
+            ]
+            layout = [[
+                sg.Frame(title, cf)
+            ]]
+            return layout
+
+        # 正常系
+        mw = None
+        actual = pmw.MakeWindowLayout(mw)
+        expect = ExpectMakeWindowLayout(mw)
+
+        # sgオブジェクトは別IDで生成されるため、各要素を比較する
+        # self.assertEqual(expect, actual)
+        self.assertEqual(type(expect), type(actual))
+        self.assertEqual(len(expect), len(actual))
+        for e1, a1 in zip(expect, actual):
+            self.assertEqual(len(e1), len(a1))
+            for e2, a2 in zip(e1, a1):
+                for e3, a3 in zip(e2.Rows, a2.Rows):
+                    self.assertEqual(len(e3), len(a3))
+                    for e4, a4 in zip(e3, a3):
+                        if hasattr(a4, "DisplayText") and a4.DisplayText:
+                            self.assertEqual(e4.DisplayText, a4.DisplayText)
+                        if hasattr(a4, "Key") and a4.Key:
+                            self.assertEqual(e4.Key, a4.Key)
+
+        # 異常系
+        # インターバル文字列が不正な文字列
+        pmw.record["check_interval"] = "不正なインターバル文字列"
+        actual = pmw.MakeWindowLayout(mw)
+        self.assertIsNone(actual)
+
+        # インターバル文字列が負の数指定
+        pmw.record["check_interval"] = "-15分"
+        actual = pmw.MakeWindowLayout(mw)
+        self.assertIsNone(actual)
+        pmw.record["check_interval"] = "15分"
+
+        # recordの設定が不完全
+        del pmw.record["id"]
+        actual = pmw.MakeWindowLayout(mw)
+        self.assertIsNone(actual)
+
+        # recordが設定されていない
+        del pmw.record
+        actual = pmw.MakeWindowLayout(mw)
+        self.assertIsNone(actual)
+        pass
+
 
 if __name__ == "__main__":
     if sys.argv:

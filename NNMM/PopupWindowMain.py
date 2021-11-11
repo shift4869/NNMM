@@ -126,14 +126,37 @@ class PopupMylistWindow(PopupWindowBase):
         else:
             super().__init__(True, True, "マイリスト情報ウィンドウ")
 
-    def MakeWindowLayout(self, mw):
+    def MakeWindowLayout(self, mw) -> list[list[sg.Frame]] | None:
+        """画面のレイアウトを作成する
+
+        Notes:
+            先にInitを実行し、self.recordを設定しておく必要がある
+
+        Args:
+            mw (sg.Window): 親windowの情報（使用しない）
+
+        Returns:
+            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
+        """
         # 画面のレイアウトを作成する
         horizontal_line = "-" * 132
         csize = (20, 1)
         tsize = (50, 1)
         thsize = (5, 1)
 
+        # self.recordが設定されていない場合はNoneを返して終了
+        if not hasattr(self, "record") or self.record is None:
+            return None
+
         r = self.record
+        mylist_cols = Mylist.__table__.c.keys()
+
+        # マイリスト情報をすべて含んでいない場合はNoneを返して終了
+        for c in mylist_cols:
+            if c not in r:
+                return None
+
+        # 設定
         id_index = r["id"]
         username = r["username"]
         mylistname = r["mylistname"]
@@ -148,11 +171,23 @@ class PopupMylistWindow(PopupWindowBase):
         # インターバル文字列をパース
         unit_list = ["分", "時間", "日", "週間", "ヶ月"]
         check_interval = r["check_interval"]
+        check_interval_num = -1
+        check_interval_unit = ""
         t = str(check_interval)
         for u in unit_list:
             t = t.replace(u, "")
-        check_interval_num = int(t)
-        check_interval_unit = str(check_interval).replace(str(t), "")
+
+        try:
+            check_interval_num = int(t)
+            check_interval_unit = str(check_interval).replace(str(t), "")
+        except ValueError:
+            return None  # キャスト失敗エラー
+
+        if check_interval_num < 0:
+            return None  # 負の数ならエラー([1-59]の範囲想定)
+
+        if check_interval_unit not in unit_list:
+            return None  # 想定外の単位ならエラー
 
         cf = [
             [sg.Text(horizontal_line)],
