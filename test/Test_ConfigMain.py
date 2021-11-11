@@ -145,9 +145,9 @@ class TestConfigMain(unittest.TestCase):
         self.assertTrue("db" in actual)
         self.assertTrue("save_path" in actual["db"])
 
-        self.assertTrue("niconico" in actual)
-        self.assertTrue("email" in actual["niconico"])
-        self.assertTrue("password" in actual["niconico"])
+        # self.assertTrue("niconico" in actual)
+        # self.assertTrue("email" in actual["niconico"])
+        # self.assertTrue("password" in actual["niconico"])
         pass
 
     def test_GetConfig(self):
