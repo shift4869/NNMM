@@ -64,9 +64,9 @@ class PopupWindowBase(ProcessBase.ProcessBase):
             mw (sg.Window): 親windowの情報
 
         Returns:
-            int: 成功時0
+            int: 成功時0、エラー時-1
         """
-        return 0
+        return -1
 
     def Run(self, mw) -> int:
         """子windowイベントループ
@@ -138,7 +138,6 @@ class PopupMylistWindow(PopupWindowBase):
         Returns:
             list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
         """
-        # 画面のレイアウトを作成する
         horizontal_line = "-" * 132
         csize = (20, 1)
         tsize = (50, 1)
@@ -214,29 +213,50 @@ class PopupMylistWindow(PopupWindowBase):
         ]]
         return layout
 
-    def Init(self, mw):
-        # 初期化
-        # 親ウィンドウからの情報を取得する
-        # self.window = mw.window
-        # self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+    def Init(self, mw) -> int:
+        """初期化
 
-        # 選択されたマイリストのマイリストレコードオブジェクトを取得する
-        v = mw.values.get("-LIST-")
+        Args:
+            mw (sg.Window): 親windowの情報
+
+        Returns:
+            int: 成功時0、エラー時-1
+        """
+        # 親ウィンドウからの情報を取得する
+        v = []
+        try:
+            # self.window = mw.window
+            v = mw.values.get("-LIST-")
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("Mylist popup window Init failed, argument error.")
+            return -1
+
+        # 選択されたマイリストのShownameを取得する
         if v and len(v) > 0:
             v = v[0]
+        else:
+            logger.error("Mylist popup window Init failed, mylist is not selected.")
+            return -1
 
-        if v[:2] == "*:":
+        # 新着表示のマークがある場合は削除する
+        NEW_MARK = "*:"
+        if v[:2] == NEW_MARK:
             v = v[2:]
+
+        # 選択されたマイリストのマイリストレコードオブジェクトを取得する
         record = self.mylist_db.SelectFromShowname(v)
-        
         if record and len(record) == 1:
             record = record[0]
+        else:
+            logger.error("Mylist popup window Init failed, mylist is not found in mylist_db.")
+            return -1
 
+        # recordを設定(MakeWindowLayoutで使用する)
         self.record = record
 
-        # 子ウィンドウの初期値
+        # 子ウィンドウの初期値設定
         self.title = "マイリスト情報"
         self.size = (580, 450)
         self.ep_dict = {

@@ -215,6 +215,27 @@ class TestPopupWindowMain(unittest.TestCase):
         self.assertIsNone(actual)
         pass
 
+    def test_PMWInit(self):
+        """マイリスト情報windowの初期化処理をテストする
+        """
+        pmw = PopupMylistWindow()
+
+        mw = MagicMock()
+        sfs_mock = MagicMock()
+        type(sfs_mock).SelectFromShowname = lambda s, v: [v]
+        type(mw).mylist_db = sfs_mock
+        type(mw).mylist_info_db = "mylist_info_db"
+        type(mw).values = {"-LIST-": ["mylist showname"]}
+
+        # 正常系
+        actual = pmw.Init(mw)
+        self.assertEqual(0, actual)
+        self.assertEqual("mylist showname", pmw.record)
+        self.assertEqual("マイリスト情報", pmw.title)
+        self.assertEqual((580, 450), pmw.size)
+        self.assertEqual({"-SAVE-": PopupMylistWindowSave}, pmw.ep_dict)
+        pass
+
 
 if __name__ == "__main__":
     if sys.argv:
