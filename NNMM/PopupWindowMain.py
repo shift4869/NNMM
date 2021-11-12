@@ -222,7 +222,7 @@ class PopupMylistWindow(PopupWindowBase):
         Returns:
             int: 成功時0、エラー時-1
         """
-        # 親ウィンドウからの情報を取得する
+        # 親windowからの情報を取得する
         v = []
         try:
             # self.window = mw.window
