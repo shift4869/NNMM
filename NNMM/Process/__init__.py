@@ -14,3 +14,4 @@ from . import ProcessWatchedMylist
 from . import ProcessWatchedAllMylist
 from . import ProcessSearch
 from . import ProcessBase
+from . import ProcessDownload

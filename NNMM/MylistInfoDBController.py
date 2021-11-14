@@ -352,6 +352,31 @@ class MylistInfoDBController(DBControllerBase):
         session.close()
         return res_dict
 
+    def SelectFromIDURL(self, video_id: str, mylist_url: str) -> list[dict]:
+        """MylistInfoからvideo_idとmylist_urlを条件としてSELECTする
+
+        Note:
+            f"select * from MylistInfo where video_id = {video_id} and mylist_url = {mylist_url}"
+            (video_id, mylist_url)をキーとするためSelectされるレコードはユニークである想定
+
+        Args:
+            video_id (str): 取得対象の動画ID
+            mylist_url (str): 取得対象の所属マイリストURL
+
+        Returns:
+            dict[]: SELECTしたレコードの辞書リスト
+        """
+        Session = sessionmaker(bind=self.engine, autoflush=False)
+        session = Session()
+
+        res = session.query(MylistInfo).filter(
+            and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url)
+        ).with_for_update().all()
+        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+
+        session.close()
+        return res_dict
+
     def SelectFromVideoURL(self, video_url: str) -> list[dict]:
         """MylistInfoからvideo_urlを条件としてSELECTする
 

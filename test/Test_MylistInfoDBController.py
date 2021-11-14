@@ -383,6 +383,47 @@ class TestMylistInfoDBController(unittest.TestCase):
             self.assertEqual(actual, [])
             pass
 
+    def test_SelectFromIDURL(self):
+        """MylistInfoからvideo_idとmylist_urlを条件としてSELECTする機能のテスト
+        """
+        with ExitStack() as stack:
+            # mock = stack.enter_context(patch("NNMM.MylistInfoDBController.MylistInfoDBController.Func"))
+            mi_cont = MylistInfoDBController(TEST_DB_PATH)
+            expect = self.__LoadToTable()
+
+            # SELECT条件となるvideo_idを選定する
+            video_info = self.__GetVideoInfoSet()
+            video_id_info = [v[0] for v in video_info]
+            t_id = random.randint(0, len(video_id_info) - 1)
+            video_id = video_id_info[t_id]
+
+            # SELECT条件となるmylist_urlを選定する
+            mylist_info = self.__GetURLInfoSet()
+            m_id = random.randint(0, len(mylist_info) - 1)
+            mylist_url = mylist_info[m_id]
+
+            # 正常系
+            actual = mi_cont.SelectFromIDURL(video_id, mylist_url)
+            self.assertTrue(len(actual) == 1)
+            expect = [e for e in expect if e["video_id"] == video_id and e["mylist_url"] == mylist_url]
+            self.assertEqual(expect, actual)
+
+            # 異常系
+            # 存在しないvideo_idを指定する
+            error_video_id = "sm99999999"
+            actual = mi_cont.SelectFromIDURL(error_video_id, mylist_url)
+            self.assertEqual(actual, [])
+
+            # 存在しないmylist_urlを指定する
+            error_mylist_url = "https://www.nicovideo.jp/user/99999999/mylist/99999999"
+            actual = mi_cont.SelectFromIDURL(video_id, error_mylist_url)
+            self.assertEqual(actual, [])
+
+            # どちらも存在しない指定
+            actual = mi_cont.SelectFromIDURL(error_video_id, error_mylist_url)
+            self.assertEqual(actual, [])
+            pass
+
     def test_SelectFromVideoURL(self):
         """MylistInfoからvideo_urlを条件としてSELECTする機能のテスト
         """

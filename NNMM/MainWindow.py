@@ -62,6 +62,7 @@ class MainWindow():
             "検索（動画名）::-TR-": ProcessSearch.ProcessVideoSearch,
             "強調表示を解除::-TR-": ProcessSearch.ProcessVideoSearchClear,
             "情報表示::-TR-": PopupWindowMain.PopupVideoWindow,
+            "動画ダウンロード::-TR-": ProcessDownload.ProcessDownload,
             "全動画表示::-MR-": ProcessShowMylistInfoAll.ProcessShowMylistInfoAll,
             "視聴済にする（選択）::-MR-": ProcessWatchedMylist.ProcessWatchedMylist,
             "視聴済にする（全て）::-MR-": ProcessWatchedAllMylist.ProcessWatchedAllMylist,
@@ -77,6 +78,8 @@ class MainWindow():
             "-CREATE-": ProcessCreateMylist.ProcessCreateMylist,
             "-CREATE_THREAD_DONE-": ProcessCreateMylist.ProcessCreateMylistThreadDone,
             "-DELETE-": ProcessDeleteMylist.ProcessDeleteMylist,
+            "-DOWNLOAD-": ProcessDownload.ProcessDownload,
+            "-DOWNLOAD_THREAD_DONE-": ProcessDownload.ProcessDownloadThreadDone,
             "-UPDATE-": ProcessUpdateMylistInfo.ProcessUpdateMylistInfo,
             "-UPDATE_THREAD_DONE-": ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone,
             "-ALL_UPDATE-": ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo,
@@ -140,6 +143,8 @@ class MainWindow():
                 "強調表示を解除::-TR-",
                 "---",
                 "情報表示::-TR-",
+                "---",
+                "動画ダウンロード::-TR-",
             ]
         ]
         table_style = {
