@@ -119,7 +119,7 @@ class PopupWindowBase(ProcessBase.ProcessBase):
 
 
 class PopupMylistWindow(PopupWindowBase):
-    
+
     def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
         if process_name:
             super().__init__(log_sflag, log_eflag, process_name)
@@ -274,7 +274,19 @@ class PopupMylistWindowSave(ProcessBase.ProcessBase):
         else:
             super().__init__(True, True, "マイリスト情報ウィンドウSave")
     
-    def Run(self, mw):
+    def Run(self, mw) -> int:
+        """ポップアップwindow上の変更を保存する
+
+        Notes:
+            "-SAVE-"
+            マイリスト情報windowの保存ボタンが押された時呼び出される
+
+        Args:
+            mw (sg.Window): ポップアップwindowの情報
+
+        Returns:
+            int: 正常終了時0、エラー時-1
+        """
         self.window = mw.window
         self.values = mw.values
         self.mylist_db = mw.mylist_db

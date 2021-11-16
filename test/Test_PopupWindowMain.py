@@ -218,10 +218,10 @@ class TestPopupWindowMain(unittest.TestCase):
     def test_PMWInit(self):
         """マイリスト情報windowの初期化処理をテストする
         """
-        pmw = PopupMylistWindow()
-
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.PopupWindowMain.logger.error"))
+
+            pmw = PopupMylistWindow()
 
             NEW_MARK = "*:"
             mw = MagicMock()
@@ -255,7 +255,18 @@ class TestPopupWindowMain(unittest.TestCase):
             del mw.mylist_db
             actual = pmw.Init(mw)
             self.assertEqual(-1, actual)
+        pass
 
+    def test_PMWSRun(self):
+        """マイリスト情報windowの変更を保存する機能をテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.PopupWindowMain.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.PopupWindowMain.logger.error"))
+            mockpp = stack.enter_context(patch("NNMM.PopupWindowMain.sg.popup_ok"))
+            pmw = PopupMylistWindowSave()
+
+            actual = pmw.Run(None)
         pass
 
 
