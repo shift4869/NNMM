@@ -78,12 +78,16 @@ class PopupWindowBase(ProcessBase.ProcessBase):
             int: 正常終了時0、エラー時-1
         """
         # 初期化
-        self.Init(mw)
+        res = self.Init(mw)
+        if res == -1:
+            sg.popup_ok("情報ウィンドウの初期化に失敗しました。")
+            return -1
 
         # ウィンドウレイアウト作成
         layout = self.MakeWindowLayout(mw)
 
         if not layout:
+            sg.popup_ok("情報ウィンドウのレイアウト表示に失敗しました。")
             return -1
 
         # ウィンドウオブジェクト作成
@@ -104,14 +108,7 @@ class PopupWindowBase(ProcessBase.ProcessBase):
             if self.ep_dict.get(event):
                 self.values = values
                 pb = self.ep_dict.get(event)()
-
-                if pb.log_sflag:
-                    logger.info(f'"{pb.process_name}" starting.')
-
                 pb.Run(self)
-
-                if pb.log_eflag:
-                    logger.info(f'"{pb.process_name}" finished.')
 
         # ウィンドウ終了処理
         self.window.close()
@@ -326,7 +323,6 @@ class PopupMylistWindowSave(ProcessBase.ProcessBase):
         if dt < -1:
             # インターバル文字列解釈エラー
             logger.error(f"update interval setting is invalid : {interval_str}")
-            sg.popup_ok("インターバル文字列が不正です。")
             return -1
 
         # マイリスト情報更新
@@ -336,20 +332,43 @@ class PopupMylistWindowSave(ProcessBase.ProcessBase):
 
 
 class PopupVideoWindow(PopupWindowBase):
-    
+
     def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
         if process_name:
             super().__init__(log_sflag, log_eflag, process_name)
         else:
             super().__init__(True, True, "動画情報ウィンドウ")
 
-    def MakeWindowLayout(self, mw):
-        # 画面のレイアウトを作成する
+    def MakeWindowLayout(self, mw) -> list[list[sg.Frame]]:
+        """画面のレイアウトを作成する
+
+        Notes:
+            先にInitを実行し、self.recordを設定しておく必要がある
+
+        Args:
+            mw (sg.Window): 親windowの情報（使用しない）
+
+        Returns:
+            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
+        """
         horizontal_line = "-" * 132
         csize = (20, 1)
         tsize = (50, 1)
 
+        # self.recordが設定されていない場合はNoneを返して終了
+        if not hasattr(self, "record") or self.record is None:
+            return None
+
         r = self.record
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+        mylist_info_cols = MylistInfo.__table__.c.keys()
+
+        # 動画情報をすべて含んでいない場合はNoneを返して終了
+        for c in mylist_info_cols:
+            if c not in r:
+                return None
+
+        # 設定
         id_index = r["id"]
         video_id = r["video_id"]
         title = r["title"]
@@ -359,7 +378,6 @@ class PopupVideoWindow(PopupWindowBase):
         video_url = r["video_url"]
         mylist_url = r["mylist_url"]
         created_at = r["created_at"]
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
 
         cf = [
             [sg.Text(horizontal_line)],
@@ -382,20 +400,36 @@ class PopupVideoWindow(PopupWindowBase):
         ]]
         return layout
 
-    def Init(self, mw):
-        # 初期化
-        # 親ウィンドウからの情報を取得する
-        window = mw.window
-        values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+    def Init(self, mw) -> int:
+        """初期化
 
-        # mylist_url = values["-INPUT1-"]
+        Args:
+            mw (sg.Window): 親windowの情報
+
+        Returns:
+            int: 成功時0、エラー時-1
+        """
+        # 親windowからの情報を取得する
+        window = None
+        values = None
+        try:
+            window = mw.window
+            values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("MylistInfo popup window Init failed, argument error.")
+            return -1
+
+        # 引数設定チェック
+        if window is None or values is None:
+            logger.error("MylistInfo popup window Init failed, argument error.")
+            return -1
 
         # テーブルの行が選択されていなかったら何もしない
         if not values["-TABLE-"]:
-            logger.info("Table row is none selected.")
-            return
+            logger.info("Table row is not selected.")
+            return -1
 
         # 選択されたテーブル行数
         row = int(values["-TABLE-"][0])
@@ -405,19 +439,15 @@ class PopupVideoWindow(PopupWindowBase):
         selected = def_data[row]
 
         # 動画情報を取得する
-        records = self.mylist_info_db.SelectFromVideoID(selected[1])
-        record = []
+        video_id = selected[1]
         mylist_url = selected[7]
-        # 可能ならマイリストURLを照合する
-        if mylist_url != "":
-            record = [r for r in records if r["mylist_url"] == mylist_url]
-        else:
-            record = records[0:1]
+        records = self.mylist_info_db.SelectFromIDURL(video_id, mylist_url)
 
-        if record and len(record) == 1:
-            record = record[0]
+        if records == [] or len(records) != 1:
+            logger.error("Selected row is invalid.")
+            return -1
 
-        self.record = record
+        self.record = records[0]
 
         # 子ウィンドウの初期値
         self.title = "動画情報"

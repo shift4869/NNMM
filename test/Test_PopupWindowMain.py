@@ -30,7 +30,7 @@ class ConcretePopupWindowBase(PopupWindowBase):
         return mw
 
     def Init(self, mw) -> int:
-        return 0
+        return mw
 
     def Run(self, mw) -> int:
         return super().Run(mw) if self.process_name == "テスト用具体化処理" else None
@@ -74,6 +74,7 @@ class TestPopupWindowMain(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.PopupWindowMain.logger.info"))
             mockwd = stack.enter_context(patch("NNMM.PopupWindowMain.sg.Window"))
+            mockpp = stack.enter_context(patch("NNMM.PopupWindowMain.sg.popup_ok"))
 
             def r_mock_func(title, layout, size, finalize, resizable, modal):
                 r_mock = MagicMock()
@@ -86,12 +87,18 @@ class TestPopupWindowMain(unittest.TestCase):
             mockwd.side_effect = r_mock_func
 
             # 正常系
-            e_mw = [["dummy window"]]
+            e_mw = [["dummy window layout"]]
             res = cpwb.Run(e_mw)
             self.assertEqual(0, res)
 
             # 異常系
+            # レイアウト作成に失敗
             e_mw = None
+            res = cpwb.Run(e_mw)
+            self.assertEqual(-1, res)
+
+            # 初期化に失敗
+            e_mw = -1
             res = cpwb.Run(e_mw)
             self.assertEqual(-1, res)
         pass
@@ -263,7 +270,6 @@ class TestPopupWindowMain(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.PopupWindowMain.logger.info"))
             mockle = stack.enter_context(patch("NNMM.PopupWindowMain.logger.error"))
-            mockpp = stack.enter_context(patch("NNMM.PopupWindowMain.sg.popup_ok"))
             pmw = PopupMylistWindowSave()
 
             def getmock(value):
@@ -299,11 +305,11 @@ class TestPopupWindowMain(unittest.TestCase):
             type(mockwm).window = mockwin
             type(mockwm).values = []
 
-            def mockUpsertUpsert(s, id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new):
+            def mockUpsert(s, id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new):
                 return 0
 
             mockmb = MagicMock()
-            type(mockmb).Upsert = mockUpsertUpsert
+            type(mockmb).Upsert = mockUpsert
             type(mockwm).mylist_db = mockmb
             type(mockwm).mylist_info_db = []
 
@@ -326,6 +332,159 @@ class TestPopupWindowMain(unittest.TestCase):
             del type(mockwm).mylist_db
             del mockwm.mylist_db
             actual = pmw.Run(mockwm)
+            self.assertEqual(-1, actual)
+        pass
+
+    def test_PVWMakeWindowLayout(self):
+        """動画情報windowのレイアウトをテストする
+        """
+        pvw = PopupVideoWindow()
+
+        e_record = {
+            "id": 0,
+            "video_id": "sm11111111",
+            "title": "動画タイトル1",
+            "username": "投稿者1",
+            "status": "未視聴",
+            "uploaded_at": "2021-05-29 22:00:11",
+            "video_url": "https://www.nicovideo.jp/watch/sm11111111",
+            "mylist_url": "https://www.nicovideo.jp/user/11111111/mylist/12345678",
+            "created_at": "2021-10-16 00:00:11",
+        }
+        pvw.record = copy.deepcopy(e_record)
+
+        title = "動画情報"
+        pvw.title = title
+
+        def ExpectMakeWindowLayout(mw):
+            # 画面のレイアウトを作成する
+            horizontal_line = "-" * 132
+            csize = (20, 1)
+            tsize = (50, 1)
+
+            r = e_record
+            id_index = r["id"]
+            video_id = r["video_id"]
+            title = r["title"]
+            username = r["username"]
+            status = r["status"]
+            uploaded_at = r["uploaded_at"]
+            video_url = r["video_url"]
+            mylist_url = r["mylist_url"]
+            created_at = r["created_at"]
+
+            cf = [
+                [sg.Text(horizontal_line)],
+                [sg.Text("ID", size=csize, visible=False), sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize)],
+                [sg.Text("動画ID", size=csize), sg.Input(f"{video_id}", key="-USERNAME-", readonly=True, size=tsize)],
+                [sg.Text("動画名", size=csize), sg.Input(f"{title}", key="-MYLISTNAME-", readonly=True, size=tsize)],
+                [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
+                [sg.Text("状況", size=csize), sg.Input(f"{status}", key="-SHOWNAME-", readonly=True, size=tsize)],
+                [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
+                [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
+                [sg.Text("マイリストURL", size=csize), sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize)],
+                [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
+                [sg.Text(horizontal_line)],
+                [sg.Text("")],
+                [sg.Text("")],
+                [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
+            ]
+            layout = [[
+                sg.Frame(title, cf)
+            ]]
+            return layout
+
+        # 正常系
+        mw = None
+        actual = pvw.MakeWindowLayout(mw)
+        expect = ExpectMakeWindowLayout(mw)
+
+        # sgオブジェクトは別IDで生成されるため、各要素を比較する
+        # self.assertEqual(expect, actual)
+        self.assertEqual(type(expect), type(actual))
+        self.assertEqual(len(expect), len(actual))
+        for e1, a1 in zip(expect, actual):
+            self.assertEqual(len(e1), len(a1))
+            for e2, a2 in zip(e1, a1):
+                for e3, a3 in zip(e2.Rows, a2.Rows):
+                    self.assertEqual(len(e3), len(a3))
+                    for e4, a4 in zip(e3, a3):
+                        if hasattr(a4, "DisplayText") and a4.DisplayText:
+                            self.assertEqual(e4.DisplayText, a4.DisplayText)
+                        if hasattr(a4, "Key") and a4.Key:
+                            self.assertEqual(e4.Key, a4.Key)
+
+        # 異常系
+        # recordの設定が不完全
+        del pvw.record["id"]
+        actual = pvw.MakeWindowLayout(mw)
+        self.assertIsNone(actual)
+
+        # recordが設定されていない
+        del pvw.record
+        actual = pvw.MakeWindowLayout(mw)
+        self.assertIsNone(actual)
+        pass
+
+    def test_PVWInit(self):
+        """動画情報windowの初期化処理をテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.PopupWindowMain.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.PopupWindowMain.logger.error"))
+
+            pvw = PopupVideoWindow()
+
+            e_video_id = "sm11111111"
+            e_mylist_url = "https://www.nicovideo.jp/user/11111111/mylist/12345678"
+            e_tv = [
+                0,
+                e_video_id,
+                "動画タイトル1",
+                "投稿者1",
+                "未視聴",
+                "2021-05-29 22:00:11",
+                "https://www.nicovideo.jp/watch/sm11111111",
+                e_mylist_url,
+                "2021-10-16 00:00:11",
+            ]
+            mw = MagicMock()
+            v_mock = MagicMock()
+            type(v_mock).Values = [e_tv]
+            type(mw).window = {"-TABLE-": v_mock}
+            type(mw).values = {"-TABLE-": [0]}
+            sfiu_mock = MagicMock()
+            type(sfiu_mock).SelectFromIDURL = lambda s, v, m: [v + "_" + m]
+            type(mw).mylist_info_db = sfiu_mock
+            type(mw).mylist_db = "mylist_db"
+
+            # 正常系
+            actual = pvw.Init(mw)
+            self.assertEqual(0, actual)
+            self.assertEqual(f"{e_video_id}_{e_mylist_url}", pvw.record)
+            self.assertEqual("動画情報", pvw.title)
+            self.assertEqual((580, 400), pvw.size)
+
+            # 異常系
+            # 動画情報レコードオブジェクト取得失敗
+            type(sfiu_mock).SelectFromIDURL = lambda s, v, m: []
+            actual = pvw.Init(mw)
+            self.assertEqual(-1, actual)
+
+            # テーブルの行が選択されていない
+            type(mw).values = {"-TABLE-": None}
+            actual = pvw.Init(mw)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正
+            type(mw).values = None
+            actual = pvw.Init(mw)
+            self.assertEqual(-1, actual)
+
+            # 親windowが必要な属性を持っていない
+            del type(mw).mylist_info_db
+            del mw.mylist_info_db
+            actual = pvw.Init(mw)
             self.assertEqual(-1, actual)
         pass
 
