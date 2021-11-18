@@ -266,7 +266,67 @@ class TestPopupWindowMain(unittest.TestCase):
             mockpp = stack.enter_context(patch("NNMM.PopupWindowMain.sg.popup_ok"))
             pmw = PopupMylistWindowSave()
 
-            actual = pmw.Run(None)
+            def getmock(value):
+                r = MagicMock()
+                type(r).get = lambda s: value
+                return r
+
+            expect_window_dict = {
+                "-ID_INDEX-": 0,
+                "-USERNAME-": "投稿者1",
+                "-MYLISTNAME-": "マイリスト名1",
+                "-TYPE-": "mylist",
+                "-SHOWNAME-": "「マイリスト名1」-投稿者1さんのマイリスト",
+                "-URL-": "https://www.nicovideo.jp/user/11111111/mylist/10000011",
+                "-CREATED_AT-": "21-11-11 01:00:00",
+                "-UPDATED_AT-": "21-11-11 01:00:20",
+                "-CHECKED_AT-": "21-11-11 01:00:10",
+                "-IS_INCLUDE_NEW-": True,
+                "-CHECK_INTERVAL_NUM-": 15,
+                "-CHECK_INTERVAL_UNIT-": "分",
+            }
+            for k, v in expect_window_dict.items():
+                expect_window_dict[k] = getmock(v)
+
+            mockwm = MagicMock()
+            mockwin = MagicMock()
+            mockakd = MagicMock()
+            type(mockakd).keys = expect_window_dict.keys
+            type(mockwin).AllKeysDict = mockakd
+            mockwin.__getitem__.side_effect = expect_window_dict.__getitem__
+            mockwin.__iter__.side_effect = expect_window_dict.__iter__
+            mockwin.__contains__.side_effect = expect_window_dict.__contains__
+            type(mockwm).window = mockwin
+            type(mockwm).values = []
+
+            def mockUpsertUpsert(s, id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new):
+                return 0
+
+            mockmb = MagicMock()
+            type(mockmb).Upsert = mockUpsertUpsert
+            type(mockwm).mylist_db = mockmb
+            type(mockwm).mylist_info_db = []
+
+            # 正常系
+            actual = pmw.Run(mockwm)
+            self.assertEqual(0, actual)
+
+            # 異常系
+            # インターバル文字列が不正な値
+            expect_window_dict["-CHECK_INTERVAL_UNIT-"] = getmock("不正な時間単位")
+            actual = pmw.Run(mockwm)
+            self.assertEqual(-1, actual)
+
+            # レイアウトに想定しているキーが存在しない
+            del expect_window_dict["-CHECK_INTERVAL_UNIT-"]
+            actual = pmw.Run(mockwm)
+            self.assertEqual(-1, actual)
+
+            # 引数のwindowが必要な属性を持っていない
+            del type(mockwm).mylist_db
+            del mockwm.mylist_db
+            actual = pmw.Run(mockwm)
+            self.assertEqual(-1, actual)
         pass
 
 

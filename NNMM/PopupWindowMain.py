@@ -287,11 +287,25 @@ class PopupMylistWindowSave(ProcessBase.ProcessBase):
         Returns:
             int: 正常終了時0、エラー時-1
         """
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("Mylist popup window save, argument error.")
+            return -1
 
+        # キーチェック
+        PMW_ROWS = ["-ID_INDEX-", "-USERNAME-", "-MYLISTNAME-", "-TYPE-", "-SHOWNAME-", "-URL-",
+                    "-CREATED_AT-", "-UPDATED_AT-", "-CHECKED_AT-", "-IS_INCLUDE_NEW-", "-CHECK_INTERVAL_NUM-", "-CHECK_INTERVAL_UNIT-"]
+        allkeys = list(self.window.AllKeysDict.keys())
+        for k in PMW_ROWS:
+            if k not in allkeys:
+                logger.error("Mylist popup window layout key error.")
+                return -1
+
+        # 値の設定
         id_index = self.window["-ID_INDEX-"].get()
         username = self.window["-USERNAME-"].get()
         mylistname = self.window["-MYLISTNAME-"].get()
@@ -315,8 +329,8 @@ class PopupMylistWindowSave(ProcessBase.ProcessBase):
             sg.popup_ok("インターバル文字列が不正です。")
             return -1
 
+        # マイリスト情報更新
         self.mylist_db.Upsert(id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)
-
         logger.info("マイリスト情報Saved")
         return 0
 
