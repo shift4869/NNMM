@@ -22,6 +22,8 @@ class MainWindow():
     """メインウィンドウクラス
     """
     def __init__(self):
+        """メインウィンドウクラスのコンストラクタ
+        """
         # 設定値初期化
         ConfigMain.ProcessConfigBase.SetConfig()
         self.config = ConfigMain.ProcessConfigBase.GetConfig()
