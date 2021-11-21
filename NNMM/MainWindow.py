@@ -98,7 +98,12 @@ class MainWindow():
 
         logger.info("window setup done.")
 
-    def MakeMainWindowLayout(self):
+    def MakeMainWindowLayout(self) -> list[list[sg.Frame]] | None:
+        """画面のレイアウトを作成する
+
+        Returns:
+            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
+        """
         # 左ペイン
         listbox_right_click_menu = [
             "-LISTBOX_RIGHT_CLICK_MENU-", [
