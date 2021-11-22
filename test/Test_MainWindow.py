@@ -21,6 +21,26 @@ from NNMM.Process import *
 TEST_DB_PATH = "./test/test.db"
 
 
+# テスト用具体化ProcessBase
+class ConcreteProcessBase(ProcessBase.ProcessBase):
+    
+    def __init__(self) -> None:
+        super().__init__(True, False, "テスト用具体化処理")
+
+    def Run(self, mw) -> int:
+        return 0
+
+
+# テスト用具体化ProcessBase(エラー想定)
+class ConcreteErrorProcessBase(ProcessBase.ProcessBase):
+    
+    def __init__(self) -> None:
+        super().__init__(True, False, "テスト用具体化処理")
+
+    def Run(self, mw) -> int:
+        raise Exception
+
+
 class TestWindowMain(unittest.TestCase):
 
     def setUp(self):
@@ -324,6 +344,44 @@ class TestWindowMain(unittest.TestCase):
     def test_Run(self):
         """WindowMainのメインベントループをテストする
         """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.MainWindow.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.MainWindow.logger.error"))
+            mockwd = stack.enter_context(patch("NNMM.MainWindow.sg.Window"))
+            mockcps = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.SetConfig"))
+            mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
+            mockmdbc = stack.enter_context(patch("NNMM.MainWindow.MylistDBController"))
+            mockmidbc = stack.enter_context(patch("NNMM.MainWindow.MylistInfoDBController"))
+            mockmmwl = stack.enter_context(patch("NNMM.MainWindow.MainWindow.MakeMainWindowLayout"))
+            mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
+            mockums = stack.enter_context(patch("NNMM.MainWindow.UpdateMylistShow"))
+            mockcmgcl = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfigLayout"))
+            mockcmpcl = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigLoad"))
+
+            def r_mock_window(title, layout, size, finalize, resizable):
+                r_mock = MagicMock()
+                v_mock = MagicMock()
+                v_mock.side_effect = [
+                    ("-DO_TEST-", "do something"),
+                    ("-TAB_CHANGED-", {"-TAB_CHANGED-": "設定"}),
+                    ("-TAB_CHANGED-", {"-TAB_CHANGED-": "ログ"}),
+                    ("-NONE_TEST-", "none"),
+                    ("-ERROR_TEST-", "error"),
+                    ("-EXIT-", "exit"),
+                ]
+                type(r_mock).read = v_mock
+                type(r_mock).close = lambda s: 0
+                return r_mock
+
+            mockwd.side_effect = r_mock_window
+
+            # 実行
+            mw = MainWindow()
+            mw.ep_dict["-DO_TEST-"] = ConcreteProcessBase
+            mw.ep_dict["-NONE_TEST-"] = lambda: None
+            mw.ep_dict["-ERROR_TEST-"] = ConcreteErrorProcessBase
+            actual = mw.Run()
+            self.assertEqual(0, actual)
         pass
 
 

@@ -194,8 +194,12 @@ class MainWindow():
 
         return layout
 
-    def Run(self):
-        # イベントのループ
+    def Run(self) -> int:
+        """メインイベントループ
+
+        Returns:
+            int: 正常終了時0
+        """
         while True:
             # イベントの読み込み
             event, values = self.window.read()
@@ -209,9 +213,16 @@ class MainWindow():
             # イベント処理
             if self.ep_dict.get(event):
                 self.values = values
-                pb = self.ep_dict.get(event)()
 
-                pb.Run(self)
+                try:
+                    pb = self.ep_dict.get(event)()
+
+                    if pb is None or not hasattr(pb, "Run"):
+                        continue
+
+                    pb.Run(self)
+                except Exception:
+                    logger.error("main event loop error.")
 
             # タブ切り替え
             if event == "-TAB_CHANGED-":
