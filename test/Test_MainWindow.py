@@ -4,6 +4,7 @@
 
 import copy
 import sys
+from typing import Sized
 import unittest
 from contextlib import ExitStack
 from logging import INFO, getLogger
@@ -193,6 +194,11 @@ class TestWindowMain(unittest.TestCase):
             mockums = stack.enter_context(patch("NNMM.MainWindow.UpdateMylistShow"))
             mockcmgcl = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfigLayout"))
 
+            # sg.Outputだけは標準エラー等に干渉するためdummyに置き換える
+            mockop = stack.enter_context(patch("NNMM.MainWindow.sg.Output"))
+            mockop.side_effect = lambda size, echo_stdout_stderr: sg.Text("dummy")
+
+            # configレイアウトのdummy
             def DummyCFLayout():
                 cf_layout = [[
                     sg.Frame("Config", [
@@ -202,12 +208,14 @@ class TestWindowMain(unittest.TestCase):
                 return cf_layout
             mockcmgcl.side_effect = DummyCFLayout
 
+            # インスタンス生成
             mw = None
-            # with ExitStack() as stack2:
-            #     mockwd = stack2.enter_context(patch("NNMM.MainWindow.sg.Window"))
-            #     mockmmwl = stack2.enter_context(patch("NNMM.MainWindow.MainWindow.MakeMainWindowLayout"))
-            mw = MainWindow()
+            with ExitStack() as stack2:
+                mockwd = stack2.enter_context(patch("NNMM.MainWindow.sg.Window"))
+                mockmmwl = stack2.enter_context(patch("NNMM.MainWindow.MainWindow.MakeMainWindowLayout"))
+                mw = MainWindow()
 
+            # レイアウト予測値生成
             def ExpectMakeMainWindowLayout():
                 # 左ペイン
                 listbox_right_click_menu = [
@@ -298,7 +306,7 @@ class TestWindowMain(unittest.TestCase):
                 ]]
                 return layout
 
-            # 正常系
+            # 実行
             actual = mw.MakeMainWindowLayout()
             expect = ExpectMakeMainWindowLayout()
 
@@ -328,17 +336,11 @@ class TestWindowMain(unittest.TestCase):
                     self.assertEqual(e.DisplayText, a.DisplayText)
                 if hasattr(a, "Key") and a.Key:
                     self.assertEqual(e.Key, a.Key)
+                return 0
 
-            try:
-                # 作成したレイアウトを比較
-                CheckLayout(expect, actual)
-
-                # 作成したウィンドウのイベントを処理してクローズしないとdelエラーが出る
-                # THINK::一瞬だけウィンドウが生成されて見えてしまう・・
-                mw.window.read()
-                mw.window.close()
-            except Exception:
-                pass
+            # 作成したレイアウトを比較
+            actual = CheckLayout(expect, actual)
+            self.assertEqual(0, actual)
         pass
 
     def test_Run(self):
