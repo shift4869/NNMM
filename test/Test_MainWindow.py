@@ -2,9 +2,7 @@
 """MainWindow のテスト
 """
 
-import copy
 import sys
-from typing import Sized
 import unittest
 from contextlib import ExitStack
 from logging import INFO, getLogger

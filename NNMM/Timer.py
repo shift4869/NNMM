@@ -3,12 +3,9 @@ import re
 import threading
 from datetime import date, datetime, timedelta
 from logging import INFO, getLogger
-from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
 from NNMM.ConfigMain import ProcessConfigBase
@@ -18,49 +15,75 @@ logger.setLevel(INFO)
 
 
 class ProcessTimer(ProcessBase.ProcessBase):
-    timer_thread = None
-    window = None
-    values = None
 
     def __init__(self):
         super().__init__(False, False, "タイマーセット")
+        self.timer_thread = None
+        self.window = None
+        self.values = None
 
-    def Run(self, mw):
-        self.window = mw.window
-        self.values = mw.values
+    def Run(self, mw) -> int:
+        """タイマー実行時の処理
 
-        # タイマーセットイベントが登録された場合
-        # v = values["-TIMER_SET-"]
-        # if v == "-FIRST_SET-":
-        #     pass
+        Notes:
+            "-TIMER_SET-"
+            "-FIRST_SET-" が同時に指定されていた場合、初回サイクルとみなしてスキップする
 
-        # オートリロード間隔を取得する
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: タイマーが実行されて後続のイベントが起動したなら0,
+                 タイマー実行がスキップされたなら1,
+                 オートリロードしない設定なら2,
+                 エラー時-1
+        """
+        result = 0
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+        except AttributeError:
+            logger.error("Timer Init failed, argument error.")
+            return -1
+
+        # オートリロード設定を取得する
         config = ProcessConfigBase.GetConfig()
         i_str = config["general"].get("auto_reload", "")
         if i_str == "(使用しない)" or i_str == "":
+            # 現在タイマー待機中のものがあればキャンセルする
             if self.timer_thread:
                 self.timer_thread.cancel()
                 self.timer_thread = None
-            return
+            return 2
 
-        pattern = "^([0-9]+)分毎$"
-        interval = int(re.findall(pattern, i_str)[0])
+        # オートリロード間隔を取得する
+        try:
+            pattern = "^([0-9]+)分毎$"
+            interval = int(re.findall(pattern, i_str)[0])
+        except IndexError:
+            logger.error("Timer Init failed, interval config error.")
+            return -1
 
-        # 既に更新中なら二重に実行はしない
+        # スキップ判定
         pattern = "^更新中\([0-9]+\/[0-9]+\)$|^更新中$"
         v = self.window["-INPUT2-"].get()
         if self.values.get("-TIMER_SET-") == "-FIRST_SET-":
+            # 初回起動ならスキップ
             self.values["-TIMER_SET-"] = ""
+            result = 1
             logger.info("Auto-reload -FIRST_SET- ... skip first auto-reload cycle.")
 
+            # 現在タイマー待機中のものがあればキャンセルする
             if self.timer_thread:
                 self.timer_thread.cancel()
                 self.timer_thread = None
-
         elif re.search(pattern, v):
+            # 既に更新中ならスキップ
             self.values["-TIMER_SET-"] = ""
+            result = 1
             logger.info("-ALL_UPDATE- running now ... skip this auto-reload cycle.")
-            pass
         else:
             # すべて更新ボタンが押された場合の処理を起動する
             # self.window.write_event_value("-ALL_UPDATE-", "")
@@ -75,10 +98,11 @@ class ProcessTimer(ProcessBase.ProcessBase):
         self.timer_thread.setDaemon(True)
         self.timer_thread.start()
 
+        # 次回起動時間の予測をログに出力
         dts_format = "%Y-%m-%d %H:%M:%S"
         dst = datetime.now() + timedelta(minutes=interval)
         logger.info(f"Next auto-reload cycle start at {dst.strftime(dts_format)}.")
-        return 0
+        return result
 
 
 if __name__ == "__main__":
