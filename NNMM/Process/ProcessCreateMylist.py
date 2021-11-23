@@ -21,49 +21,68 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, False, "マイリスト追加")
 
-    def Run(self, mw):
-        # "-CREATE-"
-        # 左下、マイリスト追加ボタンが押された場合
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+    def Run(self, mw) -> int:
+        """マイリスト追加ボタン押下時の処理
 
-        # 現在のマイリストURL
-        mylist_url = self.values["-INPUT1-"]
+        Notes:
+            "-CREATE-"
+            左下のマイリスト追加ボタンが押された場合
 
-        # 右上のテキストボックスにも左下のテキストボックスにも
-        # URLが入力されていない場合何もしない
-        if mylist_url == "":
-            mylist_url = self.values["-INPUT2-"]
-            if mylist_url == "":
-                return
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: マイリスト追加に成功したら0,
+                 キャンセルされたなら1,
+                 エラー時-1
+        """
+        logger.info("Create mylist start.")
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("Create mylist failed, argument error.")
+            return -1
+
+        # 追加するマイリストURL（候補）
+        # mylist_url = self.values["-INPUT1-"]
+        # mylist_url = self.values["-INPUT2-"]
+
+        # 追加するマイリストURLをユーザーに問い合わせる
+        mylist_url = sg.popup_get_text("追加する マイリスト/ 投稿動画一覧 のURLを入力", title="追加URL")
+
+        # キャンセルされた場合
+        if mylist_url is None or mylist_url == "":
+            logger.info("Create mylist canceled.")
+            return 1
 
         # クエリ除去
         mylist_url = urllib.parse.urlunparse(
             urllib.parse.urlparse(mylist_url)._replace(query=None)
         )
 
-        # 既存マイリストと重複していた場合何もしない
-        prev_mylist = self.mylist_db.SelectFromURL(mylist_url)
-        if prev_mylist:
-            return
-
         # 入力されたurlが対応したタイプでない場合何もしない
         url_type = GetURLType(mylist_url)
         if url_type == "":
-            return
+            sg.popup("入力されたURLには対応していません\n新規追加処理を終了します", title="")
+            logger.info(f"Create mylist failed, '{mylist_url}' is invalid url.")
+            return 1
 
-        # 確認
-        # res = sg.popup_ok_cancel(mylist_url + "\nマイリスト追加しますか？")
-        # if res == "Cancel":
-        #     return
+        # 既存マイリストと重複していた場合何もしない
+        prev_mylist = self.mylist_db.SelectFromURL(mylist_url)
+        if prev_mylist:
+            sg.popup("既存マイリスト一覧に含まれています\n新規追加処理を終了します", title="")
+            logger.info(f"Create mylist canceled, '{mylist_url}' is already included.")
+            return 1
 
         # マイリスト情報収集
         # 右ペインのテーブルに表示するマイリスト情報を取得
         self.window["-INPUT2-"].update(value="ロード中")
         self.window.refresh()
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
         # asyncでマイリスト情報を収集する
         # pyppeteerでページをレンダリングしてhtmlからスクレイピングする
         loop = asyncio.new_event_loop()
@@ -113,6 +132,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
 
         # 後続処理へ
         self.window.write_event_value("-CREATE_THREAD_DONE-", "")
+        return 0
 
 
 class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
@@ -122,7 +142,7 @@ class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
 
     def Run(self, mw):
         # "-CREATE_THREAD_DONE-"
-        # -CREATE-のマルチスレッド処理が終わった後の処理
+        # -CREATE-の処理が終わった後の処理
         self.window = mw.window
         self.values = mw.values
         self.mylist_db = mw.mylist_db
@@ -134,6 +154,8 @@ class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+
+        logger.info("Create mylist end.")
 
 
 if __name__ == "__main__":
