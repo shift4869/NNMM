@@ -1,5 +1,6 @@
 # coding: utf-8
 import logging.config
+import traceback
 from logging import INFO, getLogger
 from pathlib import Path
 
@@ -222,6 +223,7 @@ class MainWindow():
 
                     pb.Run(self)
                 except Exception:
+                    logger.error(traceback.format_exc())
                     logger.error("main event loop error.")
 
             # タブ切り替え
