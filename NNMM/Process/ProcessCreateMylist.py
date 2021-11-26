@@ -252,6 +252,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         self.mylist_info_db.UpsertFromList(records)
 
         # 後続処理へ
+        self.window["-INPUT1-"].update(value=mylist_url)
         self.window["-INPUT2-"].update(value="マイリスト追加完了")
         self.window.write_event_value("-CREATE_THREAD_DONE-", "")
         return 0

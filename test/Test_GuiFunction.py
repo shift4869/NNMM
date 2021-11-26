@@ -411,8 +411,10 @@ class TestGetMyListInfo(unittest.TestCase):
         e_index = random.randint(0, len(records) - 1)
         mylist_url = self.__GetURLInfoSet()[e_index]
         r_list = MagicMock()
-        r_listupdate = MagicMock()
-        type(r_list).update = r_listupdate
+        r_listWidget = MagicMock()
+        r_listsee = MagicMock()
+        type(r_listWidget).see = r_listsee
+        type(r_list).Widget = r_listWidget
         type(r_list).get_indexes = lambda s: [e_index]
 
         r_input = MagicMock()
@@ -448,11 +450,11 @@ class TestGetMyListInfo(unittest.TestCase):
         self.assertEqual(r_inputget.call_count, 1)
         r_inputget.reset_mock()
 
-        # lucal[{n回目の呼び出し}][kwargs=1]
-        lucal = r_listupdate.call_args_list
+        # lucal[{n回目の呼び出し}][args=0]
+        lucal = r_listsee.call_args_list
         self.assertEqual(len(lucal), 1)
-        self.assertEqual({"set_to_index": e_index}, lucal[0][1])
-        r_listupdate.reset_mock()
+        self.assertEqual((e_index, ), lucal[0][0])
+        r_listsee.reset_mock()
 
         # tucal[{n回目の呼び出し}][kwargs=1]
         tucal = r_tableupdate.call_args_list
@@ -475,10 +477,10 @@ class TestGetMyListInfo(unittest.TestCase):
         r_values.reset_mock()
 
         # lical[{n回目の呼び出し}][kwargs=1]
-        lucal = r_listupdate.call_args_list
+        lucal = r_listsee.call_args_list
         self.assertEqual(len(lucal), 1)
-        self.assertEqual({"set_to_index": e_index}, lucal[0][1])
-        r_listupdate.reset_mock()
+        self.assertEqual((e_index, ), lucal[0][0])
+        r_listsee.reset_mock()
 
         # tucal[{n回目の呼び出し}][kwargs=1]
         tucal = r_tableupdate.call_args_list

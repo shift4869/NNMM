@@ -198,7 +198,8 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
             def_data.append(a)
 
     # 画面更新
-    window["-LIST-"].update(set_to_index=index)
+    # window["-LIST-"].update(set_to_index=index)
+    window["-LIST-"].Widget.see(index)
     window["-TABLE-"].update(values=def_data)
     if len(def_data) > 0:
         window["-TABLE-"].update(select_rows=[0])

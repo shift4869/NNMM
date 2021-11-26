@@ -401,11 +401,6 @@ class TestProcessCreateMylist(unittest.TestCase):
                 "showname": showname,
                 "mylistname": mylistname,
             }
-            mockrucs.side_effect = [
-                [expect_v_record],
-                [],
-                expect_m_record,
-            ]
             type(mockruc).run_until_complete = mockrucs
             mocknel.side_effect = lambda: mockruc
 
@@ -419,6 +414,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                 "-INPUT2-": "",
             }
             expect_window_dict = {
+                "-INPUT1-": "",
                 "-INPUT2-": "",
             }
             for k, v in expect_window_dict.items():
@@ -437,6 +433,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             def Upsert_mock(s, id: int, username: str, mylistname: str, type: str, showname: str, url: str,
                             created_at: str, updated_at: str, checked_at: str, check_interval: str, is_include_new: bool) -> int:
                 return 0
+
             mockmb = MagicMock()
             type(mockmb).SelectFromURL = lambda s, url: []
             type(mockmb).Select = lambda s: [{"id": 0}]
@@ -447,7 +444,38 @@ class TestProcessCreateMylist(unittest.TestCase):
             type(mockmib).UpsertFromList = lambda s, records: 0
             type(mockwm).mylist_info_db = mockmib
 
+            # 正常系
+            # マイリストに所属している動画情報の取得に成功するパターン
+            mockrucs.side_effect = [
+                [expect_v_record],  # 動画情報の取得に成功するパターン
+            ]
             actual = pcm.Run(mockwm)
+            self.assertEqual(0, actual)
+
+            # マイリストに動画が一つも登録されていない場合のパターン
+            mockrucs.side_effect = [
+                [],  # 動画情報の取得に失敗
+                expect_m_record,  # からの個別にマイリスト情報収集するパターン
+            ]
+            actual = pcm.Run(mockwm)
+            self.assertEqual(0, actual)
+
+            # 異常系
+            # オートリロード間隔の指定が不正
+            mockrucs.side_effect = [
+                [expect_v_record],  # 動画情報の取得に成功するパターン
+            ]
+            mockcpg.side_effect = lambda: {"general": {"auto_reload": "不正な時間指定"}}
+            actual = pcm.Run(mockwm)
+            self.assertEqual(-1, actual)
+
+            # マイリスト情報の取得に失敗（マイリストに属する動画情報もマイリストそのものの情報も取得失敗）
+            mockrucs.side_effect = [
+                [],  # 動画情報の取得に失敗
+                [],  # 個別のマイリスト情報収集にも失敗
+            ]
+            actual = pcm.Run(mockwm)
+            self.assertEqual(-1, actual)
         pass
 
     def test_PCMTDRun(self):
