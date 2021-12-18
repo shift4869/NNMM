@@ -420,15 +420,15 @@ class TestProcessCreateMylist(unittest.TestCase):
             for k, v in expect_window_dict.items():
                 expect_window_dict[k] = updatemock(v)
 
-            mockwm = MagicMock()
+            mockmw = MagicMock()
             mockwin = MagicMock()
             type(mockwin).write_event_value = lambda s, k, v: f"{k}_{v}"
             type(mockwin).refresh = lambda s: 0
             mockwin.__getitem__.side_effect = expect_window_dict.__getitem__
             mockwin.__iter__.side_effect = expect_window_dict.__iter__
             mockwin.__contains__.side_effect = expect_window_dict.__contains__
-            type(mockwm).window = mockwin
-            type(mockwm).values = expect_values_dict
+            type(mockmw).window = mockwin
+            type(mockmw).values = expect_values_dict
 
             def Upsert_mock(s, id: int, username: str, mylistname: str, type: str, showname: str, url: str,
                             created_at: str, updated_at: str, checked_at: str, check_interval: str, is_include_new: bool) -> int:
@@ -438,18 +438,18 @@ class TestProcessCreateMylist(unittest.TestCase):
             type(mockmb).SelectFromURL = lambda s, url: []
             type(mockmb).Select = lambda s: [{"id": 0}]
             type(mockmb).Upsert = Upsert_mock
-            type(mockwm).mylist_db = mockmb
+            type(mockmw).mylist_db = mockmb
 
             mockmib = MagicMock()
             type(mockmib).UpsertFromList = lambda s, records: 0
-            type(mockwm).mylist_info_db = mockmib
+            type(mockmw).mylist_info_db = mockmib
 
             # 正常系
             # マイリストに所属している動画情報の取得に成功するパターン
             mockrucs.side_effect = [
                 [expect_v_record],  # 動画情報の取得に成功するパターン
             ]
-            actual = pcm.Run(mockwm)
+            actual = pcm.Run(mockmw)
             self.assertEqual(0, actual)
 
             # マイリストに動画が一つも登録されていない場合のパターン
@@ -457,7 +457,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                 [],  # 動画情報の取得に失敗
                 expect_m_record,  # からの個別にマイリスト情報収集するパターン
             ]
-            actual = pcm.Run(mockwm)
+            actual = pcm.Run(mockmw)
             self.assertEqual(0, actual)
 
             # 異常系
@@ -466,7 +466,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                 [expect_v_record],  # 動画情報の取得に成功するパターン
             ]
             mockcpg.side_effect = lambda: {"general": {"auto_reload": "不正な時間指定"}}
-            actual = pcm.Run(mockwm)
+            actual = pcm.Run(mockmw)
             self.assertEqual(-1, actual)
 
             # マイリスト情報の取得に失敗（マイリストに属する動画情報もマイリストそのものの情報も取得失敗）
@@ -474,13 +474,72 @@ class TestProcessCreateMylist(unittest.TestCase):
                 [],  # 動画情報の取得に失敗
                 [],  # 個別のマイリスト情報収集にも失敗
             ]
-            actual = pcm.Run(mockwm)
+            actual = pcm.Run(mockmw)
+            self.assertEqual(-1, actual)
+
+            # 既存マイリストと重複
+            type(mockmb).SelectFromURL = lambda s, url: expect_v_record
+            actual = pcm.Run(mockmw)
+            self.assertEqual(1, actual)
+
+            # 入力されたurlが不正
+            url = "https://www.google.co.jp/"
+            actual = pcm.Run(mockmw)
+            self.assertEqual(1, actual)
+
+            # マイリストURL問い合わせをキャンセルされた
+            mockpgt.side_effect = lambda msg, title: None
+            actual = pcm.Run(mockmw)
+            self.assertEqual(1, actual)
+
+            # 引数エラー
+            del mockmw.window
+            del type(mockmw).window
+            actual = pcm.Run(mockmw)
             self.assertEqual(-1, actual)
         pass
 
     def test_PCMTDRun(self):
         """ProcessCreateMylistThreadDoneのRunをテストする
         """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.error"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.UpdateMylistShow"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.UpdateTableShow"))
+
+            pcm_td = ProcessCreateMylist.ProcessCreateMylistThreadDone()
+
+            mockmw = MagicMock()
+            type(mockmw).window = "window"
+            type(mockmw).values = {"-INPUT1-": "values"}
+            type(mockmw).mylist_db = "mylist_db"
+            type(mockmw).mylist_info_db = "mylist_info_db"
+
+            # 正常系
+            actual = pcm_td.Run(mockmw)
+            self.assertEqual(0, actual)
+
+            # mcal[{n回目の呼び出し}][args=0]
+            mcal = mockums.call_args_list
+            self.assertEqual(len(mcal), 1)
+            self.assertEqual((mockmw.window, mockmw.mylist_db), mcal[0][0])
+            mockums.reset_mock()
+
+            # tcal[{n回目の呼び出し}][args=0]
+            tcal = mockuts.call_args_list
+            self.assertEqual(len(tcal), 1)
+            self.assertEqual((mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mockmw.values["-INPUT1-"]), tcal[0][0])
+            mockuts.reset_mock()
+
+            # 異常系
+            # 引数エラー
+            del mockmw.window
+            del type(mockmw).window
+            actual = pcm_td.Run(mockmw)
+            self.assertEqual(-1, actual)
+            mockums.assert_not_called()
+            mockuts.assert_not_called()
         pass
 
 

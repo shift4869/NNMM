@@ -296,6 +296,7 @@ class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info("Create mylist success.")
+        return 0
 
 
 if __name__ == "__main__":
