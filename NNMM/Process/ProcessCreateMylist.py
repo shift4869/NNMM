@@ -198,8 +198,8 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
             s_record = now_video_list[0]
         if not s_record:
             # 動画が一つも登録されていない場合、個別にマイリスト情報を取得する
-            loop = asyncio.new_event_loop()
             s_record = loop.run_until_complete(self.AsyncGetMyListInfo(mylist_url))
+        loop.close()
 
         # マイリスト情報が取得できたか確認
         if not s_record or not(s_record.keys() >= {"username", "mylistname", "showname"}):

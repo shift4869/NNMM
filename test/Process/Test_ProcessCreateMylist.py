@@ -8,6 +8,8 @@ import random
 import sys
 import unittest
 import urllib.parse
+import warnings
+from asyncio import new_event_loop
 from contextlib import ExitStack
 from datetime import datetime
 from logging import INFO, getLogger
@@ -20,6 +22,7 @@ from NNMM import GetMyListInfo
 class TestProcessCreateMylist(unittest.TestCase):
 
     def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
         pass
 
     def tearDown(self):
@@ -309,8 +312,8 @@ class TestProcessCreateMylist(unittest.TestCase):
 
             # 正常系
             urls = self.__GetURLSet()
+            loop = asyncio.new_event_loop()
             for url in urls:
-                loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(pcm.AsyncGetMyListInfo(url))
                 expect = self.__MakeExpectResult(url)
                 self.assertEqual(expect, actual)
@@ -320,7 +323,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             url = "https://不正なURL/user/11111111/video"
             actual = loop.run_until_complete(pcm.AsyncGetMyListInfo(url))
             self.assertEqual({}, actual)
- 
+
             # session.getが常に失敗
             with patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self.__MakeSessionMock(503)):
                 url = urls[0]
@@ -359,8 +362,9 @@ class TestProcessCreateMylist(unittest.TestCase):
             mockgndt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.GetNowDatetime"))
             mockpgt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sg.popup_get_text"))
             mockpu = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sg.popup"))
-            mockpu = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sg.popup"))
             mocknel = stack.enter_context(patch("asyncio.new_event_loop"))
+            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.GetMyListInfo.AsyncGetMyListInfo"))
+            mocksagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.ProcessCreateMylist.AsyncGetMyListInfo"))
 
             pcm = ProcessCreateMylist.ProcessCreateMylist()
 
@@ -402,6 +406,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                 "mylistname": mylistname,
             }
             type(mockruc).run_until_complete = mockrucs
+
             mocknel.side_effect = lambda: mockruc
 
             def updatemock(value):
@@ -446,36 +451,57 @@ class TestProcessCreateMylist(unittest.TestCase):
 
             # 正常系
             # マイリストに所属している動画情報の取得に成功するパターン
-            mockrucs.side_effect = [
+            # mockrucs.side_effect = [
+            #     [expect_v_record],  # 動画情報の取得に成功するパターン
+            # ]
+            self.ri = 0
+            rrt = []
+
+            def ReturnRucs(f):
+                # async処理をイベントループ内で実行しておく
+                loop = new_event_loop()
+                loop.run_until_complete(f)
+                loop.close()
+
+                # 返り値は別で用意して返す
+                self.ri = self.ri + 1
+                return rrt[self.ri - 1]
+
+            mockrucs.side_effect = ReturnRucs
+            rrt = [
                 [expect_v_record],  # 動画情報の取得に成功するパターン
             ]
             actual = pcm.Run(mockmw)
             self.assertEqual(0, actual)
+            self.ri = 0
 
             # マイリストに動画が一つも登録されていない場合のパターン
-            mockrucs.side_effect = [
+            rrt = [
                 [],  # 動画情報の取得に失敗
                 expect_m_record,  # からの個別にマイリスト情報収集するパターン
             ]
             actual = pcm.Run(mockmw)
             self.assertEqual(0, actual)
+            self.ri = 0
 
             # 異常系
             # オートリロード間隔の指定が不正
-            mockrucs.side_effect = [
+            rrt = [
                 [expect_v_record],  # 動画情報の取得に成功するパターン
             ]
             mockcpg.side_effect = lambda: {"general": {"auto_reload": "不正な時間指定"}}
             actual = pcm.Run(mockmw)
             self.assertEqual(-1, actual)
+            self.ri = 0
 
             # マイリスト情報の取得に失敗（マイリストに属する動画情報もマイリストそのものの情報も取得失敗）
-            mockrucs.side_effect = [
+            rrt = [
                 [],  # 動画情報の取得に失敗
                 [],  # 個別のマイリスト情報収集にも失敗
             ]
             actual = pcm.Run(mockmw)
             self.assertEqual(-1, actual)
+            self.ri = 0
 
             # 既存マイリストと重複
             type(mockmb).SelectFromURL = lambda s, url: expect_v_record
