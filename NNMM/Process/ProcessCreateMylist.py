@@ -132,6 +132,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         Notes:
             "-CREATE-"
             左下のマイリスト追加ボタンが押された場合
+            またはマイリスト右クリックメニューからマイリスト追加が選択された場合
 
         Args:
             mw (MainWindow): メインウィンドウオブジェクト
