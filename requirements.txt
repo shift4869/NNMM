@@ -15,6 +15,7 @@ cryptography==36.0.1; python_version >= "3.6"
 cssselect==1.1.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 emoji==1.6.3
 fake-useragent==0.1.11
+freezegun==1.1.0; python_version >= "3.5"
 frozenlist==1.2.0; python_version >= "3.6"
 greenlet==1.1.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 idna==3.3; python_version >= "3.5"
