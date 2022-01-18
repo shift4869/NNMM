@@ -66,7 +66,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
             [sg.Column([[sg.Button("設定保存", key="-C_CONFIG_SAVE-")]], justification="right")],
         ]
         layout = [[
-            sg.Frame("Config", cf, size=(1070, 100))
+            sg.Frame("Config", cf, size=(500, 580))
         ]]
         return layout
 

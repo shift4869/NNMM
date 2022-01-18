@@ -135,7 +135,7 @@ class MainWindow():
         ]
 
         # 右ペイン
-        table_cols_name = [" No. ", "   動画ID   ", "               動画名               ", "    投稿者    ", "  状況  ", "     投稿日時      ", "動画URL", "所属マイリストURL"]
+        table_cols_name = ["No.", "   動画ID   ", "              動画名              ", "   投稿者   ", "  状況  ", "     投稿日時      ", "動画URL", "所属マイリストURL"]
         cols_width = [20, 20, 20, 20, 80, 100, 0, 0]
         def_data = [["", "", "", "", "", "", "", ""]]
         table_right_click_menu = [
@@ -177,13 +177,13 @@ class MainWindow():
         mf_layout = [[
             sg.Frame("Main", [
                 [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
-            ], size=(1070, 100))
+            ], size=(1170, 1000))
         ]]
         cf_layout = ConfigMain.ProcessConfigBase.GetConfigLayout()
         lf_layout = [[
             sg.Frame("ログ", [
                 [sg.Column([[sg.Output(size=(1080, 100), echo_stdout_stderr=True)]])]
-            ], size=(1070, 100))
+            ], size=(1170, 1000))
         ]]
         layout = [[
             sg.TabGroup([[
