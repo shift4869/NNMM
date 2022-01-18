@@ -46,6 +46,7 @@ tqdm = "^4.62.3"
 urllib3 = "^1.26.8"
 w3lib = "^1.22.0"
 websockets = "^10.1"
+freezegun = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 
