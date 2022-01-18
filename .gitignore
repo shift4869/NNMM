@@ -125,4 +125,3 @@ log*.txt*
 *.csv
 /rss
 *.mp4
-EncryptConfig.py
