@@ -19,7 +19,7 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
         super().__init__(True, True, "マイリスト削除")
 
     def Run(self, mw) -> int:
-        """マイリスト追加ボタン押下時の処理
+        """マイリスト削除ボタン押下時の処理
 
         Notes:
             "-DELETE-"

@@ -53,10 +53,6 @@ class TestProcessDeleteMylist(unittest.TestCase):
             }
 
             mockmw = MagicMock()
-            mockvalue = MagicMock()
-            mockvalue.__getitem__.side_effect = expect_values_dict.__getitem__
-            mockvalue.__iter__.side_effect = expect_values_dict.__iter__
-            mockvalue.__contains__.side_effect = expect_values_dict.__contains__
             type(mockmw).values = expect_values_dict
             mockmylist_db = MagicMock()
             type(mockmylist_db).SelectFromShowname = ReturnSelectFromShowname

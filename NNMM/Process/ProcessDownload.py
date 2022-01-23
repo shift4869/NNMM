@@ -3,13 +3,11 @@ import asyncio
 import threading
 from logging import INFO, getLogger
 
-import PySimpleGUI as sg
 import niconico_dl
 
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
-from NNMM import GetMyListInfo
 from NNMM.Process import ProcessBase
 
 
@@ -20,42 +18,64 @@ logger.setLevel(INFO)
 class ProcessDownload(ProcessBase.ProcessBase):
 
     def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
-        # 派生クラス（すべて更新時）の生成時は引数ありで呼び出される
+        # 派生クラスの生成時は引数ありで呼び出される
         if process_name:
             super().__init__(log_sflag, log_eflag, process_name)
         else:
             super().__init__(True, False, "動画ダウンロード")
 
     def Run(self, mw):
-        # "動画ダウンロード::-TR-"
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """動画ダウンロード処理
+
+        Notes:
+            "動画ダウンロード::-TR-"
+            動画右クリックメニューから動画ダウンロードが選択された場合
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 動画ダウンロード開始成功したら0,
+                 エラー時-1
+        """
+        logger.info("Download video start.")
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("Download video failed, argument error.")
+            return -1
 
         # テーブルの行が選択されていなかったら何もしない
         if not self.values["-TABLE-"]:
-            logger.info("Table row is none selected.")
-            return
+            logger.info("Table row is not selected.")
+            return -1
 
-        # 選択されたテーブル行数
-        row = int(self.values["-TABLE-"][0])
-        # 現在のテーブルの全リスト
-        def_data = self.window["-TABLE-"].Values
-        # 選択されたテーブル行
-        selected = def_data[row]
+        try:
+            # 選択されたテーブル行数
+            row = int(self.values["-TABLE-"][0])
+            # 現在のテーブルの全リスト
+            def_data = self.window["-TABLE-"].Values
+            # 選択されたテーブル行
+            selected = def_data[row]
 
-        # 動画情報を取得する
-        video_id = selected[1]
-        video_url = selected[6]
-        mylist_url = selected[7]
-        records = self.mylist_info_db.SelectFromIDURL(video_id, mylist_url)
+            # 動画情報を取得する
+            video_id = selected[1]
+            video_url = selected[6]
+            mylist_url = selected[7]
+            records = self.mylist_info_db.SelectFromIDURL(video_id, mylist_url)
 
-        if records == []:
-            logger.info("Selected row is invalid.")
-            return
+            if records == []:
+                logger.error("Selected row is invalid.")
+                return -1
 
-        self.record = records[0]
+            self.record = records[0]
+        except IndexError:
+            logger.error("Download video failed, getting record info is failed.")
+            return -1
 
         # 左下の表示変更
         self.window["-INPUT2-"].update(value="動画DL開始(ログ参照)")
@@ -65,22 +85,52 @@ class ProcessDownload(ProcessBase.ProcessBase):
 
         # マルチスレッド処理
         threading.Thread(target=self.DownloadThread, args=(self.record, ), daemon=True).start()
+        return 0
 
     def DownloadThread(self, record):
+        """動画ダウンロードワーカーを実行する処理
+
+        Notes:
+            threading.Threadにより別threadで実行される前提
+
+        Args:
+            record (dict): DL対象の動画情報レコード
+
+        Returns:
+            int: 動画ダウンロードに成功したら0,
+                 エラー時-1
+        """
+        if not (record and "video_url" in record):
+            logger.error("DownloadThread failed, argument record is invalid.")
+            return -1
+
         loop = asyncio.new_event_loop()
         res = loop.run_until_complete(self.DownloadThreadWorker(record))
 
         video_url = record["video_url"]
         logger.info(video_url + " : download done.")
         self.window.write_event_value("-DOWNLOAD_THREAD_DONE-", "")
+        return res
 
     async def DownloadThreadWorker(self, record: Mylist):
+        """動画ダウンロードワーカー
+
+        Notes:
+            niconico_dlライブラリを使用
+
+        Args:
+            record (dict): DL対象の動画情報レコード
+
+        Returns:
+            int: 動画ダウンロードに成功したら0,
+                 エラー時-1
+        """
         video_url = record["video_url"]
         # TODO::プログレス表示
         with niconico_dl.NicoNicoVideo(video_url, log=False) as nico:
             data = nico.get_info()
             nico.download(data["video"]["title"] + ".mp4")
-        pass
+        return 0
 
 
 class ProcessDownloadThreadDone(ProcessBase.ProcessBase):

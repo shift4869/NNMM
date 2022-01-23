@@ -57,8 +57,8 @@ class TestProcessCreateMylist(unittest.TestCase):
         """
         mylist_url_info = self.__GetMylistURLSet()
         mylist_info = {
-            mylist_url_info[0]: ("投稿者1さんの投稿動画‐ニコニコ動画", "投稿動画", "投稿者1"),
-            mylist_url_info[1]: ("投稿者2さんの投稿動画‐ニコニコ動画", "投稿動画", "投稿者2"),
+            mylist_url_info[0]: ("投稿者1さんの投稿動画-ニコニコ動画", "投稿動画", "投稿者1"),
+            mylist_url_info[1]: ("投稿者2さんの投稿動画-ニコニコ動画", "投稿動画", "投稿者2"),
             mylist_url_info[2]: ("「マイリスト1」-投稿者1さんのマイリスト", "マイリスト1", "投稿者1"),
             mylist_url_info[3]: ("「マイリスト2」-投稿者1さんのマイリスト", "マイリスト2", "投稿者1"),
             mylist_url_info[4]: ("「マイリスト3」-投稿者3さんのマイリスト", "マイリスト3", "投稿者3"),
