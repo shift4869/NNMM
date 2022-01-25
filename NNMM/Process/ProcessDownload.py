@@ -112,7 +112,7 @@ class ProcessDownload(ProcessBase.ProcessBase):
         self.window.write_event_value("-DOWNLOAD_THREAD_DONE-", "")
         return res
 
-    async def DownloadThreadWorker(self, record: Mylist):
+    async def DownloadThreadWorker(self, record):
         """動画ダウンロードワーカー
 
         Notes:
@@ -125,6 +125,10 @@ class ProcessDownload(ProcessBase.ProcessBase):
             int: 動画ダウンロードに成功したら0,
                  エラー時-1
         """
+        if not (record and "video_url" in record):
+            logger.error("DownloadThreadWorker failed, argument record is invalid.")
+            return -1
+
         video_url = record["video_url"]
         # TODO::プログレス表示
         with niconico_dl.NicoNicoVideo(video_url, log=False) as nico:
@@ -151,7 +155,7 @@ class ProcessDownloadThreadDone(ProcessBase.ProcessBase):
 
 
 if __name__ == "__main__":
-    # video_url = "https://www.nicovideo.jp/watch/sm39619606"
+    # video_url = "https://www.nicovideo.jp/watch/sm9"
 
     # def DownloadVideo(url):
     #     with niconico_dl.NicoNicoVideoAsync(url, log=False) as nico:

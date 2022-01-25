@@ -2,6 +2,7 @@
 """ProcessDownload のテスト
 """
 
+import asyncio
 import sys
 import unittest
 import warnings
@@ -162,7 +163,43 @@ class TestProcessDownload(unittest.TestCase):
             actual = pdl.DownloadThread(record)
             self.assertEqual(-1, actual)
 
-        pass
+    def test_PDLDownloadThread(self):
+        """ProcessDownloadの動画ダウンロードワーカーをテストする
+        """
+        with ExitStack() as stack:
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessDownload.logger.error"))
+            mocknico = stack.enter_context(patch("niconico_dl.NicoNicoVideo"))
+
+            pdl = ProcessDownload.ProcessDownload()
+
+            # 正常系
+            video_id_s = "sm11111111"
+            mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
+            record = self.__ReturnSelectFromIDURL(video_id_s, mylist_url_s)[0]
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(pdl.DownloadThreadWorker(record))
+            self.assertEqual(0, actual)
+
+            # 実行後呼び出し確認
+            mc = mocknico.mock_calls
+            self.assertEqual(8, len(mc))
+            self.assertEqual(call(record["video_url"], log=False), mc[0])
+            self.assertEqual(call().__enter__(), mc[1])
+            self.assertEqual(call().__enter__().get_info(), mc[2])
+            self.assertEqual(call().__enter__().get_info().__getitem__("video"), mc[3])
+            self.assertEqual(call().__enter__().get_info().__getitem__().__getitem__("title"), mc[4])
+            self.assertEqual(call().__enter__().get_info().__getitem__().__getitem__().__add__(".mp4"), mc[5])
+            mockarg = mocknico().__enter__().get_info().__getitem__().__getitem__().__add__()
+            self.assertEqual(call().__enter__().download(mockarg), mc[6])
+            self.assertEqual(call().__exit__(None, None, None), mc[7])
+            mocknico.reset_mock()
+
+            # 異常系
+            # レコードが不正
+            record = {"invalid": "invalid record"}
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(pdl.DownloadThreadWorker(record))
+            self.assertEqual(-1, actual)
 
 
 if __name__ == "__main__":
