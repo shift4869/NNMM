@@ -183,14 +183,14 @@ class TestProcessDownload(unittest.TestCase):
             # 実行後呼び出し確認
             mc = mocknico.mock_calls
             self.assertEqual(8, len(mc))
-            self.assertEqual(call(record["video_url"], log=False), mc[0])
+            self.assertEqual(call(record["video_url"], log=True), mc[0])
             self.assertEqual(call().__enter__(), mc[1])
             self.assertEqual(call().__enter__().get_info(), mc[2])
             self.assertEqual(call().__enter__().get_info().__getitem__("video"), mc[3])
             self.assertEqual(call().__enter__().get_info().__getitem__().__getitem__("title"), mc[4])
             self.assertEqual(call().__enter__().get_info().__getitem__().__getitem__().__add__(".mp4"), mc[5])
             mockarg = mocknico().__enter__().get_info().__getitem__().__getitem__().__add__()
-            self.assertEqual(call().__enter__().download(mockarg), mc[6])
+            self.assertEqual(call().__enter__().download(mockarg, load_chunk_size=8 * 1024 * 1024), mc[6])
             self.assertEqual(call().__exit__(None, None, None), mc[7])
             mocknico.reset_mock()
 
