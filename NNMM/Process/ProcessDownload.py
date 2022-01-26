@@ -131,9 +131,9 @@ class ProcessDownload(ProcessBase.ProcessBase):
 
         video_url = record["video_url"]
         # TODO::プログレス表示
-        with niconico_dl.NicoNicoVideo(video_url, log=False) as nico:
+        with niconico_dl.NicoNicoVideo(video_url, log=True) as nico:
             data = nico.get_info()
-            nico.download(data["video"]["title"] + ".mp4")
+            nico.download(data["video"]["title"] + ".mp4", load_chunk_size=8 * 1024 * 1024)
         return 0
 
 
@@ -143,15 +143,32 @@ class ProcessDownloadThreadDone(ProcessBase.ProcessBase):
         super().__init__(False, True, "動画ダウンロード")
 
     def Run(self, mw):
-        # -DOWNLOAD-のマルチスレッド処理が終わった後の処理
-        window = mw.window
-        values = mw.values
-        mylist_db = mw.mylist_db
-        mylist_info_db = mw.mylist_info_db
-        # 左下の表示を更新する
-        window["-INPUT2-"].update(value="動画DL完了!")
+        """動画ダウンロードのマルチスレッド処理が終わった後の処理
 
-        # logger.info(video_url + " : download done.")
+        Notes:
+            "-DOWNLOAD_THREAD_DONE-"
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 処理成功0, エラー時-1
+        """
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("Post download video process failed, argument error.")
+            return -1
+
+        # 左下の表示を更新する
+        self.window["-INPUT2-"].update(value="動画DL完了!")
+
+        logger.info("Download video done.")
+        return 0
 
 
 if __name__ == "__main__":

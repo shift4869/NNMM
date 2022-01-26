@@ -201,6 +201,31 @@ class TestProcessDownload(unittest.TestCase):
             actual = loop.run_until_complete(pdl.DownloadThreadWorker(record))
             self.assertEqual(-1, actual)
 
+    def test_PDLTDRun(self):
+        """ProcessDownloadThreadDoneのRunをテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessDownload.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessDownload.logger.error"))
+
+            pdltd = ProcessDownload.ProcessDownloadThreadDone()
+
+            # 正常系
+            mockmw = MagicMock()
+            actual = pdltd.Run(mockmw)
+            self.assertEqual(0, actual)
+
+            # 実行後呼び出し確認
+            mc = mockmw.window.mock_calls
+            self.assertEqual(2, len(mc))
+            self.assertEqual(call.__getitem__("-INPUT2-"), mc[0])
+            self.assertEqual(call.__getitem__().update(value="動画DL完了!"), mc[1])
+
+            # 引数エラー
+            del mockmw.window
+            actual = pdltd.Run(mockmw)
+            self.assertEqual(-1, actual)
+
 
 if __name__ == "__main__":
     if sys.argv:
