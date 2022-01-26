@@ -19,7 +19,7 @@ class ProcessMoveDown(ProcessBase.ProcessBase):
         super().__init__(True, True, "下に移動")
 
     def Run(self, mw):
-        """マイリストの並びを下に移動させる
+        """マイリストの並び順を一つ下に移動させる
 
         Notes:
             "下に移動::-MR-"

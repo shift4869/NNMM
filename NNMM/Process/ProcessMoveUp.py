@@ -19,12 +19,31 @@ class ProcessMoveUp(ProcessBase.ProcessBase):
         super().__init__(True, True, "上に移動")
 
     def Run(self, mw):
+        """マイリストの並び順を一つ上に移動させる
+
+        Notes:
+            "下に移動::-MR-"
+            マイリスト右クリックで「下に移動」が選択された場合
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 移動に成功した場合0,
+                 一番下のマイリストが選択され下に移動できなかった場合1,
+                 エラー時-1
+        """
         # "上に移動::-MR-"
         # マイリスト右クリックで「上に移動」が選択された場合
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("MoveUp failed, argument error.")
+            return -1
 
         src_index = 0
         if self.window["-LIST-"].get_indexes():
@@ -34,7 +53,7 @@ class ProcessMoveUp(ProcessBase.ProcessBase):
 
         if src_index == 0:
             logger.info(f"{src_v} -> index is 0 , can't move up.")
-            return
+            return 1
 
         if src_v[:2] == "*:":
             src_v = src_v[2:]
@@ -53,7 +72,8 @@ class ProcessMoveUp(ProcessBase.ProcessBase):
         self.window["-LIST-"].update(set_to_index=dst_index)
 
         logger.info(f"{src_v} -> index move up from {src_index} to {dst_index}.")
-    
+        return 0
+
 
 if __name__ == "__main__":
     from NNMM import MainWindow
