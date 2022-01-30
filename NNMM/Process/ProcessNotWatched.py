@@ -19,24 +19,41 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
         super().__init__(True, True, "未視聴にする")
 
     def Run(self, mw):
-        # "未視聴にする::-TR-"
-        # テーブル右クリックで「未視聴にする」が選択された場合
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """動画の状況ステータスを"未視聴"に設定する
+
+        Notes:
+            "未視聴にする::-TR-"
+            テーブル右クリックで「未視聴にする」が選択された場合
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 処理成功した場合0, エラー時-1
+        """
+        logger.info("NotWatched start.")
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("NotWatched failed, argument error.")
+            return -1
 
         # 現在のtableの全リスト
         def_data = self.window["-TABLE-"].Values
-        # 現在のマイリストURL
-        # mylist_url = self.values["-INPUT1-"]
 
         # 行が選択されていないなら何もしない
         if not self.values["-TABLE-"]:
-            return
+            logger.error("NotWatched failed, no record selected.")
+            return -1
 
         # 選択された行（複数可）についてすべて処理する
         all_num = len(self.values["-TABLE-"])
+        row = 0
         for i, v in enumerate(self.values["-TABLE-"]):
             row = int(v)
 
@@ -65,6 +82,9 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
 
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)
+
+        logger.info("NotWatched success.")
+        return 0
 
 
 if __name__ == "__main__":

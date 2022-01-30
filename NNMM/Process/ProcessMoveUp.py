@@ -22,8 +22,8 @@ class ProcessMoveUp(ProcessBase.ProcessBase):
         """マイリストの並び順を一つ上に移動させる
 
         Notes:
-            "下に移動::-MR-"
-            マイリスト右クリックで「下に移動」が選択された場合
+            "上に移動::-MR-"
+            マイリスト右クリックで「上に移動」が選択された場合
 
         Args:
             mw (MainWindow): メインウィンドウオブジェクト
@@ -33,8 +33,6 @@ class ProcessMoveUp(ProcessBase.ProcessBase):
                  一番下のマイリストが選択され下に移動できなかった場合1,
                  エラー時-1
         """
-        # "上に移動::-MR-"
-        # マイリスト右クリックで「上に移動」が選択された場合
         # 引数チェック
         try:
             self.window = mw.window
