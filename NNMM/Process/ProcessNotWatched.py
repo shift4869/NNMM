@@ -73,6 +73,8 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
             # 未視聴にしたので必ず新着あり扱いになる
             # マイリストDB新着フラグ更新
             self.mylist_db.UpdateIncludeFlag(selected[7], True)
+
+        # テーブル更新を反映させる
         self.window["-TABLE-"].update(values=def_data)
 
         # テーブルの表示を更新する

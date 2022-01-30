@@ -19,21 +19,37 @@ class ProcessWatched(ProcessBase.ProcessBase):
         super().__init__(True, True, "視聴済にする")
 
     def Run(self, mw):
-        # "視聴済にする::-TR-"
-        # テーブル右クリックで「視聴済にする」が選択された場合
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """動画の状況ステータスを""(視聴済)に設定する
+
+        Notes:
+            "視聴済にする::-TR-"
+            テーブル右クリックで「視聴済にする」が選択された場合
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 処理成功した場合0, エラー時-1
+        """
+        logger.info("Watched start.")
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("Watched failed, argument error.")
+            return -1
 
         # 現在のtableの全リスト
         def_data = self.window["-TABLE-"].Values
-        # 現在のマイリストURL
-        # mylist_url = self.values["-INPUT1-"]
 
         # 行が選択されていないなら何もしない
         if not self.values["-TABLE-"]:
-            return
+            logger.error("Watched failed, no record selected.")
+            return -1
 
         # 選択された行（複数可）についてすべて処理する
         all_num = len(self.values["-TABLE-"])
@@ -42,7 +58,7 @@ class ProcessWatched(ProcessBase.ProcessBase):
             row = int(v)
 
             # マイリスト情報ステータスDB更新
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
             selected = def_data[row]
             res = self.mylist_info_db.UpdateStatus(selected[1], selected[7], "")
             if res == 0:
@@ -60,9 +76,6 @@ class ProcessWatched(ProcessBase.ProcessBase):
                 # マイリストDB新着フラグ更新
                 self.mylist_db.UpdateIncludeFlag(selected[7], False)
 
-        # マイリスト画面表示更新
-        UpdateMylistShow(self.window, self.mylist_db)
-
         # テーブル更新を反映させる
         self.window["-TABLE-"].update(values=def_data)
 
@@ -70,6 +83,12 @@ class ProcessWatched(ProcessBase.ProcessBase):
         mylist_url = self.values["-INPUT1-"]
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
         self.window["-TABLE-"].update(select_rows=[row])
+
+        # マイリスト画面表示更新
+        UpdateMylistShow(self.window, self.mylist_db)
+
+        logger.info("Watched success.")
+        return 0
 
 
 if __name__ == "__main__":

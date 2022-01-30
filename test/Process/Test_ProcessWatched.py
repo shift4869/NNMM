@@ -1,5 +1,5 @@
 # coding: utf-8
-"""ProcessNotWatched のテスト
+"""ProcessWatched のテスト
 """
 
 import random
@@ -12,7 +12,7 @@ from mock import MagicMock, patch, call
 from NNMM.Process import *
 
 
-class TestProcessNotWatched(unittest.TestCase):
+class TestProcessWatched(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -21,23 +21,25 @@ class TestProcessNotWatched(unittest.TestCase):
         pass
 
     def test_PNWRun(self):
-        """ProcessNotWatchedのRunをテストする
+        """ProcessWatchedのRunをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.logger.error"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.UpdateTableShow"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.UpdateMylistShow"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessWatched.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessWatched.logger.error"))
+            mockiminv = stack.enter_context(patch("NNMM.Process.ProcessWatched.IsMylistIncludeNewVideo"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatched.UpdateTableShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessWatched.UpdateMylistShow"))
 
-            pnw = ProcessNotWatched.ProcessNotWatched()
+            pw = ProcessWatched.ProcessWatched()
 
             # 正常系
             NUM = 5
             mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
+            mockiminv.return_value = False
 
             def MakeTableRecords():
                 table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
-                records = [[str(i), f"sm1{i:07}", f"動画名{i}", f"投稿者1", "", "2022-01-28 22:00:00",
+                records = [[str(i), f"sm1{i:07}", f"動画名{i}", f"投稿者1", "未視聴", "2022-01-28 22:00:00",
                             f"https://www.nicovideo.jp/watch/sm1{i:07}", mylist_url_s] for i in range(1, NUM + 1)]
                 return records
 
@@ -73,7 +75,7 @@ class TestProcessNotWatched(unittest.TestCase):
                 return r
 
             mockmw = ReturnMW()
-            actual = pnw.Run(mockmw)
+            actual = pw.Run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -94,14 +96,15 @@ class TestProcessNotWatched(unittest.TestCase):
                 mockmw.values.reset_mock()
 
                 mc = mockmw.method_calls
-                self.assertEqual(len(selected_num_s) * 2, len(mc))
+                self.assertEqual(len(selected_num_s) * 3, len(mc))
                 c_index = 0
                 for s_index in selected_num_s:
                     v = table_records_s[s_index][1]
                     m = table_records_s[s_index][7]
-                    self.assertEqual(call.mylist_info_db.UpdateStatus(v, m, "未視聴"), mc[c_index])
-                    self.assertEqual(call.mylist_db.UpdateIncludeFlag(m, True), mc[c_index + 1])
-                    c_index = c_index + 2
+                    self.assertEqual(call.mylist_info_db.UpdateStatus(v, m, ""), mc[c_index])
+                    self.assertEqual(call.mylist_info_db.SelectFromMylistURL(m), mc[c_index + 1])
+                    self.assertEqual(call.mylist_db.UpdateIncludeFlag(m, False), mc[c_index + 2])
+                    c_index = c_index + 3
                 mockmw.reset_mock()
 
                 mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mylist_url_s)
@@ -114,7 +117,7 @@ class TestProcessNotWatched(unittest.TestCase):
             # 複数選択
             selected_num_s = random.sample(range(NUM), 3)
             mockmw = ReturnMW()
-            actual = pnw.Run(mockmw)
+            actual = pw.Run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
@@ -122,14 +125,14 @@ class TestProcessNotWatched(unittest.TestCase):
             # 行が選択されていない
             selected_num_s = []
             mockmw = ReturnMW()
-            actual = pnw.Run(mockmw)
+            actual = pw.Run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             mockmw = ReturnMW()
             del mockmw.window
             del type(mockmw).window
-            actual = pnw.Run(mockmw)
+            actual = pw.Run(mockmw)
             self.assertEqual(-1, actual)
 
 
