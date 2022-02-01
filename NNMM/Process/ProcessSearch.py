@@ -25,6 +25,7 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
         Notes:
             "検索（マイリスト）::-MR-"
             マイリスト右クリックで「検索（マイリスト）」が選択された場合
+            入力されたマイリスト名を持つマイリストをハイライト表示する
 
         Args:
             mw (MainWindow): メインウィンドウオブジェクト
@@ -46,7 +47,8 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
 
         pattern = sg.popup_get_text("マイリスト名検索（正規表現可）")
         if pattern is None or pattern == "":
-            return -1
+            logger.info("MylistSearch is canceled or target word is null.")
+            return 0
 
         logger.info(f"search word -> {pattern}.")
 
@@ -104,16 +106,34 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
         super().__init__(True, True, "マイリスト検索（動画名）")
 
     def Run(self, mw):
-        # "検索（動画名）::-MR-"
-        # マイリスト右クリックで「検索（動画名）」が選択された場合
-        # 入力された動画名を持つマイリストをハイライト表示する
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """マイリスト検索
+
+        Notes:
+            "検索（動画名）::-MR-"
+            マイリスト右クリックで「検索（動画名）」が選択された場合
+            入力された動画名を持つマイリストをハイライト表示する
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 処理成功した場合0, エラー時-1
+        """
+        logger.info("MylistSearchFromVideo start.")
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("MylistSearchFromVideo failed, argument error.")
+            return -1
 
         pattern = sg.popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
+            logger.info("MylistSearchFromVideo is canceled or target word is null.")
             return 0
 
         logger.info(f"search word -> {pattern}.")
@@ -169,6 +189,7 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
             logger.info(f"search result -> Nothing mylist(s) found.")
             self.window["-INPUT2-"].update(value="該当なし")
 
+        logger.info("MylistSearchFromVideo success.")
         return 0
 
 
