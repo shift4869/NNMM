@@ -20,16 +20,33 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
         super().__init__(True, True, "マイリスト検索（マイリスト名）")
 
     def Run(self, mw):
-        # "検索（マイリスト）::-MR-"
-        # マイリスト右クリックで「検索（マイリスト）」が選択された場合
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """マイリスト検索
+
+        Notes:
+            "検索（マイリスト）::-MR-"
+            マイリスト右クリックで「検索（マイリスト）」が選択された場合
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 処理成功した場合0, エラー時-1
+        """
+        logger.info("MylistSearch start.")
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("MylistSearch failed, argument error.")
+            return -1
 
         pattern = sg.popup_get_text("マイリスト名検索（正規表現可）")
         if pattern is None or pattern == "":
-            return 0
+            return -1
 
         logger.info(f"search word -> {pattern}.")
 
@@ -55,7 +72,6 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
         self.window["-LIST-"].update(values=list_data)
 
         # 新着マイリストの背景色とテキスト色を変更する
-        # update(values=list_data)で更新されるとデフォルトに戻る？
         # 強調したいindexのみ適用すればそれ以外はデフォルトになる
         for i in include_new_index_list:
             self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
@@ -78,6 +94,7 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
             logger.info(f"search result -> Nothing mylist(s) found.")
             self.window["-INPUT2-"].update(value="該当なし")
 
+        logger.info("MylistSearch success.")
         return 0
 
 

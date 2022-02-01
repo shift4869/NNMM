@@ -20,7 +20,7 @@ class TestProcessWatched(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_PNWRun(self):
+    def test_PWRun(self):
         """ProcessWatchedのRunをテストする
         """
         with ExitStack() as stack:
