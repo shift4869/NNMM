@@ -19,27 +19,49 @@ class ProcessShowMylistInfo(ProcessBase.ProcessBase):
         super().__init__(True, True, "マイリスト内容表示")
 
     def Run(self, mw):
-        # "-LIST-+DOUBLE CLICK+"
-        # リストボックスの項目がダブルクリックされた場合（単一）
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """選択されたマイリストに含まれる動画情報レコードを表示する
 
-        v = self.values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
-        def_data = self.window["-TABLE-"].Values  # 現在のtableの全リスト
+        Notes:
+            "-LIST-+DOUBLE CLICK+"
+            リストボックスの項目がダブルクリックされた場合（単一）
 
-        if v[:2] == "*:":
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 処理成功した場合0, エラー時-1
+        """
+        logger.info("ShowMylistInfo start.")
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("ShowMylistInfo failed, argument error.")
+            return -1
+
+        # ダブルクリックされたリストボックスの選択値を取得
+        v = self.values["-LIST-"][0]
+
+        # 新着表示のマークがある場合は削除する
+        NEW_MARK = "*:"
+        if v[:2] == NEW_MARK:
             v = v[2:]
+
+        # 対象マイリストをmylist_dbにshownameで問い合わせ
         record = self.mylist_db.SelectFromShowname(v)[0]
-        username = record.get("username")
         mylist_url = record.get("url")
-        self.window["-INPUT1-"].update(value=mylist_url)  # 対象マイリスのアドレスをテキストボックスに表示
+        self.window["-INPUT1-"].update(value=mylist_url)  # 対象マイリストのアドレスをテキストボックスに表示
 
         # テーブル更新
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info(f"{mylist_url} -> mylist info shown.")
+        logger.info("ShowMylistInfo success.")
+        return 0
 
 
 if __name__ == "__main__":
