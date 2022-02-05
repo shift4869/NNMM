@@ -57,10 +57,11 @@ class ProcessShowMylistInfoAll(ProcessBase.ProcessBase):
             index = self.window["-LIST-"].get_indexes()[0]
 
         # 全動画情報を取得
+        NUM = 100
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
         m_list = self.mylist_info_db.Select()  # DB内にある全ての動画情報を取得
-        records = sorted(m_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:100]  # 最大100要素までのスライス
+        records = sorted(m_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]  # 最大100要素までのスライス
         def_data = []
         for i, r in enumerate(records):
             a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["video_url"], r["mylist_url"]]
