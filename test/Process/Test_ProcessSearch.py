@@ -76,6 +76,22 @@ class TestProcessSearch(unittest.TestCase):
             res.append(d)
         return res
 
+    def MakeTableRecords(self, mylist_url):
+        """表示中の動画テーブルから取得されるレコードセット
+        """
+        NUM = 5
+        m = -1
+        pattern = r"https://www.nicovideo.jp/user/1000000(\d)/video"
+        if re.search(pattern, mylist_url):
+            m = int(re.search(pattern, mylist_url)[1])
+        if m == -1:
+            return []
+
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+        records = [[i, f"sm{m}000000{i+1}", f"動画タイトル{m}_{i+1}", f"投稿者{m}", "未視聴", "2022-01-28 22:00:00",
+                    f"https://www.nicovideo.jp/watch/sm{m}000000{i+1}", mylist_url] for i in range(NUM)]
+        return records
+
     def test_PMSRun(self):
         """ProcessMylistSearchのRunをテストする
         """
@@ -180,7 +196,7 @@ class TestProcessSearch(unittest.TestCase):
             mockmw = ReturnMW()
             mocksgpgt.return_value = ""
             actual = pms.Run(mockmw)
-            self.assertEqual(0, actual)
+            self.assertEqual(1, actual)
 
             # 異常系
             # 引数エラー
@@ -298,7 +314,7 @@ class TestProcessSearch(unittest.TestCase):
             mockmw = ReturnMW()
             mocksgpgt.return_value = ""
             actual = pmsfv.Run(mockmw)
-            self.assertEqual(0, actual)
+            self.assertEqual(1, actual)
 
             # 異常系
             # 引数エラー
@@ -306,6 +322,196 @@ class TestProcessSearch(unittest.TestCase):
             del mockmw.window
             del type(mockmw).window
             actual = pmsfv.Run(mockmw)
+            self.assertEqual(-1, actual)
+
+    def test_PVSRun(self):
+        """ProcessVideoSearchのRunをテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.error"))
+            mocksgpgt = stack.enter_context(patch("NNMM.Process.ProcessSearch.sg.popup_get_text"))
+
+            pvs = ProcessSearch.ProcessVideoSearch()
+
+            # 正常系
+            mylist_url_s = self.MakeMylistDB()[0]["url"]
+            selected_num_s = [0]
+
+            def ReturnMW():
+                r_wt = MagicMock()
+                r_wt.Values = self.MakeTableRecords(mylist_url_s)
+                expect_window_dict = {
+                    "-TABLE-": r_wt,
+                    "-INPUT2-": MagicMock()
+                }
+
+                expect_values_dict = {
+                    "-TABLE-": selected_num_s
+                }
+
+                r = MagicMock()
+                mockwindow = MagicMock()
+                mockwindow.__getitem__.side_effect = expect_window_dict.__getitem__
+                mockwindow.__iter__.side_effect = expect_window_dict.__iter__
+                mockwindow.__contains__.side_effect = expect_window_dict.__contains__
+                type(r).window = mockwindow
+                mockvalue = MagicMock()
+                mockvalue.__getitem__.side_effect = expect_values_dict.__getitem__
+                mockvalue.__iter__.side_effect = expect_values_dict.__iter__
+                mockvalue.__contains__.side_effect = expect_values_dict.__contains__
+                type(r).values = mockvalue
+
+                return r
+
+            mockmw = ReturnMW()
+            mocksgpgt.return_value = "動画タイトル1_1"
+            actual = pvs.Run(mockmw)
+            self.assertEqual(0, actual)
+
+            # 実行後呼び出し確認
+            def assertMockCall():
+                index = min([int(v) for v in selected_num_s])
+                pattern = mocksgpgt.return_value
+                records = self.MakeTableRecords(mylist_url_s)
+
+                match_index_list = []
+                for i, r in enumerate(records):
+                    if re.search(pattern, r[2]):
+                        match_index_list.append(i)
+                        index = i  # 更新後にスクロールするインデックスを更新
+
+                mc = mockmw.window["-TABLE-"].mock_calls
+                self.assertEqual(3, len(mc))
+                self.assertEqual(call.update(row_colors=[(i, "black", "light goldenrod") for i in match_index_list]), mc[0])
+                self.assertEqual(call.Widget.see(index + 1), mc[1])
+                if match_index_list:
+                    self.assertEqual(call.update(select_rows=match_index_list), mc[2])
+                else:
+                    self.assertEqual(call.update(select_rows=[index]), mc[2])
+                mockmw.window["-TABLE-"].reset_mock()
+
+                mc = mockmw.window["-INPUT2-"].mock_calls
+                self.assertEqual(1, len(mc))
+                if len(match_index_list) > 0:
+                    self.assertEqual(call.update(value=f"{len(match_index_list)}件ヒット！"), mc[0])
+                else:
+                    self.assertEqual(call.update(value="該当なし"), mc[0])
+                mockmw.window["-INPUT2-"].reset_mock()
+
+                mc = mockmw.values.mock_calls
+                self.assertEqual(2, len(mc))
+                self.assertEqual(call.__getitem__("-TABLE-"), mc[0])
+                self.assertEqual(call.__getitem__("-TABLE-"), mc[1])
+                mockmw.values.reset_mock()
+
+                mocksgpgt.assert_called_once_with("動画名検索（正規表現可）")
+                mocksgpgt.reset_mock()
+
+                mockmw.reset_mock()
+
+            assertMockCall()
+
+            # 複数ヒット
+            mockmw = ReturnMW()
+            mocksgpgt.return_value = "動画タイトル1_"
+            actual = pvs.Run(mockmw)
+            self.assertEqual(0, actual)
+            assertMockCall()
+
+            # 1件もヒットしなかった
+            mockmw = ReturnMW()
+            mocksgpgt.return_value = "ヒットしない検索条件"
+            actual = pvs.Run(mockmw)
+            self.assertEqual(0, actual)
+            assertMockCall()
+
+            # 検索条件が空白
+            mockmw = ReturnMW()
+            mocksgpgt.return_value = ""
+            actual = pvs.Run(mockmw)
+            self.assertEqual(1, actual)
+
+            # 異常系
+            # 引数エラー
+            mockmw = ReturnMW()
+            del mockmw.window
+            del type(mockmw).window
+            actual = pvs.Run(mockmw)
+            self.assertEqual(-1, actual)
+
+    def test_PMSCRun(self):
+        """ProcessMylistSearchClearのRunをテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.error"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessSearch.UpdateMylistShow"))
+
+            pmsc = ProcessSearch.ProcessMylistSearchClear()
+
+            # 正常系
+            mockmw = MagicMock()
+            actual = pmsc.Run(mockmw)
+            self.assertEqual(0, actual)
+            mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)
+            mockums.reset_mock()
+
+            # 異常系
+            # 引数エラー
+            mockmw = MagicMock()
+            del mockmw.window
+            actual = pmsc.Run(mockmw)
+            self.assertEqual(-1, actual)
+
+    def test_PVSCRun(self):
+        """ProcessVideoSearchClearのRunをテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.error"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessSearch.UpdateTableShow"))
+
+            pvsc = ProcessSearch.ProcessVideoSearchClear()
+
+            # 正常系
+            # mylist_urlが右上のテキストボックスに存在するとき
+            mylist_url_s = self.MakeMylistDB()[0]["url"]
+
+            def ReturnMW():
+                r_wt = MagicMock()
+                r_wt.get = lambda: mylist_url_s
+                expect_window_dict = {
+                    "-INPUT1-": r_wt
+                }
+
+                r = MagicMock()
+                mockwindow = MagicMock()
+                mockwindow.__getitem__.side_effect = expect_window_dict.__getitem__
+                mockwindow.__iter__.side_effect = expect_window_dict.__iter__
+                mockwindow.__contains__.side_effect = expect_window_dict.__contains__
+                type(r).window = mockwindow
+                return r
+
+            mockmw = ReturnMW()
+            actual = pvsc.Run(mockmw)
+            self.assertEqual(0, actual)
+            mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mylist_url_s)
+            mockuts.reset_mock()
+
+            # 右上のテキストボックス空のとき
+            mylist_url_s = ""
+            mockmw = ReturnMW()
+            actual = pvsc.Run(mockmw)
+            self.assertEqual(0, actual)
+            mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mylist_url_s)
+            mockuts.reset_mock()
+
+            # 異常系
+            # 引数エラー
+            mockmw = MagicMock()
+            del mockmw.window
+            actual = pvsc.Run(mockmw)
             self.assertEqual(-1, actual)
 
 
