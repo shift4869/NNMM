@@ -242,7 +242,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # マイリストの更新確認日時更新
         # 新しい動画情報が追加されたかに関わらずchecked_atを更新する
         dst = GetNowDatetime()
-        mylist_db.UpdateCheckdAt(mylist_url, dst)
+        mylist_db.UpdateCheckedAt(mylist_url, dst)
 
         # マイリストの更新日時更新
         # 新しい動画情報が追加されたときにupdated_atを更新する

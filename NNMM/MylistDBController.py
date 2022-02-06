@@ -159,7 +159,7 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
-    def UpdateCheckdAt(self, mylist_url: str, checked_at: str) -> int:
+    def UpdateCheckedAt(self, mylist_url: str, checked_at: str) -> int:
         """Mylistの特定のレコードについて更新確認日時を更新する
 
         Note:

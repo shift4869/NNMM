@@ -252,7 +252,7 @@ class TestMylistDBController(unittest.TestCase):
             self.assertEqual(res, -1)
             pass
 
-    def test_UpdateCheckdAt(self):
+    def test_UpdateCheckedAt(self):
         """Mylistの特定のレコードについて更新確認日時を更新する機能のテスト
         """
         with ExitStack() as stack:
@@ -266,7 +266,7 @@ class TestMylistDBController(unittest.TestCase):
 
             dts_format = "%Y-%m-%d %H:%M:%S"
             dst = datetime.now().strftime(dts_format)
-            res = m_cont.UpdateCheckdAt(mylist_url, dst)
+            res = m_cont.UpdateCheckedAt(mylist_url, dst)
             self.assertEqual(res, 0)
 
             for r in expect:
@@ -279,7 +279,7 @@ class TestMylistDBController(unittest.TestCase):
             self.assertEqual(expect, actual)
 
             # 存在しないマイリストを指定する
-            res = m_cont.UpdateCheckdAt("https://www.nicovideo.jp/user/99999999/video", dst)
+            res = m_cont.UpdateCheckedAt("https://www.nicovideo.jp/user/99999999/video", dst)
             self.assertEqual(res, -1)
             pass
 
