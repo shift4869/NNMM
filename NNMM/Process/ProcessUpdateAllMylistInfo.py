@@ -4,6 +4,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
+from typing import Callable
 
 import PySimpleGUI as sg
 
@@ -33,12 +34,29 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
 
     def Run(self, mw):
-        # -ALL_UPDATE-
-        # 左下のすべて更新ボタンが押された場合
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """すべてのマイリストのマイリスト情報を更新する
+
+        Notes:
+            "-ALL_UPDATE-"
+            左下のすべて更新ボタンが押された場合
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 成功時0, エラー時-1
+        """
+        logger.info("UpdateAllMylistInfo start.")
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("UpdateAllMylistInfo failed, argument error.")
+            return -1
 
         self.done_count = 0
 
@@ -51,6 +69,55 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         threading.Thread(target=self.UpdateMylistInfoThread,
                          args=(), daemon=True).start()
 
+        logger.info("UpdateAllMylistInfo thread start success.")
+        return 0
+
+    def UpdateMylistInfoThread(self):
+        """マイリスト情報を更新する（マルチスレッド前提）
+
+        Notes:
+            それぞれのマイリストごとに初回ロードか確認し、
+            簡易版かレンダリングかどちらで更新するかを保持する
+
+        Returns:
+            int: 成功時0, 更新対象無し1, エラー時-1
+        """
+        logger.info("UpdateMylistInfoThread start.")
+
+        # 属性チェック
+        if not hasattr(self, "window"):
+            logger.error("UpdateMylistInfoThread failed.")
+            return -1
+
+        # 更新対象取得
+        m_list = self.GetTargetMylist()
+        if not m_list:
+            logger.info("Target Mylist is nothing.")
+            self.window.write_event_value(self.E_DONE, "")
+            return 1
+
+        func_list = self.GetFunctionList(m_list)
+        prev_video_lists = self.GetPrevVideoLists(m_list)
+
+        # マルチスレッドですべてのマイリストの情報を取得する
+        # now_video_listsにすべてのthreadの結果を格納して以降で利用する
+        start = time.time()
+        self.done_count = 0
+        now_video_lists = self.GetMylistInfoExecute(func_list, m_list)
+        elapsed_time = time.time() - start
+        logger.info(f"{self.L_GETTING_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
+
+        # マルチスレッドですべてのマイリストの情報を更新する
+        start = time.time()
+        self.done_count = 0
+        result = self.UpdateMylistInfoExecute(m_list, prev_video_lists, now_video_lists)
+        elapsed_time = time.time() - start
+        logger.info(f"{self.L_UPDATE_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
+
+        # 後続処理へ
+        self.window.write_event_value(self.E_DONE, "")
+        return 0
+
     def GetTargetMylist(self):
         """更新対象のマイリストを返す
 
@@ -59,12 +126,17 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
             派生クラスでこのメソッドをオーバーライドして対象を調整する
 
         Returns:
-            list[Mylist]: 更新対象のマイリストのリスト
+            list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
         """
+        # 属性チェック
+        if not hasattr(self, "mylist_db"):
+            logger.error("GetTargetMylist failed.")
+            return []
+
         m_list = self.mylist_db.Select()
         return m_list
 
-    def GetFunctionList(self, m_list):
+    def GetFunctionList(self, m_list: list[Mylist]) -> list[Callable[[str], list[dict]]]:
         """それぞれのマイリストごとに初回ロードか確認し、
            簡易版かレンダリング版かどちらで更新するかをリストで返す
 
@@ -73,8 +145,13 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
                                    mylist_db.Select系の返り値
 
         Returns:
-            list[Function]: それぞれのマイリストを更新するためのメソッドリスト
+            list[Callable[[str], list[dict]]]: それぞれのマイリストを更新するためのメソッドリスト、エラー時空リスト
         """
+        # 属性チェック
+        if not hasattr(self, "mylist_info_db"):
+            logger.error("GetFunctionList failed.")
+            return []
+
         func_list = []
         for record in m_list:
             mylist_url = record.get("url")
@@ -97,6 +174,11 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         Returns:
             list[list[MylistInfo]]: それぞれのマイリストに含まれる動画情報のリストのリスト
         """
+        # 属性チェック
+        if not hasattr(self, "mylist_info_db"):
+            logger.error("GetFunctionList failed.")
+            return []
+
         prev_video_lists = []
         for record in m_list:
             mylist_url = record.get("url")
@@ -104,26 +186,44 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
             prev_video_lists.append(prev_video_list)
         return prev_video_lists
 
-    def GetMylistInfoExecute(self, func_list, m_list):
+    def GetMylistInfoExecute(self, func_list: list[Callable[[str], list[dict]]], m_list: list[Mylist]) -> list[list[MylistInfo]]:
         """それぞれのマイリストを引数に動画情報を取得する
 
         Args:
-            func_list (list[Function]): それぞれのマイリストを更新するためのメソッドリスト
+            func_list (list[Callable[[str], list[dict]]]): それぞれのマイリストを更新するためのメソッドリスト
             m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
                                    mylist_db.Select系の返り値
 
         Returns:
             list[list[MylistInfo]]: それぞれのマイリストについて取得した動画情報のリストのリスト
+                                    エラー時空リスト
         """
         result = []
         all_index_num = len(m_list)
+
+        # リストの大きさが一致しない場合はエラー
+        if len(func_list) != len(m_list):
+            return []
+
+        # ワーカースレッドを作成
         with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
             futures = []
-            for func, record in zip(func_list, m_list):
-                mylist_url = record.get("url")
+
+            # 引数のメソッドリストとマイリストレコードリストをワーカーに渡す
+            for func, record in zip(func_list, m_list, strict=True):
+                mylist_url = record.get("url", "")
+
+                # メソッドが呼び出し可能でない または マイリストURLが空 ならばエラー
+                if not callable(func) or mylist_url == "":
+                    return []
+
+                # ワーカー起動
                 future = executor.submit(self.GetMylistInfoWorker, func, mylist_url, all_index_num)
                 futures.append((mylist_url, future))
+
+            # 結果を取得する（futureパターン）
             result = [(f[0], f[1].result()) for f in futures]
+        # 結果を返す
         return result
 
     def GetMylistInfoWorker(self, func, url, all_index_num):
@@ -256,38 +356,6 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # self.window.write_event_value(self.E_PROGRESS, p_str)
         self.window["-INPUT2-"].update(value=p_str)
         logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
-        return 0
-
-    def UpdateMylistInfoThread(self):
-        # 全てのマイリストを更新する（マルチスレッド前提）
-
-        # それぞれのマイリストごとに初回ロードか確認し、
-        # 簡易版かレンダリングかどちらで更新するかを保持する
-        m_list = self.GetTargetMylist()
-        if not m_list:
-            logger.info(f"Target Mylist is nothing.")
-            self.window.write_event_value(self.E_DONE, "")
-            return 1
-
-        func_list = self.GetFunctionList(m_list)
-        prev_video_lists = self.GetPrevVideoLists(m_list)
-
-        # マルチスレッドですべてのマイリストの情報を取得する
-        # now_video_listsにすべてのthreadの結果を格納して以降で利用する
-        start = time.time()
-        self.done_count = 0
-        now_video_lists = self.GetMylistInfoExecute(func_list, m_list)
-        elapsed_time = time.time() - start
-        logger.info(f"{self.L_GETTING_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
-
-        # マルチスレッドですべてのマイリストの情報を更新する
-        start = time.time()
-        self.done_count = 0
-        result = self.UpdateMylistInfoExecute(m_list, prev_video_lists, now_video_lists)
-        elapsed_time = time.time() - start
-        logger.info(f"{self.L_UPDATE_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
-
-        self.window.write_event_value(self.E_DONE, "")
         return 0
 
 
