@@ -356,6 +356,64 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             actual = puami.GetMylistInfoWorker(func, mylist_url, NUM)
             self.assertEqual([], actual)
 
+    def test_UpdateMylistInfoExecute(self):
+        """UpdateMylistInfoExecute をテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
+            mocktpe = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.ThreadPoolExecutor"))
+
+            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+
+            # 正常系
+            NUM = 5
+            m_list = self.MakeMylistDB(NUM)
+            p_list = []
+            n_list = []
+
+            def ReturnSelectFromMylistURL(mylist_url):
+                res = []
+                records = self.MakeMylistInfoDB(NUM)
+                for record in records:
+                    if record.get("mylist_url") == mylist_url:
+                        res.append(record)
+                return res
+
+            expect = []
+            for m in m_list:
+                mylist_url = m.get("url")
+                expect.append(mylist_url)
+                p_list.append(ReturnSelectFromMylistURL(mylist_url))
+                n_list.append(ReturnSelectFromMylistURL(mylist_url))
+
+            r = MagicMock()
+            r.submit.side_effect = lambda f, m, p, n: MagicMock()
+            mocktpe.return_value.__enter__.side_effect = lambda: r
+
+            actual = puami.UpdateMylistInfoExecute(m_list, p_list, n_list)
+            self.assertEqual(expect, [a[0] for a in actual])
+
+            # 実行後呼び出し確認
+            mc = r.submit.mock_calls
+            self.assertEqual(NUM, len(mc))
+            for mc_e, m, p in zip(mc, m_list, p_list):
+                self.assertEqual(call(puami.UpdateMylistInfoWorker, m, p, n_list), mc_e)
+            r.submit.reset_mock()
+
+            mc = mocktpe.mock_calls
+            self.assertEqual(3, len(mc))
+            self.assertEqual(call(max_workers=8, thread_name_prefix="np_thread"), mc[0])
+            self.assertEqual(call().__enter__(), mc[1])
+            self.assertEqual(call().__exit__(None, None, None), mc[2])
+            mocktpe.reset_mock()
+
+            # 異常系
+            # マイリストレコードとprev_video_listの大きさが異なる
+            p_list = p_list[:-1]
+            actual = puami.UpdateMylistInfoExecute(m_list, p_list, n_list)
+            self.assertEqual([], actual)
+
 
 if __name__ == "__main__":
     if sys.argv:

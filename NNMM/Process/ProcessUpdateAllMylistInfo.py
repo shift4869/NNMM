@@ -200,7 +200,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
             list[list[MylistInfo]]: それぞれのマイリストについて取得した動画情報のリストのリスト
                                     エラー時空リスト
         """
-        result = []
+        result_buf = []
         all_index_num = len(m_list)
 
         # リストの大きさが一致しない場合はエラー
@@ -224,9 +224,9 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
                 futures.append((mylist_url, future))
 
             # 結果を取得する（futureパターン）
-            result = [(f[0], f[1].result()) for f in futures]
+            result_buf = [(f[0], f[1].result()) for f in futures]
         # 結果を返す
-        return result
+        return result_buf
 
     def GetMylistInfoWorker(self, func: Callable[[str], list[dict]], url: str, all_index_num: int) -> list[MylistInfo]:
         """動画情報を取得するワーカー
@@ -267,7 +267,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         logger.info(url + f" : getting done ... ({self.done_count}/{all_index_num}).")
         return res
 
-    def UpdateMylistInfoExecute(self, m_list, prev_video_lists, now_video_lists):
+    def UpdateMylistInfoExecute(self, m_list: list[Mylist], prev_video_lists: list[list[MylistInfo]], now_video_lists: list[list[MylistInfo]]) -> list[int]:
         """それぞれのマイリスト情報を更新する
 
         Args:
@@ -279,14 +279,27 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         Returns:
             list[int]: それぞれのマイリストについて動画情報を更新した際の結果のリスト
                        成功で0, 失敗で-1が格納される
+                       エラー時空リスト
         """
         result_buf = []
+
+        # リストの大きさが一致しない場合はエラー
+        if len(m_list) != len(prev_video_lists):
+            return []
+
+        # ワーカースレッドを作成
         with ThreadPoolExecutor(max_workers=8, thread_name_prefix="np_thread") as executor:
             futures = []
+
+            # 引数のマイリストレコードとprev_video_listをワーカーに渡す
             for m, prev_video_list in zip(m_list, prev_video_lists):
+                # ワーカー起動
                 future = executor.submit(self.UpdateMylistInfoWorker, m, prev_video_list, now_video_lists)
                 futures.append((m.get("url"), future))
+
+            # 結果を取得する（futureパターン）
             result_buf = [(f[0], f[1].result()) for f in futures]
+        # 結果を返す
         return result_buf
 
     def UpdateMylistInfoWorker(self, m, prev_video_list, now_video_lists):
