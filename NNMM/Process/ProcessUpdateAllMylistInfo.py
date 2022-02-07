@@ -24,6 +24,10 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
     def __init__(self):
         super().__init__(True, False, "全マイリスト内容更新")
 
+        # マルチスレッドで使うロックとカウンタ
+        self.lock = threading.Lock()
+        self.done_count = 0
+
         # ログメッセージ
         self.L_START = "All mylist update starting."
         self.L_GETTING_ELAPSED_TIME = "All getting done elapsed time"
@@ -57,8 +61,6 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         except AttributeError:
             logger.error("UpdateAllMylistInfo failed, argument error.")
             return -1
-
-        self.done_count = 0
 
         self.window["-INPUT2-"].update(value="更新中")
         self.window.refresh()
@@ -226,14 +228,41 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # 結果を返す
         return result
 
-    def GetMylistInfoWorker(self, func, url, all_index_num):
-        self.done_count = self.done_count + 1
+    def GetMylistInfoWorker(self, func: Callable[[str], list[dict]], url: str, all_index_num: int) -> list[MylistInfo]:
+        """動画情報を取得するワーカー
 
+        Args:
+            func (Callable[[str], list[dict]]):
+                マイリスト情報取得用メソッド、以下のどちらかを想定している(async)
+                GetMyListInfo.AsyncGetMyListInfo
+                GetMyListInfo.AsyncGetMyListInfoLightWeight
+            url (str): マイリストURL
+            all_index_num (int): ワーカー全体数
+
+        Returns:
+            list[MylistInfo]: マイリストURLについて取得した動画情報のリスト
+                              エラー時空リスト
+        """
+        # 属性チェック
+        if not (set(["lock", "done_count", "window"]) <= set(dir(self))):
+            return []
+
+        # 引数チェック
+        if not callable(func) or url == "":
+            return []
+
+        # 処理カウントを進める
+        # TODO::マルチスレッド対応のキューで重複なしでカウントする
+        with self.lock:
+            self.done_count = self.done_count + 1
+
+        # マイリスト情報取得
+        # asyncなのでイベントループを張る
         loop = asyncio.new_event_loop()
         res = loop.run_until_complete(func(url))
 
+        # 左下テキストボックスにプログレス表示
         p_str = f"取得中({self.done_count}/{all_index_num})"
-        # self.window.write_event_value(self.E_PROGRESS, p_str)
         self.window["-INPUT2-"].update(value=p_str)
         logger.info(url + f" : getting done ... ({self.done_count}/{all_index_num}).")
         return res

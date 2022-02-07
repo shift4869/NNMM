@@ -6,7 +6,7 @@ import re
 import sys
 import unittest
 from contextlib import ExitStack
-from mock import MagicMock, patch, call
+from mock import MagicMock, AsyncMock, patch, call
 
 from NNMM.Process import *
 
@@ -317,8 +317,44 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
 
             # 正常系
+            puami.window = MagicMock()
+            NUM = 5
+            func = AsyncMock()
+            func.side_effect = lambda url: [url]
+            mylist_url = "https://www.nicovideo.jp/user/10000001/video"
+            expect = [mylist_url]
+            actual = puami.GetMylistInfoWorker(func, mylist_url, NUM)
+            self.assertEqual(expect, actual)
+            self.assertEqual(1, puami.done_count)
+
             # 実行後呼び出し確認
+            p_str = f"取得中({puami.done_count}/{NUM})"
+            mc = puami.window.mock_calls
+            self.assertEqual(2, len(mc))
+            self.assertEqual(call.__getitem__("-INPUT2-"), mc[0])
+            self.assertEqual(call.__getitem__().update(value=p_str), mc[1])
+            puami.window.reset_mock()
+            puami.done_count = 0
+
+            func.assert_called_once_with(mylist_url)
+            func.reset_mock()
+
             # 異常系
+            # funcが呼び出し可能でない
+            func = "不正なメソッド指定"
+            actual = puami.GetMylistInfoWorker(func, mylist_url, NUM)
+            self.assertEqual([], actual)
+
+            # マイリストURLが空
+            func = AsyncMock()
+            mylist_url = ""
+            actual = puami.GetMylistInfoWorker(func, mylist_url, NUM)
+            self.assertEqual([], actual)
+
+            # 属性エラー
+            del puami.window
+            actual = puami.GetMylistInfoWorker(func, mylist_url, NUM)
+            self.assertEqual([], actual)
 
 
 if __name__ == "__main__":
