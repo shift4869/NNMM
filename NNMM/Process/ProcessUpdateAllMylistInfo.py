@@ -34,7 +34,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         self.L_UPDATE_ELAPSED_TIME = "All update done elapsed time"
 
         # イベントキー
-        self.E_PROGRESS = "-ALL_UPDATE_THREAD_PROGRESS-"
+        # self.E_PROGRESS = "-ALL_UPDATE_THREAD_PROGRESS-"
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
 
     def Run(self, mw):
@@ -314,7 +314,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
             now_video_lists (list[list[MylistInfo]]): それぞれのマイリストについて取得した動画情報のリストのリスト
 
         Returns:
-            int: 更新成功時0、エラー時-1
+            int: 更新成功時0, 取得レコード0件なら1, エラー時-1
         """
         # 属性チェック
         k = ["lock", "done_count", "window", "mylist_db", "mylist_info_db"]
@@ -364,8 +364,9 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
         if len(records) == 0:
             # 新規マイリスト取得でレンダリングが失敗した場合など
-            logger.error("UpdateMylistInfoWorker failed, no records")
-            return -1
+            all_index_num = len(now_video_lists)
+            logger.info(mylist_url + f" : no records ... ({self.done_count}/{all_index_num}).")
+            return 1
 
         # 更新前のusernameの保存と動画idリストの設定
         prev_videoid_list = [m["video_id"] for m in prev_video_list]
@@ -446,23 +447,6 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         return 0
 
 
-class ProcessUpdateAllMylistInfoThreadProgress(ProcessBase.ProcessBase):
-
-    def __init__(self):
-        super().__init__(False, False, "全マイリスト内容更新")
-
-        # イベントキー
-        self.E_PROGRESS = "-ALL_UPDATE_THREAD_PROGRESS-"
-
-    def Run(self, mw):
-        # -ALL_UPDATE_THREAD_PROGRESS-
-        # -ALL_UPDATE-処理中のプログレス
-        self.window = mw.window
-        self.values = mw.values
-        p_str = self.values[self.E_PROGRESS]
-        self.window["-INPUT2-"].update(value=p_str)
-
-
 class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
 
     def __init__(self):
@@ -472,14 +456,29 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
         self.L_FINISH = "All mylist update finished."
 
     def Run(self, mw):
-        # -ALL_UPDATE_THREAD_DONE-
-        # -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """すべてのマイリストのマイリスト情報を更新後の後処理
 
-        # 左下の表示を戻す
+        Notes:
+            "-ALL_UPDATE_THREAD_DONE-"
+            -ALL_UPDATE-のマルチスレッド処理が終わった後の処理
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 成功時0, エラー時-1
+        """
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("UpdateAllMylistInfoThreadDone failed, argument error.")
+            return -1
+
+        # 左下の表示を更新する
         self.window["-INPUT2-"].update(value="更新完了！")
 
         # テーブルの表示を更新する
@@ -490,8 +489,7 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
         # マイリストの新着表示を表示するかどうか判定する
         m_list = self.mylist_db.Select()
         for m in m_list:
-            username = m["username"]
-            mylist_url = m["url"]
+            mylist_url = m.get("url")
             video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
             table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
             def_data = []
@@ -509,6 +507,8 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
         UpdateMylistShow(self.window, self.mylist_db)
 
         logger.info(self.L_FINISH)
+        logger.info("UpdateAllMylistInfo success.")
+        return 0
 
 
 if __name__ == "__main__":

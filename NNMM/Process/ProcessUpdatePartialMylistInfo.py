@@ -55,13 +55,13 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateAllMylistInfo):
         return result
 
 
-class ProcessUpdatePartialMylistInfoThreadProgress(ProcessUpdateAllMylistInfoThreadProgress):
+# class ProcessUpdatePartialMylistInfoThreadProgress(ProcessUpdateAllMylistInfoThreadProgress):
 
-    def __init__(self):
-        super().__init__()
+#     def __init__(self):
+#         super().__init__()
 
-        # イベントキー
-        self.E_PROGRESS = "-PARTIAL_UPDATE_THREAD_PROGRESS-"
+#         # イベントキー
+#         self.E_PROGRESS = "-PARTIAL_UPDATE_THREAD_PROGRESS-"
 
 
 class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateAllMylistInfoThreadDone):

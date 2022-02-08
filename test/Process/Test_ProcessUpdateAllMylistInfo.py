@@ -568,17 +568,18 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             assertMockCall()
             puami.done_count = 0
 
+            # マイリストに登録されている動画情報の件数が0
+            n_list[0] = (mylist_url, [])
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(1, actual)
+
             # 異常系
             # mylist_info_dbに格納するために必要なキーが存在しない
+            n_list = [(m.get("url"), ReturnGetMylistInfo(m.get("url"))) for m in m_list]
             for n in n_list:
                 if n[0] == mylist_url:
                     for nr in n[1]:
                         del nr["title"]
-            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
-            self.assertEqual(-1, actual)
-
-            # マイリストに登録されている動画情報の件数が0
-            n_list[0] = (mylist_url, [])
             actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
@@ -657,6 +658,86 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
 
             # 引数が不正：マイリストレコードオブジェクトが文字列
             actual = puami.UpdateMylistInfoWorker("不正な引数", p, n_list)
+            self.assertEqual(-1, actual)
+
+    def test_UAMITPRun(self):
+        """UpdateAllMylistInfoThreadProgress のRunをテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.UpdateTableShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.UpdateMylistShow"))
+            # mockiminv = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.IsMylistIncludeNewVideo"))
+
+            puamitd = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone()
+
+            # 正常系
+            def ReturnSelectFromMylistURL(mylist_url):
+                res = []
+                records = self.MakeMylistInfoDB(num=5)
+                for i, record in enumerate(records):
+                    if record.get("mylist_url") == mylist_url:
+                        record["status"] = "未視聴" if i % 2 == 0 and i < 15 else ""
+                        res.append(record)
+                return res
+
+            m_list = self.MakeMylistDB()
+            mylist_url = m_list[0].get("url")
+            expect_valus_dict = {
+                "-INPUT1-": mylist_url
+            }
+
+            mockmw = MagicMock()
+            mockvalues = MagicMock()
+            mockvalues.__getitem__.side_effect = expect_valus_dict.__getitem__
+            mockvalues.__iter__.side_effect = expect_valus_dict.__iter__
+            mockvalues.__contains__.side_effect = expect_valus_dict.__contains__
+            mockmw.values = mockvalues
+            mockmdb = MagicMock()
+            mockmdb.Select.side_effect = lambda: self.MakeMylistDB()
+            mockmw.mylist_db = mockmdb
+            mockmidb = MagicMock()
+            mockmidb.SelectFromMylistURL.side_effect = ReturnSelectFromMylistURL
+            mockmw.mylist_info_db = mockmidb
+            actual = puamitd.Run(mockmw)
+            self.assertEqual(0, actual)
+
+            # 実行後呼び出し確認
+            mc = mockmw.window.mock_calls
+            self.assertEqual(2, len(mc))
+            self.assertEqual(call.__getitem__("-INPUT2-"), mc[0])
+            self.assertEqual(call.__getitem__().update(value="更新完了！"), mc[1])
+            mockmw.window.reset_mock()
+
+            mc = mockmw.values.mock_calls
+            self.assertEqual(1, len(mc))
+            self.assertEqual(call.__getitem__("-INPUT1-"), mc[0])
+            mockmw.values.reset_mock()
+
+            mc = mockmw.mylist_db.mock_calls
+            self.assertEqual(4, len(mc))
+            self.assertEqual(call.Select(), mc[0])
+            for i, m in enumerate(m_list[:3]):
+                mylist_url = m.get("url")
+                self.assertEqual(call.UpdateIncludeFlag(mylist_url, True), mc[i + 1])
+            mockmw.mylist_db.reset_mock()
+
+            mc = mockmw.mylist_info_db.mock_calls
+            self.assertEqual(5, len(mc))
+            for i, m in enumerate(m_list):
+                mylist_url = m.get("url")
+                self.assertEqual(call.SelectFromMylistURL(mylist_url), mc[i])
+            mockmw.mylist_info_db.reset_mock()
+
+            mylist_url = m_list[0].get("url")
+            mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mylist_url)
+            mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)
+
+            # 異常系
+            # 引数エラー
+            del mockmw.window
+            actual = puamitd.Run(mockmw)
             self.assertEqual(-1, actual)
 
 
