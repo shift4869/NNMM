@@ -7,6 +7,7 @@ import sys
 import unittest
 from contextlib import ExitStack
 from mock import MagicMock, AsyncMock, patch, call
+from sqlalchemy import all_
 
 from NNMM.Process import *
 
@@ -413,6 +414,182 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             p_list = p_list[:-1]
             actual = puami.UpdateMylistInfoExecute(m_list, p_list, n_list)
             self.assertEqual([], actual)
+
+    def test_UpdateMylistInfoWorker(self):
+        """UpdateMylistInfoWorker をテストする
+        """
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
+            mockgdt = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.GetNowDatetime"))
+            mockmdb = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.MylistDBController"))
+            mockmidb = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.MylistInfoDBController"))
+
+            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+
+            # 正常系
+            dst = "2022-02-08 01:00:01"
+            mockgdt.side_effect = lambda: dst
+            NUM = 5
+            m_list = self.MakeMylistDB()
+            m_record = m_list[0]
+            p_list = []
+            n_list = []
+
+            def ReturnSelectFromMylistURL(mylist_url):
+                res = []
+                records = self.MakeMylistInfoDB(NUM)
+                for i, record in enumerate(records):
+                    if record.get("mylist_url") == mylist_url:
+                        record["status"] = "未視聴" if i % 2 == 0 else ""
+                        record["uploaded"] = record["uploaded_at"]
+                        del record["uploaded_at"]
+                        res.append(record)
+                return res
+
+            for m in m_list:
+                mylist_url = m.get("url")
+                p_list.append(ReturnSelectFromMylistURL(mylist_url))
+                n_list.append((mylist_url, ReturnSelectFromMylistURL(mylist_url)))
+            p = p_list[0]
+
+            puami.window = MagicMock()
+            puami.mylist_db = MagicMock()
+            puami.mylist_info_db = MagicMock()
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(0, actual)
+            self.assertEqual(1, puami.done_count)
+
+            # 実行後呼び出し確認
+            def assertMockCall():
+                mc_i = mockmdb.mock_calls
+                i = 1
+                mc_j = mockmidb.mock_calls
+                j = 1
+                prev_video_list = p
+                mylist_url = m_record.get("url")
+                records = [r[1] for r in n_list if r[0] == mylist_url][0]
+
+                prev_videoid_list = [m["video_id"] for m in prev_video_list]
+                prev_username = ""
+                if prev_video_list:
+                    prev_username = prev_video_list[0].get("username")
+                now_video_list = records
+                now_videoid_list = [m["video_id"] for m in now_video_list]
+
+                status_check_list = []
+                add_new_video_flag = False
+                for n in now_videoid_list:
+                    if n in prev_videoid_list:
+                        s = [p["status"] for p in prev_video_list if p["video_id"] == n]
+                        status_check_list.append(s[0])
+                    else:
+                        status_check_list.append("未視聴")
+                        add_new_video_flag = True
+
+                for m, s in zip(now_video_list, status_check_list):
+                    m["status"] = s
+
+                if now_video_list:
+                    now_username = now_video_list[0].get("username")
+                    if prev_username != now_username:
+                        self.assertEqual(call().UpdateUsername(mylist_url, now_username), mc_i[i])
+                        i = i + 1
+                        self.assertEqual(call().UpdateUsernameInMylist(mylist_url, now_username), mc_j[j])
+                        j = j + 1
+
+                records = []
+                for m in now_video_list:
+                    r = {
+                        "video_id": m["video_id"],
+                        "title": m["title"],
+                        "username": m["username"],
+                        "status": m["status"],
+                        "uploaded_at": m["uploaded"],
+                        "video_url": m["video_url"],
+                        "mylist_url": m["mylist_url"],
+                        "created_at": dst
+                    }
+                    records.append(r)
+
+                self.assertEqual(call().UpsertFromList(records), mc_j[j])
+                j = j + 1
+
+                self.assertEqual(call().UpdateCheckedAt(mylist_url, dst), mc_i[i])
+                i = i + 1
+                if add_new_video_flag:
+                    self.assertEqual(call().UpdateUpdatedAt(mylist_url, dst), mc_i[i])
+                    i = i + 1
+
+                mockmdb.reset_mock()
+                mockmidb.reset_mock()
+
+                all_index_num = len(n_list)
+                p_str = f"更新中({puami.done_count}/{all_index_num})"
+                mc = puami.window.mock_calls
+                self.assertEqual(2, len(mc))
+                self.assertEqual(call.__getitem__("-INPUT2-"), mc[0])
+                self.assertEqual(call.__getitem__().update(value=p_str), mc[1])
+                puami.window.reset_mock()
+
+            assertMockCall()
+            puami.done_count = 0
+
+            # 新規動画追加
+            # 既存動画リストを少なくしてその差分だけ新規追加とみなす
+            # ステータスが"未視聴"で設定されるかどうか
+            p = [p[0]] + p[2:]
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(0, actual)
+            self.assertEqual(1, puami.done_count)
+            assertMockCall()
+            puami.done_count = 0
+
+            # ユーザーネームが変更されている
+            mylist_url = m_record.get("url")
+            for n in n_list:
+                if n[0] == mylist_url:
+                    for nr in n[1]:
+                        nr["username"] = "新しい投稿者名1"
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(0, actual)
+            self.assertEqual(1, puami.done_count)
+            assertMockCall()
+            puami.done_count = 0
+
+            # 異常系
+            # mylist_info_dbに格納するために必要なキーが存在しない
+            for n in n_list:
+                if n[0] == mylist_url:
+                    for nr in n[1]:
+                        del nr["title"]
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # マイリストに登録されている動画情報の件数が0
+            n_list[0] = (mylist_url, [])
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：マイリストレコードオブジェクトが空
+            actual = puami.UpdateMylistInfoWorker(None, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストが不正
+            # actual = puami.UpdateMylistInfoWorker(m_record, None, n_list)
+            # self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストのリストが重複している
+            n_list[0] = (mylist_url, n_list[1][1])
+            n_list[1] = (mylist_url, n_list[1][1])
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストのリストが不正
+            # actual = puami.UpdateMylistInfoWorker(m_record, p, None)
+            # actual = puami.UpdateMylistInfoWorker(m_record, p, [])
+            # self.assertEqual(-1, actual)
+            pass
 
 
 if __name__ == "__main__":

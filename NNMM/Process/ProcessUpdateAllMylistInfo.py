@@ -252,7 +252,6 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
             return []
 
         # 処理カウントを進める
-        # TODO::マルチスレッド対応のキューで重複なしでカウントする
         with self.lock:
             self.done_count = self.done_count + 1
 
@@ -302,26 +301,53 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # 結果を返す
         return result_buf
 
-    def UpdateMylistInfoWorker(self, m, prev_video_list, now_video_lists):
+    def UpdateMylistInfoWorker(self, m_record: Mylist, prev_video_list: list[MylistInfo], now_video_lists: list[list[MylistInfo]]) -> int:
+        """動画情報を更新するワーカー
+
+        Note:
+            更新結果は mylist_db, mylist_info_db のDBに保存される
+            画面表示の更新は行わない
+
+        Args:
+            m_record (Mylist): マイリストレコードオブジェクト
+            prev_video_list (list[MylistInfo]): マイリストに含まれる動画情報のリスト
+            now_video_lists (list[list[MylistInfo]]): それぞれのマイリストについて取得した動画情報のリストのリスト
+
+        Returns:
+            int: 更新成功時0、エラー時-1
+        """
+        # 属性チェック
+        k = ["lock", "done_count", "window", "mylist_db", "mylist_info_db"]
+        if not (set(k) <= set(dir(self))):
+            logger.error("UpdateMylistInfoWorker failed, attribute error")
+            return -1
+
+        # TODO::引数チェック
+        if not(hasattr(m_record, "get") and m_record.get("url")):
+            logger.error("UpdateMylistInfoWorker failed, argument error")
+            return -1
+
         # マルチスレッド内では各々のスレッドごとに新しくDBセッションを張る
         mylist_db = MylistDBController(self.mylist_db.dbname)
         mylist_info_db = MylistInfoDBController(self.mylist_info_db.dbname)
-        self.done_count = self.done_count + 1
+        with self.lock:
+            self.done_count = self.done_count + 1
 
-        mylist_url = m.get("url")
+        # 取得した動画情報について、マイリストに対応したものを取り出す
+        mylist_url = m_record.get("url")
         records = [r[1] for r in now_video_lists if r[0] == mylist_url]
         if len(records) == 1:
             records = records[0]
         else:
-            # error
+            logger.error("UpdateMylistInfoWorker failed, now_video_lists is invalid")
             return -1
 
         if len(records) == 0:
-            # error
             # 新規マイリスト取得でレンダリングが失敗した場合など
+            logger.error("UpdateMylistInfoWorker failed, no records")
             return -1
 
-        # prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+        # 更新前のusernameの保存と動画idリストの設定
         prev_videoid_list = [m["video_id"] for m in prev_video_list]
         prev_username = ""
         if prev_video_list:
@@ -332,31 +358,24 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # 状況ステータスを調べる
         status_check_list = []
         add_new_video_flag = False
-        for i, n in enumerate(now_videoid_list):
+        for n in now_videoid_list:
             if n in prev_videoid_list:
-                # 以前から保持していた動画が取得された場合
+                # 以前から保持していた動画が取得された場合->ステータスも保持する
                 s = [p["status"] for p in prev_video_list if p["video_id"] == n]
                 status_check_list.append(s[0])
             else:
-                # 新規に動画が追加された場合
+                # 新規に動画が追加された場合->"未視聴"に設定
                 status_check_list.append("未視聴")
                 add_new_video_flag = True
 
-        # 右ペインのテーブルに表示するマイリスト情報を取得
-        def_data = []
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-        table_cols = ["no", "id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
-
-        # 右ペインのテーブルにマイリスト情報を表示
+        # 状況ステータス設定
         for m, s in zip(now_video_list, status_check_list):
             m["status"] = s
-            a = [m["no"], m["video_id"], m["title"], m["username"], m["status"], m["uploaded"], m["video_url"], m["mylist_url"]]
-            def_data.append(a)
-        if self.window["-INPUT1-"].get() == mylist_url:
-            now_show_table_data = list[def_data]
 
         # usernameが変更されていた場合
+        # 作成したばかり等で登録件数0のマイリストの場合は除く
         if now_video_list:
+            # usernameが変更されていた場合
             now_username = now_video_list[0].get("username")
             if prev_username != now_username:
                 # マイリストの名前を更新する
@@ -366,19 +385,26 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
 
         # DBに格納
         records = []
-        for m in now_video_list:
-            dst = GetNowDatetime()
-            r = {
-                "video_id": m["video_id"],
-                "title": m["title"],
-                "username": m["username"],
-                "status": m["status"],
-                "uploaded_at": m["uploaded"],
-                "video_url": m["video_url"],
-                "mylist_url": m["mylist_url"],
-                "created_at": dst
-            }
-            records.append(r)
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
+        try:
+            for m in now_video_list:
+                dst = GetNowDatetime()
+                r = {
+                    "video_id": m["video_id"],
+                    "title": m["title"],
+                    "username": m["username"],
+                    "status": m["status"],
+                    "uploaded_at": m["uploaded"],
+                    "video_url": m["video_url"],
+                    "mylist_url": m["mylist_url"],
+                    "created_at": dst
+                }
+                if not (set(r.keys()) <= set(MylistInfo.__table__.c.keys())):
+                    raise KeyError
+                records.append(r)
+        except KeyError:
+            logger.error("UpdateMylistInfoWorker failed, key error")
+            return -1
         mylist_info_db.UpsertFromList(records)
 
         # マイリストの更新確認日時更新
@@ -395,7 +421,6 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         # プログレス表示
         all_index_num = len(now_video_lists)
         p_str = f"更新中({self.done_count}/{all_index_num})"
-        # self.window.write_event_value(self.E_PROGRESS, p_str)
         self.window["-INPUT2-"].update(value=p_str)
         logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
         return 0
