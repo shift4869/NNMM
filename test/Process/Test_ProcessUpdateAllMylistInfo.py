@@ -442,6 +442,17 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
                 for i, record in enumerate(records):
                     if record.get("mylist_url") == mylist_url:
                         record["status"] = "未視聴" if i % 2 == 0 else ""
+                        record["id"] = record["no"]
+                        del record["no"]
+                        res.append(record)
+                return res
+
+            def ReturnGetMylistInfo(mylist_url):
+                res = []
+                records = self.MakeMylistInfoDB(NUM)
+                for i, record in enumerate(records):
+                    if record.get("mylist_url") == mylist_url:
+                        record["status"] = "未視聴" if i % 2 == 0 else ""
                         record["uploaded"] = record["uploaded_at"]
                         del record["uploaded_at"]
                         res.append(record)
@@ -450,7 +461,7 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             for m in m_list:
                 mylist_url = m.get("url")
                 p_list.append(ReturnSelectFromMylistURL(mylist_url))
-                n_list.append((mylist_url, ReturnSelectFromMylistURL(mylist_url)))
+                n_list.append((mylist_url, ReturnGetMylistInfo(mylist_url)))
             p = p_list[0]
 
             puami.window = MagicMock()
@@ -571,25 +582,82 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
-            # 引数が不正：マイリストレコードオブジェクトが空
-            actual = puami.UpdateMylistInfoWorker(None, p, n_list)
-            self.assertEqual(-1, actual)
-
-            # 引数が不正：動画情報のリストが不正
-            # actual = puami.UpdateMylistInfoWorker(m_record, None, n_list)
-            # self.assertEqual(-1, actual)
-
-            # 引数が不正：動画情報のリストのリストが重複している
+            # 動画情報のリストのリストにマイリストの重複が含まれている
             n_list[0] = (mylist_url, n_list[1][1])
             n_list[1] = (mylist_url, n_list[1][1])
             actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
-            # 引数が不正：動画情報のリストのリストが不正
-            # actual = puami.UpdateMylistInfoWorker(m_record, p, None)
-            # actual = puami.UpdateMylistInfoWorker(m_record, p, [])
-            # self.assertEqual(-1, actual)
-            pass
+            # 引数が不正：動画情報のリストのリストに想定外のキーがある
+            n_list = [(m.get("url"), ReturnGetMylistInfo(m.get("url"))) for m in m_list]
+            n_list[0][1][0]["不正なキー"] = "不正な値"
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストのリストの一部がリストでない
+            n_list[0] = (mylist_url, "不正な値")
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストのリストの一部のマイリストURLが空
+            n_list[0] = ("", n_list[1][1])
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストのリストが2重空リスト
+            actual = puami.UpdateMylistInfoWorker(m_record, p, [[]])
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストのリストが空リスト
+            actual = puami.UpdateMylistInfoWorker(m_record, p, [])
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストのリストがNone
+            actual = puami.UpdateMylistInfoWorker(m_record, p, None)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストのリストが文字列
+            actual = puami.UpdateMylistInfoWorker(m_record, p, "不正な引数")
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストに想定外のキーがある
+            for m in m_list:
+                mylist_url = m.get("url")
+                p_list.append(ReturnSelectFromMylistURL(mylist_url))
+                n_list.append((mylist_url, ReturnGetMylistInfo(mylist_url)))
+            p = p_list[0]
+            p[0]["不正なキー"] = "不正な値"
+            actual = puami.UpdateMylistInfoWorker(m_record, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストが空リスト
+            actual = puami.UpdateMylistInfoWorker(m_record, [], n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストがNone
+            actual = puami.UpdateMylistInfoWorker(m_record, None, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：動画情報のリストが文字列
+            actual = puami.UpdateMylistInfoWorker(m_record, "不正な引数", n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：マイリストレコードオブジェクトのurlが空
+            del p[0]["不正なキー"]
+            actual = puami.UpdateMylistInfoWorker({"url": ""}, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：マイリストレコードオブジェクトが空辞書
+            actual = puami.UpdateMylistInfoWorker({}, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：マイリストレコードオブジェクトがNone
+            actual = puami.UpdateMylistInfoWorker(None, p, n_list)
+            self.assertEqual(-1, actual)
+
+            # 引数が不正：マイリストレコードオブジェクトが文字列
+            actual = puami.UpdateMylistInfoWorker("不正な引数", p, n_list)
+            self.assertEqual(-1, actual)
 
 
 if __name__ == "__main__":

@@ -166,7 +166,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
                 func_list.append(GetMyListInfo.AsyncGetMyListInfoLightWeight)
         return func_list
 
-    def GetPrevVideoLists(self, m_list):
+    def GetPrevVideoLists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
         """それぞれのマイリストごとに既存のレコードを取得する
 
         Args:
@@ -322,8 +322,28 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
             logger.error("UpdateMylistInfoWorker failed, attribute error")
             return -1
 
-        # TODO::引数チェック
-        if not(hasattr(m_record, "get") and m_record.get("url")):
+        # 引数チェック
+        mylist_info_cols = MylistInfo.__table__.c.keys()
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
+        try:
+            if not(hasattr(m_record, "get") and m_record.get("url")):
+                raise ValueError
+            if not(isinstance(prev_video_list, list) and prev_video_list):
+                raise ValueError
+            for m in prev_video_list:
+                if not (set(m.keys()) <= set(mylist_info_cols)):
+                    raise ValueError
+            if not(isinstance(now_video_lists, list) and now_video_lists):
+                raise ValueError
+            for mylist_url, now_video_list in now_video_lists:
+                if not(isinstance(mylist_url, str) and mylist_url):
+                    raise ValueError
+                if not(isinstance(now_video_list, list)):
+                    raise ValueError
+                for m in now_video_list:
+                    if not (set(m.keys()) <= set(table_cols)):
+                        raise ValueError
+        except ValueError:
             logger.error("UpdateMylistInfoWorker failed, argument error")
             return -1
 
@@ -382,10 +402,10 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
                 mylist_db.UpdateUsername(mylist_url, now_username)
                 # 格納済の動画情報の投稿者名を更新する
                 mylist_info_db.UpdateUsernameInMylist(mylist_url, now_username)
+                logger.info(f"Mylist username changed , {prev_username} -> {now_username}")
 
         # DBに格納
         records = []
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
         try:
             for m in now_video_list:
                 dst = GetNowDatetime()
