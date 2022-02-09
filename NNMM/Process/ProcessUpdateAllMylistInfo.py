@@ -11,6 +11,7 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
+from NNMM import GetMyListInfo
 from NNMM.Process import ProcessBase
 
 
@@ -32,9 +33,7 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         self.done_count = 0
 
         # ログメッセージ
-        self.L_START = "All mylist update starting."
-        self.L_GETTING_ELAPSED_TIME = "All getting done elapsed time"
-        self.L_UPDATE_ELAPSED_TIME = "All update done elapsed time"
+        self.L_KIND = "All mylist"
 
         # イベントキー
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
@@ -52,7 +51,8 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         Returns:
             int: 成功時0, エラー時-1
         """
-        logger.info("UpdateAllMylistInfo start.")
+        # logger.info("UpdateAllMylistInfo start.")
+        logger.info(f"{self.L_KIND} update start.")
 
         # 引数チェック
         try:
@@ -61,19 +61,18 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
             self.mylist_db = mw.mylist_db
             self.mylist_info_db = mw.mylist_info_db
         except AttributeError:
-            logger.error("UpdateAllMylistInfo failed, argument error.")
+            logger.error(f"{self.L_KIND} update failed, argument error.")
             return -1
 
         self.window["-INPUT2-"].update(value="更新中")
         self.window.refresh()
-        logger.info(self.L_START)
 
         # 登録されたすべてのマイリストから現在のマイリスト情報を取得する
         # 処理中もGUIイベントを処理するため別スレッドで起動
         threading.Thread(target=self.UpdateMylistInfoThread,
                          args=(), daemon=True).start()
 
-        logger.info("UpdateAllMylistInfo thread start success.")
+        logger.info(f"{self.L_KIND} update thread start success.")
         return 0
 
     def UpdateMylistInfoThread(self):
@@ -86,11 +85,11 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         Returns:
             int: 成功時0, 更新対象無し1, エラー時-1
         """
-        logger.info("UpdateMylistInfoThread start.")
+        logger.info(f"{self.L_KIND} update thread start.")
 
         # 属性チェック
         if not hasattr(self, "window"):
-            logger.error("UpdateMylistInfoThread failed.")
+            logger.error(f"{self.L_KIND} update thread failed, attribute error.")
             return -1
 
         # 更新対象取得
@@ -109,20 +108,21 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         self.done_count = 0
         now_video_lists = self.GetMylistInfoExecute(func_list, m_list)
         elapsed_time = time.time() - start
-        logger.info(f"{self.L_GETTING_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
+        logger.info(f"{self.L_KIND} getting done elapsed time : {elapsed_time:.2f} [sec]")
 
         # マルチスレッドですべてのマイリストの情報を更新する
         start = time.time()
         self.done_count = 0
         result = self.UpdateMylistInfoExecute(m_list, prev_video_lists, now_video_lists)
         elapsed_time = time.time() - start
-        logger.info(f"{self.L_UPDATE_ELAPSED_TIME} : {elapsed_time:.2f} [sec]")
+        logger.info(f"{self.L_KIND} update done elapsed time : {elapsed_time:.2f} [sec]")
 
         # 後続処理へ
         self.window.write_event_value(self.E_DONE, "")
+        logger.info(f"{self.L_KIND} update thread done.")
         return 0
 
-    def GetTargetMylist(self):
+    def GetTargetMylist(self) -> list[Mylist]:
         """更新対象のマイリストを返す
 
         Note:
@@ -134,7 +134,7 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         """
         # 属性チェック
         if not hasattr(self, "mylist_db"):
-            logger.error("GetTargetMylist failed.")
+            logger.error(f"{self.L_KIND} GetTargetMylist failed, attribute error.")
             return []
 
         m_list = self.mylist_db.Select()
@@ -153,7 +153,7 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         """
         # 属性チェック
         if not hasattr(self, "mylist_info_db"):
-            logger.error("GetFunctionList failed.")
+            logger.error(f"{self.L_KIND} GetFunctionList failed, attribute error.")
             return []
 
         func_list = []
@@ -180,7 +180,7 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         """
         # 属性チェック
         if not hasattr(self, "mylist_info_db"):
-            logger.error("GetFunctionList failed.")
+            logger.error(f"{self.L_KIND} GetFunctionList failed, attribute error.")
             return []
 
         prev_video_lists = []
@@ -321,7 +321,7 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         # 属性チェック
         k = ["lock", "done_count", "window", "mylist_db", "mylist_info_db"]
         if not (set(k) <= set(dir(self))):
-            logger.error("UpdateMylistInfoWorker failed, attribute error")
+            logger.error(f"{self.L_KIND} UpdateMylistInfoWorker failed, attribute error")
             return -1
 
         # 引数チェック
@@ -346,7 +346,7 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
                     if not (set(m.keys()) <= set(table_cols)):
                         raise ValueError
         except ValueError:
-            logger.error("UpdateMylistInfoWorker failed, argument error")
+            logger.error(f"{self.L_KIND} UpdateMylistInfoWorker failed, argument error")
             return -1
 
         # マルチスレッド内では各々のスレッドごとに新しくDBセッションを張る
@@ -361,7 +361,7 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
         if len(records) == 1:
             records = records[0]
         else:
-            logger.error("UpdateMylistInfoWorker failed, now_video_lists is invalid")
+            logger.error(f"{self.L_KIND} UpdateMylistInfoWorker failed, now_video_lists is invalid")
             return -1
 
         if len(records) == 0:
@@ -426,7 +426,7 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
                     raise KeyError
                 records.append(r)
         except KeyError:
-            logger.error("UpdateMylistInfoWorker failed, key error")
+            logger.error(f"{self.L_KIND} UpdateMylistInfoWorker failed, key error")
             return -1
         mylist_info_db.UpsertFromList(records)
 
@@ -455,7 +455,7 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
         super().__init__(False, True, "全マイリスト内容更新")
 
         # ログメッセージ
-        self.L_FINISH = "All mylist update finished."
+        self.L_KIND = "All mylist"
 
     def Run(self, mw):
         """すべてのマイリストのマイリスト情報を更新後の後処理
@@ -477,7 +477,7 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
             self.mylist_db = mw.mylist_db
             self.mylist_info_db = mw.mylist_info_db
         except AttributeError:
-            logger.error("UpdateAllMylistInfoThreadDone failed, argument error.")
+            logger.error(f"{self.L_KIND} update failed, argument error.")
             return -1
 
         # 左下の表示を更新する
@@ -508,8 +508,7 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)
 
-        logger.info(self.L_FINISH)
-        logger.info("UpdateAllMylistInfo success.")
+        logger.info(f"{self.L_KIND} update success.")
         return 0
 
 
