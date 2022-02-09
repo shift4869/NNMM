@@ -11,7 +11,6 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
-from NNMM.Process.ProcessUpdateMylistInfo import *
 from NNMM.Process import ProcessBase
 
 
@@ -19,10 +18,14 @@ logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
+class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
 
-    def __init__(self):
-        super().__init__(True, False, "全マイリスト内容更新")
+    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
+        # 派生クラスの生成時は引数ありで呼び出される
+        if process_name:
+            super().__init__(log_sflag, log_eflag, process_name)
+        else:
+            super().__init__(True, False, "全マイリスト内容更新")
 
         # マルチスレッドで使うロックとカウンタ
         self.lock = threading.Lock()
@@ -34,7 +37,6 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfo):
         self.L_UPDATE_ELAPSED_TIME = "All update done elapsed time"
 
         # イベントキー
-        # self.E_PROGRESS = "-ALL_UPDATE_THREAD_PROGRESS-"
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
 
     def Run(self, mw):

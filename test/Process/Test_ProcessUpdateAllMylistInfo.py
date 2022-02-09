@@ -7,7 +7,6 @@ import sys
 import unittest
 from contextlib import ExitStack
 from mock import MagicMock, AsyncMock, patch, call
-from sqlalchemy import all_
 
 from NNMM.Process import *
 
