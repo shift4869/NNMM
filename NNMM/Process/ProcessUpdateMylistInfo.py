@@ -7,7 +7,6 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process.ProcessUpdateAllMylistInfo import *
-from NNMM.Process import ProcessBase
 
 
 logger = getLogger("root")
