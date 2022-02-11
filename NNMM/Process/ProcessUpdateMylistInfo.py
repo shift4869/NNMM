@@ -37,7 +37,7 @@ class ProcessUpdateMylistInfo(ProcessUpdateAllMylistInfo):
     def GetTargetMylist(self) -> list[Mylist]:
         """更新対象のマイリストを返す
 
-        Note:
+        Notes:
             ProcessUpdateMylistInfoにおいては対象は単一のマイリストとなる
 
         Returns:

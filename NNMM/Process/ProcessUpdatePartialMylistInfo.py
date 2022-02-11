@@ -1,5 +1,5 @@
 # coding: utf-8
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
 
@@ -16,52 +16,62 @@ logger.setLevel(INFO)
 class ProcessUpdatePartialMylistInfo(ProcessUpdateAllMylistInfo):
 
     def __init__(self):
-        super().__init__()
+        super().__init__(True, False, "複数マイリスト内容更新")
 
         # ログメッセージ
-        self.L_START = "Partial mylist update starting."
-        self.L_GETTING_ELAPSED_TIME = "Partial getting done elapsed time"
-        self.L_UPDATE_ELAPSED_TIME = "Partial update done elapsed time"
+        self.L_KIND = "Partial mylist"
 
         # イベントキー
-        self.E_PROGRESS = "-PARTIAL_UPDATE_THREAD_PROGRESS-"
         self.E_DONE = "-PARTIAL_UPDATE_THREAD_DONE-"
 
-    def GetTargetMylist(self):
+    def GetTargetMylist(self) -> list[Mylist]:
         """更新対象のマイリストを返す
+
+        Notes:
+            ProcessUpdatePartialMylistInfoにおいては対象は複数のマイリストとなる
+            前回更新確認時からインターバル分だけ経過しているもののみ更新対象とする
 
         Returns:
             list[Mylist]: 更新対象のマイリストのリスト
         """
+        # 属性チェック
+        if not hasattr(self, "mylist_db"):
+            logger.error(f"{self.L_KIND} GetTargetMylist failed, attribute error.")
+            return []
+
         result = []
         m_list = self.mylist_db.Select()
 
-        # 前回更新確認時からインターバル分だけ経過しているもののみ更新対象とする
         td_format = "%Y/%m/%d %H:%M"
         dts_format = "%Y-%m-%d %H:%M:%S"
         now_dst = datetime.now()
-        for m in m_list:
-            checked_dst = datetime.strptime(m["checked_at"], dts_format)
-            interval_str = str(m["check_interval"])
-            dt = IntervalTranslation(interval_str) - 1
-            if dt < -1:
-                # インターバル文字列解釈エラー
-                logger.error(f"update interval setting is invalid : {interval_str}")
-                continue
-            predict_dst = checked_dst + timedelta(minutes=dt)
-            if predict_dst < now_dst:
-                result.append(m)
+        try:
+            for m in m_list:
+                # 前回チェック時日時取得
+                checked_dst = datetime.strptime(m["checked_at"], dts_format)
+                # インターバル文字列取得
+                interval_str = str(m["check_interval"])
+
+                dt = IntervalTranslation(interval_str) - 1
+                if dt < -1:
+                    # インターバル文字列解釈エラー
+                    mylist_url = m["url"]
+                    logger.error(f"{self.L_KIND} GetTargetMylist failed, update interval setting is invalid :")
+                    logger.error(f"\t{mylist_url} : {interval_str}")
+                    continue
+
+                # 予測次回チェック日時取得
+                predict_dst = checked_dst + timedelta(minutes=dt)
+
+                # 現在日時が予測次回チェック日時を過ぎているなら更新対象とする
+                if predict_dst < now_dst:
+                    result.append(m)
+        except (KeyError, ValueError):
+            # マイリストオブジェクトのキーエラーなど
+            logger.error(f"{self.L_KIND} GetTargetMylist failed, KeyError.")
+            return []
 
         return result
-
-
-# class ProcessUpdatePartialMylistInfoThreadProgress(ProcessUpdateAllMylistInfoThreadProgress):
-
-#     def __init__(self):
-#         super().__init__()
-
-#         # イベントキー
-#         self.E_PROGRESS = "-PARTIAL_UPDATE_THREAD_PROGRESS-"
 
 
 class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateAllMylistInfoThreadDone):
@@ -70,7 +80,7 @@ class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateAllMylistInfoThreadD
         super().__init__()
 
         # ログメッセージ
-        self.L_FINISH = "Partial mylist update finished."
+        self.L_KIND = "Partial mylist"
 
 
 if __name__ == "__main__":

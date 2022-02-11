@@ -73,7 +73,7 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
             self.assertEqual("-UPDATE_THREAD_DONE-", pumi.E_DONE)
 
     def test_PUMIGetTargetMylist(self):
-        """GetTargetMylist の初期状態をテストする
+        """GetTargetMylist をテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.info"))
