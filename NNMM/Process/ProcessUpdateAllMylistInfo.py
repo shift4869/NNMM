@@ -451,8 +451,12 @@ class ProcessUpdateAllMylistInfo(ProcessBase.ProcessBase):
 
 class ProcessUpdateAllMylistInfoThreadDone(ProcessBase.ProcessBase):
 
-    def __init__(self):
-        super().__init__(False, True, "全マイリスト内容更新")
+    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
+        # 派生クラスの生成時は引数ありで呼び出される
+        if process_name:
+            super().__init__(log_sflag, log_eflag, process_name)
+        else:
+            super().__init__(False, True, "全マイリスト内容更新")
 
         # ログメッセージ
         self.L_KIND = "All mylist"

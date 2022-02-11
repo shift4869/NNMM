@@ -56,60 +56,13 @@ class ProcessUpdateMylistInfo(ProcessUpdateAllMylistInfo):
         return m_list
 
 
-class ProcessUpdateMylistInfoThreadDone(ProcessBase.ProcessBase):
+class ProcessUpdateMylistInfoThreadDone(ProcessUpdateAllMylistInfoThreadDone):
 
     def __init__(self):
         super().__init__(False, True, "マイリスト内容更新")
 
         # ログメッセージ
         self.L_KIND = "Mylist"
-
-    def Run(self, mw) -> int:
-        """マイリスト情報を更新後の後処理
-
-        Notes:
-            "-UPDATE_THREAD_DONE-"
-            -UPDATE-の処理が終わった後の処理
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0, エラー時-1
-        """
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error(f"{self.L_KIND} update failed, argument error.")
-            return -1
-
-        # 左下の表示を戻す
-        self.window["-INPUT2-"].update(value="更新完了！")
-
-        # テーブルの表示を更新する
-        mylist_url = self.values["-INPUT1-"]
-        if mylist_url != "":
-            UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
-        self.window.refresh()
-
-        # マイリストの新着表示を表示するかどうか判定する
-        def_data = self.window["-TABLE-"].Values  # 現在のtableの全リスト
-
-        # 左のマイリストlistboxの表示を更新する
-        # 一つでも未視聴の動画が含まれる場合はマイリストの進捗フラグを立てる
-        if IsMylistIncludeNewVideo(def_data):
-            # 新着フラグを更新
-            self.mylist_db.UpdateIncludeFlag(mylist_url, True)
-
-        # マイリスト画面表示更新
-        UpdateMylistShow(self.window, self.mylist_db)
-
-        logger.info(f"{self.L_KIND} update success.")
-        return 0
 
 
 if __name__ == "__main__":

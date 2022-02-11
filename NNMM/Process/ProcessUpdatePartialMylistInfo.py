@@ -77,7 +77,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateAllMylistInfo):
 class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateAllMylistInfoThreadDone):
 
     def __init__(self):
-        super().__init__()
+        super().__init__(False, True, "複数マイリスト内容更新")
 
         # ログメッセージ
         self.L_KIND = "Partial mylist"

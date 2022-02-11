@@ -134,79 +134,16 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
             actual = pumi.GetTargetMylist()
             self.assertEqual([], actual)
 
-    def test_PUMITDRun(self):
-        """ProcessUpdateMylistInfoThreadDone のRunをテストする
+    def test_PUPMITDInit(self):
+        """ProcessUpdateMylistInfoThreadDone の初期状態をテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.error"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.UpdateTableShow"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.UpdateMylistShow"))
 
             pumitd = ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone()
 
-            # 正常系
-            m_list = self.MakeMylistDB()
-            mylist_url = m_list[0].get("url")
-            table_list = self.MakeMylistInfoDB(mylist_url)
-            records = []
-            for record in table_list:
-                records.append(list(record.values()))
-            r = MagicMock()
-            r.Values = records
-            expect_window_dict = {
-                "-TABLE-": r,
-                "-INPUT2-": MagicMock()
-            }
-            expect_values_dict = {
-                "-INPUT1-": mylist_url
-            }
-
-            mockmw = MagicMock()
-            mockwindow = MagicMock()
-            mockwindow.__getitem__.side_effect = expect_window_dict.__getitem__
-            mockwindow.__iter__.side_effect = expect_window_dict.__iter__
-            mockwindow.__contains__.side_effect = expect_window_dict.__contains__
-            mockmw.window = mockwindow
-            mockvalues = MagicMock()
-            mockvalues.__getitem__.side_effect = expect_values_dict.__getitem__
-            mockvalues.__iter__.side_effect = expect_values_dict.__iter__
-            mockvalues.__contains__.side_effect = expect_values_dict.__contains__
-            mockmw.values = mockvalues
-
-            actual = pumitd.Run(mockmw)
-            self.assertEqual(0, actual)
-
-            # 実行後呼び出し確認
-            mc = mockmw.window.mock_calls
-            self.assertEqual(3, len(mc))
-            self.assertEqual(call.__getitem__("-INPUT2-"), mc[0])
-            self.assertEqual(call.refresh(), mc[1])
-            self.assertEqual(call.__getitem__("-TABLE-"), mc[2])
-            mockmw.window.reset_mock()
-
-            mc = mockmw.values.mock_calls
-            self.assertEqual(1, len(mc))
-            self.assertEqual(call.__getitem__("-INPUT1-"), mc[0])
-            mockmw.values.reset_mock()
-
-            mc = mockmw.mock_calls
-            self.assertEqual(5, len(mc))
-            self.assertEqual(call.window.__getitem__("-INPUT2-"), mc[0])
-            self.assertEqual(call.values.__getitem__("-INPUT1-"), mc[1])
-            self.assertEqual(call.window.refresh(), mc[2])
-            self.assertEqual(call.window.__getitem__("-TABLE-"), mc[3])
-            self.assertEqual(call.mylist_db.UpdateIncludeFlag(mylist_url, True), mc[4])
-            mockmw.reset_mock()
-
-            mockuts.assert_called_once_with(pumitd.window, pumitd.mylist_db, pumitd.mylist_info_db, mylist_url)
-            mockums.assert_called_once_with(pumitd.window, pumitd.mylist_db)
-
-            # 異常系
-            # 引数エラー
-            del mockmw.window
-            actual = pumitd.Run(mockmw)
-            self.assertEqual(-1, actual)
+            self.assertEqual("Mylist", pumitd.L_KIND)
 
 
 if __name__ == "__main__":
