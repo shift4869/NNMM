@@ -1,5 +1,5 @@
 # coding: utf-8
-"""ProcessUpdateAllMylistInfo のテスト
+"""ProcessUpdateMylistInfoBase のテスト
 """
 
 import sys
@@ -7,10 +7,45 @@ import unittest
 from contextlib import ExitStack
 
 from mock import AsyncMock, MagicMock, call, patch
+from NNMM.MylistDBController import *
+from NNMM.MylistInfoDBController import *
 from NNMM.Process import *
 
 
-class TestProcessUpdateAllMylistInfo(unittest.TestCase):
+class ConcreteProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoBase):
+
+    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
+        """テスト用具体化クラス
+        """
+        super().__init__(True, False, "テスト用具体化クラス")
+
+        self.L_KIND = ""
+        self.E_DONE = ""
+
+    def MakeMylistDB(self, num: int = 5) -> list[dict]:
+        """mylist_db.Select()で取得されるマイリストデータセット
+        """
+        res = []
+        col = ["id", "username", "mylistname", "type", "showname", "url",
+               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
+        rows = [[i, f"投稿者{i+1}", "投稿動画", "uploaded", f"投稿者{i+1}さんの投稿動画",
+                 f"https://www.nicovideo.jp/user/1000000{i+1}/video",
+                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
+                 "15分", True if i % 2 == 0 else False] for i in range(num)]
+
+        for row in rows:
+            d = {}
+            for r, c in zip(row, col):
+                d[c] = r
+            res.append(d)
+        return res
+
+    def GetTargetMylist(self) -> list[Mylist]:
+        m_list = self.MakeMylistDB()
+        return m_list
+
+
+class TestProcessUpdateMylistInfoBase(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -60,14 +95,14 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         return res
 
     def test_PUAMIRun(self):
-        """ProcessUpdateAllMylistInfoのRunをテストする
+        """ProcessUpdateMylistInfoBaseのRunをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
-            mockthread = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.threading.Thread"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
+            mockthread = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.threading.Thread"))
 
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+            puami = ConcreteProcessUpdateMylistInfo()
 
             # 正常系
             mockmw = MagicMock()
@@ -100,16 +135,15 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         """UpdateMylistInfoThreadをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
-            mocktime = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.time"))
-            mockgtm = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo.GetTargetMylist"))
-            mockgfl = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo.GetFunctionList"))
-            mockgpvl = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo.GetPrevVideoLists"))
-            mockgmie = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo.GetMylistInfoExecute"))
-            mockumie = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo.UpdateMylistInfoExecute"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
+            mocktime = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.time"))
+            mockgfl = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoBase.GetFunctionList"))
+            mockgpvl = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoBase.GetPrevVideoLists"))
+            mockgmie = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoBase.GetMylistInfoExecute"))
+            mockumie = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoBase.UpdateMylistInfoExecute"))
 
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+            puami = ConcreteProcessUpdateMylistInfo()
 
             # 正常系
             mocktime.time.return_value = 0
@@ -123,14 +157,14 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             self.assertEqual(call.write_event_value(puami.E_DONE, ""), mc[0])
             puami.window.reset_mock()
 
-            mockgtm.assert_called_once_with()
-            mockgfl.assert_called_once_with(mockgtm.return_value)
-            mockgpvl.assert_called_once_with(mockgtm.return_value)
-            mockgmie.assert_called_once_with(mockgfl.return_value, mockgtm.return_value)
-            mockumie.assert_called_once_with(mockgtm.return_value, mockgpvl.return_value, mockgmie.return_value)
+            m_list = puami.GetTargetMylist()
+            mockgfl.assert_called_once_with(m_list)
+            mockgpvl.assert_called_once_with(m_list)
+            mockgmie.assert_called_once_with(mockgfl.return_value, m_list)
+            mockumie.assert_called_once_with(m_list, mockgpvl.return_value, mockgmie.return_value)
 
             # 更新対象が空だった
-            mockgtm.return_value = []
+            puami.GetTargetMylist = lambda: []
             actual = puami.UpdateMylistInfoThread()
             self.assertEqual(1, actual)
 
@@ -145,39 +179,16 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             actual = puami.UpdateMylistInfoThread()
             self.assertEqual(-1, actual)
 
-    def test_GetTargetMylist(self):
-        """GetTargetMylistをテストする
-        """
-        with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
-
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
-
-            # 正常系
-            expect = ["TargetMylist list"]
-            r = MagicMock()
-            r.Select = lambda: expect
-            puami.mylist_db = r
-            actual = puami.GetTargetMylist()
-            self.assertEqual(expect, actual)
-
-            # 異常系
-            # 属性エラー
-            del puami.mylist_db
-            actual = puami.GetTargetMylist()
-            self.assertEqual([], actual)
-
     def test_GetFunctionList(self):
         """GetFunctionListをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
-            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.GetMyListInfo.AsyncGetMyListInfo"))
-            mockagmilw = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.GetMyListInfo.AsyncGetMyListInfoLightWeight"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
+            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.GetMyListInfo.AsyncGetMyListInfo"))
+            mockagmilw = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.GetMyListInfo.AsyncGetMyListInfoLightWeight"))
 
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+            puami = ConcreteProcessUpdateMylistInfo()
 
             # 正常系
             prev_video_list = self.MakeMylistInfoDB(num=3)
@@ -212,10 +223,10 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         """GetPrevVideoListsをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
 
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+            puami = ConcreteProcessUpdateMylistInfo()
 
             # 正常系
             prev_video_list = self.MakeMylistInfoDB()
@@ -250,11 +261,11 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         """GetMylistInfoExecuteをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
-            mocktpe = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.ThreadPoolExecutor"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
+            mocktpe = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.ThreadPoolExecutor"))
 
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+            puami = ConcreteProcessUpdateMylistInfo()
 
             # 正常系
             NUM = 5
@@ -310,10 +321,10 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         """GetMylistInfoWorker をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
 
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+            puami = ConcreteProcessUpdateMylistInfo()
 
             # 正常系
             puami.window = MagicMock()
@@ -359,11 +370,11 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         """UpdateMylistInfoExecute をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
-            mocktpe = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.ThreadPoolExecutor"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
+            mocktpe = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.ThreadPoolExecutor"))
 
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+            puami = ConcreteProcessUpdateMylistInfo()
 
             # 正常系
             NUM = 5
@@ -417,13 +428,13 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         """UpdateMylistInfoWorker をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
-            mockgdt = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.GetNowDatetime"))
-            mockmdb = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.MylistDBController"))
-            mockmidb = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.MylistInfoDBController"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
+            mockgdt = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.GetNowDatetime"))
+            mockmdb = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.MylistDBController"))
+            mockmidb = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.MylistInfoDBController"))
 
-            puami = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfo()
+            puami = ConcreteProcessUpdateMylistInfo()
 
             # 正常系
             dst = "2022-02-08 01:00:01"
@@ -662,13 +673,13 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         """UpdateAllMylistInfoThreadProgress のRunをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.logger.error"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.UpdateTableShow"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.UpdateMylistShow"))
-            # mockiminv = stack.enter_context(patch("NNMM.Process.ProcessUpdateAllMylistInfo.IsMylistIncludeNewVideo"))
+            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.UpdateTableShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.UpdateMylistShow"))
+            # mockiminv = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.IsMylistIncludeNewVideo"))
 
-            puamitd = ProcessUpdateAllMylistInfo.ProcessUpdateAllMylistInfoThreadDone()
+            puamitd = ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoThreadDoneBase()
 
             # 正常系
             def ReturnSelectFromMylistURL(mylist_url):

@@ -5,6 +5,7 @@ from . import ProcessShowMylistInfo
 from . import ProcessShowMylistInfoAll
 from . import ProcessCreateMylist
 from . import ProcessDeleteMylist
+from . import ProcessUpdateMylistInfoBase
 from . import ProcessUpdateMylistInfo
 from . import ProcessUpdateAllMylistInfo
 from . import ProcessUpdatePartialMylistInfo

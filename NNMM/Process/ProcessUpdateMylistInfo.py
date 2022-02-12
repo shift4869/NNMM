@@ -6,14 +6,14 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
-from NNMM.Process.ProcessUpdateAllMylistInfo import *
+from NNMM.Process import ProcessUpdateMylistInfoBase
 
 
 logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-class ProcessUpdateMylistInfo(ProcessUpdateAllMylistInfo):
+class ProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoBase):
 
     def __init__(self):
         """マイリスト情報を更新する
@@ -22,8 +22,6 @@ class ProcessUpdateMylistInfo(ProcessUpdateAllMylistInfo):
             "-UPDATE-"
             右上の更新ボタンが押された場合
             ProcessUpdateMylistInfoは現在表示されている単一のマイリストについて動画情報を更新する
-            ProcessUpdateAllMylistInfoを継承し、更新対象として単一のマイリストを返すことで
-            その他の処理を継承元に任せている
         """
         super().__init__(True, False, "マイリスト内容更新")
 
@@ -55,12 +53,10 @@ class ProcessUpdateMylistInfo(ProcessUpdateAllMylistInfo):
         return m_list
 
 
-class ProcessUpdateMylistInfoThreadDone(ProcessUpdateAllMylistInfoThreadDone):
+class ProcessUpdateMylistInfoThreadDone(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoThreadDoneBase):
 
     def __init__(self):
         super().__init__(False, True, "マイリスト内容更新")
-
-        # ログメッセージ
         self.L_KIND = "Mylist"
 
 

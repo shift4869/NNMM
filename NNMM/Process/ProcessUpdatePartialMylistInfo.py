@@ -6,22 +6,25 @@ from logging import INFO, getLogger
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
-from NNMM.Process.ProcessUpdateAllMylistInfo import *
+from NNMM.Process import ProcessUpdateMylistInfoBase
 
 
 logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-class ProcessUpdatePartialMylistInfo(ProcessUpdateAllMylistInfo):
+class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoBase):
 
     def __init__(self):
+        """一部（複数の）マイリストのマイリスト情報を更新するクラス
+
+        Attributes:
+            L_KIND (str): ログ出力用のメッセージベース
+            E_DONE (str): 後続処理へのイベントキー
+        """
         super().__init__(True, False, "複数マイリスト内容更新")
 
-        # ログメッセージ
         self.L_KIND = "Partial mylist"
-
-        # イベントキー
         self.E_DONE = "-PARTIAL_UPDATE_THREAD_DONE-"
 
     def GetTargetMylist(self) -> list[Mylist]:
@@ -32,7 +35,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateAllMylistInfo):
             前回更新確認時からインターバル分だけ経過しているもののみ更新対象とする
 
         Returns:
-            list[Mylist]: 更新対象のマイリストのリスト
+            list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
         """
         # 属性チェック
         if not hasattr(self, "mylist_db"):
@@ -74,12 +77,10 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateAllMylistInfo):
         return result
 
 
-class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateAllMylistInfoThreadDone):
+class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoThreadDoneBase):
 
     def __init__(self):
         super().__init__(False, True, "複数マイリスト内容更新")
-
-        # ログメッセージ
         self.L_KIND = "Partial mylist"
 
 
