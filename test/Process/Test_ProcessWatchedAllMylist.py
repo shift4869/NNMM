@@ -76,7 +76,9 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
                 mockmw.reset_mock()
 
                 mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)
+                mockums.reset_mock()
                 mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db)
+                mockuts.reset_mock()
 
             assertMockCall()
 

@@ -29,7 +29,7 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
             mw (MainWindow): メインウィンドウオブジェクト
 
         Returns:
-            int: 成功時0, エラー時-1
+            int: 成功時0, すでに視聴済なら1, エラー時-1
         """
         logger.info(f"WatchedAllMylist start.")
 
@@ -48,17 +48,18 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
             logger.error("WatchedMylist failed, no mylist selected.")
             return -1
 
-        v = self.values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
+        v = self.values["-LIST-"][0]  # 選択値
 
-        if v[:2] == "*:":
+        NEW_MARK = "*:"
+        if v[:2] == NEW_MARK:
             v = v[2:]
         record = self.mylist_db.SelectFromShowname(v)[0]
         mylist_url = record.get("url")
 
         # マイリストの新着フラグがFalseなら何もしない
         if not record.get("is_include_new"):
-            logger.error('WatchedMylist failed, selected mylist is already "watched".')
-            return -1
+            logger.error('WatchedMylist success, selected mylist is already "watched".')
+            return 1
 
         # マイリスト情報内の視聴済フラグを更新
         self.mylist_info_db.UpdateStatusInMylist(mylist_url, "")

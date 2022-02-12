@@ -6,7 +6,6 @@ import sys
 import unittest
 from contextlib import ExitStack
 from mock import MagicMock, patch, call
-from pathlib import Path
 
 from NNMM.Process import *
 
@@ -38,8 +37,25 @@ class TestProcessWatchedMylist(unittest.TestCase):
         return res
 
     def ReturnMW(self):
+        m_list = self.MakeMylistDB()
+        showname = m_list[0]["showname"]
+
         r = MagicMock()
-        r.mylist_db.Select.side_effect = lambda: self.MakeMylistDB()
+
+        expect_values_dict = {
+            "-LIST-": [showname]
+        }
+
+        mockvalues = MagicMock()
+        mockvalues.__getitem__.side_effect = expect_values_dict.__getitem__
+        mockvalues.__iter__.side_effect = expect_values_dict.__iter__
+        mockvalues.__contains__.side_effect = expect_values_dict.__contains__
+        r.values = mockvalues
+
+        def ReturnSelectFromShowname(v):
+            return [m for m in m_list if m["showname"] == v]
+
+        r.mylist_db.SelectFromShowname.side_effect = ReturnSelectFromShowname
         return r
 
     def test_PVPRun(self):
@@ -61,28 +77,50 @@ class TestProcessWatchedMylist(unittest.TestCase):
             # 実行後呼び出し確認
             def assertMockCall():
                 m_list = self.MakeMylistDB()
-                records = [m for m in m_list if m["is_include_new"]]
-                all_num = len(records)
+                showname = m_list[0]["showname"]
+                mylist_url = m_list[0]["url"]
 
-                index = 1
                 mc = mockmw.mock_calls
-                self.assertEqual(1 + all_num * 2, len(mc))
-                self.assertEqual(call.mylist_db.Select(), mc[0])
-                for i, record in enumerate(records):
-                    mylist_url = record.get("url")
-                    self.assertEqual(call.mylist_info_db.UpdateStatusInMylist(mylist_url, ""), mc[index])
-                    self.assertEqual(call.mylist_db.UpdateIncludeFlag(mylist_url, False), mc[index + 1])
-                    index += 2
+                self.assertEqual(5, len(mc))
+                self.assertEqual(call.values.__getitem__("-LIST-"), mc[0])
+                self.assertEqual(call.values.__getitem__("-LIST-"), mc[1])
+                self.assertEqual(call.mylist_db.SelectFromShowname(showname), mc[2])
+                self.assertEqual(call.mylist_info_db.UpdateStatusInMylist(mylist_url, ""), mc[3])
+                self.assertEqual(call.mylist_db.UpdateIncludeFlag(mylist_url, False), mc[4])
                 mockmw.reset_mock()
 
                 mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)
+                mockums.reset_mock()
                 mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db)
+                mockuts.reset_mock()
 
             assertMockCall()
 
+            # マイリストに新着フラグあり
+            NEW_MARK = "*:"
+            mockmw = self.ReturnMW()
+            mockmw.values["-LIST-"][0] = NEW_MARK + mockmw.values["-LIST-"][0]
+            mockmw.reset_mock()
+            actual = pwm.Run(mockmw)
+            self.assertEqual(0, actual)
+            assertMockCall()
+
             # 異常系
+            # マイリストが選択されていない
+            mockmw = self.ReturnMW()
+            expect_values_dict = {
+                "-LIST-": []
+            }
+            mockvalues = MagicMock()
+            mockvalues.__getitem__.side_effect = expect_values_dict.__getitem__
+            mockvalues.__iter__.side_effect = expect_values_dict.__iter__
+            mockvalues.__contains__.side_effect = expect_values_dict.__contains__
+            mockmw.values = mockvalues
+            actual = pwm.Run(mockmw)
+            self.assertEqual(-1, actual)
+
             # 引数エラー
-            del mockmw.window
+            del mockmw.values
             actual = pwm.Run(mockmw)
             self.assertEqual(-1, actual)
 
