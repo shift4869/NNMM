@@ -19,16 +19,34 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
         super().__init__(True, True, "視聴済にする（選択）")
 
     def Run(self, mw):
-        # "視聴済にする（選択）::-MR-""
-        # マイリスト右クリックで「視聴済にする（選択）」が選択された場合
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """マイリストに含まれる動画情報についてすべて"視聴済"にする
+
+        Notes:
+            "視聴済にする（選択）::-MR-"
+            マイリスト右クリックで「視聴済にする（選択）」が選択された場合
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 成功時0, エラー時-1
+        """
+        logger.info(f"WatchedAllMylist start.")
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("WatchedMylist failed, argument error.")
+            return -1
 
         # マイリストが選択されていない場合は何もしない
         if not self.values["-LIST-"]:
-            return
+            logger.error("WatchedMylist failed, no mylist selected.")
+            return -1
 
         v = self.values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
 
@@ -39,22 +57,23 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
 
         # マイリストの新着フラグがFalseなら何もしない
         if not record.get("is_include_new"):
-            return
+            logger.error('WatchedMylist failed, selected mylist is already "watched".')
+            return -1
 
         # マイリスト情報内の視聴済フラグを更新
         self.mylist_info_db.UpdateStatusInMylist(mylist_url, "")
         # マイリストの新着フラグを更新
         self.mylist_db.UpdateIncludeFlag(mylist_url, False)
 
+        logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
+
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)
         # テーブル画面表示更新
-        # 現在表示されているマイリストの内容で更新する
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db)
-        # 選択されているマイリストの内容を表示する
-        # UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
-        logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
+        logger.info(f"WatchedMylist success.")
+        return 0
     
 
 if __name__ == "__main__":

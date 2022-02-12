@@ -66,6 +66,7 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
         # テーブル画面表示更新
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db)
 
+        logger.info(f"WatchedAllMylist success.")
         return 0
    
 
