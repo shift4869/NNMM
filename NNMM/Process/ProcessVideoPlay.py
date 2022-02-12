@@ -57,34 +57,34 @@ class ProcessVideoPlay(ProcessBase.ProcessBase):
         # 選択されたテーブル行
         selected = def_data[row]
 
-        # ブラウザに動画urlを渡す
-        config = ConfigMain.ProcessConfigBase.GetConfig()
-        cmd = config["general"].get("browser_path", "")
+        # 動画URLを取得
         records = self.mylist_info_db.SelectFromVideoID(selected[1])
         record = records[0]
         video_url = record.get("video_url")
+
+        config = ConfigMain.ProcessConfigBase.GetConfig()
+        cmd = config["general"].get("browser_path", "")
         if cmd != "" and Path(cmd).is_file():
+            # ブラウザに動画urlを渡す
             sp = sg.execute_command_subprocess(cmd, video_url)
             # logger.info(sg.execute_get_results(sp)[0])
             logger.info(f"{cmd} -> valid browser path.")
             logger.info(f"{video_url} -> video page opened with browser.")
         else:
+            # ブラウザパスが不正
             sg.popup_ok("ブラウザパスが不正です。設定タブから設定してください。")
             logger.info(f"{cmd} -> invalid browser path.")
             logger.info(f"{video_url} -> video page open failed.")
             return -1
-        
+
         # 視聴済にする
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
         STATUS_INDEX = 4
         # 状況を更新
         if def_data[row][STATUS_INDEX] != "":
-            def_data[row][STATUS_INDEX] = ""
-            self.window["-TABLE-"].update(values=def_data)
-
-        # 視聴済にする
-        pb = ProcessWatched()
-        pb.Run(mw)
+            # 視聴済にする
+            pb = ProcessWatched()
+            pb.Run(mw)
 
         logger.info(f"VideoPlay success.")
         return 0

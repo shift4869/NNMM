@@ -95,7 +95,7 @@ class TestProcessVideoPlay(unittest.TestCase):
             table_list = self.MakeMylistInfoDB(mylist_url)
             return [r for r in table_list if r["video_id"] == video_id]
 
-        r.mylist_info_db.SelectFromVideoID = ReturnSelectFromVideoID
+        r.mylist_info_db.SelectFromVideoID.side_effect = ReturnSelectFromVideoID
         return r
 
     def test_PVPRun(self):
@@ -105,7 +105,7 @@ class TestProcessVideoPlay(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.logger.error"))
             mockcmd = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
-            mockcecs = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.sg.execute_command_subprocess"))
+            mockecs = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.sg.execute_command_subprocess"))
             mockpok = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.sg.popup_ok"))
             mockpw = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.ProcessWatched"))
 
@@ -116,14 +116,63 @@ class TestProcessVideoPlay(unittest.TestCase):
             dummy_path = Path(DUMMY_EXE)
             dummy_path.touch()
 
-            mockcmd.return_value = {"general": {"browser_path": DUMMY_EXE}}
+            expect_config_dict = {"general": {"browser_path": DUMMY_EXE}}
+            mockcmd.return_value = expect_config_dict
             mockmw = self.ReturnMW()
             actual = pvp.Run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
+            def assertMockCall():
+                row = 0
+                m_list = self.MakeMylistDB()
+                mylist_url = m_list[0]["url"]
+                table_list = self.MakeMylistInfoDB(mylist_url)
+                def_data = [list(r.values()) for r in table_list]
+                selected = def_data[row]
+
+                video_id = selected[1]
+                table_list = self.MakeMylistInfoDB(mylist_url)
+                records = [r for r in table_list if r["video_id"] == video_id]
+                record = records[0]
+                video_url = record.get("video_url")
+
+                cmd = expect_config_dict["general"].get("browser_path", "")
+                if cmd != "" and Path(cmd).is_file():
+                    mockecs.assert_called_once_with(cmd, video_url)
+                    mockecs.reset_mock()
+
+                    STATUS_INDEX = 4
+                    if def_data[row][STATUS_INDEX] != "":
+                        mockpw.assert_called_once_with()
+                        mockpw.reset_mock()
+                else:
+                    mockpok.assert_called_once_with("ブラウザパスが不正です。設定タブから設定してください。")
+                    mockpok.reset_mock()
+
+                mc = mockmw.mock_calls
+                self.assertEqual(4, len(mc))
+                self.assertEqual(call.values.__getitem__("-TABLE-"), mc[0])
+                self.assertEqual(call.values.__getitem__("-TABLE-"), mc[1])
+                self.assertEqual(call.window.__getitem__("-TABLE-"), mc[2])
+                self.assertEqual(call.mylist_info_db.SelectFromVideoID(selected[1]), mc[3])
+                mockmw.reset_mock()
+
+            assertMockCall()
 
             # 異常系
+            # ブラウザパスが不正
+            expect_config_dict["general"]["browser_path"] = "不正なブラウザパス"
+            mockmw = self.ReturnMW()
+            actual = pvp.Run(mockmw)
+            self.assertEqual(-1, actual)
+            assertMockCall()
+
+            # テーブルの行が選択されていない
+            mockmw = self.ReturnMW()
+            mockmw.values = {"-TABLE-": []}
+            actual = pvp.Run(mockmw)
+            self.assertEqual(-1, actual)
 
             # 引数エラー
             del mockmw.window
