@@ -19,12 +19,29 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
         super().__init__(True, True, "視聴済にする（全て）")
 
     def Run(self, mw):
-        # "視聴済にする（全て）::-MR-"
-        # マイリスト右クリックで「視聴済にする（全て）」が選択された場合
-        self.window = mw.window
-        self.values = mw.values
-        self.mylist_db = mw.mylist_db
-        self.mylist_info_db = mw.mylist_info_db
+        """すべてのマイリストに含まれる動画情報についてすべて"視聴済"にする
+
+        Notes:
+            "視聴済にする（全て）::-MR-"
+            マイリスト右クリックで「視聴済にする（全て）」が選択された場合
+
+        Args:
+            mw (MainWindow): メインウィンドウオブジェクト
+
+        Returns:
+            int: 成功時0, エラー時-1
+        """
+        logger.info(f"WatchedAllMylist start.")
+
+        # 引数チェック
+        try:
+            self.window = mw.window
+            self.values = mw.values
+            self.mylist_db = mw.mylist_db
+            self.mylist_info_db = mw.mylist_info_db
+        except AttributeError:
+            logger.error("WatchedAllMylist failed, argument error.")
+            return -1
 
         m_list = self.mylist_db.Select()
         records = [m for m in m_list if m["is_include_new"]]
@@ -48,7 +65,9 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
         UpdateMylistShow(self.window, self.mylist_db)
         # テーブル画面表示更新
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db)
-    
+
+        return 0
+   
 
 if __name__ == "__main__":
     from NNMM import MainWindow
