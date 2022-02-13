@@ -152,7 +152,6 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
             mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdatePartialMylistInfo.logger.error"))
 
             pupmitd = ProcessUpdatePartialMylistInfo.ProcessUpdatePartialMylistInfoThreadDone()
-
             self.assertEqual("Partial mylist", pupmitd.L_KIND)
 
 

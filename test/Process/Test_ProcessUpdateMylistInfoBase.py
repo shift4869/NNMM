@@ -19,8 +19,8 @@ class ConcreteProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateM
         """
         super().__init__(True, False, "テスト用具体化クラス")
 
-        self.L_KIND = ""
-        self.E_DONE = ""
+        self.L_KIND = "Concrete Kind"
+        self.E_DONE = "Concrete Event Key"
 
     def MakeMylistDB(self, num: int = 5) -> list[dict]:
         """mylist_db.Select()で取得されるマイリストデータセット

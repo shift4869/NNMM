@@ -142,7 +142,6 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
             mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.error"))
 
             pumitd = ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone()
-
             self.assertEqual("Mylist", pumitd.L_KIND)
 
 
