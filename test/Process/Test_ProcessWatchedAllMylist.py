@@ -39,10 +39,25 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
 
     def ReturnMW(self):
         r = MagicMock()
+        
+        mylist_url = "https://www.nicovideo.jp/user/10000001/video"
+        mockget = MagicMock()
+        mockget.get.side_effect = lambda: mylist_url
+
+        expect_window_dict = {
+            "-INPUT1-": mockget
+        }
+
+        mockwindow = MagicMock()
+        mockwindow.__getitem__.side_effect = expect_window_dict.__getitem__
+        mockwindow.__iter__.side_effect = expect_window_dict.__iter__
+        mockwindow.__contains__.side_effect = expect_window_dict.__contains__
+        r.window = mockwindow
+
         r.mylist_db.Select.side_effect = lambda: self.MakeMylistDB()
         return r
 
-    def test_PVPRun(self):
+    def test_PWAMRun(self):
         """ProcessWatchedAllMylist のRunをテストする
         """
         with ExitStack() as stack:
@@ -54,6 +69,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
             pwam = ProcessWatchedAllMylist.ProcessWatchedAllMylist()
 
             # 正常系
+            mylist_url_s = "https://www.nicovideo.jp/user/10000001/video"
             mockmw = self.ReturnMW()
             actual = pwam.Run(mockmw)
             self.assertEqual(0, actual)
@@ -64,22 +80,38 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
                 records = [m for m in m_list if m["is_include_new"]]
                 all_num = len(records)
 
+                b_count = 4 if mylist_url_s == "" else 2
                 index = 1
                 mc = mockmw.mock_calls
-                self.assertEqual(1 + all_num * 2, len(mc))
+                self.assertEqual(b_count + all_num * 2, len(mc))
                 self.assertEqual(call.mylist_db.Select(), mc[0])
                 for i, record in enumerate(records):
                     mylist_url = record.get("url")
                     self.assertEqual(call.mylist_info_db.UpdateStatusInMylist(mylist_url, ""), mc[index])
                     self.assertEqual(call.mylist_db.UpdateIncludeFlag(mylist_url, False), mc[index + 1])
                     index += 2
+
+                self.assertEqual(call.window.__getitem__("-INPUT1-"), mc[index])
+                if mylist_url == "":
+                    self.assertEqual(call.window.__getitem__(""), mc[index])
+                    self.assertEqual(call.mylist_info_db.UpdateStatusInMylist(mylist_url, ""), mc[index])
+                    
                 mockmw.reset_mock()
 
                 mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)
                 mockums.reset_mock()
-                mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db)
+                mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mylist_url_s)
                 mockuts.reset_mock()
 
+            assertMockCall()
+
+            # 右上のテキストボックスが空（横断的にすべて表示時等）
+            mylist_url_s = ""
+            mockmw = self.ReturnMW()
+            mockmw.window["-INPUT1-"].get.side_effect = lambda: mylist_url_s
+            mockmw.reset_mock()
+            actual = pwam.Run(mockmw)
+            self.assertEqual(0, actual)
             assertMockCall()
 
             # 異常系

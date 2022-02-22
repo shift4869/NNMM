@@ -61,10 +61,23 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
 
             logger.info(f'{mylist_url} -> all include videos status are marked "watched" ... ({i + 1}/{all_num}).')
 
+        # 右上のテキストボックスからマイリストURLを取得
+        mylist_url = self.window["-INPUT1-"].get()
+        # 空白の場合
+        if mylist_url == "":
+            # 現在表示しているテーブルの表示をすべて視聴済にする
+            def_data = self.window["-TABLE-"].Values  # 現在のtableの全リスト
+
+            for i, record in enumerate(def_data):
+                # マイリスト情報ステータスDB更新
+                table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+                def_data[i][4] = ""
+            self.window["-TABLE-"].update(values=def_data)
+
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)
         # テーブル画面表示更新
-        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db)
+        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info(f"WatchedAllMylist success.")
         return 0
