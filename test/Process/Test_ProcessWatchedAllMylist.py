@@ -6,7 +6,6 @@ import sys
 import unittest
 from contextlib import ExitStack
 from mock import MagicMock, patch, call
-from pathlib import Path
 
 from NNMM.Process import *
 
@@ -37,15 +36,29 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
             res.append(d)
         return res
 
+    def MakeTableRecords(self):
+        """表示中の動画テーブルから取得されるレコードセット
+        """
+        NUM = 5
+        mylist_url = "https://www.nicovideo.jp/user/10000001/video"
+
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+        records = [[i, f"sm0000000{i+1}", f"動画タイトル_{i+1}", f"投稿者1", "未視聴", "2022-01-28 22:00:00",
+                    f"https://www.nicovideo.jp/watch/sm1000000{i+1}", mylist_url] for i in range(NUM)]
+        return records
+
     def ReturnMW(self):
         r = MagicMock()
         
         mylist_url = "https://www.nicovideo.jp/user/10000001/video"
         mockget = MagicMock()
         mockget.get.side_effect = lambda: mylist_url
+        mockv = MagicMock()
+        mockv.Values = self.MakeTableRecords()
 
         expect_window_dict = {
-            "-INPUT1-": mockget
+            "-INPUT1-": mockget,
+            "-TABLE-": mockv
         }
 
         mockwindow = MagicMock()
@@ -71,6 +84,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
             # 正常系
             mylist_url_s = "https://www.nicovideo.jp/user/10000001/video"
             mockmw = self.ReturnMW()
+            mockmw.reset_mock()
             actual = pwam.Run(mockmw)
             self.assertEqual(0, actual)
 
@@ -92,10 +106,18 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
                     index += 2
 
                 self.assertEqual(call.window.__getitem__("-INPUT1-"), mc[index])
-                if mylist_url == "":
-                    self.assertEqual(call.window.__getitem__(""), mc[index])
-                    self.assertEqual(call.mylist_info_db.UpdateStatusInMylist(mylist_url, ""), mc[index])
-                    
+                if mylist_url_s == "":
+                    self.assertEqual(call.window.__getitem__("-TABLE-"), mc[index + 1])
+                    def_data = self.MakeTableRecords()
+                    for i, record in enumerate(def_data):
+                        # マイリスト情報ステータスDB更新
+                        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+                        def_data[i][4] = ""
+
+                    mct = mockmw.window["-TABLE-"].mock_calls
+                    self.assertEqual(1, len(mct))
+                    self.assertEqual(call.update(values=def_data), mct[0])
+
                 mockmw.reset_mock()
 
                 mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)
