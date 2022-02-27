@@ -318,7 +318,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         try:
             if not(hasattr(m_record, "get") and m_record.get("url")):
                 raise ValueError
-            if not(isinstance(prev_video_list, list) and prev_video_list):
+            if not(isinstance(prev_video_list, list)):
                 raise ValueError
             for m in prev_video_list:
                 if not (set(m.keys()) <= set(mylist_info_cols)):
