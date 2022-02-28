@@ -414,8 +414,8 @@ if __name__ == "__main__":
 
     # url = "https://www.nicovideo.jp/user/37896001/video"
     # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
-    url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
-    # url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
+    url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"
 
     loop = asyncio.new_event_loop()
     video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
