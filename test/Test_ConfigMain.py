@@ -178,6 +178,7 @@ class TestConfigMain(unittest.TestCase):
             mockpgf = stack.enter_context(patch("PySimpleGUI.popup_get_file"))
             mocklml = stack.enter_context(patch("NNMM.ConfigMain.LoadMylist"))
             mockpu = stack.enter_context(patch("PySimpleGUI.popup"))
+            mockums = stack.enter_context(patch("NNMM.ConfigMain.UpdateMylistShow"))
 
             TEST_INPUT_PATH = "./test/input.csv"
             mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH]
@@ -220,6 +221,12 @@ class TestConfigMain(unittest.TestCase):
             self.assertEqual(len(pucal), 1)
             self.assertEqual(("読込完了", ), pucal[0][0])
             mockpu.reset_mock()
+
+            # mockums[{n回目の呼び出し}][args=0]
+            umscal = mockums.call_args_list
+            self.assertEqual(len(umscal), 1)
+            self.assertEqual((mw.window, mw.mylist_db), umscal[0][0])
+            mockums.reset_mock()
 
             # 異常系
             # ファイル選択をキャンセルされた

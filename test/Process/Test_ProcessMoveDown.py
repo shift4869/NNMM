@@ -98,6 +98,13 @@ class TestProcessMoveDown(unittest.TestCase):
             self.assertEqual(1, actual)
 
             # 異常系
+            # マイリストが選択されていない
+            index = random.randint(1, NUM - 1)
+            mockmw = ReturnMW(index)
+            mockmw.values["-LIST-"] = []
+            actual = pmd.Run(mockmw)
+            self.assertEqual(-1, actual)
+
             # 引数エラー
             del mockmw.window
             actual = pmd.Run(mockmw)

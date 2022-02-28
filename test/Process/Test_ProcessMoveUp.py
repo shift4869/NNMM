@@ -5,7 +5,6 @@
 import random
 import sys
 import unittest
-import warnings
 from contextlib import ExitStack
 from mock import MagicMock, patch, call
 
@@ -97,6 +96,13 @@ class TestProcessMoveUp(unittest.TestCase):
             self.assertEqual(1, actual)
 
             # 異常系
+            # マイリストが選択されていない
+            index = random.randint(1, NUM - 1)
+            mockmw = ReturnMW(index)
+            mockmw.values["-LIST-"] = []
+            actual = pmu.Run(mockmw)
+            self.assertEqual(-1, actual)
+
             # 引数エラー
             del mockmw.window
             actual = pmu.Run(mockmw)

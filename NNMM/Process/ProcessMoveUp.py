@@ -43,6 +43,10 @@ class ProcessMoveUp(ProcessBase.ProcessBase):
             logger.error("MoveUp failed, argument error.")
             return -1
 
+        if not self.values["-LIST-"]:
+            logger.error("MoveUp failed, no mylist selected.")
+            return -1
+
         src_index = 0
         if self.window["-LIST-"].get_indexes():
             src_index = self.window["-LIST-"].get_indexes()[0]

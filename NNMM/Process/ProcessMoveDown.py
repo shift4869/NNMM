@@ -43,6 +43,10 @@ class ProcessMoveDown(ProcessBase.ProcessBase):
             logger.error("MoveDown failed, argument error.")
             return -1
 
+        if not self.values["-LIST-"]:
+            logger.error("MoveDown failed, no mylist selected.")
+            return -1
+
         src_index = 0
         if self.window["-LIST-"].get_indexes():
             src_index = self.window["-LIST-"].get_indexes()[0]

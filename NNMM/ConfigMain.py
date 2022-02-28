@@ -7,6 +7,7 @@ from pathlib import Path
 import PySimpleGUI as sg
 
 from NNMM.CSVSaveLoad import *
+from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
@@ -133,6 +134,8 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
         # マイリスト読込
         sd_path = Path(sd_path_str)
         res = LoadMylist(mw.mylist_db, str(sd_path))
+
+        UpdateMylistShow(mw.window, mw.mylist_db)
 
         # 結果通知
         if res == 0:
