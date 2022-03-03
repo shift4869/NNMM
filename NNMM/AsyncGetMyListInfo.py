@@ -4,16 +4,10 @@ import logging.config
 import pprint
 import re
 import traceback
-from urllib import response
-import urllib.parse
 from datetime import datetime
 from logging import INFO, getLogger
-from pathlib import Path
-from time import sleep
 
 import pyppeteer
-import requests
-from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession, HTMLResponse, HtmlElement
 
 from NNMM import ConfigMain, GuiFunction
@@ -24,7 +18,7 @@ logger.setLevel(INFO)
 
 
 async def AsyncGetMyListInfo(url: str) -> list[dict]:
-    """投稿動画ページアドレスから掲載されている動画の情報を取得する
+    """投稿動画/マイリストページアドレスから掲載されている動画の情報を取得する
 
     Notes:
         table_colsをキーとする情報を辞書で返す
@@ -48,41 +42,31 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
         logger.error("url_type is invalid , not target url.")
         return []
 
-    # URL取得
-    response = None
-    all_links_list = []
-    test_count = 0
-    MAX_TEST_NUM = 5
-    while True:
-        try:
-            response = await GetAsyncSessionResponce(url)
-
-            # すべてのリンクを抽出
-            all_links_set = response.html.links
-            all_links_list = list(all_links_set)  # setをlistにキャストするとvalueのみのリストになる
-        except Exception as e:
-            logger.error(traceback.format_exc())
-            pass
-
-        if (all_links_list) or (test_count > MAX_TEST_NUM):
-            break
-        test_count = test_count + 1
-        await asyncio.sleep(3)
-
-    # {MAX_TEST_NUM}回レンダリングしても失敗した場合はエラー
-    if test_count > MAX_TEST_NUM:
+    # ページ取得
+    session, response = await GetAsyncSessionResponce(url, True)
+    await session.close()
+    if not response:
         logger.error("HTML pages request failed.")
         return []
 
+    # すべての動画リンクを抽出
+    # setであるresponse.html.linksを使うと順序の情報が保存できないためタグを見る
+    # all_links_set = response.html.links
+    # setをlistにキャストするとvalueのみのリストになる
+    # all_links_list = list(all_links_set)
+    video_list = []
     pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+$"  # ニコニコ動画URLの形式
-    video_list = [s for s in all_links_list if re.search(pattern, s)]
+    video_link_lx = response.html.lxml.find_class("NC-MediaObject-main")
+    for video_link in video_link_lx:
+        a = video_link.find("a")
+        if re.search(pattern, a.attrib["href"]):
+            video_list.append(a.attrib["href"])
 
     # 動画リンクが1つもない場合は空リストを返して終了
     if video_list == []:
         logger.warning("HTML pages request is success , but video info is nothing.")
         return []
 
-    # ループ脱出後はレンダリングが正常に行えたことが保証されている
     # 動画情報を集める
     table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
     table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
@@ -95,7 +79,9 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"  # ニコニコ動画URLの形式
     video_id_list = [re.findall(pattern, s)[0] for s in video_list]
 
-    title_list, uploaded_list, username_list, showname, myshowname = await AnalysisHtml(url_type, video_id_list, response.html.lxml)
+    # 取得ページと動画IDから必要な情報を収集する
+    t = await AnalysisHtml(url_type, video_id_list, response.html.lxml)
+    title_list, uploaded_list, username_list, showname, myshowname = t
 
     # 結合
     res = []
@@ -113,46 +99,48 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
         value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
         res.append(dict(zip(table_cols, value_list)))
 
-    # 降順ソート（順番に積み上げているので自然と降順になっているはずだが一応）
-    # video_idで降順ソートする
-    # No.も付記する
-    # res.sort(key=lambda t: t["video_id"], reverse=True)
+    # No.を付記する
     for i, r in enumerate(res):
         res[i]["no"] = i + 1
 
     return res
 
 
-async def GetAsyncSessionResponce(request_url: str) -> HTMLResponse | None:
-    # セッション開始
-    session = AsyncHTMLSession()
-    browser = await pyppeteer.launch({
-        "ignoreHTTPSErrors": True,
-        "headless": True,
-        "handleSIGINT": False,
-        "handleSIGTERM": False,
-        "handleSIGHUP": False
-    })
-    session._browser = browser
+async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> HTMLResponse | None:
+    if not session:
+        # セッション開始
+        session = AsyncHTMLSession()
+        browser = await pyppeteer.launch({
+            "ignoreHTTPSErrors": True,
+            "headless": True,
+            "handleSIGINT": False,
+            "handleSIGTERM": False,
+            "handleSIGHUP": False
+        })
+        session._browser = browser
 
-    # ブラウザエンジンでHTMLを生成
+    MAX_RETRY_NUM = 5
+    response = None
+
     # 初回起動時はchromiumインストールのために時間がかかる
-    try:
-        response = await session.get(request_url)
-        await response.html.arender(sleep=1)
-    except Exception as e:
-        logger.error(traceback.format_exc())
-        return None
+    for _ in range(MAX_RETRY_NUM):
+        try:
+            response = await session.get(request_url)
+            if do_rendering:
+                await response.html.arender(sleep=2)
 
-    # responseの取得成否に関わらずセッションは閉じる
-    await session.close()
+            response.raise_for_status()
 
-    try:
-        response.raise_for_status()
-    except Exception:
-        return None
+            if (response is not None) and (response.html.lxml is not None):
+                break
 
-    return response
+            await asyncio.sleep(1)
+        except Exception:
+            logger.error(traceback.format_exc())
+    else:
+        response = None
+
+    return (session, response)
 
 
 async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
@@ -205,7 +193,7 @@ async def AnalysisUploadedPage(lxml: HtmlElement):
         return "uploaded date parse failed."
 
     # 投稿者収集
-    # ひとまず投稿動画の投稿者のみ（単一）
+    # 投稿動画の投稿者は単一であることが保証されている
     username_lx = lxml.find_class("UserDetailsHeader-nickname")
     if username_lx == []:
         return "username parse failed."
@@ -258,7 +246,8 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement):
     username_lx = lxml.find_class("UserDetailsHeader-nickname")
     if username_lx == []:
         return "username parse failed."
-    username = username_lx[0].text
+    username = username_lx[0].text  # マイリスト作成者は元のhtmlに含まれている
+    # 各動画の投稿者は元のhtmlに含まれていないのでAPIを通して取得する
     username_list = await GetUsernameFromApi(video_id_list)
 
     # マイリスト名収集
@@ -273,14 +262,23 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement):
 
 
 async def GetUsernameFromApi(video_id_list: list[str]):
-    session = AsyncHTMLSession()
+    # video_id_listで渡された動画IDについてAPIを通して投稿者を取得する
+    default_name = "<NULL>"
+    base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
     username_list = []
+    session = None
     for video_id in video_id_list:
-        url = "https://ext.nicovideo.jp/api/getthumbinfo/" + video_id
-        response = await session.get(url)
-        username_lx = response.html.lxml.findall("thumb/user_nickname")
-        username = username_lx[0].text
+        username = default_name
+        url = base_url + video_id
+        session, response = await GetAsyncSessionResponce(url, False, session)
+        if response:
+            username_lx = response.html.lxml.findall("thumb/user_nickname")
+            if username_lx and len(username_lx) == 1:
+                username = username_lx[0].text
+            else:
+                username = default_name
         username_list.append(username)
+
     await session.close()
     return username_list
 
@@ -293,6 +291,7 @@ if __name__ == "__main__":
     # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
     # url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
     url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/99999999"
 
     loop = asyncio.new_event_loop()
     video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
