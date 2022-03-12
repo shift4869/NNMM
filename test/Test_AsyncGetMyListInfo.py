@@ -89,9 +89,8 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         res = video_info.get(mylist_url, [("", "", "")])
         return res
 
-    def __MakeResponceMock(self, mock, mylist_url, status_code):
-        result = []
-        video_info = self.__GetVideoInfoSet(mylist_url)
+    def __MakeResponceMock(self, mylist_url, status_code):
+        mock = MagicMock()
 
         def ReturnFind(val):
             r_find = MagicMock()
@@ -101,14 +100,19 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             return r_find
 
         def ReturnFindClass(name):
+            result = []
+            video_info_list = self.__GetVideoInfoSet(mylist_url)
             if name == "NC-MediaObject-main":
-                result = []
+                result = [ReturnFind(video_info[1]) for video_info in video_info_list]
+            return result
+
+        mock.html.lxml.find_class = ReturnFindClass
         return mock
 
     def __MakeSessionResponceMock(self, mock, status_code) -> tuple[AsyncMock, MagicMock]:
         async def ReturnSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncMock, MagicMock]:
             ar_session = AsyncMock()
-            r_responce = self.__MakeResponceMock(r_responce, request_url, status_code)
+            r_responce = self.__MakeResponceMock(request_url, status_code)
             return (ar_session, r_responce)
 
         mock.side_effect = ReturnSessionResponce
