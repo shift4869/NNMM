@@ -43,10 +43,15 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
         return []
 
     # ページ取得
-    session, response = await GetAsyncSessionResponce(url, True)
-    await session.close()
-    if not response:
-        logger.error("HTML pages request failed.")
+    session, response = None, None
+    try:
+        session, response = await GetAsyncSessionResponce(url, True)
+        await session.close()
+        if not response:
+            logger.error("HTML pages request failed.")
+            return []
+    except Exception:
+        logger.error(traceback.format_exc())
         return []
 
     # すべての動画リンクを抽出
@@ -80,7 +85,12 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     video_id_list = [re.findall(pattern, s)[0] for s in video_list]
 
     # 取得ページと動画IDから必要な情報を収集する
-    t = await AnalysisHtml(url_type, video_id_list, response.html.lxml)
+    t = None
+    try:
+        t = await AnalysisHtml(url_type, video_id_list, response.html.lxml)
+    except Exception:
+        logger.error(traceback.format_exc())
+        return []
     title_list, uploaded_list, username_list, showname, myshowname = t
 
     # 結合
@@ -100,13 +110,26 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
         res.append(dict(zip(table_cols, value_list)))
 
     # No.を付記する
-    for i, r in enumerate(res):
+    for i, _ in enumerate(res):
         res[i]["no"] = i + 1
 
     return res
 
 
-async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> HTMLResponse | None:
+async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncHTMLSession, HTMLResponse] | None:
+    """_summary_
+
+    Args:
+        request_url (_type_): _description_
+        do_rendering (_type_): _description_
+        session (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+
+    Raises:
+        ValueError: if arg1 is empty string.
+    """
     if not session:
         # セッション開始
         session = AsyncHTMLSession()
