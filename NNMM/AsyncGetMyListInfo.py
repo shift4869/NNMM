@@ -95,19 +95,17 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
     # 結合
     res = []
-    # 収集した情報の数はそれぞれ一致するはずだが最小のものに合わせる
-    list_num_min = min(len(video_list), len(title_list), len(uploaded_list), len(username_list), len(video_id_list))
-    video_list = video_list[:list_num_min]
-    title_list = title_list[:list_num_min]
-    uploaded_list = uploaded_list[:list_num_min]
-    username_list = username_list[:list_num_min]
-    video_id_list = video_id_list[:list_num_min]
-    if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(username_list) or len(username_list) != len(video_id_list):
-        logger.error("getting video info list length is invalid.")
+    try:
+        # 収集した情報の数はそれぞれ一致するはず
+        if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(username_list) or len(username_list) != len(video_id_list):
+            logger.error("getting video info list length is invalid.")
+            return []
+        for id, title, uploaded, username, video_url in zip(video_id_list, title_list, uploaded_list, username_list, video_list):
+            value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
+            res.append(dict(zip(table_cols, value_list)))
+    except Exception:
+        logger.error(traceback.format_exc())
         return []
-    for id, title, uploaded, username, video_url in zip(video_id_list, title_list, uploaded_list, username_list, video_list):
-        value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
-        res.append(dict(zip(table_cols, value_list)))
 
     # No.を付記する
     for i, _ in enumerate(res):
@@ -260,9 +258,9 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement):
             else:
                 dst = datetime.strptime(tca, td_format)
                 uploaded_list.append(dst.strftime(dts_format))
-    except AttributeError as e:
+    except AttributeError:
         return "uploaded parse failed."
-    except ValueError as e:
+    except ValueError:
         return "uploaded date parse failed."
 
     # 投稿者収集
