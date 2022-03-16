@@ -39,7 +39,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     # 入力チェック
     url_type = GuiFunction.GetURLType(url)
     if url_type not in ["uploaded", "mylist"]:
-        logger.error("url_type is invalid , not target url.")
+        logger.error("url_type is invalid , url is not target url.")
         return []
 
     # ページ取得
@@ -97,6 +97,9 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     res = []
     try:
         # 収集した情報の数はそれぞれ一致するはず
+        if not(video_list and title_list and uploaded_list and username_list and video_id_list):
+            logger.error("getting video info list is failed.")
+            return []
         if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(username_list) or len(username_list) != len(video_id_list):
             logger.error("getting video info list length is invalid.")
             return []

@@ -11,6 +11,7 @@ import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime
+from urllib.error import HTTPError
 from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
 
@@ -89,7 +90,7 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         res = video_info.get(mylist_url, [("", "", "")])
         return res
 
-    def __MakeResponceMock(self, request_url, status_code):
+    def __MakeResponceMock(self, request_url, status_code: int = 200, error_target: str = ""):
         mock = MagicMock()
 
         def ReturnHref(val):
@@ -109,7 +110,9 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             mylist_url = request_url
             mylist_info = self.__GetMylistInfoSet(mylist_url)
             video_info_list = self.__GetVideoInfoSet(mylist_url)
-            if name == "NC-MediaObject-main":
+            if name == error_target:
+                result = []
+            elif name == "NC-MediaObject-main":
                 result = [ReturnHref(video_info[1]) for video_info in video_info_list]
             elif name == "NC-MediaObjectTitle":
                 result = [ReturnText(video_info[0]) for video_info in video_info_list]
@@ -140,21 +143,39 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         mock.html.lxml.findall = ReturnFindAll
         return mock
 
-    def __MakeSessionResponceMock(self, mock, status_code) -> tuple[AsyncMock, MagicMock]:
+    def __MakeSessionResponceMock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
         async def ReturnSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncMock, MagicMock]:
             ar_session = AsyncMock()
-            r_responce = self.__MakeResponceMock(request_url, status_code)
-            return (ar_session, r_responce)
+            if error_target == "HTTPError":
+                raise HTTPError
+            if status_code == 503:
+                return (ar_session, None)
+
+            r_response = self.__MakeResponceMock(request_url, status_code, error_target)
+            return (ar_session, r_response)
 
         mock.side_effect = ReturnSessionResponce
         return mock
 
-    def __MakeUsernameApiMock(self, mock, status_code):
-        async def ReturnUsernameApi(video_id_list):
-            r_responce = MagicMock()
-            return r_responce
-
-        mock.side_effect = ReturnUsernameApi
+    def __MakeAnalysisHtmlMock(self, mock, kind: str = ""):
+        if kind == "HTTPError":
+            async def ReturnAnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
+                raise HTTPError
+            mock.side_effect = ReturnAnalysisHtml
+        elif kind == "ReturnNone":
+            async def ReturnAnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
+                return (None, None, None, "", "")
+            mock.side_effect = ReturnAnalysisHtml
+        elif kind == "ReturnDifferentLength":
+            async def ReturnAnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
+                return (["title"], ["uploaded_at"], ["username"], "showname", "myshowname")
+            mock.side_effect = ReturnAnalysisHtml
+        elif kind == "ReturnTypeError":
+            async def ReturnAnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
+                return (-1, -1, -1, "showname", "myshowname")
+            mock.side_effect = ReturnAnalysisHtml
+        else:
+            mock.side_effect = AsyncMock
         return mock
 
     def __MakeExpectResult(self, mylist_url):
@@ -216,25 +237,62 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
                 actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
                 expect = self.__MakeExpectResult(url)
                 self.assertEqual(expect, actual)
-            return
+
             # 異常系
             # 入力URLが不正
             url = "https://不正なURL/user/11111111/video"
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
- 
+
             # session.getが常に失敗
-            with patch("NNMM.AsyncGetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(503)):
-                url = urls[0]
-                actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
-                self.assertEqual([], actual)
+            mockses = self.__MakeSessionResponceMock(mockses, 503)
+            url = urls[0]
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
+            self.assertEqual([], actual)
+
+            # session.getが例外送出
+            mockses = self.__MakeSessionResponceMock(mockses, 503, "HTTPError")
+            url = urls[0]
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
+            self.assertEqual([], actual)
 
             # 動画リンクが1つもないマイリストを指定
             # 正確にはエラーではない(warning)が結果として空リストが返ってくる
-            with patch("NNMM.GuiFunction.GetURLType", lambda x: "mylist"):
-                url = "https://www.nicovideo.jp/user/99999999/mylist/99999999"
-                actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
-                self.assertEqual([], actual)
+            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            url = "https://www.nicovideo.jp/user/99999999/mylist/99999999"
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
+            self.assertEqual([], actual)
+
+            # 動画情報収集に失敗
+            mockah = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.AnalysisHtml"))
+            mockah = self.__MakeAnalysisHtmlMock(mockah, "HTTPError")
+            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            url = urls[0]
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
+            self.assertEqual([], actual)
+
+            # 取得した動画情報がNone
+            mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnNone")
+            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            url = urls[0]
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
+            self.assertEqual([], actual)
+
+            # 取得した動画情報の長さが不正
+            mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnDifferentLength")
+            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            url = urls[0]
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
+            self.assertEqual([], actual)
+
+            # 取得した動画情報の内容が不正
+            mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnTypeError")
+            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            url = urls[0]
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
+            self.assertEqual([], actual)
+
+            return
 
             # 動画名収集に失敗(AttributeError)
             url = urls[0]
