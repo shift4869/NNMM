@@ -118,18 +118,27 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
 
 
 async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncHTMLSession, HTMLResponse] | None:
-    """_summary_
+    """非同期でページ取得する
+
+    Notes:
+        この関数で取得したAsyncHTMLSession は呼び出し側で
+        await session.close() することを推奨
+        接続は MAX_RETRY_NUM = 5 回試行する
+        この回数リトライしてもページ取得できなかった場合、responseがNoneとなる
 
     Args:
-        request_url (_type_): _description_
-        do_rendering (_type_): _description_
-        session (_type_, optional): _description_. Defaults to None.
+        request_url (str): 取得対象ページURL
+        do_rendering (bool): 動的にレンダリングするかどうか
+        session (AsyncHTMLSession, optional): 使い回すセッションがあれば指定
 
     Returns:
-        _type_: _description_
+        session (AsyncHTMLSession): 非同期セッション
+        response (HTMLResponse): ページ取得結果のレスポンス
+                                 リトライ回数超過時None
+                                 正常時 response.html.lxml が非Noneであることが保証される
 
     Raises:
-        ValueError: if arg1 is empty string.
+        HTTPError: session.get 等失敗時
     """
     if not session:
         # セッション開始

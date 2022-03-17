@@ -12,7 +12,7 @@ import unittest
 from contextlib import ExitStack
 from datetime import datetime
 from urllib.error import HTTPError
-from mock import MagicMock, patch, AsyncMock
+from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
 
 import pyppeteer
@@ -222,7 +222,7 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         return res
 
     def test_AsyncGetMyListInfo(self):
-        """AsyncGetMyListInfoのテスト
+        """AsyncGetMyListInfo のテスト
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
@@ -292,54 +292,58 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
 
-            return
-
-            # 動画名収集に失敗(AttributeError)
-            url = urls[0]
-            error_target = "NC-MediaObjectTitle"
-            with patch("NNMM.AsyncGetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
-                actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
-                self.assertEqual([], actual)
-
-            # 投稿日時収集に失敗(AttributeError)
-            error_target = "NC-VideoRegisteredAtText-text"
-            with patch("NNMM.AsyncGetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
-                actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
-                self.assertEqual([], actual)
-
-            # 投稿日時収集に失敗(ValueError)
-            error_target = "NC-VideoRegisteredAtText-text__ValueError"
-            with patch("NNMM.AsyncGetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
-                actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
-                self.assertEqual([], actual)
-
-            # 投稿者収集に失敗(AttributeError)
-            error_target = "UserDetailsHeader-nickname"
-            with patch("NNMM.AsyncGetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
-                actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
-                self.assertEqual([], actual)
-
-            # マイリスト名収集に失敗(AttributeError)
-            url = urls[2]
-            error_target = "MylistHeader-name"
-            with patch("NNMM.AsyncGetMyListInfo.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
-                actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
-                self.assertEqual([], actual)
-            pass
-
     def test_GetAsyncSessionResponce(self):
-        """GetAsyncSessionResponceのテスト
+        """GetAsyncSessionResponce のテスト
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.warning"))
+            mockas = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.AsyncHTMLSession"))
+            mockpp = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.pyppeteer.launch"))
+            mocksl = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.asyncio.sleep"))
 
             # 正常系
+            session = AsyncMock()
+            response = AsyncMock()
+
+            async def ReturnGet(request_url):
+                return response
+
+            session.get.side_effect = ReturnGet
+            mockas.side_effect = lambda: session
+
+            url = self.__GetURLSet()[0]
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
+            expect = (session, response)
+            self.assertEqual(expect, actual)
+
+            # 呼び出し確認
+            def assertMockCall(request_url, do_rendering):
+                mc = session.mock_calls
+                self.assertEqual(1, len(mc))
+                self.assertEqual(call.get(request_url), mc[0])
+                session.reset_mock()
+
+                mc = response.mock_calls
+                if do_rendering:
+                    self.assertEqual(2, len(mc))
+                    self.assertEqual(call.html.arender(sleep=2), mc[0])
+                    self.assertEqual(call.raise_for_status(), mc[1])
+                else:
+                    self.assertEqual(1, len(mc))
+                    self.assertEqual(call.raise_for_status(), mc[0])
+
+                self.assertIsNotNone(response.html.lxml)
+                response.reset_mock()
+
+            assertMockCall(url, True)
+
             # 異常系
             pass
 
     def test_AnalysisUploadedPage(self):
-        """AnalysisUploadedPageのテスト
+        """AnalysisUploadedPage のテスト
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
@@ -350,7 +354,7 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             pass
 
     def test_AnalysisMylistPage(self):
-        """AnalysisMylistPageのテスト
+        """AnalysisMylistPage のテスト
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
@@ -361,7 +365,7 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             pass
 
     def test_GetUsernameFromApi(self):
-        """GetUsernameFromApiのテスト
+        """GetUsernameFromApi のテスト
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
