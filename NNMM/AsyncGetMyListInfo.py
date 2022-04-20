@@ -117,7 +117,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     return res
 
 
-async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncHTMLSession, HTMLResponse] | None:
+async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncHTMLSession, HTMLResponse]:
     """非同期でページ取得する
 
     Notes:
@@ -135,10 +135,7 @@ async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session:
         session (AsyncHTMLSession): 非同期セッション
         response (HTMLResponse): ページ取得結果のレスポンス
                                  リトライ回数超過時None
-                                 正常時 response.html.lxml が非Noneであることが保証される
-
-    Raises:
-        HTTPError: session.get 等失敗時
+                                 正常時 response.html.lxml が非Noneであることが保証されたresponse
     """
     if not session:
         # セッション開始
@@ -159,9 +156,10 @@ async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session:
     for _ in range(MAX_RETRY_NUM):
         try:
             response = await session.get(request_url)
+            response.raise_for_status()
+
             if do_rendering:
                 await response.html.arender(sleep=2)
-
             response.raise_for_status()
 
             if (response is not None) and (response.html.lxml is not None):
@@ -176,31 +174,70 @@ async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session:
     return (session, response)
 
 
-async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
+async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement) -> tuple[list[str], list[str], list[str], str, str]:
+    """htmlを解析する
+
+    Notes:
+        url_typeから投稿動画ページかマイリストページかを識別して処理を分ける
+
+    Args:
+        url_type (str): URLタイプ
+        video_id_list (list[str]): 動画IDリスト
+        lxml (HtmlElement): 解析対象のhtml
+
+    Returns:
+        tuple[list[str], list[str], list[str], str, str]: (タイトルリスト, 投稿日時リスト, 投稿者リスト, マイリスト表示名, マイリスト名)
+
+    Raises:
+        AttributeError: html解析失敗時
+        ValueError: datetime.strptime 投稿日時解釈失敗時
+    """
     res = None
     if url_type == "uploaded":
         res = await AnalysisUploadedPage(lxml)
     elif url_type == "mylist":
         res = await AnalysisMylistPage(video_id_list, lxml)
 
-    if isinstance(res, str):
-        logger.error(res)
-        return (None, None, None, None, None)
+    # if isinstance(res, str):
+    #     logger.error(res)
+    #     return (None, None, None, None, None)
 
     return res
 
 
-async def AnalysisUploadedPage(lxml: HtmlElement):
+async def AnalysisUploadedPage(lxml: HtmlElement) -> tuple[list[str], list[str], list[str], str, str]:
+    """投稿動画ページのhtmlを解析する
+
+    Args:
+        lxml (HtmlElement): Mylistページのhtml
+
+    Returns:
+        tuple[list[str], list[str], list[str], str, str]: (タイトルリスト, 投稿日時リスト, 投稿者リスト, マイリスト表示名, マイリスト名)
+
+    Raises:
+        AttributeError: html解析失敗時
+        ValueError: datetime.strptime 投稿日時解釈失敗時
+    """
+    # 探索対象のクラスタグ定数
+    TCT_TITLE = "NC-MediaObjectTitle"
+    TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
+    TCT_USERNAME = "UserDetailsHeader-nickname"
+    TCT_MYSHOWNAME = "MylistHeader-name"
+
+    # エラーメッセージ定数
+    MSG_TITLE = f"title parse failed. '{TCT_TITLE}' is not found."
+    MSG_UPLOADED1 = f"uploaded parse failed. '{TCT_UPLOADED}' is not found."
+    MSG_UPLOADED2 = "uploaded date parse failed."
+    MSG_USERNAME = f"username parse failed. '{TCT_USERNAME}' is not found."
+    MSG_MYSHOWNAME = f"myshowname parse failed. '{TCT_MYSHOWNAME}' is not found."
+
     # 動画名収集
     # 全角スペースは\u3000(unicode-escape)となっている
     title_list = []
-    try:
-        title_lx = lxml.find_class("NC-MediaObjectTitle")
-        if title_lx == []:
-            raise AttributeError
-        title_list = [str(t.text) for t in title_lx]
-    except AttributeError as e:
-        return "title parse failed."
+    title_lx = lxml.find_class(TCT_TITLE)
+    if title_lx == []:
+        raise AttributeError(MSG_TITLE)
+    title_list = [str(t.text) for t in title_lx]
 
     # 投稿日時収集
     # td_format: HTMLページに記載されている日付形式
@@ -209,9 +246,9 @@ async def AnalysisUploadedPage(lxml: HtmlElement):
     dts_format = "%Y-%m-%d %H:%M:00"
     uploaded_list = []
     try:
-        uploaded_lx = lxml.find_class("NC-VideoRegisteredAtText-text")
+        uploaded_lx = lxml.find_class(TCT_UPLOADED)
         if uploaded_lx == []:
-            raise AttributeError
+            raise AttributeError(MSG_UPLOADED1)
 
         for t in uploaded_lx:
             tca = str(t.text)
@@ -220,19 +257,17 @@ async def AnalysisUploadedPage(lxml: HtmlElement):
             else:
                 dst = datetime.strptime(tca, td_format)
                 uploaded_list.append(dst.strftime(dts_format))
-    except AttributeError as e:
-        return "uploaded parse failed."
-    except ValueError as e:
-        return "uploaded date parse failed."
+    except ValueError:
+        raise ValueError(MSG_UPLOADED2)
 
     # 投稿者収集
     # 投稿動画の投稿者は単一であることが保証されている
-    username_lx = lxml.find_class("UserDetailsHeader-nickname")
+    username_lx = lxml.find_class(TCT_USERNAME)
     if username_lx == []:
-        return "username parse failed."
+        raise AttributeError(MSG_USERNAME)
     username = username_lx[0].text
     num = len(title_list)
-    username_list = [username for i in range(num)]
+    username_list = [username for _ in range(num)]
 
     # マイリスト名収集
     showname = f"{username}さんの投稿動画"
@@ -240,17 +275,40 @@ async def AnalysisUploadedPage(lxml: HtmlElement):
     return (title_list, uploaded_list, username_list, showname, myshowname)
 
 
-async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement):
+async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> tuple[list[str], list[str], list[str], str, str]:
+    """マイリストページのhtmlを解析する
+
+    Args:
+        video_id_list (list[str]): 動画IDリスト
+        lxml (HtmlElement): マイリストページのhtml
+
+    Returns:
+        tuple[list[str], list[str], list[str], str, str]: (タイトルリスト, 投稿日時リスト, 投稿者リスト, マイリスト表示名, マイリスト名)
+
+    Raises:
+        AttributeError: html解析失敗時
+        ValueError: datetime.strptime 投稿日時解釈失敗時
+    """
+    # 探索対象のクラスタグ定数
+    TCT_TITLE = "NC-MediaObjectTitle"
+    TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
+    TCT_USERNAME = "UserDetailsHeader-nickname"
+    TCT_MYSHOWNAME = "MylistHeader-name"
+
+    # エラーメッセージ定数
+    MSG_TITLE = f"title parse failed. '{TCT_TITLE}' is not found."
+    MSG_UPLOADED1 = f"uploaded parse failed. '{TCT_UPLOADED}' is not found."
+    MSG_UPLOADED2 = "uploaded date parse failed."
+    MSG_USERNAME = f"username parse failed. '{TCT_USERNAME}' is not found."
+    MSG_MYSHOWNAME = f"myshowname parse failed. '{TCT_MYSHOWNAME}' is not found."
+
     # 動画名収集
     # 全角スペースは\u3000(unicode-escape)となっている
     title_list = []
-    try:
-        title_lx = lxml.find_class("NC-MediaObjectTitle")
-        if title_lx == []:
-            raise AttributeError
-        title_list = [str(t.text) for t in title_lx]
-    except AttributeError as e:
-        return "title parse failed."
+    title_lx = lxml.find_class(TCT_TITLE)
+    if title_lx == []:
+        raise AttributeError(MSG_TITLE)
+    title_list = [str(t.text) for t in title_lx]
 
     # 投稿日時収集
     # td_format: HTMLページに記載されている日付形式
@@ -259,9 +317,9 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement):
     dts_format = "%Y-%m-%d %H:%M:00"
     uploaded_list = []
     try:
-        uploaded_lx = lxml.find_class("NC-VideoRegisteredAtText-text")
+        uploaded_lx = lxml.find_class(TCT_UPLOADED)
         if uploaded_lx == []:
-            raise AttributeError
+            raise AttributeError(MSG_UPLOADED1)
 
         for t in uploaded_lx:
             tca = str(t.text)
@@ -270,15 +328,13 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement):
             else:
                 dst = datetime.strptime(tca, td_format)
                 uploaded_list.append(dst.strftime(dts_format))
-    except AttributeError:
-        return "uploaded parse failed."
     except ValueError:
-        return "uploaded date parse failed."
+        raise ValueError(MSG_UPLOADED2)
 
     # 投稿者収集
-    username_lx = lxml.find_class("UserDetailsHeader-nickname")
+    username_lx = lxml.find_class(TCT_USERNAME)
     if username_lx == []:
-        return "username parse failed."
+        raise AttributeError(MSG_USERNAME)
     username = username_lx[0].text  # マイリスト作成者は元のhtmlに含まれている
     # 各動画の投稿者は元のhtmlに含まれていないのでAPIを通して取得する
     username_list = await GetUsernameFromApi(video_id_list)
@@ -286,16 +342,28 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement):
     # マイリスト名収集
     showname = ""
     myshowname = ""
-    myshowname_lx = lxml.find_class("MylistHeader-name")
+    myshowname_lx = lxml.find_class(TCT_MYSHOWNAME)
     if myshowname_lx == []:
-        return "myshowname parse failed."
+        raise AttributeError(MSG_MYSHOWNAME)
     myshowname = myshowname_lx[0].text
     showname = f"「{myshowname}」-{username}さんのマイリスト"
     return (title_list, uploaded_list, username_list, showname, myshowname)
 
 
 async def GetUsernameFromApi(video_id_list: list[str]):
-    # video_id_listで渡された動画IDについてAPIを通して投稿者を取得する
+    """Mylistページのhtmlを解析する
+
+    Notes:
+        video_id_listで渡された動画IDについてAPIを通して投稿者を取得する
+        うまく投稿者名が取得出来なかった場合は default_name を割り当てる
+        動画情報API："https://ext.nicovideo.jp/api/getthumbinfo/{動画ID}"
+
+    Args:
+        video_id_list (list[str]): 動画IDリスト
+
+    Returns:
+        list[str]: ユーザーネームのリスト
+    """
     default_name = "<NULL>"
     base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
     username_list = []
@@ -320,11 +388,11 @@ if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     ConfigMain.ProcessConfigBase.SetConfig()
 
-    # url = "https://www.nicovideo.jp/user/37896001/video"
-    # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
-    # url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
-    url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"
-    # url = "https://www.nicovideo.jp/user/12899156/mylist/99999999"
+    url = "https://www.nicovideo.jp/user/37896001/video"  # 投稿動画
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"  # 中量マイリスト
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"  # 少量マイリスト
+    # url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"  # テスト用マイリスト
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/99999999"  # 存在しないマイリスト
 
     loop = asyncio.new_event_loop()
     video_list = loop.run_until_complete(AsyncGetMyListInfo(url))

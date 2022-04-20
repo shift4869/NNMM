@@ -303,15 +303,32 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             mocksl = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.asyncio.sleep"))
 
             # 正常系
+            MAX_RETRY_NUM = 5
             session = AsyncMock()
             response = AsyncMock()
 
-            async def ReturnGet(request_url):
-                return response
+            def MakeReturnGet(retry_count=0, html_error=False):
+                global count
+                count = retry_count
 
-            session.get.side_effect = ReturnGet
+                async def ReturnGet(request_url):
+                    global count
+                    if count <= 0:
+                        if html_error:
+                            del response.html.lxml
+                        response.raise_for_status = AsyncMock
+                        return response
+                    else:
+                        count = count - 1
+                        response.raise_for_status = HTTPError
+                        return response
+
+                return ReturnGet
+
+            session.get.side_effect = MakeReturnGet()
             mockas.side_effect = lambda: session
 
+            # do_renderingがTrue, sessionがNone
             url = self.__GetURLSet()[0]
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
@@ -319,26 +336,89 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             self.assertEqual(expect, actual)
 
             # 呼び出し確認
-            def assertMockCall(request_url, do_rendering):
-                mc = session.mock_calls
-                self.assertEqual(1, len(mc))
-                self.assertEqual(call.get(request_url), mc[0])
-                session.reset_mock()
+            def assertMockCall(request_url, do_rendering, use_session):
+                if use_session is None:
+                    mockas.assert_called_once()
+                    mockas.reset_mock()
+
+                    mc = session.mock_calls
+                    self.assertEqual(1, len(mc))
+                    self.assertEqual(call.get(request_url), mc[0])
+                    session.reset_mock()
+                else:
+                    mockas.assert_not_called()
+                    mockas.reset_mock()
+
+                    mc = session.mock_calls
+                    self.assertEqual(2, len(mc))
+                    self.assertEqual(call.__bool__(), mc[0])
+                    self.assertEqual(call.get(request_url), mc[1])
+                    session.reset_mock()
 
                 mc = response.mock_calls
                 if do_rendering:
-                    self.assertEqual(2, len(mc))
-                    self.assertEqual(call.html.arender(sleep=2), mc[0])
-                    self.assertEqual(call.raise_for_status(), mc[1])
-                else:
                     self.assertEqual(1, len(mc))
-                    self.assertEqual(call.raise_for_status(), mc[0])
+                    self.assertEqual(call.html.arender(sleep=2), mc[0])
+                else:
+                    self.assertEqual(0, len(mc))
 
                 self.assertIsNotNone(response.html.lxml)
                 response.reset_mock()
 
-            assertMockCall(url, True)
+            assertMockCall(url, True, None)
 
+            # do_renderingがFalse, sessionがNone
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, False, None))
+            expect = (session, response)
+            self.assertEqual(expect, actual)
+            assertMockCall(url, False, None)
+
+            # do_renderingがTrue, sessionがNoneでない
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, session))
+            expect = (session, response)
+            self.assertEqual(expect, actual)
+            assertMockCall(url, True, session)
+
+            # do_renderingがFalse, sessionがNoneでない
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, False, session))
+            expect = (session, response)
+            self.assertEqual(expect, actual)
+            assertMockCall(url, False, session)
+
+            # リトライして成功するパターン
+            session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM - 1, False)
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
+            expect = (session, response)
+            self.assertEqual(expect, actual)
+
+            # 異常系
+            # MAX_RETRY_NUM回リトライしたが失敗したパターン
+            session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM, False)
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
+            expect = (session, None)
+            self.assertEqual(expect, actual)
+
+            # responseの取得に成功したがresponse.html.lxmlが存在しないパターン
+            session.get.side_effect = MakeReturnGet(0, True)
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
+            expect = (session, None)
+            self.assertEqual(expect, actual)
+            pass
+
+    def test_AnalysisHtml(self):
+        """AnalysisHtml のテスト
+        """
+        with ExitStack() as stack:
+            mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
+            mocklw = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.warning"))
+
+            # 正常系
             # 異常系
             pass
 
