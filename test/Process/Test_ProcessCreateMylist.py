@@ -16,7 +16,7 @@ from logging import INFO, getLogger
 from mock import MagicMock, patch, AsyncMock
 
 from NNMM.Process import *
-from NNMM import GetMyListInfo
+from NNMM import GetMyListInfoFromRss
 
 
 class TestProcessCreateMylist(unittest.TestCase):

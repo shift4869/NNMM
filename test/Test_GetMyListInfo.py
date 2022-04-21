@@ -18,7 +18,7 @@ from pathlib import Path
 import bs4
 
 from NNMM.MylistDBController import *
-from NNMM import GetMyListInfo
+from NNMM import GetMyListInfoFromRss
 
 RSS_PATH = "./test/rss/"
 
@@ -263,13 +263,13 @@ class TestGetMyListInfo(unittest.TestCase):
             expect.append(dict(zip(table_cols, value_list)))
         return expect
 
-    def test_AsyncGetMyListInfoLightWeight(self):
-        """AsyncGetMyListInfoLightWeightのテスト
+    def test_GetMyListInfoFromRss(self):
+        """GetMyListInfoFromRssのテスト
         """
         with ExitStack() as stack:
-            mockslp = stack.enter_context(patch("NNMM.GetMyListInfo.sleep"))
-            mockle = stack.enter_context(patch("NNMM.GetMyListInfo.logger.error"))
-            mocklw = stack.enter_context(patch("NNMM.GetMyListInfo.logger.warning"))
+            mockslp = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.sleep"))
+            mockle = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.logger.error"))
+            mocklw = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.logger.warning"))
             mockelm = stack.enter_context(patch("asyncio.get_event_loop", self.__MakeEventLoopMock))
             mockcpb = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", self.__MakeConfigMock))
 
@@ -277,40 +277,40 @@ class TestGetMyListInfo(unittest.TestCase):
             urls = self.__GetURLSet()
             for url in urls:
                 loop = asyncio.new_event_loop()
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 expect = self.__MakeExpectResult(url)
                 self.assertEqual(expect, actual)
 
             # 異常系
             # 入力URLが不正
             url = "https://不正なURL/user/11111111/video"
-            actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+            actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
             self.assertEqual([], actual)
 
             # urlパース失敗
             with patch("NNMM.GuiFunction.GetURLType", lambda x: "mylist"):
                 url = "https://不正なURL/user/11111111/video"
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 self.assertEqual([], actual)
 
             # RSS取得が常に失敗
-            with patch("NNMM.GetMyListInfo.BeautifulSoup", lambda t, p: None):
+            with patch("NNMM.GetMyListInfoFromRss.BeautifulSoup", lambda t, p: None):
                 url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 self.assertEqual([], actual)
 
             # 投稿者名取得に失敗
             pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
             with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
                 url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 self.assertEqual([], actual)
 
             # マイリスト名取得に失敗
             pattern = "^マイリスト (.*)‐ニコニコ動画$"
             with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
                 url = urls[2]
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 self.assertEqual([], actual)
 
             # config取得に失敗
@@ -318,14 +318,14 @@ class TestGetMyListInfo(unittest.TestCase):
             # withの間だけconfigを返す関数を無効化する
             with patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", lambda: None):
                 url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 self.assertEqual([], actual)
 
             # RSS保存に失敗
             # RSS保存は失敗しても返り値は正常となる
             with patch("pathlib.Path.open", lambda: None):
                 url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 expect = self.__MakeExpectResult(url)
                 self.assertEqual(expect, actual)
 
@@ -334,7 +334,7 @@ class TestGetMyListInfo(unittest.TestCase):
             pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
             with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
                 url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 self.assertEqual([], actual)
 
             # エントリ保存に失敗(ValueError)
@@ -350,7 +350,7 @@ class TestGetMyListInfo(unittest.TestCase):
 
             with patch("bs4.element.Tag.find", lambda s, t: real_func(s, t) if t != "pubDate" else mock_func(s, t)):
                 url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfoLightWeight(url))
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 self.assertEqual([], actual)
 
             pass

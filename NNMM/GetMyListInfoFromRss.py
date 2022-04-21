@@ -22,7 +22,7 @@ logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-async def AsyncGetMyListInfoLightWeight(url: str) -> list[dict]:
+async def GetMyListInfoFromRss(url: str) -> list[dict]:
     """投稿動画ページアドレスからRSSを通して動画の情報を取得する
 
     Notes:
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"
 
     loop = asyncio.new_event_loop()
-    video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
+    video_list = loop.run_until_complete(GetMyListInfoFromRss(url))
     pprint.pprint(video_list)
 
     pass

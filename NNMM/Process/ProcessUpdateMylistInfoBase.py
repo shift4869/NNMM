@@ -8,7 +8,7 @@ from logging import INFO, getLogger
 from typing import Callable
 
 import PySimpleGUI as sg
-from NNMM import GetMyListInfo, GetMyListInfoFromHtml
+from NNMM import GetMyListInfoFromHtml, GetMyListInfoFromRss
 from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
@@ -74,7 +74,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
                 func_list.append(GetMyListInfoFromHtml.GetMyListInfoFromHtml)
             else:
                 # 既に動画情報が存在するならRSSから取得
-                func_list.append(GetMyListInfo.AsyncGetMyListInfoLightWeight)
+                func_list.append(GetMyListInfoFromRss.AsyncGetMyListInfoLightWeight)
         return func_list
 
     def GetPrevVideoLists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
