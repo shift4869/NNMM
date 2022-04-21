@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Tuple
 
+import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from sqlalchemy.orm.exc import *
@@ -68,7 +69,7 @@ class MylistDBController(DBControllerBase):
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url)).with_for_update()
             p = q.one()
-        except NoResultFound:
+        except sqlalchemy.orm.exc.NoResultFound:
             # INSERT
             session.add(r)
             res = 0
