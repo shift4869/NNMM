@@ -12,7 +12,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
-from NNMM import GetMyListInfo, ConfigMain
+from NNMM import AsyncGetMyListInfo, ConfigMain
 
 
 logger = getLogger("root")
@@ -192,7 +192,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         # pyppeteerでページをレンダリングしてhtmlからスクレイピングする
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
         loop = asyncio.new_event_loop()
-        now_video_list = loop.run_until_complete(GetMyListInfo.AsyncGetMyListInfo(mylist_url))
+        now_video_list = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(mylist_url))
         s_record = {}
         if len(now_video_list) > 0:
             # マイリストに所属している動画情報の取得に成功したならば先頭レコードを保持
