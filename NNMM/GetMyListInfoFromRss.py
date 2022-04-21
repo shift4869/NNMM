@@ -10,10 +10,8 @@ from logging import INFO, getLogger
 from pathlib import Path
 from time import sleep
 
-import pyppeteer
 import requests
 from bs4 import BeautifulSoup
-from requests_html import AsyncHTMLSession
 
 from NNMM import ConfigMain, GuiFunction
 
@@ -241,10 +239,11 @@ if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     ConfigMain.ProcessConfigBase.SetConfig()
 
-    # url = "https://www.nicovideo.jp/user/37896001/video"
-    # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"
-    # url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"
-    url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"
+    # url = "https://www.nicovideo.jp/user/37896001/video"  # 投稿動画
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"  # 中量マイリスト
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"  # 少量マイリスト
+    url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"  # テスト用マイリスト
+    # url = "https://www.nicovideo.jp/user/12899156/mylist/99999999"  # 存在しないマイリスト
 
     loop = asyncio.new_event_loop()
     video_list = loop.run_until_complete(GetMyListInfoFromRss(url))

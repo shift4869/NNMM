@@ -74,7 +74,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
                 func_list.append(GetMyListInfoFromHtml.GetMyListInfoFromHtml)
             else:
                 # 既に動画情報が存在するならRSSから取得
-                func_list.append(GetMyListInfoFromRss.AsyncGetMyListInfoLightWeight)
+                func_list.append(GetMyListInfoFromRss.GetMyListInfoFromRss)
         return func_list
 
     def GetPrevVideoLists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
