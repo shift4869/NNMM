@@ -17,7 +17,7 @@ logger = getLogger("root")
 logger.setLevel(INFO)
 
 
-async def AsyncGetMyListInfo(url: str) -> list[dict]:
+async def GetMyListInfoFromHtml(url: str) -> list[dict]:
     """投稿動画/マイリストページアドレスから掲載されている動画の情報を取得する
 
     Notes:
@@ -392,8 +392,8 @@ if __name__ == "__main__":
     # url = "https://www.nicovideo.jp/user/12899156/mylist/99999999"  # 存在しないマイリスト
 
     loop = asyncio.new_event_loop()
-    video_list = loop.run_until_complete(AsyncGetMyListInfo(url))
-    # video_list = loop.run_until_complete(AsyncGetMyListInfoLightWeight(url))
+    video_list = loop.run_until_complete(GetMyListInfoFromHtml(url))
+    # video_list = loop.run_until_complete(GetMyListInfoFromHtmlLightWeight(url))
     pprint.pprint(video_list)
 
     pass

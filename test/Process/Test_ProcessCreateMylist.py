@@ -363,7 +363,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             mockpgt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sg.popup_get_text"))
             mockpu = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sg.popup"))
             mocknel = stack.enter_context(patch("asyncio.new_event_loop"))
-            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.AsyncGetMyListInfo.AsyncGetMyListInfo"))
+            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.GetMyListInfoFromHtml.GetMyListInfoFromHtml"))
             mocksagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.ProcessCreateMylist.AsyncGetMyListInfo"))
 
             pcm = ProcessCreateMylist.ProcessCreateMylist()
