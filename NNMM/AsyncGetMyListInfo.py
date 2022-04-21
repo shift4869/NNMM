@@ -45,7 +45,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     # ページ取得
     session, response = None, None
     try:
-        session, response = await GetAsyncSessionResponce(url, True)
+        session, response = await GetAsyncSessionResponse(url, True)
         await session.close()
         if not response:
             logger.error("HTML pages request failed.")
@@ -117,7 +117,7 @@ async def AsyncGetMyListInfo(url: str) -> list[dict]:
     return res
 
 
-async def GetAsyncSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncHTMLSession, HTMLResponse]:
+async def GetAsyncSessionResponse(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncHTMLSession, HTMLResponse]:
     """非同期でページ取得する
 
     Notes:
@@ -190,7 +190,7 @@ async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElemen
 
     Raises:
         AttributeError: html解析失敗時
-        ValueError: datetime.strptime 投稿日時解釈失敗時
+        ValueError: url_typeが不正, または datetime.strptime 投稿日時解釈失敗時
     """
     res = None
     if url_type == "uploaded":
@@ -198,9 +198,8 @@ async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElemen
     elif url_type == "mylist":
         res = await AnalysisMylistPage(video_id_list, lxml)
 
-    # if isinstance(res, str):
-    #     logger.error(res)
-    #     return (None, None, None, None, None)
+    if not res:
+        raise ValueError("html analysis failed.")
 
     return res
 
@@ -209,7 +208,7 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> tuple[list[str], list[str],
     """投稿動画ページのhtmlを解析する
 
     Args:
-        lxml (HtmlElement): Mylistページのhtml
+        lxml (HtmlElement): 投稿動画ページのhtml
 
     Returns:
         tuple[list[str], list[str], list[str], str, str]: (タイトルリスト, 投稿日時リスト, 投稿者リスト, マイリスト表示名, マイリスト名)
@@ -222,14 +221,12 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> tuple[list[str], list[str],
     TCT_TITLE = "NC-MediaObjectTitle"
     TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
     TCT_USERNAME = "UserDetailsHeader-nickname"
-    TCT_MYSHOWNAME = "MylistHeader-name"
 
     # エラーメッセージ定数
     MSG_TITLE = f"title parse failed. '{TCT_TITLE}' is not found."
     MSG_UPLOADED1 = f"uploaded parse failed. '{TCT_UPLOADED}' is not found."
     MSG_UPLOADED2 = "uploaded date parse failed."
     MSG_USERNAME = f"username parse failed. '{TCT_USERNAME}' is not found."
-    MSG_MYSHOWNAME = f"myshowname parse failed. '{TCT_MYSHOWNAME}' is not found."
 
     # 動画名収集
     # 全角スペースは\u3000(unicode-escape)となっている
@@ -351,7 +348,7 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> tup
 
 
 async def GetUsernameFromApi(video_id_list: list[str]):
-    """Mylistページのhtmlを解析する
+    """動画IDから投稿者名を取得する
 
     Notes:
         video_id_listで渡された動画IDについてAPIを通して投稿者を取得する
@@ -371,7 +368,7 @@ async def GetUsernameFromApi(video_id_list: list[str]):
     for video_id in video_id_list:
         username = default_name
         url = base_url + video_id
-        session, response = await GetAsyncSessionResponce(url, False, session)
+        session, response = await GetAsyncSessionResponse(url, False, session)
         if response:
             username_lx = response.html.lxml.findall("thumb/user_nickname")
             if username_lx and len(username_lx) == 1:

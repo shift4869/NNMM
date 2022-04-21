@@ -90,7 +90,7 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         res = video_info.get(mylist_url, [("", "", "")])
         return res
 
-    def __MakeResponceMock(self, request_url, status_code: int = 200, error_target: str = ""):
+    def __MakeResponseMock(self, request_url, status_code: int = 200, error_target: str = ""):
         mock = MagicMock()
 
         def ReturnHref(val):
@@ -143,18 +143,18 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         mock.html.lxml.findall = ReturnFindAll
         return mock
 
-    def __MakeSessionResponceMock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
-        async def ReturnSessionResponce(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncMock, MagicMock]:
+    def __MakeSessionResponseMock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
+        async def ReturnSessionResponse(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncMock, MagicMock]:
             ar_session = AsyncMock()
             if error_target == "HTTPError":
                 raise HTTPError
             if status_code == 503:
                 return (ar_session, None)
 
-            r_response = self.__MakeResponceMock(request_url, status_code, error_target)
+            r_response = self.__MakeResponseMock(request_url, status_code, error_target)
             return (ar_session, r_response)
 
-        mock.side_effect = ReturnSessionResponce
+        mock.side_effect = ReturnSessionResponse
         return mock
 
     def __MakeAnalysisHtmlMock(self, mock, kind: str = ""):
@@ -227,10 +227,10 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.warning"))
-            mockses = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.GetAsyncSessionResponce"))
+            mockses = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.GetAsyncSessionResponse"))
 
             # 正常系
-            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            mockses = self.__MakeSessionResponseMock(mockses, 200)
             urls = self.__GetURLSet()
             for url in urls:
                 loop = asyncio.new_event_loop()
@@ -245,20 +245,20 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             self.assertEqual([], actual)
 
             # session.getが常に失敗
-            mockses = self.__MakeSessionResponceMock(mockses, 503)
+            mockses = self.__MakeSessionResponseMock(mockses, 503)
             url = urls[0]
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
 
             # session.getが例外送出
-            mockses = self.__MakeSessionResponceMock(mockses, 503, "HTTPError")
+            mockses = self.__MakeSessionResponseMock(mockses, 503, "HTTPError")
             url = urls[0]
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
 
             # 動画リンクが1つもないマイリストを指定
             # 正確にはエラーではない(warning)が結果として空リストが返ってくる
-            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = "https://www.nicovideo.jp/user/99999999/mylist/99999999"
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
@@ -266,34 +266,34 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             # 動画情報収集に失敗
             mockah = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.AnalysisHtml"))
             mockah = self.__MakeAnalysisHtmlMock(mockah, "HTTPError")
-            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = urls[0]
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
 
             # 取得した動画情報がNone
             mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnNone")
-            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = urls[0]
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
 
             # 取得した動画情報の長さが不正
             mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnDifferentLength")
-            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = urls[0]
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
 
             # 取得した動画情報の内容が不正
             mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnTypeError")
-            mockses = self.__MakeSessionResponceMock(mockses, 200)
+            mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = urls[0]
             actual = loop.run_until_complete(AsyncGetMyListInfo.AsyncGetMyListInfo(url))
             self.assertEqual([], actual)
 
-    def test_GetAsyncSessionResponce(self):
-        """GetAsyncSessionResponce のテスト
+    def test_GetAsyncSessionResponse(self):
+        """GetAsyncSessionResponse のテスト
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
@@ -331,7 +331,7 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             # do_renderingがTrue, sessionがNone
             url = self.__GetURLSet()[0]
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponse(url, True, None))
             expect = (session, response)
             self.assertEqual(expect, actual)
 
@@ -369,21 +369,21 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
 
             # do_renderingがFalse, sessionがNone
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, False, None))
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponse(url, False, None))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, False, None)
 
             # do_renderingがTrue, sessionがNoneでない
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, session))
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponse(url, True, session))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, True, session)
 
             # do_renderingがFalse, sessionがNoneでない
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, False, session))
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponse(url, False, session))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, False, session)
@@ -391,7 +391,7 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             # リトライして成功するパターン
             session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM - 1, False)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponse(url, True, None))
             expect = (session, response)
             self.assertEqual(expect, actual)
 
@@ -399,17 +399,16 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             # MAX_RETRY_NUM回リトライしたが失敗したパターン
             session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM, False)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponse(url, True, None))
             expect = (session, None)
             self.assertEqual(expect, actual)
 
             # responseの取得に成功したがresponse.html.lxmlが存在しないパターン
             session.get.side_effect = MakeReturnGet(0, True)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponce(url, True, None))
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetAsyncSessionResponse(url, True, None))
             expect = (session, None)
             self.assertEqual(expect, actual)
-            pass
 
     def test_AnalysisHtml(self):
         """AnalysisHtml のテスト
@@ -417,10 +416,43 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.warning"))
+            mockaup = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.AnalysisUploadedPage"))
+            mockamp = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.AnalysisMylistPage"))
+
+            mockaup.return_value = "AnalysisUploadedPage result"
+            mockamp.return_value = "AnalysisMylistPage result"
 
             # 正常系
+            # 投稿動画ページ
+            url_type = "uploaded"
+            video_id_list = []
+            lxml = None
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisHtml(url_type, video_id_list, lxml))
+            expect = "AnalysisUploadedPage result"
+            self.assertEqual(expect, actual)
+            mockaup.assert_called_once_with(lxml)
+            mockaup.reset_mock()
+            mockamp.assert_not_called()
+            mockamp.reset_mock()
+
+            # マイリストページ
+            url_type = "mylist"
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisHtml(url_type, video_id_list, lxml))
+            expect = "AnalysisMylistPage result"
+            self.assertEqual(expect, actual)
+            mockaup.assert_not_called()
+            mockaup.reset_mock()
+            mockamp.assert_called_once_with(video_id_list, lxml)
+            mockamp.reset_mock()
+
             # 異常系
-            pass
+            # 不正なurlタイプ
+            with self.assertRaises(ValueError):
+                url_type = "invalid url type"
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisHtml(url_type, video_id_list, lxml))
 
     def test_AnalysisUploadedPage(self):
         """AnalysisUploadedPage のテスト
@@ -429,9 +461,51 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.warning"))
 
+            # 探索対象のクラスタグ定数
+            TCT_TITLE = "NC-MediaObjectTitle"
+            TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
+            TCT_USERNAME = "UserDetailsHeader-nickname"
+
             # 正常系
+            mylist_url = self.__GetURLSet()[0]
+            mylist_info = self.__GetMylistInfoSet(mylist_url)
+            video_info_list = self.__GetVideoInfoSet(mylist_url)
+            title_list = [video_info[0] for video_info in video_info_list]
+            td_format = "%Y/%m/%d %H:%M"
+            dts_format = "%Y-%m-%d %H:%M:00"
+            uploaded_list = [datetime.strptime(video_info[2], td_format).strftime(dts_format) for video_info in video_info_list]
+            num = len(title_list)
+            username = mylist_info[2]
+            username_list = [mylist_info[2] for _ in range(num)]
+            showname = f"{username}さんの投稿動画"
+            myshowname = "投稿動画"
+            expect = (title_list, uploaded_list, username_list, showname, myshowname)
+
+            response = self.__MakeResponseMock(mylist_url)
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisUploadedPage(response.html.lxml))
+            self.assertEqual(expect, actual)
+
             # 異常系
-            pass
+            # 動画名収集失敗
+            with self.assertRaises(AttributeError):
+                response = self.__MakeResponseMock(mylist_url, 200, TCT_TITLE)
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisUploadedPage(response.html.lxml))
+
+            # 投稿日時収集失敗
+            with self.assertRaises(AttributeError):
+                response = self.__MakeResponseMock(mylist_url, 200, TCT_UPLOADED)
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisUploadedPage(response.html.lxml))
+
+            # TODO::投稿日時収集は成功するが解釈に失敗
+
+            # 投稿者収集失敗
+            with self.assertRaises(AttributeError):
+                response = self.__MakeResponseMock(mylist_url, 200, TCT_USERNAME)
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisUploadedPage(response.html.lxml))
 
     def test_AnalysisMylistPage(self):
         """AnalysisMylistPage のテスト
@@ -439,10 +513,65 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.warning"))
+            mockguf = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.GetUsernameFromApi"))
+
+            # 探索対象のクラスタグ定数
+            TCT_TITLE = "NC-MediaObjectTitle"
+            TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
+            TCT_USERNAME = "UserDetailsHeader-nickname"
+            TCT_MYSHOWNAME = "MylistHeader-name"
 
             # 正常系
+            mylist_url = self.__GetURLSet()[0]
+            mylist_info = self.__GetMylistInfoSet(mylist_url)
+            video_info_list = self.__GetVideoInfoSet(mylist_url)
+            title_list = [video_info[0] for video_info in video_info_list]
+            td_format = "%Y/%m/%d %H:%M"
+            dts_format = "%Y-%m-%d %H:%M:00"
+            uploaded_list = [datetime.strptime(video_info[2], td_format).strftime(dts_format) for video_info in video_info_list]
+            num = len(title_list)
+            username = mylist_info[2]
+            username_list = [mylist_info[2] + f"_{i}" for i in range(num)]
+            myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
+            showname = f"「{myshowname}」-{username}さんのマイリスト"
+            expect = (title_list, uploaded_list, username_list, showname, myshowname)
+
+            mockguf.return_value = [mylist_info[2] + f"_{i}" for i in range(num)]
+
+            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
+            video_id_list = [re.findall(pattern, s[1])[0] for s in video_info_list]
+
+            response = self.__MakeResponseMock(mylist_url)
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisMylistPage(video_id_list, response.html.lxml))
+            self.assertEqual(expect, actual)
+
             # 異常系
-            pass
+            # 動画名収集失敗
+            with self.assertRaises(AttributeError):
+                response = self.__MakeResponseMock(mylist_url, 200, TCT_TITLE)
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisMylistPage(video_id_list, response.html.lxml))
+
+            # 投稿日時収集失敗
+            with self.assertRaises(AttributeError):
+                response = self.__MakeResponseMock(mylist_url, 200, TCT_UPLOADED)
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisMylistPage(video_id_list, response.html.lxml))
+
+            # TODO::投稿日時収集は成功するが解釈に失敗
+
+            # 投稿者収集失敗
+            with self.assertRaises(AttributeError):
+                response = self.__MakeResponseMock(mylist_url, 200, TCT_USERNAME)
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisMylistPage(video_id_list, response.html.lxml))
+
+            # マイリスト名収集失敗
+            with self.assertRaises(AttributeError):
+                response = self.__MakeResponseMock(mylist_url, 200, TCT_MYSHOWNAME)
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(AsyncGetMyListInfo.AnalysisMylistPage(video_id_list, response.html.lxml))
 
     def test_GetUsernameFromApi(self):
         """GetUsernameFromApi のテスト
@@ -450,10 +579,35 @@ class TestAsyncGetMyListInfo(unittest.TestCase):
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.logger.warning"))
+            mockses = stack.enter_context(patch("NNMM.AsyncGetMyListInfo.GetAsyncSessionResponse"))
 
             # 正常系
+            mockses = self.__MakeSessionResponseMock(mockses, 200)
+
+            mylist_url = self.__GetURLSet()[0]
+            mylist_info = self.__GetMylistInfoSet(mylist_url)
+            video_info_list = self.__GetVideoInfoSet(mylist_url)
+            title_list = [video_info[0] for video_info in video_info_list]
+            num = len(title_list)
+            username_list = [mylist_info[2] for _ in range(num)]
+            expect = username_list
+
+            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
+            video_id_list = [re.findall(pattern, s[1])[0] for s in video_info_list]
+
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetUsernameFromApi(video_id_list))
+            self.assertEqual(expect, actual)
+
             # 異常系
-            pass
+            num = len(video_id_list)
+            default_name = "<NULL>"
+            expect = [default_name for _ in range(num)]
+            video_id_list = ["sm99999999" for _ in range(num)]
+
+            loop = asyncio.new_event_loop()
+            actual = loop.run_until_complete(AsyncGetMyListInfo.GetUsernameFromApi(video_id_list))
+            self.assertEqual(expect, actual)
 
 
 if __name__ == "__main__":
