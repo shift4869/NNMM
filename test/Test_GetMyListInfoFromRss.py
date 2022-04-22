@@ -1,7 +1,7 @@
 # coding: utf-8
-"""GetMyListInfoのテスト
+"""GetMyListInfoFromRssのテスト
 
-GetMyListInfoの各種機能をテストする
+GetMyListInfoFromRssの各種機能をテストする
 """
 
 import asyncio
@@ -23,7 +23,7 @@ from NNMM import GetMyListInfoFromRss
 RSS_PATH = "./test/rss/"
 
 
-class TestGetMyListInfo(unittest.TestCase):
+class TestGetMyListInfoFromRss(unittest.TestCase):
 
     def setUp(self):
         # requestsのResourceWarning抑制
@@ -184,6 +184,41 @@ class TestGetMyListInfo(unittest.TestCase):
         type(r_response).run_in_executor = ReturnRunInExecutor
         return r_response
 
+    def __MakeAsyncHTMLSession(self) -> AsyncMock:
+        """AsyncHTMLSession にパッチするモックを作成する
+        """
+        r_response = AsyncMock()
+
+        async def ReturnGet(s, url):
+            r = MagicMock()
+
+            def ReturnText(val):
+                r_text = MagicMock()
+                r_text.text = val
+                return r_text
+
+            base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
+            pattern = f"^{base_url}(sm[0-9]+)$"
+            video_id = re.findall(pattern, url)[0]
+
+            def ReturnFindall(name):
+                urls = self.__GetMylistURLSet()
+                for mylist_url in urls:
+                    mylist_info = self.__GetMylistInfoSet(mylist_url)
+                    video_info_list = self.__GetVideoInfoSet(mylist_url)
+                    for video_info in video_info_list:
+                        if video_id in video_info[1]:
+                            return [ReturnText(mylist_info[2])]
+                return []
+
+            r.html.lxml.findall = ReturnFindall
+            # url = args
+            # type(r).raise_for_status = lambda s: 0
+            # type(r).text = self.__MakeXML(url)
+            return r
+        type(r_response).get = ReturnGet
+        return r_response
+
     def __MakeConfigMock(self) -> dict:
         """Configから取得できるRSS書き出し先のパスを返すモックを作成する
 
@@ -267,11 +302,12 @@ class TestGetMyListInfo(unittest.TestCase):
         """GetMyListInfoFromRssのテスト
         """
         with ExitStack() as stack:
-            mockslp = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.sleep"))
+            # mockslp = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.sleep"))
             mockle = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.logger.warning"))
             mockelm = stack.enter_context(patch("asyncio.get_event_loop", self.__MakeEventLoopMock))
             mockcpb = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", self.__MakeConfigMock))
+            mocksg = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.AsyncHTMLSession", self.__MakeAsyncHTMLSession))
 
             # 正常系
             urls = self.__GetURLSet()
