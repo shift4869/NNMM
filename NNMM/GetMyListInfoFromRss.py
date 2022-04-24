@@ -238,6 +238,7 @@ def GetItemInfo(item_lx) -> tuple[str, str, str, str]:
         tuple[str, str, str, str]: 動画ID, 動画タイトル, 投稿日時, 動画URL
 
     Raises:
+        AttributeError, TypeError: エントリパース失敗時
         ValueError: datetime.strptime 投稿日時解釈失敗時
     """
     # td_format: RSSに記載されている日付形式
@@ -248,11 +249,12 @@ def GetItemInfo(item_lx) -> tuple[str, str, str, str]:
     title = item_lx.find("title").text
 
     link_lx = item_lx.find("link")
+    video_url = link_lx.text
     pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+"
-    if re.findall(pattern, link_lx.text):
+    if re.findall(pattern, video_url):
         # クエリ除去してURL部分のみ保持
         video_url = urllib.parse.urlunparse(
-            urllib.parse.urlparse(link_lx.text)._replace(query=None)
+            urllib.parse.urlparse(video_url)._replace(query=None)
         )
 
     pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
@@ -328,8 +330,7 @@ async def AnalysisUploadedPage(url, soup) -> dict:
             }
 
     Raises:
-        IndexError, TypeError: html解析失敗時
-        ValueError: url_typeが不正 または html解析失敗時
+        IndexError, TypeError, ValueError: html解析失敗時
     """
     # 投稿者IDとマイリストID取得
     pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
@@ -411,8 +412,7 @@ async def AnalysisMylistPage(url, soup):
             }
 
     Raises:
-        IndexError, TypeError: html解析失敗時
-        ValueError: url_typeが不正 または html解析失敗時
+        IndexError, TypeError, ValueError: html解析失敗時
     """
     # マイリスト作成者のユーザーIDとマイリストIDを取得
     pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
@@ -524,10 +524,10 @@ if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     ConfigMain.ProcessConfigBase.SetConfig()
 
-    url = "https://www.nicovideo.jp/user/37896001/video"  # 投稿動画
+    # url = "https://www.nicovideo.jp/user/37896001/video"  # 投稿動画
     # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"  # 中量マイリスト
     # url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"  # 少量マイリスト
-    # url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"  # テスト用マイリスト
+    url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"  # テスト用マイリスト
     # url = "https://www.nicovideo.jp/user/12899156/mylist/99999999"  # 存在しないマイリスト
 
     loop = asyncio.new_event_loop()
