@@ -158,7 +158,8 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         # mylist_url = self.values["-INPUT2-"]
 
         # 追加するマイリストURLをユーザーに問い合わせる
-        mylist_url = sg.popup_get_text("追加する マイリスト/ 投稿動画一覧 のURLを入力", title="追加URL")
+        # mylist_url = sg.popup_get_text("追加する マイリスト/ 投稿動画一覧 のURLを入力", title="追加URL")
+        mylist_url = PopupGetText("追加する マイリスト/ 投稿動画一覧 のURLを入力", title="追加URL")
 
         # キャンセルされた場合
         if mylist_url is None or mylist_url == "":

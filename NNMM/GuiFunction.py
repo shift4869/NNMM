@@ -112,6 +112,34 @@ def IntervalTranslation(interval_str: str) -> int:
     return -1
 
 
+def PopupGetText(message, title=None, default_text='', password_char='', size=(None, None), button_color=None,
+                 background_color=None, text_color=None, icon=None, font=None, no_titlebar=False,
+                 grab_anywhere=False, keep_on_top=None, location=(None, None), relative_location=(None, None), image=None, modal=True):
+    """sg.popup_get_text のラッパー
+
+    Notes:
+        テキストボックスにデフォルトでフォーカスをセットする
+        image はサポートしていないので利用するときは追加すること
+    """
+    layout = [[sg.Text(message, auto_size_text=True, text_color=text_color, background_color=background_color)],
+              [sg.Input(default_text=default_text, size=size, key="-INPUT-", password_char=password_char, focus=True)],
+              [sg.Button("Ok", size=(6, 1), bind_return_key=True), sg.Button("Cancel", size=(6, 1))]]
+
+    window = sg.Window(title=title or message, layout=layout, icon=icon, auto_size_text=True, button_color=button_color, no_titlebar=no_titlebar,
+                       background_color=background_color, grab_anywhere=grab_anywhere, keep_on_top=keep_on_top, location=location, relative_location=relative_location, finalize=True, modal=modal, font=font)
+
+    window["-INPUT-"].set_focus(True)
+
+    button, values = window.read()
+    window.close()
+    del window
+    if button != "Ok":
+        return None
+    else:
+        path = values["-INPUT-"]
+        return path
+
+
 def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController) -> int:
     """マイリストペインの表示を更新する
 
