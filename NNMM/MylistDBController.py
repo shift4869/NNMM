@@ -1,8 +1,6 @@
 # coding: utf-8
 import re
-from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Tuple
 
 import sqlalchemy
 from sqlalchemy import *

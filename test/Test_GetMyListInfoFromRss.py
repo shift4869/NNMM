@@ -11,6 +11,7 @@ import unittest
 import urllib.parse
 import warnings
 from contextlib import ExitStack
+from datetime import datetime
 from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
 from re import findall

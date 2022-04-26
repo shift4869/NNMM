@@ -2,11 +2,10 @@
 import re
 import time
 import traceback
-from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import sqlalchemy
 from sqlalchemy import *
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import *
 from sqlalchemy.orm.exc import *
 
@@ -52,7 +51,7 @@ class MylistInfoDBController(DBControllerBase):
         try:
             q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
             p = q.one()
-        except NoResultFound:
+        except sqlalchemy.orm.exc.NoResultFound:
             # INSERT
             session.add(r)
             res = 0
@@ -119,7 +118,7 @@ class MylistInfoDBController(DBControllerBase):
                 try:
                     q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
                     p = q.with_for_update().one()
-                except NoResultFound:
+                except sqlalchemy.orm.exc.NoResultFound:
                     # INSERT
                     session.add(r)
                     r_res.append(0)

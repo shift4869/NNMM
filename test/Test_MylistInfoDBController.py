@@ -5,21 +5,15 @@ MylistInfoDBController.MylistInfoDBController()の各種機能をテストする
 """
 
 import copy
-import re
 import random
 import sys
-import time
-import traceback
 import unittest
-import warnings
 from contextlib import ExitStack
-from datetime import date, datetime, timedelta
 from logging import WARNING, getLogger
 from mock import MagicMock, PropertyMock, patch
 from pathlib import Path
 
 from sqlalchemy import *
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import *
 from sqlalchemy.orm.exc import *
 

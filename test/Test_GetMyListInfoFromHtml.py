@@ -15,8 +15,7 @@ from urllib.error import HTTPError
 from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
 
-import pyppeteer
-from requests_html import AsyncHTMLSession, HTMLResponse, HtmlElement
+from requests_html import AsyncHTMLSession, HtmlElement
 
 from NNMM import GuiFunction
 from NNMM import GetMyListInfoFromHtml
