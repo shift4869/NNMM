@@ -38,8 +38,8 @@ class TestProcessWatched(unittest.TestCase):
             mockiminv.return_value = False
 
             def MakeTableRecords():
-                table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
-                records = [[str(i), f"sm1{i:07}", f"動画名{i}", f"投稿者1", "未視聴", "2022-01-28 22:00:00",
+                table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
+                records = [[str(i), f"sm1{i:07}", f"動画名{i}", f"投稿者1", "未視聴", "2022-01-28 22:00:00", "2022-01-28 22:01:00",
                             f"https://www.nicovideo.jp/watch/sm1{i:07}", mylist_url_s] for i in range(1, NUM + 1)]
                 return records
 
@@ -100,7 +100,7 @@ class TestProcessWatched(unittest.TestCase):
                 c_index = 0
                 for s_index in selected_num_s:
                     v = table_records_s[s_index][1]
-                    m = table_records_s[s_index][7]
+                    m = table_records_s[s_index][8]
                     self.assertEqual(call.mylist_info_db.UpdateStatus(v, m, ""), mc[c_index])
                     self.assertEqual(call.mylist_info_db.SelectFromMylistURL(m), mc[c_index + 1])
                     self.assertEqual(call.mylist_db.UpdateIncludeFlag(m, False), mc[c_index + 2])

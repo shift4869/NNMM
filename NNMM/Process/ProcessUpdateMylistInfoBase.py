@@ -314,7 +314,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
 
         # 引数チェック
         mylist_info_cols = MylistInfo.__table__.c.keys()
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
         try:
             if not(hasattr(m_record, "get") and m_record.get("url")):
                 raise ValueError
@@ -406,6 +406,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
                     "username": m["username"],
                     "status": m["status"],
                     "uploaded_at": m["uploaded"],
+                    "registered_at": m["registered_at"],
                     "video_url": m["video_url"],
                     "mylist_url": m["mylist_url"],
                     "created_at": dst
@@ -485,10 +486,10 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
         for m in m_list:
             mylist_url = m.get("url")
             video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
             def_data = []
             for i, t in enumerate(video_list):
-                a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"], t["video_url"], t["mylist_url"]]
+                a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"], t["registered_at"], t["video_url"], t["mylist_url"]]
                 def_data.append(a)
 
             # 左のマイリストlistboxの表示を更新する

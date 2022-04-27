@@ -69,7 +69,7 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
             def_data = self.window["-TABLE-"].Values  # 現在のtableの全リスト
 
             for i, record in enumerate(def_data):
-                table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+                table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
                 def_data[i][4] = ""
             self.window["-TABLE-"].update(values=def_data)
 

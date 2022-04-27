@@ -116,11 +116,11 @@ class TestGetMyListInfo(unittest.TestCase):
         """動画情報セットを返す（mylist_url以外）
         """
         video_info = [
-            ("sm11111111", "動画タイトル1", "投稿者1", "未視聴", "2021-05-29 22:00:11", "https://www.nicovideo.jp/watch/sm11111111", "2021-10-16 00:00:11"),
-            ("sm22222222", "動画タイトル2", "投稿者1", "未視聴", "2021-05-29 22:00:22", "https://www.nicovideo.jp/watch/sm22222222", "2021-10-16 00:00:22"),
-            ("sm33333333", "動画タイトル3", "投稿者1", "未視聴", "2021-05-29 22:00:33", "https://www.nicovideo.jp/watch/sm33333333", "2021-10-16 00:00:33"),
-            ("sm44444444", "動画タイトル4", "投稿者2", "未視聴", "2021-05-29 22:00:44", "https://www.nicovideo.jp/watch/sm44444444", "2021-10-16 00:00:44"),
-            ("sm55555555", "動画タイトル5", "投稿者2", "未視聴", "2021-05-29 22:00:55", "https://www.nicovideo.jp/watch/sm55555555", "2021-10-16 00:00:55"),
+            ("sm11111111", "動画タイトル1", "投稿者1", "未視聴", "2021-05-29 22:00:11", "2021-05-29 22:01:11", "https://www.nicovideo.jp/watch/sm11111111", "2021-10-16 00:00:11"),
+            ("sm22222222", "動画タイトル2", "投稿者1", "未視聴", "2021-05-29 22:00:22", "2021-05-29 22:02:22", "https://www.nicovideo.jp/watch/sm22222222", "2021-10-16 00:00:22"),
+            ("sm33333333", "動画タイトル3", "投稿者1", "未視聴", "2021-05-29 22:00:33", "2021-05-29 22:03:33", "https://www.nicovideo.jp/watch/sm33333333", "2021-10-16 00:00:33"),
+            ("sm44444444", "動画タイトル4", "投稿者2", "未視聴", "2021-05-29 22:00:44", "2021-05-29 22:04:44", "https://www.nicovideo.jp/watch/sm44444444", "2021-10-16 00:00:44"),
+            ("sm55555555", "動画タイトル5", "投稿者2", "未視聴", "2021-05-29 22:00:55", "2021-05-29 22:05:55", "https://www.nicovideo.jp/watch/sm55555555", "2021-10-16 00:00:55"),
         ]
         return video_info
 
@@ -133,7 +133,8 @@ class TestGetMyListInfo(unittest.TestCase):
                 title (str): 動画タイトル
                 username (str): 投稿者名
                 status (str): 視聴状況({"未視聴", ""})
-                uploaded_at (str): 動画投稿日時
+                uploaded_at (str): 投稿日時
+                registered_at (str): 登録日時
                 video_url (str): 動画URL
                 created_at (str): 作成日時
             マイリスト情報セット
@@ -148,7 +149,7 @@ class TestGetMyListInfo(unittest.TestCase):
         """
         v = self.__GetVideoInfoSet()[id]
         mylist_url = self.__GetURLInfoSet()[mylist_id]
-        r = MylistInfo(v[0], v[1], v[2], v[3], v[4], v[5], mylist_url, v[6])
+        r = MylistInfo(v[0], v[1], v[2], v[3], v[4], v[5], v[6], mylist_url, v[7])
         return r
 
     def __LoadToMylistInfoTable(self) -> list[dict]:
@@ -443,7 +444,7 @@ class TestGetMyListInfo(unittest.TestCase):
         expect = []
         records = mb_cont.SelectFromMylistURL(mylist_url)
         for i, m in enumerate(records):
-            a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"], m["video_url"], m["mylist_url"]]
+            a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"], m["registered_at"], m["video_url"], m["mylist_url"]]
             expect.append(a)
 
         # window["-INPUT1-"].get()の呼び出し確認

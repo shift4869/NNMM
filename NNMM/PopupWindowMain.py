@@ -360,7 +360,7 @@ class PopupVideoWindow(PopupWindowBase):
             return None
 
         r = self.record
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
         mylist_info_cols = MylistInfo.__table__.c.keys()
 
         # 動画情報をすべて含んでいない場合はNoneを返して終了
@@ -375,6 +375,7 @@ class PopupVideoWindow(PopupWindowBase):
         username = r["username"]
         status = r["status"]
         uploaded_at = r["uploaded_at"]
+        registered_at = r["registered_at"]
         video_url = r["video_url"]
         mylist_url = r["mylist_url"]
         created_at = r["created_at"]
@@ -387,11 +388,11 @@ class PopupVideoWindow(PopupWindowBase):
             [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
             [sg.Text("状況", size=csize), sg.Input(f"{status}", key="-SHOWNAME-", readonly=True, size=tsize)],
             [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
+            [sg.Text("登録日時", size=csize), sg.Input(f"{registered_at}", key="-URL-", readonly=True, size=tsize)],
             [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
             [sg.Text("マイリストURL", size=csize), sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize)],
             [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
             [sg.Text(horizontal_line)],
-            [sg.Text("")],
             [sg.Text("")],
             [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
         ]
@@ -440,7 +441,7 @@ class PopupVideoWindow(PopupWindowBase):
 
         # 動画情報を取得する
         video_id = selected[1]
-        mylist_url = selected[7]
+        mylist_url = selected[8]
         records = self.mylist_info_db.SelectFromIDURL(video_id, mylist_url)
 
         if records == [] or len(records) != 1:

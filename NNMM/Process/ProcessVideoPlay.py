@@ -78,7 +78,7 @@ class ProcessVideoPlay(ProcessBase.ProcessBase):
             return -1
 
         # 視聴済にする
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
         STATUS_INDEX = 4
         # 状況を更新
         if def_data[row][STATUS_INDEX] != "":

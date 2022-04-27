@@ -21,7 +21,7 @@ class MylistInfoDBController(DBControllerBase):
         super().__init__(db_fullpath)
 
     def Upsert(self, video_id: str, title: str, username: str, status: str,
-               uploaded_at: str, video_url: str, mylist_url: str, created_at: str) -> int:
+               uploaded_at: str, registered_at: str, video_url: str, mylist_url: str, created_at: str) -> int:
         """MylistInfoにUPSERTする
 
         Notes:
@@ -34,7 +34,8 @@ class MylistInfoDBController(DBControllerBase):
             title (str): 動画タイトル
             username (str): 投稿者名
             status (str): 視聴状況({"未視聴", "視聴済"})
-            uploaded_at (str): 動画投稿日時
+            uploaded_at (str): 投稿日時
+            registered_at (str): 登録日時
             video_url (str): 動画URL
             mylist_url (str): 所属マイリストURL
             created_at (str): 作成日時
@@ -46,7 +47,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
+        r = MylistInfo(video_id, title, username, status, uploaded_at, registered_at, video_url, mylist_url, created_at)
 
         try:
             q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
@@ -62,6 +63,7 @@ class MylistInfoDBController(DBControllerBase):
             p.username = r.username
             p.status = r.status
             p.uploaded_at = r.uploaded_at
+            p.registered_at = r.registered_at
             p.video_url = r.video_url
             p.mylist_url = r.mylist_url
             p.created_at = r.created_at
@@ -88,7 +90,8 @@ class MylistInfoDBController(DBControllerBase):
                     title (str): 動画タイトル
                     username (str): 投稿者名
                     status (str): 視聴状況({"未視聴", "視聴済"})
-                    uploaded_at (str): 動画投稿日時
+                    uploaded_at (str): 投稿日時
+                    registered_at (str): 登録日時
                     video_url (str): 動画URL
                     mylist_url (str): 所属マイリストURL
                     created_at (str): 作成日時
@@ -109,11 +112,12 @@ class MylistInfoDBController(DBControllerBase):
                 username = record.get("username")
                 status = record.get("status")
                 uploaded_at = record.get("uploaded_at")
+                registered_at = record.get("registered_at")
                 video_url = record.get("video_url")
                 mylist_url = record.get("mylist_url")
                 created_at = record.get("created_at")
 
-                r = MylistInfo(video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at)
+                r = MylistInfo(video_id, title, username, status, uploaded_at, registered_at, video_url, mylist_url, created_at)
 
                 try:
                     q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
@@ -129,6 +133,7 @@ class MylistInfoDBController(DBControllerBase):
                     p.username = r.username
                     p.status = r.status
                     p.uploaded_at = r.uploaded_at
+                    p.registered_at = r.registered_at
                     p.video_url = r.video_url
                     p.mylist_url = r.mylist_url
                     p.created_at = r.created_at

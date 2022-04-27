@@ -15,6 +15,7 @@ class MylistInfo(Base):
         [username] TEXT NOT NULL,
         [status] TEXT,
         [uploaded_at] TEXT,
+        [registered_at] TEXT,
         [video_url] TEXT NOT NULL,
         [mylist_url] TEXT NOT NULL,
         [created_at] TEXT,
@@ -29,6 +30,7 @@ class MylistInfo(Base):
     username = Column(String(512), nullable=False)
     status = Column(String(512))
     uploaded_at = Column(String(256))
+    registered_at = Column(String(256))
     video_url = Column(String(512), nullable=False)
     mylist_url = Column(String(512), nullable=False)
     created_at = Column(String(256))
@@ -37,13 +39,14 @@ class MylistInfo(Base):
         super(Base, self).__init__(*args, **kwargs)
         self.status = "未視聴"
 
-    def __init__(self, video_id, title, username, status, uploaded_at, video_url, mylist_url, created_at):
+    def __init__(self, video_id, title, username, status, uploaded_at, registered_at, video_url, mylist_url, created_at):
         # self.id = id
         self.video_id = video_id
         self.title = title
         self.username = username
         self.status = status
         self.uploaded_at = uploaded_at
+        self.registered_at = registered_at
         self.video_url = video_url
         self.mylist_url = mylist_url
         self.created_at = created_at
@@ -62,6 +65,7 @@ class MylistInfo(Base):
             "username": self.username,
             "status": self.status,
             "uploaded_at": self.uploaded_at,
+            "registered_at": self.registered_at,
             "video_url": self.video_url,
             "mylist_url": self.mylist_url,
             "created_at": self.created_at,

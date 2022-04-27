@@ -58,9 +58,9 @@ class ProcessWatched(ProcessBase.ProcessBase):
             row = int(v)
 
             # マイリスト情報ステータスDB更新
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
             selected = def_data[row]
-            res = self.mylist_info_db.UpdateStatus(selected[1], selected[7], "")
+            res = self.mylist_info_db.UpdateStatus(selected[1], selected[8], "")
             if res == 0:
                 logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "watched".')
             else:
@@ -70,11 +70,11 @@ class ProcessWatched(ProcessBase.ProcessBase):
             def_data[row][4] = ""
 
             # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
-            m_list = self.mylist_info_db.SelectFromMylistURL(selected[7])
+            m_list = self.mylist_info_db.SelectFromMylistURL(selected[8])
             m_list = [list(m.values()) for m in m_list]
             if not IsMylistIncludeNewVideo(m_list):
                 # マイリストDB新着フラグ更新
-                self.mylist_db.UpdateIncludeFlag(selected[7], False)
+                self.mylist_db.UpdateIncludeFlag(selected[8], False)
 
         # テーブル更新を反映させる
         self.window["-TABLE-"].update(values=def_data)

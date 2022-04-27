@@ -38,7 +38,7 @@ class MainWindow():
         layout = self.MakeMainWindowLayout()
 
         # ウィンドウオブジェクト作成
-        self.window = sg.Window("NNMM", layout, size=(1130, 900), finalize=True, resizable=True)
+        self.window = sg.Window("NNMM", layout, size=(1330, 900), finalize=True, resizable=True)
         self.window["-LIST-"].bind("<Double-Button-1>", "+DOUBLE CLICK+")
 
         # ログ設定
@@ -133,9 +133,9 @@ class MainWindow():
         ]
 
         # 右ペイン
-        table_cols_name = ["No.", "   動画ID   ", "              動画名              ", "   投稿者   ", "  状況  ", "     投稿日時      ", "動画URL", "所属マイリストURL"]
-        cols_width = [20, 20, 20, 20, 80, 100, 0, 0]
-        def_data = [["", "", "", "", "", "", "", ""]]
+        table_cols_name = ["No.", "   動画ID   ", "                動画名                ", "   投稿者   ", "  状況  ", "     投稿日時      ", "     登録日時      ", "動画URL", "所属マイリストURL"]
+        cols_width = [20, 20, 20, 20, 80, 100, 100, 0, 0]
+        def_data = [["", "", "", "", "", "", "", "", ""]]
         table_right_click_menu = [
             "-TABLE_RIGHT_CLICK_MENU-", [
                 "! ",
@@ -167,7 +167,7 @@ class MainWindow():
         }
         t = sg.Table(**table_style)
         r_pane = [
-            [sg.Input("", key="-INPUT1-", size=(91, 100)), sg.Button("更新", key="-UPDATE-"), sg.Button("終了", key="-EXIT-")],
+            [sg.Input("", key="-INPUT1-", size=(120, 100)), sg.Button("更新", key="-UPDATE-"), sg.Button("終了", key="-EXIT-")],
             [sg.Column([[t]], expand_x=True)],
         ]
 
@@ -175,13 +175,13 @@ class MainWindow():
         mf_layout = [[
             sg.Frame("Main", [
                 [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
-            ], size=(1170, 1000))
+            ], size=(1370, 1000))
         ]]
         cf_layout = ConfigMain.ProcessConfigBase.GetConfigLayout()
         lf_layout = [[
             sg.Frame("ログ", [
                 [sg.Column([[sg.Output(size=(1080, 100), echo_stdout_stderr=True)]])]
-            ], size=(1170, 1000))
+            ], size=(1370, 1000))
         ]]
         layout = [[
             sg.TabGroup([[

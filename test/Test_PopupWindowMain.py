@@ -344,6 +344,7 @@ class TestPopupWindowMain(unittest.TestCase):
             "username": "投稿者1",
             "status": "未視聴",
             "uploaded_at": "2021-05-29 22:00:11",
+            "registered_at": "2021-05-29 22:01:11",
             "video_url": "https://www.nicovideo.jp/watch/sm11111111",
             "mylist_url": "https://www.nicovideo.jp/user/11111111/mylist/12345678",
             "created_at": "2021-10-16 00:00:11",
@@ -366,6 +367,7 @@ class TestPopupWindowMain(unittest.TestCase):
             username = r["username"]
             status = r["status"]
             uploaded_at = r["uploaded_at"]
+            registered_at = r["registered_at"]
             video_url = r["video_url"]
             mylist_url = r["mylist_url"]
             created_at = r["created_at"]
@@ -378,11 +380,11 @@ class TestPopupWindowMain(unittest.TestCase):
                 [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
                 [sg.Text("状況", size=csize), sg.Input(f"{status}", key="-SHOWNAME-", readonly=True, size=tsize)],
                 [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
+                [sg.Text("登録日時", size=csize), sg.Input(f"{registered_at}", key="-URL-", readonly=True, size=tsize)],
                 [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
                 [sg.Text("マイリストURL", size=csize), sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize)],
                 [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
                 [sg.Text(horizontal_line)],
-                [sg.Text("")],
                 [sg.Text("")],
                 [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
             ]
@@ -441,6 +443,7 @@ class TestPopupWindowMain(unittest.TestCase):
                 "投稿者1",
                 "未視聴",
                 "2021-05-29 22:00:11",
+                "2021-05-29 22:01:11",
                 "https://www.nicovideo.jp/watch/sm11111111",
                 e_mylist_url,
                 "2021-10-16 00:00:11",
