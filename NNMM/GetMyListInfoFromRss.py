@@ -68,22 +68,59 @@ async def GetMyListInfoFromRss(url: str) -> list[dict]:
     table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
     mylist_url = url
 
+    # RSSから必要な情報を収集する
+    # res = {
+    #     "userid": userid,                           # ユーザーID 1234567
+    #     "mylistid": mylistid,                       # マイリストID 12345678
+    #     "showname": showname,                       # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+    #     "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+    #     "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
+    #     "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+    #     "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    # }
     try:
-        t = await AnalysisSoup(url_type, url, soup)
+        soup_d = await AnalysisSoup(url_type, url, soup)
     except Exception:
         logger.error(traceback.format_exc())
         return []
 
+    video_id_list = soup_d.get("video_id_list")
+
+    # 動画IDについてAPIを通して情報を取得する
+    # res = {
+    #     "video_id_list": video_id_list,     # 動画IDリスト [sm12345678]
+    #     "title_list": title_list,           # 動画タイトルリスト [テスト動画]
+    #     "uploaded_at_list": uploaded_at_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "video_url_list": video_url_list,   # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    #     "username_list": username_list,     # 投稿者リスト [投稿者1]
+    # }
+    try:
+        api_d = await GetUsernameFromApi(video_id_list)
+    except Exception:
+        logger.error(traceback.format_exc())
+        return []
+
+    # バリデーション
+    if soup_d.get("title_list") != api_d.get("title_list"):
+        logger.error("video title from html and from api is different.")
+        return []
+    if soup_d.get("video_url_list") != api_d.get("video_url_list"):
+        logger.error("video url from html and from api is different.")
+        return []
+
     # 動画情報をそれぞれ格納
-    userid = t.get("userid")
-    mylistid = t.get("mylistid")
-    showname = t.get("showname")
-    myshowname = t.get("myshowname")
-    video_id_list = t.get("video_id_list")
-    title_list = t.get("title_list")
-    uploaded_list = t.get("uploaded_list")
-    video_url_list = t.get("video_url_list")
-    username_list = t.get("username_list")
+    video_d = dict(soup_d, **api_d)
+    userid = video_d.get("userid")
+    mylistid = video_d.get("mylistid")
+    showname = video_d.get("showname")
+    myshowname = video_d.get("myshowname")
+    video_id_list = video_d.get("video_id_list")
+    title_list = video_d.get("title_list")
+    registered_at_list = video_d.get("registered_at_list")
+    uploaded_at_list = video_d.get("uploaded_at_list")
+    video_url_list = video_d.get("video_url_list")
+    username_list = video_d.get("username_list")
 
     # td_format: RSSに記載されている日付形式
     # dts_format: NNMMで扱う日付形式
@@ -92,25 +129,36 @@ async def GetMyListInfoFromRss(url: str) -> list[dict]:
 
     # バリデーション
     # {
-    #     "userid": userid,                   # ユーザーID 1234567
-    #     "mylistid": mylistid,               # マイリストID 12345678
-    #     "showname": showname,               # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
-    #     "myshowname": myshowname,           # マイリスト名 「まとめマイリスト」
-    #     "video_id_list": video_id_list,     # 動画IDリスト [sm12345678]
-    #     "title_list": title_list,           # 動画タイトルリスト [テスト動画]
-    #     "uploaded_list": uploaded_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-    #     "video_url_list": video_url_list,   # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-    #     "username_list": username_list,     # 投稿者リスト [投稿者1]
+    #     "userid": userid,                         # ユーザーID 1234567
+    #     "mylistid": mylistid,                     # マイリストID 12345678
+    #     "showname": showname,                     # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+    #     "myshowname": myshowname,                 # マイリスト名 「まとめマイリスト」
+    #     "video_id_list": video_id_list,           # 動画IDリスト [sm12345678]
+    #     "title_list": title_list,                 # 動画タイトルリスト [テスト動画]
+    #     "uploaded_at_list": uploaded_at_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "registered_at_list": registered_at_list, # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "video_url_list": video_url_list,         # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    #     "username_list": username_list,           # 投稿者リスト [投稿者1]
     # }
     try:
         if not (isinstance(userid, str) and isinstance(mylistid, str) and isinstance(showname, str) and isinstance(myshowname, str)):
             raise ValueError
         if not (userid != "" and showname != "" and myshowname != ""):
             raise ValueError
-        if not (isinstance(video_id_list, list) and isinstance(title_list, list) and isinstance(uploaded_list, list) and isinstance(video_url_list, list) and isinstance(username_list, list)):
+        if not isinstance(video_id_list, list):
+            raise ValueError
+        if not isinstance(title_list, list):
+            raise ValueError
+        if not isinstance(uploaded_at_list, list):
+            raise ValueError
+        if not isinstance(registered_at_list, list):
+            raise ValueError
+        if not isinstance(video_url_list, list):
+            raise ValueError
+        if not isinstance(username_list, list):
             raise ValueError
         num = len(video_id_list)
-        if not (len(title_list) == num and len(uploaded_list) == num and len(video_url_list) == num and len(username_list) == num):
+        if not (len(title_list) == num and len(uploaded_at_list) == num and len(registered_at_list) == num and len(video_url_list) == num and len(username_list) == num):
             raise ValueError
 
         if not re.search("[0-9]+", userid):
@@ -122,12 +170,13 @@ async def GetMyListInfoFromRss(url: str) -> list[dict]:
             if not re.search("[0-9]+", mylistid):
                 raise ValueError
 
-        for video_id, title, uploaded, video_url, username in zip(video_id_list, title_list, uploaded_list, video_url_list, username_list):
+        for video_id, title, uploaded_at, registered_at, video_url, username in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, video_url_list, username_list):
             if not re.search("sm[0-9]+", video_id):
                 raise ValueError
             if title == "":
                 raise ValueError
-            dt = datetime.strptime(uploaded, dts_format)  # 日付形式が正しく変換されるかチェック
+            dt = datetime.strptime(uploaded_at, dts_format)  # 日付形式が正しく変換されるかチェック
+            dt = datetime.strptime(registered_at, dts_format)  # 日付形式が正しく変換されるかチェック
             if not re.search("https://www.nicovideo.jp/watch/sm[0-9]+", video_url):
                 raise ValueError
             if username == "":
@@ -159,18 +208,22 @@ async def GetMyListInfoFromRss(url: str) -> list[dict]:
 
     res = []
     now_date = datetime.now()
-    for video_id, title, uploaded, video_url, username in zip(video_id_list, title_list, uploaded_list, video_url_list, username_list):
-        # 投稿日時が未来日の場合、登録しない（投稿予約など）
-        if now_date < datetime.strptime(uploaded, dts_format):
-            continue
+    try:
+        for video_id, title, uploaded_at, registered_at, username, video_url in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list):
+            # 登録日時が未来日の場合、登録しない（投稿予約など）
+            if now_date < datetime.strptime(registered_at, dts_format):
+                continue
 
-        # 出力インターフェイスチェック
-        value_list = [-1, video_id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
-        if len(table_cols) != len(value_list):
-            continue
+            # 出力インターフェイスチェック
+            value_list = [-1, video_id, title, username, "", uploaded_at, registered_at, video_url, mylist_url, showname, myshowname]
+            if len(table_cols) != len(value_list):
+                continue
 
-        # 登録
-        res.append(dict(zip(table_cols, value_list)))
+            # 登録
+            res.append(dict(zip(table_cols, value_list)))
+    except Exception:
+        logger.error(traceback.format_exc())
+        return []
 
     # 重複削除
     seen = []
@@ -235,7 +288,7 @@ def GetItemInfo(item_lx) -> tuple[str, str, str, str]:
         item_lx (bs4.element.Tag): soup.find_allで取得されたitemタグ
 
     Returns:
-        tuple[str, str, str, str]: 動画ID, 動画タイトル, 投稿日時, 動画URL
+        tuple[str, str, str, str]: 動画ID, 動画タイトル, 登録日時, 動画URL
 
     Raises:
         AttributeError, TypeError: エントリパース失敗時
@@ -261,9 +314,9 @@ def GetItemInfo(item_lx) -> tuple[str, str, str, str]:
     video_id = re.findall(pattern, video_url)[0]
 
     pubDate_lx = item_lx.find("pubDate")
-    uploaded = datetime.strptime(pubDate_lx.text, td_format).strftime(dts_format)
+    registered_at = datetime.strptime(pubDate_lx.text, td_format).strftime(dts_format)
 
-    return (video_id, title, uploaded, video_url)
+    return (video_id, title, registered_at, video_url)
 
 
 async def AnalysisSoup(url_type: str, url: str, soup: BeautifulSoup) -> dict:
@@ -281,15 +334,14 @@ async def AnalysisSoup(url_type: str, url: str, soup: BeautifulSoup) -> dict:
     Returns:
         dict: 解析結果をまとめた辞書
             {
-                "userid": userid,                   # ユーザーID 1234567
-                "mylistid": mylistid,               # マイリストID 12345678
-                "showname": showname,               # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
-                "myshowname": myshowname,           # マイリスト名 「まとめマイリスト」
-                "video_id_list": video_id_list,     # 動画IDリスト [sm12345678]
-                "title_list": title_list,           # 動画タイトルリスト [テスト動画]
-                "uploaded_list": uploaded_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-                "video_url_list": video_url_list,   # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-                "username_list": username_list,     # 投稿者リスト [投稿者1]
+                "userid": userid,                           # ユーザーID 1234567
+                "mylistid": mylistid,                       # マイリストID 12345678
+                "showname": showname,                       # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+                "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+                "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
             }
 
     Raises:
@@ -318,15 +370,14 @@ async def AnalysisUploadedPage(url, soup) -> dict:
     Returns:
         dict: 解析結果をまとめた辞書
             {
-                "userid": userid,                   # ユーザーID 1234567
-                "mylistid": mylistid,               # マイリストID 12345678
-                "showname": showname,               # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
-                "myshowname": myshowname,           # マイリスト名 「まとめマイリスト」
-                "video_id_list": video_id_list,     # 動画IDリスト [sm12345678]
-                "title_list": title_list,           # 動画タイトルリスト [テスト動画]
-                "uploaded_list": uploaded_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-                "video_url_list": video_url_list,   # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-                "username_list": username_list,     # 投稿者リスト [投稿者1]
+                "userid": userid,                           # ユーザーID 1234567
+                "mylistid": mylistid,                       # マイリストID 12345678
+                "showname": showname,                       # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+                "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+                "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
             }
 
     Raises:
@@ -350,27 +401,22 @@ async def AnalysisUploadedPage(url, soup) -> dict:
     # 動画エントリ取得
     video_id_list = []
     title_list = []
-    uploaded_list = []
+    registered_at_list = []
     video_url_list = []
     items_lx = soup.find_all("item")
     for item in items_lx:
         # 動画エントリパース
-        video_id, title, uploaded, video_url = GetItemInfo(item)
+        video_id, title, registered_at, video_url = GetItemInfo(item)
 
         # パース結果チェック
-        if (video_id == "") or (title == "") or (uploaded == "") or (video_url == ""):
+        if (video_id == "") or (title == "") or (registered_at == "") or (video_url == ""):
             continue
 
         # 格納
         video_id_list.append(video_id)
         title_list.append(title)
-        uploaded_list.append(uploaded)
+        registered_at_list.append(registered_at)
         video_url_list.append(video_url)
-
-    # 投稿者収集
-    # 投稿動画の投稿者は単一であることが保証されている
-    num = len(video_id_list)
-    username_list = [username for _ in range(num)]
 
     # 返り値設定
     res = {
@@ -380,14 +426,13 @@ async def AnalysisUploadedPage(url, soup) -> dict:
         "myshowname": myshowname,
         "video_id_list": video_id_list,
         "title_list": title_list,
-        "uploaded_list": uploaded_list,
+        "registered_at_list": registered_at_list,
         "video_url_list": video_url_list,
-        "username_list": username_list,
     }
     return res
 
 
-async def AnalysisMylistPage(url, soup):
+async def AnalysisMylistPage(url, soup) -> dict:
     """マイリストページのRSSを解析する
 
     Notes:
@@ -400,15 +445,14 @@ async def AnalysisMylistPage(url, soup):
     Returns:
         dict: 解析結果をまとめた辞書
             {
-                "userid": userid,                   # ユーザーID 1234567
-                "mylistid": mylistid,               # マイリストID 12345678
-                "showname": showname,               # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
-                "myshowname": myshowname,           # マイリスト名 「まとめマイリスト」
-                "video_id_list": video_id_list,     # 動画IDリスト [sm12345678]
-                "title_list": title_list,           # 動画タイトルリスト [テスト動画]
-                "uploaded_list": uploaded_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-                "video_url_list": video_url_list,   # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-                "username_list": username_list,     # 投稿者リスト [投稿者1]
+                "userid": userid,                           # ユーザーID 1234567
+                "mylistid": mylistid,                       # マイリストID 12345678
+                "showname": showname,                       # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+                "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+                "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
             }
 
     Raises:
@@ -432,26 +476,22 @@ async def AnalysisMylistPage(url, soup):
     # 動画エントリ取得
     video_id_list = []
     title_list = []
-    uploaded_list = []
+    registered_at_list = []
     video_url_list = []
     items_lx = soup.find_all("item")
     for item in items_lx:
         # 動画エントリパース
-        video_id, title, uploaded, video_url = GetItemInfo(item)
+        video_id, title, registered_at, video_url = GetItemInfo(item)
 
         # パース結果チェック
-        if (video_id == "") or (title == "") or (uploaded == "") or (video_url == ""):
+        if (video_id == "") or (title == "") or (registered_at == "") or (video_url == ""):
             continue
 
         # 格納
         video_id_list.append(video_id)
         title_list.append(title)
-        uploaded_list.append(uploaded)
+        registered_at_list.append(registered_at)
         video_url_list.append(video_url)
-
-    # 動画投稿者名収集
-    # 動画IDリストを用いて動画情報APIに問い合わせる
-    username_list = await GetUsernameFromApi(video_id_list)
 
     # 返り値設定
     res = {
@@ -461,14 +501,13 @@ async def AnalysisMylistPage(url, soup):
         "myshowname": myshowname,
         "video_id_list": video_id_list,
         "title_list": title_list,
-        "uploaded_list": uploaded_list,
+        "registered_at_list": registered_at_list,
         "video_url_list": video_url_list,
-        "username_list": username_list,
     }
     return res
 
 
-async def GetUsernameFromApi(video_id_list: list[str]):
+async def GetUsernameFromApi(video_id_list: list[str]) -> dict:
     """動画IDから投稿者名を取得する
 
     Notes:
@@ -480,18 +519,29 @@ async def GetUsernameFromApi(video_id_list: list[str]):
         video_id_list (list[str]): 動画IDリスト
 
     Returns:
-        list[str]: ユーザーネームのリスト
+        dict: 解析結果をまとめた辞書
+            {
+                "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+                "username_list": username_list,             # 投稿者リスト [投稿者1]
+            }
     """
     MAX_RETRY_NUM = 5
     session = AsyncHTMLSession()
 
-    default_name = "<NULL>"
     base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
+    td_format = "%Y-%m-%dT%H:%M:%S%z"
+    dts_format = "%Y-%m-%d %H:%M:%S"
+
+    title_list = []
+    uploaded_at_list = []
+    video_url_list = []
     username_list = []
     for video_id in video_id_list:
-        username = default_name
-        response = None
         url = base_url + video_id
+        response = None
 
         for _ in range(MAX_RETRY_NUM):
             try:
@@ -508,16 +558,42 @@ async def GetUsernameFromApi(video_id_list: list[str]):
             response = None
 
         if response:
-            # username_lx = soup.find_all("user_nickname")
-            username_lx = response.html.lxml.findall("thumb/user_nickname")
-            if username_lx and len(username_lx) == 1:
-                username = username_lx[0].text
-            else:
-                username = default_name
-        username_list.append(username)
+            thumb_lx = response.html.lxml.findall("thumb")[0]
+
+            # 動画タイトル
+            title_lx = thumb_lx.findall("title")
+            title = title_lx[0].text
+            title_list.append(title)
+
+            # 投稿日時
+            uploaded_at_lx = thumb_lx.findall("first_retrieve")
+            uploaded_at = datetime.strptime(uploaded_at_lx[0].text, td_format).strftime(dts_format)
+            uploaded_at_list.append(uploaded_at)
+
+            # 動画URL
+            video_url_lx = thumb_lx.findall("watch_url")
+            video_url = video_url_lx[0].text
+            video_url_list.append(video_url)
+
+            # 投稿者
+            username_lx = thumb_lx.findall("user_nickname")
+            username = username_lx[0].text
+            username_list.append(username)
 
     await session.close()
-    return username_list
+
+    num = len(video_id_list)
+    if not (len(title_list) == num and len(uploaded_at_list) == num and len(video_url_list) == num and len(username_list) == num):
+        raise ValueError
+
+    res = {
+        "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
+        "title_list": title_list,               # 動画タイトルリスト [テスト動画]
+        "uploaded_at_list": uploaded_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+        "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+        "username_list": username_list,         # 投稿者リスト [投稿者1]
+    }
+    return res
 
 
 if __name__ == "__main__":

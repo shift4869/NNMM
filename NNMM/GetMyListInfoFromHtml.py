@@ -139,14 +139,14 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
 
     # バリデーション
     # {
-    #     "showname": showname,               # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
-    #     "myshowname": myshowname,           # マイリスト名 「まとめマイリスト」
-    #     "video_id_list": video_id_list,     # 動画IDリスト [sm12345678]
-    #     "title_list": title_list,           # 動画タイトルリスト [テスト動画]
+    #     "showname": showname,                     # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+    #     "myshowname": myshowname,                 # マイリスト名 「まとめマイリスト」
+    #     "video_id_list": video_id_list,           # 動画IDリスト [sm12345678]
+    #     "title_list": title_list,                 # 動画タイトルリスト [テスト動画]
     #     "uploaded_at_list": uploaded_at_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-    #     "registered_at_list": registered_at_list,     # 登録日時リスト [%Y-%m-%d %H:%M:%S]
-    #     "video_url_list": video_url_list,   # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-    #     "username_list": username_list,     # 投稿者リスト [投稿者1]
+    #     "registered_at_list": registered_at_list, # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "video_url_list": video_url_list,         # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    #     "username_list": username_list,           # 投稿者リスト [投稿者1]
     # }
     dts_format = "%Y-%m-%d %H:%M:%S"
     try:
@@ -188,8 +188,13 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
     # 結合
     res = []
     try:
-        for id, title, uploaded_at, registered_at, username, video_url in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list):
-            value_list = [-1, id, title, username, "", uploaded_at, registered_at, video_url, mylist_url, showname, myshowname]
+        for video_id, title, uploaded_at, registered_at, username, video_url in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list):
+            # 出力インターフェイスチェック
+            value_list = [-1, video_id, title, username, "", uploaded_at, registered_at, video_url, mylist_url, showname, myshowname]
+            if len(table_cols) != len(value_list):
+                continue
+
+            # 登録
             res.append(dict(zip(table_cols, value_list)))
     except Exception:
         logger.error(traceback.format_exc())
@@ -271,13 +276,14 @@ async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElemen
         lxml (HtmlElement): 解析対象のhtml
 
     Returns:
-        res = {
-            "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
-            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
-            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
-        }
+        dict: 解析結果をまとめた辞書
+            {
+                "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+                "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            }
 
     Raises:
         AttributeError: html解析失敗時
@@ -302,13 +308,14 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> dict:
         lxml (HtmlElement): 投稿動画ページのhtml
 
     Returns:
-        res = {
-            "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
-            "myshowname": myshowname,                   # マイリスト名 「投稿動画」
-            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
-        }
+        dict: 解析結果をまとめた辞書
+            {
+                "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
+                "myshowname": myshowname,                   # マイリスト名 「投稿動画」
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            }
 
     Raises:
         AttributeError: html解析失敗時
@@ -387,13 +394,14 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> dic
         lxml (HtmlElement): マイリストページのhtml
 
     Returns:
-        res = {
-            "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
-            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
-            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
-        }
+        dict: 解析結果をまとめた辞書
+            {
+                "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+                "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            }
 
     Raises:
         AttributeError: html解析失敗時
@@ -498,13 +506,14 @@ async def GetUsernameFromApi(video_id_list: list[str]):
         video_id_list (list[str]): 動画IDリスト
 
     Returns:
-        res = {
-            "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
-            "title_list": title_list,               # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-            "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-            "username_list": username_list,         # 投稿者リスト [投稿者1]
-        }
+        dict: 解析結果をまとめた辞書
+            {
+                "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
+                "title_list": title_list,               # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+                "username_list": username_list,         # 投稿者リスト [投稿者1]
+            }
     """
     base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
     td_format = "%Y-%m-%dT%H:%M:%S%z"
