@@ -1,7 +1,7 @@
 # coding: utf-8
-"""GetMyListInfoFromHtmlのテスト
+"""GetMyListInfoFromHtml のテスト
 
-GetMyListInfoFromHtmlの各種機能をテストする
+GetMyListInfoFromHtml の各種機能をテストする
 """
 
 import asyncio
@@ -10,12 +10,12 @@ import shutil
 import sys
 import unittest
 from contextlib import ExitStack
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.error import HTTPError
 from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
 
-from requests_html import AsyncHTMLSession, HtmlElement
+from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
 from NNMM import GetMyListInfoFromHtml
@@ -47,7 +47,9 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
 
     def __GetMylistURLSet(self) -> list[str]:
         """mylist_urlセットを返す
-            # スクレイピングの場合はURLは開ければ良いため区別しない
+
+        Notes:
+            スクレイピングの場合はURLは開ければ良いため区別しない
             mylist_url_info = [
                 "https://www.nicovideo.jp/user/11111111/video",
                 "https://www.nicovideo.jp/user/22222222/video",
@@ -76,18 +78,81 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
         """動画情報セットを返す
         """
         mylist_url_info = self.__GetMylistURLSet()
-        title_t = "動画タイトル{}_{:02}"
-        video_url_t = "https://www.nicovideo.jp/watch/sm{}00000{:02}"
-        uploaded_t = "2022/03/13 0{}:{:02}"
-        video_info = {
-            mylist_url_info[0]: [(title_t.format(1, i), video_url_t.format(1, i), uploaded_t.format(1, i)) for i in range(1, 10)],
-            mylist_url_info[1]: [(title_t.format(2, i), video_url_t.format(2, i), uploaded_t.format(2, i)) for i in range(1, 10)],
-            mylist_url_info[2]: [(title_t.format(1, i), video_url_t.format(1, i), uploaded_t.format(1, i)) for i in range(1, 5)],
-            mylist_url_info[3]: [(title_t.format(1, i), video_url_t.format(1, i), uploaded_t.format(1, i)) for i in range(5, 10)],
-            mylist_url_info[4]: [(title_t.format(3, i), video_url_t.format(3, i), uploaded_t.format(3, i)) for i in range(1, 10)],
-        }
-        res = video_info.get(mylist_url, [("", "", "")])
+        m_range = {
+            mylist_url_info[0]: range(1, 10),
+            mylist_url_info[1]: range(1, 10),
+            mylist_url_info[2]: range(1, 5),
+            mylist_url_info[3]: range(5, 10),
+            mylist_url_info[4]: range(1, 10),
+        }.get(mylist_url, range(1, 10))
+
+        pattern = r"https://www.nicovideo.jp/user/([0-9]{8})/.*"
+        userid = re.findall(pattern, mylist_url)[0]
+        n = userid[0]
+
+        res = []
+        td_format = "%Y-%m-%dT%H:%M:%S%z"
+        dts_format = "%Y-%m-%d %H:%M:%S"
+        for i in m_range:
+            video_id = f"sm{n}00000{i:02}"
+            video_info = self.__GetVideoInfo(video_id)
+            uploaded_at = datetime.strptime(video_info["uploaded_at"], td_format).strftime(dts_format)
+
+            rd = datetime.strptime(video_info["uploaded_at"], td_format)
+            rd += timedelta(minutes=1)
+            registered_at = rd.strftime(dts_format)
+
+            video_info["uploaded_at"] = uploaded_at
+            video_info["registered_at"] = registered_at
+            res.append(video_info)
+
         return res
+
+    def __GetVideoInfo(self, video_id: str) -> list[tuple[str, str, str]]:
+        """動画情報を返す
+        """
+        # video_idのパターンはsm{投稿者id}00000{動画識別2桁}
+        pattern = r"sm([0-9]{1})00000([0-9]{2})"
+        n, m = re.findall(pattern, video_id)[0]
+        title = f"動画タイトル{n}_{m}"
+        uploaded_at = f"2022-04-29T0{n}:{m}:00+09:00"
+        video_url = "https://www.nicovideo.jp/watch/" + video_id
+        user_id = n * 8
+        username = f"動画投稿者{n}"
+
+        res = {
+            "video_id": video_id,         # 動画ID [sm12345678]
+            "title": title,               # 動画タイトル [テスト動画]
+            "uploaded_at": uploaded_at,   # 投稿日時 [%Y-%m-%d %H:%M:%S]
+            "video_url": video_url,       # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
+            "user_id": user_id,           # 投稿者id [投稿者1]
+            "username": username,         # 投稿者 [投稿者1]
+        }
+        return res
+
+    def __GetXMLFromAPI(self, video_id: str) -> str:
+        """APIから返ってくる動画情報セットxmlを返す
+        """
+        video_info = self.__GetVideoInfo(video_id)
+        title = video_info.get("title")
+        first_retrieve = video_info.get("uploaded_at")
+        watch_url = video_info.get("video_url")
+        user_id = video_info.get("user_id")
+        user_nickname = video_info.get("username")
+
+        xml = """<?xml version="1.0" encoding="utf-8"?>
+                    <nicovideo_thumb_response status="ok">
+                        <thumb>"""
+        xml += f"""<video_id>{video_id}</video_id>
+                <title>{title}</title>
+                <first_retrieve>{first_retrieve}</first_retrieve>
+                <watch_url>{watch_url}</watch_url>
+                <user_id>{user_id}</user_id>
+                <user_nickname>{user_nickname}</user_nickname>"""
+        xml += """</thumb>
+                    </nicovideo_thumb_response>"""
+
+        return xml
 
     def __MakeResponseMock(self, request_url, status_code: int = 200, error_target: str = ""):
         mock = MagicMock()
@@ -109,37 +174,37 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             mylist_url = request_url
             mylist_info = self.__GetMylistInfoSet(mylist_url)
             video_info_list = self.__GetVideoInfoSet(mylist_url)
+
+            td_format = "%Y-%m-%d %H:%M:%S"
+            dts_format = "%Y/%m/%d %H:%M"
             if name == error_target:
                 result = []
             elif name == "NC-MediaObject-main":
-                result = [ReturnHref(video_info[1]) for video_info in video_info_list]
+                result = [ReturnHref(video_info["video_url"]) for video_info in video_info_list]
             elif name == "NC-MediaObjectTitle":
-                result = [ReturnText(video_info[0]) for video_info in video_info_list]
+                result = [ReturnText(video_info["title"]) for video_info in video_info_list]
             elif name == "NC-VideoRegisteredAtText-text":
-                result = [ReturnText(video_info[2]) for video_info in video_info_list]
+                result = [ReturnText(datetime.strptime(video_info["uploaded_at"], td_format).strftime(dts_format)) for video_info in video_info_list]
+            elif name == "MylistItemAddition-addedAt":
+                result = [ReturnText(datetime.strptime(video_info["registered_at"], td_format).strftime(dts_format)) for video_info in video_info_list]
             elif name == "UserDetailsHeader-nickname":
                 result = [ReturnText(mylist_info[2])]
             elif name == "MylistHeader-name":
                 result = [ReturnText(mylist_info[0].replace("‐ニコニコ動画", ""))]
             return result
 
-        def ReturnFindAll(name):
-            if name == "thumb/user_nickname":
-                # request_url = "https://ext.nicovideo.jp/api/getthumbinfo/sm10000001"
-                pattern = "^https://ext.nicovideo.jp/api/getthumbinfo/(sm[0-9]+)$"
-                video_id = re.findall(pattern, request_url)[0]
-
-                urls = self.__GetURLSet()
-                for mylist_url in urls:
-                    mylist_info = self.__GetMylistInfoSet(mylist_url)
-                    video_info_list = self.__GetVideoInfoSet(mylist_url)
-                    for video_info in video_info_list:
-                        if video_id in video_info[1]:
-                            return [ReturnText(mylist_info[2])]
-            return []
-
         mock.html.lxml.find_class = ReturnFindClass
-        mock.html.lxml.findall = ReturnFindAll
+        return mock
+
+    def __MakeAPIResponseMock(self, request_url, status_code: int = 200, error_target: str = ""):
+        mock = MagicMock()
+
+        pattern = "^https://ext.nicovideo.jp/api/getthumbinfo/(sm[0-9]+)$"
+        video_id = re.findall(pattern, request_url)[0]
+        xml = self.__GetXMLFromAPI(video_id)
+        html = HTML(html=xml)
+
+        mock.html = html
         return mock
 
     def __MakeSessionResponseMock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
@@ -156,68 +221,125 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
         mock.side_effect = ReturnSessionResponse
         return mock
 
-    def __MakeAnalysisHtmlMock(self, mock, kind: str = ""):
-        if kind == "HTTPError":
-            async def ReturnAnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
+    def __MakeAPISessionResponseMock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
+        async def ReturnSessionResponse(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncMock, MagicMock]:
+            ar_session = AsyncMock()
+            if error_target == "HTTPError":
                 raise HTTPError
-            mock.side_effect = ReturnAnalysisHtml
-        elif kind == "ReturnNone":
-            async def ReturnAnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
-                return (None, None, None, "", "")
-            mock.side_effect = ReturnAnalysisHtml
-        elif kind == "ReturnDifferentLength":
-            async def ReturnAnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
-                return (["title"], ["uploaded_at"], ["username"], "showname", "myshowname")
-            mock.side_effect = ReturnAnalysisHtml
-        elif kind == "ReturnTypeError":
-            async def ReturnAnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement):
-                return (-1, -1, -1, "showname", "myshowname")
-            mock.side_effect = ReturnAnalysisHtml
-        else:
-            mock.side_effect = AsyncMock
+            if status_code == 503:
+                return (ar_session, None)
+
+            r_response = self.__MakeAPIResponseMock(request_url, status_code, error_target)
+            return (ar_session, r_response)
+
+        mock.side_effect = ReturnSessionResponse
         return mock
 
-    def __MakeExpectResult(self, mylist_url):
-        res = []
-        url_type = GuiFunction.GetURLType(mylist_url)
+    def __MakeAnalysisHtmlMock(self, mock, url: str = "", kind: str = ""):
+        url_type = GuiFunction.GetURLType(url)
+        mylist_url = url
+
         mylist_info = self.__GetMylistInfoSet(mylist_url)
         video_info_list = self.__GetVideoInfoSet(mylist_url)
+        title_list = [video_info["title"] for video_info in video_info_list]
+        uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+        registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
 
-        pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-        video_list = [s[1] for s in video_info_list]
-        video_id_list = [re.findall(pattern, s)[0] for s in video_list]
-
-        td_format = "%Y/%m/%d %H:%M"
-        dts_format = "%Y-%m-%d %H:%M:00"
-
-        num = len(video_info_list)
-        for i in range(num):
-            video_info = video_info_list[i]
-            video_id = video_id_list[i]
-
-            dst = datetime.strptime(video_info[2], td_format)
+        if url_type == "uploaded":
             username = mylist_info[2]
+            showname = f"{username}さんの投稿動画"
+            myshowname = "投稿動画"
+        elif url_type == "mylist":
+            username = mylist_info[2]
+            myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
+            showname = f"「{myshowname}」-{username}さんのマイリスト"
 
-            if url_type == "uploaded":
-                myshowname = "投稿動画"
-                showname = f"{username}さんの投稿動画"
-            elif url_type == "mylist":
-                myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
-                showname = f"「{myshowname}」-{username}さんのマイリスト"
+        html_result = {
+            "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+        }
 
-            a = {
-                "no": i + 1,
-                "video_id": video_id,
-                "title": video_info[0],
-                "username": username,
-                "status": "",
-                "uploaded": dst.strftime(dts_format),
-                "video_url": video_info[1],
-                "mylist_url": mylist_url,
-                "showname": showname,
-                "mylistname": myshowname
-            }
-            res.append(a)
+        def ReturnHtml(u, lxml):
+            if kind == "AttributeError":
+                raise AttributeError
+            return html_result
+
+        mock.side_effect = ReturnHtml
+        return mock
+
+    def __MakeGetUsernameFromApiMock(self, mock, url: str = "", kind: str = ""):
+        mylist_url = url
+
+        video_info_list = self.__GetVideoInfoSet(mylist_url)
+        title_list = [video_info["title"] for video_info in video_info_list]
+        uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+        video_id_list = [video_info["video_id"] for video_info in video_info_list]
+        video_url_list = [video_info["video_url"] for video_info in video_info_list]
+        username_list = [video_info["username"] for video_info in video_info_list]
+
+        api_result = {
+            "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
+            "title_list": title_list,               # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+            "username_list": username_list,         # 投稿者リスト [投稿者1]
+        }
+
+        if kind == "TitleError":
+            api_result["title_list"] = [t + "_不正なタイトル名" for t in title_list]
+        if kind == "VideoUrlError":
+            api_result["video_url_list"] = [v + "_不正なタイトル名" for v in video_url_list]
+        if kind == "UsernameError":
+            api_result["username_list"] = []
+
+        def ReturnApi(v):
+            if kind == "HTTPError":
+                raise HTTPError
+            return api_result
+
+        mock.side_effect = ReturnApi
+        return mock
+
+    def __MakeExpectResult(self, url):
+        url_type = GuiFunction.GetURLType(url)
+        mylist_url = url
+
+        mylist_info = self.__GetMylistInfoSet(mylist_url)
+        video_info_list = self.__GetVideoInfoSet(mylist_url)
+        title_list = [video_info["title"] for video_info in video_info_list]
+        uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+        registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
+        video_id_list = [video_info["video_id"] for video_info in video_info_list]
+        video_url_list = [video_info["video_url"] for video_info in video_info_list]
+        username_list = [video_info["username"] for video_info in video_info_list]
+
+        if url_type == "uploaded":
+            username = mylist_info[2]
+            showname = f"{username}さんの投稿動画"
+            myshowname = "投稿動画"
+        elif url_type == "mylist":
+            username = mylist_info[2]
+            myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
+            showname = f"「{myshowname}」-{username}さんのマイリスト"
+
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
+        res = []
+        for video_id, title, uploaded_at, registered_at, username, video_url in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list):
+            # 出力インターフェイスチェック
+            value_list = [-1, video_id, title, username, "", uploaded_at, registered_at, video_url, mylist_url, showname, myshowname]
+            if len(table_cols) != len(value_list):
+                continue
+
+            # 登録
+            res.append(dict(zip(table_cols, value_list)))
+
+        # No.を付記する
+        for i, _ in enumerate(res):
+            res[i]["no"] = i + 1
+
         return res
 
     def test_GetMyListInfoFromHtml(self):
@@ -227,11 +349,16 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             mockle = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.logger.warning"))
             mockses = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.GetAsyncSessionResponse"))
+            mockhtml = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.AnalysisHtml"))
+            mockhapi = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.GetUsernameFromApi"))
 
             # 正常系
             mockses = self.__MakeSessionResponseMock(mockses, 200)
             urls = self.__GetURLSet()
             for url in urls:
+                mockhtml = self.__MakeAnalysisHtmlMock(mockhtml, url)
+                mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url)
+
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(GetMyListInfoFromHtml.GetMyListInfoFromHtml(url))
                 expect = self.__MakeExpectResult(url)
@@ -262,34 +389,44 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             actual = loop.run_until_complete(GetMyListInfoFromHtml.GetMyListInfoFromHtml(url))
             self.assertEqual([], actual)
 
-            # 動画情報収集に失敗
-            mockah = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.AnalysisHtml"))
-            mockah = self.__MakeAnalysisHtmlMock(mockah, "HTTPError")
+            # htmlからの動画情報収集に失敗
+            mockhtml = self.__MakeAnalysisHtmlMock(mockhtml, url, "AttributeError")
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url)
             mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = urls[0]
             actual = loop.run_until_complete(GetMyListInfoFromHtml.GetMyListInfoFromHtml(url))
             self.assertEqual([], actual)
 
-            # 取得した動画情報がNone
-            mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnNone")
+            # apiからの動画情報収集に失敗
+            mockhtml = self.__MakeAnalysisHtmlMock(mockhtml, url)
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url, "HTTPError")
             mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = urls[0]
             actual = loop.run_until_complete(GetMyListInfoFromHtml.GetMyListInfoFromHtml(url))
             self.assertEqual([], actual)
 
-            # 取得した動画情報の長さが不正
-            mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnDifferentLength")
+            # 取得したtitleの情報がhtmlとapiで異なる
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url, "TitleError")
             mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = urls[0]
             actual = loop.run_until_complete(GetMyListInfoFromHtml.GetMyListInfoFromHtml(url))
             self.assertEqual([], actual)
 
-            # 取得した動画情報の内容が不正
-            mockah = self.__MakeAnalysisHtmlMock(mockah, "ReturnTypeError")
+            # 取得したvideo_urlの情報がhtmlとapiで異なる
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url, "VideoUrlError")
             mockses = self.__MakeSessionResponseMock(mockses, 200)
             url = urls[0]
             actual = loop.run_until_complete(GetMyListInfoFromHtml.GetMyListInfoFromHtml(url))
             self.assertEqual([], actual)
+
+            # username_listの大きさが不正
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url, "UsernameError")
+            mockses = self.__MakeSessionResponseMock(mockses, 200)
+            url = urls[0]
+            actual = loop.run_until_complete(GetMyListInfoFromHtml.GetMyListInfoFromHtml(url))
+            self.assertEqual([], actual)
+
+            # TODO::結合時のエラーを模倣する
 
     def test_GetAsyncSessionResponse(self):
         """GetAsyncSessionResponse のテスト
@@ -427,7 +564,7 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             video_id_list = []
             lxml = None
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisHtml(url_type, video_id_list, lxml))
+            actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisHtml(url_type, lxml))
             expect = "AnalysisUploadedPage result"
             self.assertEqual(expect, actual)
             mockaup.assert_called_once_with(lxml)
@@ -438,12 +575,12 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             # マイリストページ
             url_type = "mylist"
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisHtml(url_type, video_id_list, lxml))
+            actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisHtml(url_type, lxml))
             expect = "AnalysisMylistPage result"
             self.assertEqual(expect, actual)
             mockaup.assert_not_called()
             mockaup.reset_mock()
-            mockamp.assert_called_once_with(video_id_list, lxml)
+            mockamp.assert_called_once_with(lxml)
             mockamp.reset_mock()
 
             # 異常系
@@ -451,7 +588,7 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             with self.assertRaises(ValueError):
                 url_type = "invalid url type"
                 loop = asyncio.new_event_loop()
-                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisHtml(url_type, video_id_list, lxml))
+                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisHtml(url_type, lxml))
 
     def test_AnalysisUploadedPage(self):
         """AnalysisUploadedPage のテスト
@@ -466,19 +603,25 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             TCT_USERNAME = "UserDetailsHeader-nickname"
 
             # 正常系
+            expect = {}
             mylist_url = self.__GetURLSet()[0]
             mylist_info = self.__GetMylistInfoSet(mylist_url)
             video_info_list = self.__GetVideoInfoSet(mylist_url)
-            title_list = [video_info[0] for video_info in video_info_list]
-            td_format = "%Y/%m/%d %H:%M"
-            dts_format = "%Y-%m-%d %H:%M:00"
-            uploaded_list = [datetime.strptime(video_info[2], td_format).strftime(dts_format) for video_info in video_info_list]
-            num = len(title_list)
+            title_list = [video_info["title"] for video_info in video_info_list]
+            uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+            registered_at_list = uploaded_at_list
+
             username = mylist_info[2]
-            username_list = [mylist_info[2] for _ in range(num)]
             showname = f"{username}さんの投稿動画"
             myshowname = "投稿動画"
-            expect = (title_list, uploaded_list, username_list, showname, myshowname)
+
+            expect = {
+                "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+                "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            }
 
             response = self.__MakeResponseMock(mylist_url)
             loop = asyncio.new_event_loop()
@@ -512,37 +655,38 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.logger.warning"))
-            mockguf = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.GetUsernameFromApi"))
 
             # 探索対象のクラスタグ定数
             TCT_TITLE = "NC-MediaObjectTitle"
             TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
+            TCT_REGISTERED = "MylistItemAddition-addedAt"
             TCT_USERNAME = "UserDetailsHeader-nickname"
             TCT_MYSHOWNAME = "MylistHeader-name"
 
             # 正常系
+            expect = {}
             mylist_url = self.__GetURLSet()[0]
             mylist_info = self.__GetMylistInfoSet(mylist_url)
             video_info_list = self.__GetVideoInfoSet(mylist_url)
-            title_list = [video_info[0] for video_info in video_info_list]
-            td_format = "%Y/%m/%d %H:%M"
-            dts_format = "%Y-%m-%d %H:%M:00"
-            uploaded_list = [datetime.strptime(video_info[2], td_format).strftime(dts_format) for video_info in video_info_list]
-            num = len(title_list)
+            title_list = [video_info["title"] for video_info in video_info_list]
+            uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+            registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
+
             username = mylist_info[2]
-            username_list = [mylist_info[2] + f"_{i}" for i in range(num)]
             myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
             showname = f"「{myshowname}」-{username}さんのマイリスト"
-            expect = (title_list, uploaded_list, username_list, showname, myshowname)
 
-            mockguf.return_value = [mylist_info[2] + f"_{i}" for i in range(num)]
-
-            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-            video_id_list = [re.findall(pattern, s[1])[0] for s in video_info_list]
+            expect = {
+                "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+                "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+                "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            }
 
             response = self.__MakeResponseMock(mylist_url)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(video_id_list, response.html.lxml))
+            actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(response.html.lxml))
             self.assertEqual(expect, actual)
 
             # 異常系
@@ -550,27 +694,35 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             with self.assertRaises(AttributeError):
                 response = self.__MakeResponseMock(mylist_url, 200, TCT_TITLE)
                 loop = asyncio.new_event_loop()
-                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(video_id_list, response.html.lxml))
+                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(response.html.lxml))
 
             # 投稿日時収集失敗
             with self.assertRaises(AttributeError):
                 response = self.__MakeResponseMock(mylist_url, 200, TCT_UPLOADED)
                 loop = asyncio.new_event_loop()
-                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(video_id_list, response.html.lxml))
+                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(response.html.lxml))
 
             # TODO::投稿日時収集は成功するが解釈に失敗
+
+            # 登録日時収集失敗
+            with self.assertRaises(AttributeError):
+                response = self.__MakeResponseMock(mylist_url, 200, TCT_REGISTERED)
+                loop = asyncio.new_event_loop()
+                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(response.html.lxml))
+
+            # TODO::登録日時収集は成功するが解釈に失敗
 
             # 投稿者収集失敗
             with self.assertRaises(AttributeError):
                 response = self.__MakeResponseMock(mylist_url, 200, TCT_USERNAME)
                 loop = asyncio.new_event_loop()
-                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(video_id_list, response.html.lxml))
+                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(response.html.lxml))
 
             # マイリスト名収集失敗
             with self.assertRaises(AttributeError):
                 response = self.__MakeResponseMock(mylist_url, 200, TCT_MYSHOWNAME)
                 loop = asyncio.new_event_loop()
-                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(video_id_list, response.html.lxml))
+                actual = loop.run_until_complete(GetMyListInfoFromHtml.AnalysisMylistPage(response.html.lxml))
 
     def test_GetUsernameFromApi(self):
         """GetUsernameFromApi のテスト
@@ -578,35 +730,39 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.logger.warning"))
-            mockses = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.GetAsyncSessionResponse"))
+            mockapises = stack.enter_context(patch("NNMM.GetMyListInfoFromHtml.GetAsyncSessionResponse"))
 
             # 正常系
-            mockses = self.__MakeSessionResponseMock(mockses, 200)
+            mockapises = self.__MakeAPISessionResponseMock(mockapises, 200)
 
+            expect = {}
             mylist_url = self.__GetURLSet()[0]
-            mylist_info = self.__GetMylistInfoSet(mylist_url)
             video_info_list = self.__GetVideoInfoSet(mylist_url)
-            title_list = [video_info[0] for video_info in video_info_list]
-            num = len(title_list)
-            username_list = [mylist_info[2] for _ in range(num)]
-            expect = username_list
+            video_id_list = [video_info["video_id"] for video_info in video_info_list]
+            title_list = [video_info["title"] for video_info in video_info_list]
+            uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+            video_url_list = [video_info["video_url"] for video_info in video_info_list]
+            username_list = [video_info["username"] for video_info in video_info_list]
 
-            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-            video_id_list = [re.findall(pattern, s[1])[0] for s in video_info_list]
+            expect = {
+                "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
+                "title_list": title_list,               # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+                "username_list": username_list,         # 投稿者リスト [投稿者1]
+            }
 
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(GetMyListInfoFromHtml.GetUsernameFromApi(video_id_list))
             self.assertEqual(expect, actual)
 
             # 異常系
-            num = len(video_id_list)
-            default_name = "<NULL>"
-            expect = [default_name for _ in range(num)]
-            video_id_list = ["sm99999999" for _ in range(num)]
+            # GetAsyncSessionResponse に失敗
+            mockapises = self.__MakeAPISessionResponseMock(mockapises, 503)
 
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(GetMyListInfoFromHtml.GetUsernameFromApi(video_id_list))
-            self.assertEqual(expect, actual)
+            with self.assertRaises(ValueError):
+                actual = loop.run_until_complete(GetMyListInfoFromHtml.GetUsernameFromApi(video_id_list))
 
 
 if __name__ == "__main__":

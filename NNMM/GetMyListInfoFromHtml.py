@@ -94,7 +94,7 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
     # }
     html_d = None
     try:
-        html_d = await AnalysisHtml(url_type, video_id_list, response.html.lxml)
+        html_d = await AnalysisHtml(url_type, response.html.lxml)
     except Exception:
         logger.error(traceback.format_exc())
         return []
@@ -139,14 +139,14 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
 
     # バリデーション
     # {
-    #     "showname": showname,                     # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
-    #     "myshowname": myshowname,                 # マイリスト名 「まとめマイリスト」
-    #     "video_id_list": video_id_list,           # 動画IDリスト [sm12345678]
-    #     "title_list": title_list,                 # 動画タイトルリスト [テスト動画]
-    #     "uploaded_at_list": uploaded_at_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-    #     "registered_at_list": registered_at_list, # 登録日時リスト [%Y-%m-%d %H:%M:%S]
-    #     "video_url_list": video_url_list,         # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-    #     "username_list": username_list,           # 投稿者リスト [投稿者1]
+    #     "showname": showname,                      # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+    #     "myshowname": myshowname,                  # マイリスト名 「まとめマイリスト」
+    #     "video_id_list": video_id_list,            # 動画IDリスト [sm12345678]
+    #     "title_list": title_list,                  # 動画タイトルリスト [テスト動画]
+    #     "uploaded_at_list": uploaded_at_list,      # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "registered_at_list": registered_at_list,  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "video_url_list": video_url_list,          # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    #     "username_list": username_list,            # 投稿者リスト [投稿者1]
     # }
     dts_format = "%Y-%m-%d %H:%M:%S"
     try:
@@ -264,7 +264,7 @@ async def GetAsyncSessionResponse(request_url: str, do_rendering: bool, session:
     return (session, response)
 
 
-async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement) -> dict:
+async def AnalysisHtml(url_type: str, lxml: HtmlElement) -> dict:
     """htmlを解析する
 
     Notes:
@@ -272,7 +272,6 @@ async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElemen
 
     Args:
         url_type (str): URLタイプ
-        video_id_list (list[str]): 動画IDリスト
         lxml (HtmlElement): 解析対象のhtml
 
     Returns:
@@ -293,7 +292,7 @@ async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElemen
     if url_type == "uploaded":
         res = await AnalysisUploadedPage(lxml)
     elif url_type == "mylist":
-        res = await AnalysisMylistPage(video_id_list, lxml)
+        res = await AnalysisMylistPage(lxml)
 
     if not res:
         raise ValueError("html analysis failed.")
@@ -366,7 +365,6 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> dict:
     registered_at_list = uploaded_at_list
 
     # 投稿者収集
-    # 投稿動画の投稿者は単一であることが保証されている
     username_lx = lxml.find_class(TCT_USERNAME)
     if username_lx == []:
         raise AttributeError(MSG_USERNAME)
@@ -386,11 +384,10 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> dict:
     return res
 
 
-async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> dict:
+async def AnalysisMylistPage(lxml: HtmlElement) -> dict:
     """マイリストページのhtmlを解析する
 
     Args:
-        video_id_list (list[str]): 動画IDリスト
         lxml (HtmlElement): マイリストページのhtml
 
     Returns:
@@ -559,7 +556,7 @@ async def GetUsernameFromApi(video_id_list: list[str]):
     res = {
         "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
         "title_list": title_list,               # 動画タイトルリスト [テスト動画]
-        "uploaded_at_list": uploaded_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+        "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
         "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
         "username_list": username_list,         # 投稿者リスト [投稿者1]
     }
