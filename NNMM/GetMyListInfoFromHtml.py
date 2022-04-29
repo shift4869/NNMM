@@ -22,8 +22,8 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
 
     Notes:
         table_colsをキーとする情報を辞書で返す
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
         実際に内部ブラウザでページを開き、
         レンダリングして最終的に表示されたページから動画情報をスクレイピングする
         レンダリングに時間がかかる代わりに最大100件まで取得できる
@@ -59,22 +59,22 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
     # all_links_set = response.html.links
     # setをlistにキャストするとvalueのみのリストになる
     # all_links_list = list(all_links_set)
-    video_list = []
+    video_url_list = []
     pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+$"  # ニコニコ動画URLの形式
     video_link_lx = response.html.lxml.find_class("NC-MediaObject-main")
     for video_link in video_link_lx:
         a = video_link.find("a")
         if re.search(pattern, a.attrib["href"]):
-            video_list.append(a.attrib["href"])
+            video_url_list.append(a.attrib["href"])
 
     # 動画リンクが1つもない場合は空リストを返して終了
-    if video_list == []:
+    if video_url_list == []:
         logger.warning("HTML pages request is success , but video info is nothing.")
         return []
 
     # 動画情報を集める
-    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-    table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
     mylist_url = url
 
     # 動画リンク抽出は降順でないため、ソートする（ロード順？）
@@ -82,29 +82,114 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
 
     # 動画ID収集
     pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"  # ニコニコ動画URLの形式
-    video_id_list = [re.findall(pattern, s)[0] for s in video_list]
+    video_id_list = [re.findall(pattern, s)[0] for s in video_url_list]
 
     # 取得ページと動画IDから必要な情報を収集する
-    t = None
+    # res = {
+    #     "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+    #     "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+    #     "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+    #     "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+    # }
+    html_d = None
     try:
-        t = await AnalysisHtml(url_type, video_id_list, response.html.lxml)
+        html_d = await AnalysisHtml(url_type, video_id_list, response.html.lxml)
     except Exception:
         logger.error(traceback.format_exc())
         return []
-    title_list, uploaded_list, username_list, showname, myshowname = t
+
+    # 動画IDについてAPIを通して情報を取得する
+    # res = {
+    #     "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
+    #     "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+    #     "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    #     "username_list": username_list,             # 投稿者リスト [投稿者1]
+    # }
+    api_d = None
+    try:
+        api_d = await GetUsernameFromApi(video_id_list)
+    except Exception:
+        logger.error(traceback.format_exc())
+        return []
+
+    # バリデーション
+    if html_d.get("title_list") != api_d.get("title_list"):
+        logger.error("video title from html and from api is different.")
+        return []
+    # uploaded_at はapi_dの方が精度が良いため一致はしない
+    # if html_d.get("uploaded_at_list") != api_d.get("uploaded_at_list"):
+    #     logger.error("uploaded_at from html and from api is different.")
+    #     return []
+    if video_url_list != api_d.get("video_url_list"):
+        logger.error("video url from html and from api is different.")
+        return []
+
+    # 動画情報をそれぞれ格納
+    video_d = dict(html_d, **api_d)
+    showname = video_d.get("showname")
+    myshowname = video_d.get("myshowname")
+    video_id_list = video_d.get("video_id_list")
+    title_list = video_d.get("title_list")
+    uploaded_at_list = video_d.get("uploaded_at_list")
+    registered_at_list = video_d.get("registered_at_list")
+    video_url_list = video_d.get("video_url_list")
+    username_list = video_d.get("username_list")
+
+    # バリデーション
+    # {
+    #     "showname": showname,               # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+    #     "myshowname": myshowname,           # マイリスト名 「まとめマイリスト」
+    #     "video_id_list": video_id_list,     # 動画IDリスト [sm12345678]
+    #     "title_list": title_list,           # 動画タイトルリスト [テスト動画]
+    #     "uploaded_at_list": uploaded_at_list,     # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "registered_at_list": registered_at_list,     # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+    #     "video_url_list": video_url_list,   # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    #     "username_list": username_list,     # 投稿者リスト [投稿者1]
+    # }
+    dts_format = "%Y-%m-%d %H:%M:%S"
+    try:
+        if not (isinstance(showname, str) and isinstance(myshowname, str)):
+            raise ValueError
+        if not (showname != "" and myshowname != ""):
+            raise ValueError
+        if not isinstance(video_id_list, list):
+            raise ValueError
+        if not isinstance(title_list, list):
+            raise ValueError
+        if not isinstance(uploaded_at_list, list):
+            raise ValueError
+        if not isinstance(registered_at_list, list):
+            raise ValueError
+        if not isinstance(video_url_list, list):
+            raise ValueError
+        if not isinstance(username_list, list):
+            raise ValueError
+        num = len(video_id_list)
+        if not (len(title_list) == num and len(uploaded_at_list) == num and len(video_url_list) == num and len(username_list) == num):
+            raise ValueError
+
+        for video_id, title, uploaded_at, registered_at, video_url, username in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, video_url_list, username_list):
+            if not re.search("sm[0-9]+", video_id):
+                raise ValueError
+            if title == "":
+                raise ValueError
+            dt = datetime.strptime(uploaded_at, dts_format)  # 日付形式が正しく変換されるかチェック
+            dt = datetime.strptime(registered_at, dts_format)  # 日付形式が正しく変換されるかチェック
+            if not re.search("https://www.nicovideo.jp/watch/sm[0-9]+", video_url):
+                raise ValueError
+            if username == "":
+                raise ValueError
+    except Exception:
+        logger.error(traceback.format_exc())
+        return []
 
     # 結合
     res = []
     try:
-        # 収集した情報の数はそれぞれ一致するはず
-        if not(video_list and title_list and uploaded_list and username_list and video_id_list):
-            logger.error("getting video info list is failed.")
-            return []
-        if len(video_list) != len(title_list) or len(title_list) != len(uploaded_list) or len(uploaded_list) != len(username_list) or len(username_list) != len(video_id_list):
-            logger.error("getting video info list length is invalid.")
-            return []
-        for id, title, uploaded, username, video_url in zip(video_id_list, title_list, uploaded_list, username_list, video_list):
-            value_list = [-1, id, title, username, "", uploaded, video_url, mylist_url, showname, myshowname]
+        for id, title, uploaded_at, registered_at, username, video_url in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list):
+            value_list = [-1, id, title, username, "", uploaded_at, registered_at, video_url, mylist_url, showname, myshowname]
             res.append(dict(zip(table_cols, value_list)))
     except Exception:
         logger.error(traceback.format_exc())
@@ -174,7 +259,7 @@ async def GetAsyncSessionResponse(request_url: str, do_rendering: bool, session:
     return (session, response)
 
 
-async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement) -> tuple[list[str], list[str], list[str], str, str]:
+async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElement) -> dict:
     """htmlを解析する
 
     Notes:
@@ -186,7 +271,13 @@ async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElemen
         lxml (HtmlElement): 解析対象のhtml
 
     Returns:
-        tuple[list[str], list[str], list[str], str, str]: (タイトルリスト, 投稿日時リスト, 投稿者リスト, マイリスト表示名, マイリスト名)
+        res = {
+            "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+        }
 
     Raises:
         AttributeError: html解析失敗時
@@ -204,14 +295,20 @@ async def AnalysisHtml(url_type: str, video_id_list: list[str], lxml: HtmlElemen
     return res
 
 
-async def AnalysisUploadedPage(lxml: HtmlElement) -> tuple[list[str], list[str], list[str], str, str]:
+async def AnalysisUploadedPage(lxml: HtmlElement) -> dict:
     """投稿動画ページのhtmlを解析する
 
     Args:
         lxml (HtmlElement): 投稿動画ページのhtml
 
     Returns:
-        tuple[list[str], list[str], list[str], str, str]: (タイトルリスト, 投稿日時リスト, 投稿者リスト, マイリスト表示名, マイリスト名)
+        res = {
+            "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
+            "myshowname": myshowname,                   # マイリスト名 「投稿動画」
+            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+        }
 
     Raises:
         AttributeError: html解析失敗時
@@ -224,8 +321,8 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> tuple[list[str], list[str],
 
     # エラーメッセージ定数
     MSG_TITLE = f"title parse failed. '{TCT_TITLE}' is not found."
-    MSG_UPLOADED1 = f"uploaded parse failed. '{TCT_UPLOADED}' is not found."
-    MSG_UPLOADED2 = "uploaded date parse failed."
+    MSG_UPLOADED1 = f"uploaded_at parse failed. '{TCT_UPLOADED}' is not found."
+    MSG_UPLOADED2 = "uploaded_at date parse failed."
     MSG_USERNAME = f"username parse failed. '{TCT_USERNAME}' is not found."
 
     # 動画名収集
@@ -241,21 +338,25 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> tuple[list[str], list[str],
     # dts_format: NNMMで扱う日付形式
     td_format = "%Y/%m/%d %H:%M"
     dts_format = "%Y-%m-%d %H:%M:00"
-    uploaded_list = []
+    uploaded_at_list = []
     try:
-        uploaded_lx = lxml.find_class(TCT_UPLOADED)
-        if uploaded_lx == []:
+        uploaded_at_lx = lxml.find_class(TCT_UPLOADED)
+        if uploaded_at_lx == []:
             raise AttributeError(MSG_UPLOADED1)
 
-        for t in uploaded_lx:
+        for t in uploaded_at_lx:
             tca = str(t.text)
             if "前" in tca or "今" in tca:
-                uploaded_list.append(tca)
+                uploaded_at_list.append(tca)
             else:
                 dst = datetime.strptime(tca, td_format)
-                uploaded_list.append(dst.strftime(dts_format))
+                uploaded_at_list.append(dst.strftime(dts_format))
     except ValueError:
         raise ValueError(MSG_UPLOADED2)
+
+    # 登録日時収集
+    # 投稿動画は登録日時は投稿日時と一致する
+    registered_at_list = uploaded_at_list
 
     # 投稿者収集
     # 投稿動画の投稿者は単一であることが保証されている
@@ -263,16 +364,22 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> tuple[list[str], list[str],
     if username_lx == []:
         raise AttributeError(MSG_USERNAME)
     username = username_lx[0].text
-    num = len(title_list)
-    username_list = [username for _ in range(num)]
 
     # マイリスト名収集
     showname = f"{username}さんの投稿動画"
     myshowname = "投稿動画"
-    return (title_list, uploaded_list, username_list, showname, myshowname)
+
+    res = {
+        "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
+        "myshowname": myshowname,                   # マイリスト名 「投稿動画」
+        "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+        "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+        "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+    }
+    return res
 
 
-async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> tuple[list[str], list[str], list[str], str, str]:
+async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> dict:
     """マイリストページのhtmlを解析する
 
     Args:
@@ -280,7 +387,13 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> tup
         lxml (HtmlElement): マイリストページのhtml
 
     Returns:
-        tuple[list[str], list[str], list[str], str, str]: (タイトルリスト, 投稿日時リスト, 投稿者リスト, マイリスト表示名, マイリスト名)
+        res = {
+            "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+        }
 
     Raises:
         AttributeError: html解析失敗時
@@ -289,13 +402,16 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> tup
     # 探索対象のクラスタグ定数
     TCT_TITLE = "NC-MediaObjectTitle"
     TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
+    TCT_REGISTERED = "MylistItemAddition-addedAt"
     TCT_USERNAME = "UserDetailsHeader-nickname"
     TCT_MYSHOWNAME = "MylistHeader-name"
 
     # エラーメッセージ定数
     MSG_TITLE = f"title parse failed. '{TCT_TITLE}' is not found."
-    MSG_UPLOADED1 = f"uploaded parse failed. '{TCT_UPLOADED}' is not found."
-    MSG_UPLOADED2 = "uploaded date parse failed."
+    MSG_UPLOADED1 = f"uploaded_at parse failed. '{TCT_UPLOADED}' is not found."
+    MSG_UPLOADED2 = "uploaded_at date parse failed."
+    MSG_REGISTERED1 = f"registered_at parse failed. '{TCT_REGISTERED}' is not found."
+    MSG_REGISTERED2 = "registered_at date parse failed."
     MSG_USERNAME = f"username parse failed. '{TCT_USERNAME}' is not found."
     MSG_MYSHOWNAME = f"myshowname parse failed. '{TCT_MYSHOWNAME}' is not found."
 
@@ -312,29 +428,44 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> tup
     # dts_format: NNMMで扱う日付形式
     td_format = "%Y/%m/%d %H:%M"
     dts_format = "%Y-%m-%d %H:%M:00"
-    uploaded_list = []
+    uploaded_at_list = []
     try:
-        uploaded_lx = lxml.find_class(TCT_UPLOADED)
-        if uploaded_lx == []:
+        uploaded_at_lx = lxml.find_class(TCT_UPLOADED)
+        if uploaded_at_lx == []:
             raise AttributeError(MSG_UPLOADED1)
 
-        for t in uploaded_lx:
+        for t in uploaded_at_lx:
             tca = str(t.text)
             if "前" in tca or "今" in tca:
-                uploaded_list.append(tca)
+                uploaded_at_list.append(tca)
             else:
                 dst = datetime.strptime(tca, td_format)
-                uploaded_list.append(dst.strftime(dts_format))
+                uploaded_at_list.append(dst.strftime(dts_format))
     except ValueError:
         raise ValueError(MSG_UPLOADED2)
 
-    # 投稿者収集
+    # 登録日時収集
+    registered_at_list = []
+    try:
+        registered_at_lx = lxml.find_class(TCT_REGISTERED)
+        if registered_at_lx == []:
+            raise AttributeError(MSG_REGISTERED1)
+
+        for t in registered_at_lx:
+            tca = str(t.text).replace(" マイリスト登録", "")
+            if "前" in tca or "今" in tca:
+                registered_at_list.append(tca)
+            else:
+                dst = datetime.strptime(tca, td_format)
+                registered_at_list.append(dst.strftime(dts_format))
+    except ValueError:
+        raise ValueError(MSG_REGISTERED2)
+
+    # マイリスト作成者名収集
     username_lx = lxml.find_class(TCT_USERNAME)
     if username_lx == []:
         raise AttributeError(MSG_USERNAME)
     username = username_lx[0].text  # マイリスト作成者は元のhtmlに含まれている
-    # 各動画の投稿者は元のhtmlに含まれていないのでAPIを通して取得する
-    username_list = await GetUsernameFromApi(video_id_list)
 
     # マイリスト名収集
     showname = ""
@@ -344,7 +475,15 @@ async def AnalysisMylistPage(video_id_list: list[str], lxml: HtmlElement) -> tup
         raise AttributeError(MSG_MYSHOWNAME)
     myshowname = myshowname_lx[0].text
     showname = f"「{myshowname}」-{username}さんのマイリスト"
-    return (title_list, uploaded_list, username_list, showname, myshowname)
+
+    res = {
+        "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
+        "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+        "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+        "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+        "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+    }
+    return res
 
 
 async def GetUsernameFromApi(video_id_list: list[str]):
@@ -359,36 +498,73 @@ async def GetUsernameFromApi(video_id_list: list[str]):
         video_id_list (list[str]): 動画IDリスト
 
     Returns:
-        list[str]: ユーザーネームのリスト
+        res = {
+            "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
+            "title_list": title_list,               # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+            "username_list": username_list,         # 投稿者リスト [投稿者1]
+        }
     """
-    default_name = "<NULL>"
     base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
+    td_format = "%Y-%m-%dT%H:%M:%S%z"
+    dts_format = "%Y-%m-%d %H:%M:%S"
+
+    title_list = []
+    uploaded_at_list = []
+    video_url_list = []
     username_list = []
     session = None
     for video_id in video_id_list:
-        username = default_name
         url = base_url + video_id
         session, response = await GetAsyncSessionResponse(url, False, session)
         if response:
-            username_lx = response.html.lxml.findall("thumb/user_nickname")
-            if username_lx and len(username_lx) == 1:
-                username = username_lx[0].text
-            else:
-                username = default_name
-        username_list.append(username)
+            thumb_lx = response.html.lxml.findall("thumb")[0]
+
+            # 動画タイトル
+            title_lx = thumb_lx.findall("title")
+            title = title_lx[0].text
+            title_list.append(title)
+
+            # 投稿日時
+            uploaded_at_lx = thumb_lx.findall("first_retrieve")
+            uploaded_at = datetime.strptime(uploaded_at_lx[0].text, td_format).strftime(dts_format)
+            uploaded_at_list.append(uploaded_at)
+
+            # 動画URL
+            video_url_lx = thumb_lx.findall("watch_url")
+            video_url = video_url_lx[0].text
+            video_url_list.append(video_url)
+
+            # 投稿者
+            username_lx = thumb_lx.findall("user_nickname")
+            username = username_lx[0].text
+            username_list.append(username)
 
     await session.close()
-    return username_list
+
+    num = len(video_id_list)
+    if not (len(title_list) == num and len(uploaded_at_list) == num and len(video_url_list) == num and len(username_list) == num):
+        raise ValueError
+
+    res = {
+        "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
+        "title_list": title_list,               # 動画タイトルリスト [テスト動画]
+        "uploaded_at_list": uploaded_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+        "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+        "username_list": username_list,         # 投稿者リスト [投稿者1]
+    }
+    return res
 
 
 if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     ConfigMain.ProcessConfigBase.SetConfig()
 
-    url = "https://www.nicovideo.jp/user/37896001/video"  # 投稿動画
+    # url = "https://www.nicovideo.jp/user/37896001/video"  # 投稿動画
     # url = "https://www.nicovideo.jp/user/12899156/mylist/39194985"  # 中量マイリスト
     # url = "https://www.nicovideo.jp/user/12899156/mylist/67376990"  # 少量マイリスト
-    # url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"  # テスト用マイリスト
+    url = "https://www.nicovideo.jp/user/6063658/mylist/72036443"  # テスト用マイリスト
     # url = "https://www.nicovideo.jp/user/12899156/mylist/99999999"  # 存在しないマイリスト
 
     loop = asyncio.new_event_loop()
