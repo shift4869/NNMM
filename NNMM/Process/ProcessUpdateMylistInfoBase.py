@@ -249,6 +249,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         # asyncなのでイベントループを張る
         loop = asyncio.new_event_loop()
         res = loop.run_until_complete(func(url))
+        loop.close()
 
         # 左下テキストボックスにプログレス表示
         p_str = f"取得中({self.done_count}/{all_index_num})"
@@ -314,7 +315,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
 
         # 引数チェック
         mylist_info_cols = MylistInfo.__table__.c.keys()
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
         try:
             if not(hasattr(m_record, "get") and m_record.get("url")):
                 raise ValueError
@@ -358,11 +359,10 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
             logger.info(mylist_url + f" : no records ... ({self.done_count}/{all_index_num}).")
             return 1
 
-        # 更新前のusernameの保存と動画idリストの設定
+        # 更新前の動画idリストの設定
         prev_videoid_list = [m["video_id"] for m in prev_video_list]
-        prev_username = ""
-        if prev_video_list:
-            prev_username = prev_video_list[0].get("username")
+
+        # 更新後の動画idリストの設定
         now_video_list = records
         now_videoid_list = [m["video_id"] for m in now_video_list]
 
@@ -383,17 +383,18 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         for m, s in zip(now_video_list, status_check_list):
             m["status"] = s
 
+        # THINK::マイリスト作成者名が変わっていた場合に更新する方法
         # usernameが変更されていた場合
         # 作成したばかり等で登録件数0のマイリストの場合は除く
-        if now_video_list:
-            # usernameが変更されていた場合
-            now_username = now_video_list[0].get("username")
-            if prev_username != now_username:
-                # マイリストの名前を更新する
-                mylist_db.UpdateUsername(mylist_url, now_username)
-                # 格納済の動画情報の投稿者名を更新する
-                mylist_info_db.UpdateUsernameInMylist(mylist_url, now_username)
-                logger.info(f"Mylist username changed , {prev_username} -> {now_username}")
+        # if now_video_list:
+        #     # usernameが変更されていた場合
+        #     now_username = now_video_list[0].get("username")
+        #     if prev_username != now_username:
+        #         # マイリストの名前を更新する
+        #         mylist_db.UpdateUsername(mylist_url, now_username)
+        #         # 格納済の動画情報の投稿者名を更新する
+        #         mylist_info_db.UpdateUsernameInMylist(mylist_url, now_username)
+        #         logger.info(f"Mylist username changed , {prev_username} -> {now_username}")
 
         # DBに格納
         records = []
@@ -405,7 +406,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
                     "title": m["title"],
                     "username": m["username"],
                     "status": m["status"],
-                    "uploaded_at": m["uploaded"],
+                    "uploaded_at": m["uploaded_at"],
                     "registered_at": m["registered_at"],
                     "video_url": m["video_url"],
                     "mylist_url": m["mylist_url"],

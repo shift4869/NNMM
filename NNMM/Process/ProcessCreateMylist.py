@@ -191,7 +191,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
 
         # asyncでマイリスト情報を収集する
         # pyppeteerでページをレンダリングしてhtmlからスクレイピングする
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
         loop = asyncio.new_event_loop()
         now_video_list = loop.run_until_complete(GetMyListInfoFromHtml.GetMyListInfoFromHtml(mylist_url))
         s_record = {}
@@ -245,7 +245,8 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
                 "title": m["title"],
                 "username": m["username"],
                 "status": "未視聴",  # 初追加時はすべて未視聴扱い
-                "uploaded_at": m["uploaded"],
+                "uploaded_at": m["uploaded_at"],
+                "registered_at": m["registered_at"],
                 "video_url": m["video_url"],
                 "mylist_url": m["mylist_url"],
                 "created_at": dst,
