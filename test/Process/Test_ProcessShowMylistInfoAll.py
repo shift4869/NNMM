@@ -26,13 +26,14 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
         res = []
 
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
-                           "投稿日時", "動画URL", "所属マイリストURL"]
+                           "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
         table_cols = ["no", "video_id", "title", "username", "status",
-                      "uploaded_at", "video_url", "mylist_url"]
+                      "uploaded_at", "registered_at", "video_url", "mylist_url"]
         n = 0
         for k in range(NUM):
             table_rows = [[n, f"sm{k+1}000000{i+1}", f"動画タイトル{k+1}_{i+1}", f"投稿者{k+1}", "",
                            f"2022-02-01 0{k+1}:00:0{i+1}",
+                           f"2022-02-01 0{k+1}:01:0{i+1}",
                            f"https://www.nicovideo.jp/watch/sm{k+1}000000{i+1}",
                            f"https://www.nicovideo.jp/user/1000000{k+1}/video"] for i in range(NUM)]
             n = n + 1
@@ -92,7 +93,7 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
             records = sorted(m_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]
             def_data = []
             for i, r in enumerate(records):
-                a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["video_url"], r["mylist_url"]]
+                a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["registered_at"], r["video_url"], r["mylist_url"]]
                 def_data.append(a)
             mc = mockmw.window["-TABLE-"].mock_calls
             self.assertEqual(3, len(mc))

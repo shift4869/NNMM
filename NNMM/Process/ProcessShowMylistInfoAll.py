@@ -64,7 +64,7 @@ class ProcessShowMylistInfoAll(ProcessBase.ProcessBase):
         records = sorted(m_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]  # 最大100要素までのスライス
         def_data = []
         for i, r in enumerate(records):
-            a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["video_url"], r["mylist_url"]]
+            a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["registered_at"], r["video_url"], r["mylist_url"]]
             def_data.append(a)
 
         # 右上のマイリストURLは空白にする
