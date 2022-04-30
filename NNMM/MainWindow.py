@@ -128,7 +128,7 @@ class MainWindow():
         ]
         l_pane = [
             [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 44), auto_size_text=True, right_click_menu=listbox_right_click_menu)],
-            [sg.Button(" partial(intarval update) ", key="-PARTIAL_UPDATE-"), sg.Button(" all(forced update) ", key="-ALL_UPDATE-")],
+            [sg.Button(" インターバル更新 ", key="-PARTIAL_UPDATE-"), sg.Button(" すべて更新 ", key="-ALL_UPDATE-")],
             [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Input("", key="-INPUT2-", size=(24, 10))],
         ]
 
