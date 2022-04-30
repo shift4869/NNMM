@@ -1,25 +1,26 @@
 # coding: utf-8
-"""GetMyListInfoFromRssのテスト
+"""GetMyListInfoFromRss のテスト
 
-GetMyListInfoFromRssの各種機能をテストする
+GetMyListInfoFromRss の各種機能をテストする
 """
 
 import asyncio
+import re
 import shutil
 import sys
 import unittest
 import urllib.parse
 import warnings
 from contextlib import ExitStack
-from datetime import datetime
+from datetime import datetime, timedelta
 from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
-from re import findall
 from urllib.error import HTTPError
 
 from bs4 import BeautifulSoup
+from requests_html import HTML
 
-from NNMM.MylistDBController import *
+from NNMM import GuiFunction
 from NNMM import GetMyListInfoFromRss
 
 RSS_PATH = "./test/rss/"
@@ -79,42 +80,88 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         """動画情報セットを返す
         """
         mylist_url_info = self.__GetMylistURLSet()
-        title_t = "動画タイトル{}_{:02}"
-        video_url_t = "https://www.nicovideo.jp/watch/sm{}00000{:02}"
-        uploaded_t = "Wed, 19 Oct 2021 0{}:{:02}:00 +0900"
-        video_info = {
-            mylist_url_info[0]: [(title_t.format(1, i), video_url_t.format(1, i), uploaded_t.format(1, i)) for i in range(1, 10)],
-            mylist_url_info[1]: [(title_t.format(2, i), video_url_t.format(2, i), uploaded_t.format(2, i)) for i in range(1, 10)],
-            mylist_url_info[2]: [(title_t.format(1, i), video_url_t.format(1, i), uploaded_t.format(1, i)) for i in range(1, 5)],
-            mylist_url_info[3]: [(title_t.format(1, i), video_url_t.format(1, i), uploaded_t.format(1, i)) for i in range(5, 10)],
-            mylist_url_info[4]: [(title_t.format(3, i), video_url_t.format(3, i), uploaded_t.format(3, i)) for i in range(1, 10)],
-        }
-        res = video_info.get(mylist_url, [("", "", "")])
+        m_range = {
+            mylist_url_info[0]: range(1, 10),
+            mylist_url_info[1]: range(1, 10),
+            mylist_url_info[2]: range(1, 5),
+            mylist_url_info[3]: range(5, 10),
+            mylist_url_info[4]: range(1, 10),
+        }.get(mylist_url, range(1, 10))
+
+        # "https://www.nicovideo.jp/user/22222222/video"
+        # "https://www.nicovideo.jp/mylist/00000011"
+        pattern = r"https://www.nicovideo.jp/user/([0-9]{8})/.*"
+        if re.findall(pattern, mylist_url):
+            userid = re.findall(pattern, mylist_url)[0]
+        else:
+            userid = "33333333"
+        n = userid[0]
+
+        res = []
+        td_format = "%Y-%m-%dT%H:%M:%S%z"
+        dts_format = "%Y-%m-%d %H:%M:%S"
+        for i in m_range:
+            video_id = f"sm{n}00000{i:02}"
+            video_info = self.__GetVideoInfo(video_id)
+            uploaded_at = datetime.strptime(video_info["uploaded_at"], td_format).strftime(dts_format)
+
+            rd = datetime.strptime(video_info["uploaded_at"], td_format)
+            rd += timedelta(minutes=1)
+            registered_at = rd.strftime(dts_format)
+
+            video_info["uploaded_at"] = uploaded_at
+            video_info["registered_at"] = registered_at
+            res.append(video_info)
+
         return res
 
-    def __GetURLType(self, url: str) -> str:
-        """URLタイプを返す
-
-        Args:
-            url (str): 対象URL
-
-        Returns:
-            str: マッチ時 URLタイプ{"uploaded", "mylist"}
-                 マッチしなかった場合 空文字列
+    def __GetVideoInfo(self, video_id: str) -> list[tuple[str, str, str]]:
+        """動画情報を返す
         """
-        # 投稿動画
-        pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
-        if re.search(pattern, url):
-            return "uploaded"
+        # video_idのパターンはsm{投稿者id}00000{動画識別2桁}
+        pattern = r"sm([0-9]{1})00000([0-9]{2})"
+        n, m = re.findall(pattern, video_id)[0]
+        title = f"動画タイトル{n}_{m}"
+        uploaded_at = f"2022-04-29T0{n}:{m}:00+09:00"
+        video_url = "https://www.nicovideo.jp/watch/" + video_id
+        user_id = n * 8
+        username = f"動画投稿者{n}"
 
-        # マイリスト
-        pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-        if re.search(pattern, url):
-            return "mylist"
+        res = {
+            "video_id": video_id,         # 動画ID [sm12345678]
+            "title": title,               # 動画タイトル [テスト動画]
+            "uploaded_at": uploaded_at,   # 投稿日時 [%Y-%m-%d %H:%M:%S]
+            "video_url": video_url,       # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
+            "user_id": user_id,           # 投稿者id [投稿者1]
+            "username": username,         # 投稿者 [投稿者1]
+        }
+        return res
 
-        return ""
+    def __GetXMLFromAPI(self, video_id: str) -> str:
+        """APIから返ってくる動画情報セットxmlを返す
+        """
+        video_info = self.__GetVideoInfo(video_id)
+        title = video_info.get("title")
+        first_retrieve = video_info.get("uploaded_at")
+        watch_url = video_info.get("video_url")
+        user_id = video_info.get("user_id")
+        user_nickname = video_info.get("username")
 
-    def __MakeXML(self, mylist_url: str) -> str:
+        xml = """<?xml version="1.0" encoding="utf-8"?>
+                    <nicovideo_thumb_response status="ok">
+                        <thumb>"""
+        xml += f"""<video_id>{video_id}</video_id>
+                <title>{title}</title>
+                <first_retrieve>{first_retrieve}</first_retrieve>
+                <watch_url>{watch_url}</watch_url>
+                <user_id>{user_id}</user_id>
+                <user_nickname>{user_nickname}</user_nickname>"""
+        xml += """</thumb>
+                    </nicovideo_thumb_response>"""
+
+        return xml
+
+    def __GetXMLFromRSS(self, mylist_url: str) -> str:
         """RSS取得時に返されるxmlを作成する
 
         Args:
@@ -123,8 +170,6 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         Returns:
             str: 成功時 生成したxml, 失敗時 空文字列
         """
-        xml = ""
-
         # クエリ除去
         mylist_url = urllib.parse.urlunparse(
             urllib.parse.urlparse(mylist_url)._replace(query=None)
@@ -151,19 +196,27 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         """
 
         # 動画情報加工
+        src_df = "%Y-%m-%d %H:%M:%S"
+        dst_df = "%a, %d %b %Y %H:%M:%S +0900"
         video_info = self.__GetVideoInfoSet(mylist_url)
         for item in reversed(video_info):
-            title, video_url, uploaded = item
-            xml = xml + f"""
+            title = item.get("title")
+            video_url = item.get("video_url")
+            registered_at = item.get("registered_at")
+
+            rd = datetime.strptime(item["registered_at"], src_df)
+            registered_at = rd.strftime(dst_df)
+
+            xml += f"""
                 <item>
                     <title>{title}</title>
                     <link>{video_url}?ref=rss_mylist_rss2</link>
-                    <pubDate>{uploaded}</pubDate>
+                    <pubDate>{registered_at}</pubDate>
                     <description><![CDATA[<p></p>]]></description>
                 </item>
             """
 
-        xml = xml + "</channel></rss>"
+        xml += "</channel></rss>"
         return xml
 
     def __MakeEventLoopMock(self, retry_count=0, html_error=False) -> AsyncMock:
@@ -189,7 +242,7 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
                 # 想定されるアドレスかどうか
                 urls = self.__GetMylistURLSet()
                 if request_url in urls:
-                    r.text = self.__MakeXML(request_url)
+                    r.text = self.__GetXMLFromRSS(request_url)
                 else:
                     raise HTTPError
 
@@ -202,39 +255,7 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         type(r_response).run_in_executor = ReturnRunInExecutor
         return r_response
 
-    def __MakeAsyncHTMLSession(self) -> AsyncMock:
-        """AsyncHTMLSession にパッチするモックを作成する
-        """
-        r_response = AsyncMock()
-
-        async def ReturnGet(s, url):
-            r = MagicMock()
-
-            def ReturnText(val):
-                r_text = MagicMock()
-                r_text.text = val
-                return r_text
-
-            base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
-            pattern = f"^{base_url}(sm[0-9]+)$"
-            video_id = re.findall(pattern, url)[0]
-
-            def ReturnFindall(name):
-                urls = self.__GetMylistURLSet()
-                for mylist_url in urls:
-                    mylist_info = self.__GetMylistInfoSet(mylist_url)
-                    video_info_list = self.__GetVideoInfoSet(mylist_url)
-                    for video_info in video_info_list:
-                        if video_id in video_info[1]:
-                            return [ReturnText(mylist_info[2])]
-                return []
-
-            r.html.lxml.findall = ReturnFindall
-            return r
-        type(r_response).get = ReturnGet
-        return r_response
-
-    def __MakeAsyncHTMLSessionAPI(self) -> AsyncMock:
+    def __MakeAPIResponseMock(self, status_code: int = 200, error_target: str = "") -> AsyncMock:
         """AsyncHTMLSession にパッチするモックを作成する（動画情報API用）
         """
         r_response = AsyncMock()
@@ -242,30 +263,28 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         async def ReturnGet(s, url):
             r = MagicMock()
 
-            def ReturnText(val):
-                r_text = MagicMock()
-                r_text.text = val
-                return r_text
+            if error_target == "HTTPError":
+                raise HTTPError
+            if status_code == 503:
+                return None
 
-            base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
-            pattern = f"^{base_url}(sm[0-9]+)$"
+            pattern = "^https://ext.nicovideo.jp/api/getthumbinfo/(sm[0-9]+)$"
             video_id = re.findall(pattern, url)[0]
+            xml = self.__GetXMLFromAPI(video_id)
+            html = HTML(html=xml)
 
-            def ReturnFindall(name):
-                urls = self.__GetMylistURLSet()
-                if name == "thumb/user_nickname":
-                    for mylist_url in urls:
-                        mylist_info = self.__GetMylistInfoSet(mylist_url)
-                        video_info_list = self.__GetVideoInfoSet(mylist_url)
-                        for video_info in video_info_list:
-                            if video_id in video_info[1]:
-                                return [ReturnText(mylist_info[2])]
-                return []
-
-            r.html.lxml.findall = ReturnFindall
+            r.html = html
             return r
         type(r_response).get = ReturnGet
         return r_response
+
+    def __MakeAPISessionResponseMock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
+        def ReturnAsyncHTMLSession():
+            r_response = self.__MakeAPIResponseMock(status_code, error_target)
+            return r_response
+
+        mock.side_effect = ReturnAsyncHTMLSession
+        return mock
 
     def __MakeConfigMock(self) -> dict:
         """Configから取得できるRSS書き出し先のパスを返すモックを作成する
@@ -275,76 +294,136 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         """
         return {"general": {"rss_save_path": RSS_PATH}}
 
-    def __MakeExpectResult(self, url: str) -> list[dict]:
-        """RSSまたはHTMLページスクレイピングで取得される動画情報の予測値を生成する
-
-        Notes:
-            table_colsをキーとする辞書リストを返す
-
-        Args:
-            url (str): リスクエト先URL
-
-        Returns:
-            list[dict]: table_colsをキーとする動画情報辞書のリスト
-        """
-        expect = []
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
-
-        # クエリ除去
-        url = urllib.parse.urlunparse(
-            urllib.parse.urlparse(url)._replace(query=None)
-        )
-
-        # url_type判定
-        type = self.__GetURLType(url)
-
+    def __MakeAnalysisSoupMock(self, mock, url: str = "", kind: str = ""):
+        url_type = GuiFunction.GetURLType(url)
         mylist_url = url
+
         # マイリストのURLならRSSが取得できるURLに加工
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
         if re.search(pattern, mylist_url):
             mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
 
-        # マイリスト情報と動画情報を取得
         mylist_info = self.__GetMylistInfoSet(mylist_url)
-        video_info = self.__GetVideoInfoSet(mylist_url)
+        video_info_list = self.__GetVideoInfoSet(mylist_url)
+        video_id_list = [video_info["video_id"] for video_info in video_info_list]
+        title_list = [video_info["title"] for video_info in video_info_list]
+        registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
+        video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
-        username = mylist_info[2]
+        if url_type == "uploaded":
+            pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
+            userid = re.findall(pattern, url)[0]
+            mylistid = ""
+            username = mylist_info[2]
+            showname = f"{username}さんの投稿動画"
+            myshowname = "投稿動画"
+        elif url_type == "mylist":
+            pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
+            userid, mylistid = re.findall(pattern, url)[0]
+            username = mylist_info[2]
+            myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
+            showname = f"「{myshowname}」-{username}さんのマイリスト"
 
-        for i, item in enumerate(reversed(video_info)):
-            # マイリスト名収集
-            showname = ""
-            myshowname = ""
-            if type == "uploaded":
-                # 投稿動画の場合はマイリスト名がないのでユーザー名と合わせて便宜上の名前に設定
-                myshowname = "投稿動画"
-                showname = f"{username}さんの投稿動画"
-            elif type == "mylist":
-                # マイリストの場合はタイトルから取得
-                pattern = "^マイリスト (.*)‐ニコニコ動画$"
-                myshowname = re.findall(pattern, mylist_info[0])[0]
-                showname = f"「{myshowname}」-{username}さんのマイリスト"
+        soup_result = {
+            "userid": userid,                           # ユーザーID 1234567
+            "mylistid": mylistid,                       # マイリストID 12345678
+            "showname": showname,                       # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+            "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
+            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
+            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+        }
 
-            title = item[0]
+        def ReturnSoup(type: str, url: str, soup: BeautifulSoup):
+            if kind == "ValueError":
+                raise ValueError
+            return soup_result
 
-            video_url = item[1]
-            pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+"
-            if re.findall(pattern, video_url):
-                # クエリ除去してURL部分のみ保持
-                video_url = urllib.parse.urlunparse(
-                    urllib.parse.urlparse(video_url)._replace(query=None)
-                )
+        mock.side_effect = ReturnSoup
+        return mock
 
-            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-            video_id = re.findall(pattern, item[1])[0]
+    def __MakeGetUsernameFromApiMock(self, mock, url: str = "", kind: str = ""):
+        mylist_url = url
 
-            td_format = "%a, %d %b %Y %H:%M:%S %z"
-            dts_format = "%Y-%m-%d %H:%M:%S"
-            uploaded = datetime.strptime(item[2], td_format).strftime(dts_format)
+        # マイリストのURLならRSSが取得できるURLに加工
+        pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
+        if re.search(pattern, mylist_url):
+            mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
 
-            value_list = [i + 1, video_id, title, username, "",
-                          uploaded, video_url, url, showname, myshowname]
-            expect.append(dict(zip(table_cols, value_list)))
-        return expect
+        video_info_list = self.__GetVideoInfoSet(mylist_url)
+        title_list = [video_info["title"] for video_info in video_info_list]
+        uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+        video_id_list = [video_info["video_id"] for video_info in video_info_list]
+        video_url_list = [video_info["video_url"] for video_info in video_info_list]
+        username_list = [video_info["username"] for video_info in video_info_list]
+
+        api_result = {
+            "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
+            "title_list": title_list,               # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+            "username_list": username_list,         # 投稿者リスト [投稿者1]
+        }
+
+        if kind == "TitleError":
+            api_result["title_list"] = [t + "_不正なタイトル名" for t in title_list]
+        if kind == "VideoUrlError":
+            api_result["video_url_list"] = [v + "_不正なタイトル名" for v in video_url_list]
+        if kind == "UsernameError":
+            api_result["username_list"] = []
+
+        def ReturnApi(v):
+            if kind == "HTTPError":
+                raise HTTPError
+            return api_result
+
+        mock.side_effect = ReturnApi
+        return mock
+
+    def __MakeExpectResult(self, url):
+        url_type = GuiFunction.GetURLType(url)
+        mylist_url = url
+
+        # マイリストのURLならRSSが取得できるURLに加工
+        pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
+        if re.search(pattern, mylist_url):
+            mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
+
+        mylist_info = self.__GetMylistInfoSet(mylist_url)
+        video_info_list = self.__GetVideoInfoSet(mylist_url)
+        title_list = [video_info["title"] for video_info in video_info_list]
+        uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+        registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
+        video_id_list = [video_info["video_id"] for video_info in video_info_list]
+        video_url_list = [video_info["video_url"] for video_info in video_info_list]
+        username_list = [video_info["username"] for video_info in video_info_list]
+
+        if url_type == "uploaded":
+            username = mylist_info[2]
+            showname = f"{username}さんの投稿動画"
+            myshowname = "投稿動画"
+        elif url_type == "mylist":
+            username = mylist_info[2]
+            myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
+            showname = f"「{myshowname}」-{username}さんのマイリスト"
+
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
+        res = []
+        for video_id, title, uploaded_at, registered_at, username, video_url in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list):
+            # 出力インターフェイスチェック
+            value_list = [-1, video_id, title, username, "", uploaded_at, registered_at, video_url, url, showname, myshowname]
+            if len(table_cols) != len(value_list):
+                continue
+
+            # 登録
+            res.append(dict(zip(table_cols, value_list)))
+
+        # No.を付記する
+        for i, _ in enumerate(res):
+            res[i]["no"] = i + 1
+
+        return res
 
     def test_GetMyListInfoFromRss(self):
         """GetMyListInfoFromRss のテスト
@@ -352,15 +431,18 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.logger.warning"))
-            mockslp = stack.enter_context(patch("asyncio.sleep"))
-            mockgel = stack.enter_context(patch("asyncio.get_event_loop"))
             mockcpb = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", self.__MakeConfigMock))
-            mocksg = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.AsyncHTMLSession", self.__MakeAsyncHTMLSession))
+            mockgel = stack.enter_context(patch("asyncio.get_event_loop"))
+            mocksoup = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.AnalysisSoup"))
+            mockhapi = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.GetUsernameFromApi"))
 
             # 正常系
             mockgel.return_value = self.__MakeEventLoopMock()
             urls = self.__GetURLSet()
             for url in urls:
+                mocksoup = self.__MakeAnalysisSoupMock(mocksoup, url)
+                mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url)
+
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 expect = self.__MakeExpectResult(url)
@@ -379,24 +461,10 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
                 self.assertEqual([], actual)
 
             # RSS取得が常に失敗
-            with patch("NNMM.GetMyListInfoFromRss.BeautifulSoup", lambda t, p: None):
-                url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
-                self.assertEqual([], actual)
-
-            # 投稿者名取得に失敗
-            pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
-            with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
-                url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
-                self.assertEqual([], actual)
-
-            # マイリスト名取得に失敗
-            pattern = "^マイリスト (.*)‐ニコニコ動画$"
-            with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
-                url = urls[2]
-                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
-                self.assertEqual([], actual)
+            # with patch("NNMM.GetMyListInfoFromRss.BeautifulSoup", lambda t, p: None):
+            #     url = urls[0]
+            #     actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
+            #     self.assertEqual([], actual)
 
             # config取得に失敗
             # 二重にパッチを当てても想定どおりの挙動をしてくれる
@@ -406,37 +474,39 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
                 actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
                 self.assertEqual([], actual)
 
-            # RSS保存に失敗
-            # RSS保存は失敗しても返り値は正常となる
-            with patch("pathlib.Path.open", lambda: None):
-                url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
-                expect = self.__MakeExpectResult(url)
-                self.assertEqual(expect, actual)
+            # htmlからの動画情報収集に失敗
+            mocksoup = self.__MakeAnalysisSoupMock(mocksoup, url, "ValueError")
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url)
+            url = urls[0]
+            actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
+            self.assertEqual([], actual)
 
-            # エントリ保存に失敗(TypeError)
-            # エントリのvideo_idの切り出しに失敗
-            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-            with patch("re.findall", lambda p, t: findall(p, t) if p != pattern else None):
-                url = urls[0]
-                actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
-                self.assertEqual([], actual)
+            # apiからの動画情報収集に失敗
+            mocksoup = self.__MakeAnalysisSoupMock(mocksoup, url)
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url, "HTTPError")
+            url = urls[0]
+            actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
+            self.assertEqual([], actual)
 
-            # エントリ保存に失敗(ValueError)
-            # エントリのuploadedの切り出しに失敗
-            # datetime.strptimeはビルトイン関数のためモックを当てるのが面倒
-            # BeautifulSoupのfindメソッドを置き換える
-            # real_func = bs4.element.Tag.find
+            # 取得したtitleの情報がhtmlとapiで異なる
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url, "TitleError")
+            url = urls[0]
+            actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
+            self.assertEqual([], actual)
 
-            # def mock_func(s, t):
-            #     r = real_func(s, t)
-            #     type(r).text = r.text + "不正なpubDate"
-            #     return r
+            # 取得したvideo_urlの情報がhtmlとapiで異なる
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url, "VideoUrlError")
+            url = urls[0]
+            actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
+            self.assertEqual([], actual)
 
-            # with patch("bs4.element.Tag.find", lambda s, t: real_func(s, t) if t != "pubDate" else mock_func(s, t)):
-            #     url = urls[0]
-            #     actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
-            #     self.assertEqual([], actual)
+            # username_listの大きさが不正
+            mockhapi = self.__MakeGetUsernameFromApiMock(mockhapi, url, "UsernameError")
+            url = urls[0]
+            actual = loop.run_until_complete(GetMyListInfoFromRss.GetMyListInfoFromRss(url))
+            self.assertEqual([], actual)
+
+            # TODO::結合時のエラーを模倣する
 
     def test_GetSoupInstance(self):
         """GetSoupInstance のテスト
@@ -455,14 +525,14 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
             mockgel.return_value = self.__MakeEventLoopMock()
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(GetMyListInfoFromRss.GetSoupInstance(url, suffix))
-            expect = self.__MakeXML(url)
+            expect = self.__GetXMLFromRSS(url)
             self.assertEqual(expect, actual[1].text)
 
             # リトライあり、取得成功
             mockgel.return_value = self.__MakeEventLoopMock(MAX_RETRY_NUM - 1, False)
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(GetMyListInfoFromRss.GetSoupInstance(url, suffix))
-            expect = self.__MakeXML(url)
+            expect = self.__GetXMLFromRSS(url)
             self.assertEqual(expect, actual[1].text)
 
             # 異常系
@@ -495,15 +565,15 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
             expect = (None, None)
             self.assertEqual(expect, actual)
 
-    def test_GetSoupInstance(self):
-        """GetSoupInstance のテスト
+    def test_GetItemInfo(self):
+        """GetItemInfo のテスト
         """
         with ExitStack() as stack:
             # 正常系
             url = self.__GetURLSet()[0]
 
             def MakeItemLx(url, error_target=""):
-                xml = self.__MakeXML(url)
+                xml = self.__GetXMLFromRSS(url)
                 if error_target != "":
                     xml = xml.replace(error_target, "invalid")
                 soup = BeautifulSoup(xml, "lxml-xml")
@@ -567,7 +637,7 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
             # 正常系
             # 投稿動画ページ
             url = self.__GetURLSet()[0]
-            xml = self.__MakeXML(url)
+            xml = self.__GetXMLFromRSS(url)
             soup = BeautifulSoup(xml, "lxml-xml")
 
             url_type = "uploaded"
@@ -582,7 +652,7 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
 
             # マイリストページ
             url = self.__GetURLSet()[3]
-            xml = self.__MakeXML(url)
+            xml = self.__GetXMLFromRSS(url)
             soup = BeautifulSoup(xml, "lxml-xml")
             url_type = "mylist"
             loop = asyncio.new_event_loop()
@@ -607,25 +677,18 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         with ExitStack() as stack:
             # 正常系
             mylist_url = self.__GetMylistURLSet()[0]
-            title, uploaded, username = self.__GetMylistInfoSet(mylist_url)
+            mylist_title, _, mylist_username = self.__GetMylistInfoSet(mylist_url)
             video_info = self.__GetVideoInfoSet(mylist_url)
             video_info.reverse()
             pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
             userid = re.findall(pattern, mylist_url)[0]
             myshowname = "投稿動画"
-            showname = f"{username}さんの投稿動画"
-            
-            title_list = [v[0] for v in video_info]
-            video_url_list = [v[1] for v in video_info]
-            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-            video_id_list = [re.findall(pattern, v)[0] for v in video_url_list]
+            showname = f"{mylist_username}さんの投稿動画"
 
-            td_format = "%a, %d %b %Y %H:%M:%S %z"
-            dts_format = "%Y-%m-%d %H:%M:%S"
-            uploaded_list = [datetime.strptime(v[2], td_format).strftime(dts_format) for v in video_info]
-
-            num = len(video_id_list)
-            username_list = [username for _ in range(num)]
+            video_id_list = [v["video_id"] for v in video_info]
+            title_list = [v["title"] for v in video_info]
+            registered_at_list = [v["registered_at"] for v in video_info]
+            video_url_list = [v["video_url"] for v in video_info]
 
             expect = {
                 "userid": userid,
@@ -634,13 +697,12 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
                 "myshowname": myshowname,
                 "video_id_list": video_id_list,
                 "title_list": title_list,
-                "uploaded_list": uploaded_list,
+                "registered_at_list": registered_at_list,
                 "video_url_list": video_url_list,
-                "username_list": username_list,
             }
 
             def MakeSoup(url, error_target=""):
-                xml = self.__MakeXML(url)
+                xml = self.__GetXMLFromRSS(url)
                 if error_target != "":
                     xml = xml.replace(error_target, "invalid")
                 return BeautifulSoup(xml, "lxml-xml")
@@ -657,13 +719,13 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(GetMyListInfoFromRss.AnalysisUploadedPage(mylist_url, soup))
 
-            # 投稿日時収集失敗
+            # 登録日時収集失敗
             with self.assertRaises(AttributeError):
                 soup = MakeSoup(mylist_url, "pubDate")
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(GetMyListInfoFromRss.AnalysisUploadedPage(mylist_url, soup))
 
-            # TODO::投稿日時収集は成功するが解釈に失敗
+            # TODO::登録日時収集は成功するが解釈に失敗
 
             # 動画URL収集失敗
             with self.assertRaises(AttributeError):
@@ -675,37 +737,27 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         """AnalysisMylistPage のテスト
         """
         with ExitStack() as stack:
-            mockguf = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.GetUsernameFromApi"))
-
             # 正常系
             url = self.__GetURLSet()[3]
             mylist_url = url
+
             # マイリストのURLならRSSが取得できるURLに加工
             pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
             if re.search(pattern, mylist_url):
                 mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
-            title, uploaded, username = self.__GetMylistInfoSet(mylist_url)
+            mylist_title, _, mylist_username = self.__GetMylistInfoSet(mylist_url)
             video_info = self.__GetVideoInfoSet(mylist_url)
             video_info.reverse()
             pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
             userid, mylistid = re.findall(pattern, url)[0]
             pattern = "^マイリスト (.*)‐ニコニコ動画$"
-            myshowname = re.findall(pattern, title)[0]
-            showname = f"「{myshowname}」-{username}さんのマイリスト"
+            myshowname = re.findall(pattern, mylist_title)[0]
+            showname = f"「{myshowname}」-{mylist_username}さんのマイリスト"
 
-            title_list = [v[0] for v in video_info]
-            video_url_list = [v[1] for v in video_info]
-            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-            video_id_list = [re.findall(pattern, v)[0] for v in video_url_list]
-
-            td_format = "%a, %d %b %Y %H:%M:%S %z"
-            dts_format = "%Y-%m-%d %H:%M:%S"
-            uploaded_list = [datetime.strptime(v[2], td_format).strftime(dts_format) for v in video_info]
-
-            # 投稿者名は実際には動画情報APIに問い合わせているがここでは検証しない
-            num = len(video_id_list)
-            username_list = [username for _ in range(num)]
-            mockguf.return_value = username_list
+            video_id_list = [v["video_id"] for v in video_info]
+            title_list = [v["title"] for v in video_info]
+            registered_at_list = [v["registered_at"] for v in video_info]
+            video_url_list = [v["video_url"] for v in video_info]
 
             expect = {
                 "userid": userid,
@@ -714,13 +766,12 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
                 "myshowname": myshowname,
                 "video_id_list": video_id_list,
                 "title_list": title_list,
-                "uploaded_list": uploaded_list,
+                "registered_at_list": registered_at_list,
                 "video_url_list": video_url_list,
-                "username_list": username_list,
             }
 
             def MakeSoup(url, error_target=""):
-                xml = self.__MakeXML(url)
+                xml = self.__GetXMLFromRSS(url)
                 if error_target != "":
                     xml = xml.replace(error_target, "invalid")
                 return BeautifulSoup(xml, "lxml-xml")
@@ -737,13 +788,13 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(GetMyListInfoFromRss.AnalysisMylistPage(url, soup))
 
-            # 投稿日時収集失敗
+            # 登録日時収集失敗
             with self.assertRaises(AttributeError):
                 soup = MakeSoup(mylist_url, "pubDate")
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(GetMyListInfoFromRss.AnalysisMylistPage(url, soup))
 
-            # TODO::投稿日時収集は成功するが解釈に失敗
+            # TODO::登録日時収集は成功するが解釈に失敗
 
             # 動画URL収集失敗
             with self.assertRaises(AttributeError):
@@ -756,40 +807,40 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.logger.error"))
-            mockslp = stack.enter_context(patch("asyncio.sleep"))
-            mockgel = stack.enter_context(patch("asyncio.get_event_loop"))
-            mocksg = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.AsyncHTMLSession", self.__MakeAsyncHTMLSessionAPI))
+            mockslp = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.asyncio.sleep"))
+            mocksg = stack.enter_context(patch("NNMM.GetMyListInfoFromRss.AsyncHTMLSession"))
 
             # 正常系
-            default_name = "<NULL>"
-            url = self.__GetURLSet()[3]
-            mylist_url = url
-            # マイリストのURLならRSSが取得できるURLに加工
-            pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-            if re.search(pattern, mylist_url):
-                mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
-            title, uploaded, username = self.__GetMylistInfoSet(mylist_url)
-            video_info = self.__GetVideoInfoSet(mylist_url)
-            video_info.reverse()
+            mocksg = self.__MakeAPISessionResponseMock(mocksg, 200)
 
-            video_url_list = [v[1] for v in video_info]
-            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-            video_id_list = [re.findall(pattern, v)[0] for v in video_url_list]
+            expect = {}
+            mylist_url = self.__GetURLSet()[3]
+            video_info_list = self.__GetVideoInfoSet(mylist_url)
+            video_id_list = [video_info["video_id"] for video_info in video_info_list]
+            title_list = [video_info["title"] for video_info in video_info_list]
+            uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
+            video_url_list = [video_info["video_url"] for video_info in video_info_list]
+            username_list = [video_info["username"] for video_info in video_info_list]
 
-            num = len(video_id_list)
-            expect = [username for _ in range(num)]
+            expect = {
+                "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
+                "title_list": title_list,               # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+                "username_list": username_list,         # 投稿者リスト [投稿者1]
+            }
 
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(GetMyListInfoFromRss.GetUsernameFromApi(video_id_list))
             self.assertEqual(expect, actual)
 
             # 異常系
-            video_id_list = ["sm99999999", "sm99999998", "sm99999997"]
-            num = len(video_id_list)
-            expect = [default_name for _ in range(num)]
+            # session.get に失敗
+            mocksg = self.__MakeAPISessionResponseMock(mocksg, 503)
+
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(GetMyListInfoFromRss.GetUsernameFromApi(video_id_list))
-            self.assertEqual(expect, actual)
+            with self.assertRaises(ValueError):
+                actual = loop.run_until_complete(GetMyListInfoFromRss.GetUsernameFromApi(video_id_list))
 
 
 if __name__ == "__main__":
