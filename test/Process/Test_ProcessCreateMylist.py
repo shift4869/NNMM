@@ -392,10 +392,10 @@ class TestProcessCreateMylist(unittest.TestCase):
                 "title": "動画タイトル1",
                 "username": username,
                 "status": "",
-                "uploaded": "Wed, 19 Oct 2021 01:00:00 +0900",
+                "uploaded_at": "2022-04-30 01:00:00",
+                "registered_at": "2022-04-30 01:01:00",
                 "video_url": "https://www.nicovideo.jp/watch/sm11111111",
                 "mylist_url": url,
-                "created_at": "Wed, 19 Oct 2021 02:00:00 +0900",
                 "showname": showname,
                 "mylistname": mylistname,
             }
