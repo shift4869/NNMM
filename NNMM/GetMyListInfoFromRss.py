@@ -122,10 +122,10 @@ async def GetMyListInfoFromRss(url: str) -> list[dict]:
     video_url_list = video_d.get("video_url_list")
     username_list = video_d.get("username_list")
 
-    # td_format: RSSに記載されている日付形式
-    # dts_format: NNMMで扱う日付形式
-    td_format = "%a, %d %b %Y %H:%M:%S %z"
-    dts_format = "%Y-%m-%d %H:%M:%S"
+    # src_df: RSSに記載されている日付形式
+    # dst_df: NNMMで扱う日付形式
+    src_df = "%a, %d %b %Y %H:%M:%S %z"
+    dst_df = "%Y-%m-%d %H:%M:%S"
 
     # バリデーション
     # {
@@ -175,8 +175,8 @@ async def GetMyListInfoFromRss(url: str) -> list[dict]:
                 raise ValueError
             if title == "":
                 raise ValueError
-            dt = datetime.strptime(uploaded_at, dts_format)  # 日付形式が正しく変換されるかチェック
-            dt = datetime.strptime(registered_at, dts_format)  # 日付形式が正しく変換されるかチェック
+            dt = datetime.strptime(uploaded_at, dst_df)  # 日付形式が正しく変換されるかチェック
+            dt = datetime.strptime(registered_at, dst_df)  # 日付形式が正しく変換されるかチェック
             if not re.search("https://www.nicovideo.jp/watch/sm[0-9]+", video_url):
                 raise ValueError
             if username == "":
@@ -211,7 +211,7 @@ async def GetMyListInfoFromRss(url: str) -> list[dict]:
     try:
         for video_id, title, uploaded_at, registered_at, username, video_url in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list):
             # 登録日時が未来日の場合、登録しない（投稿予約など）
-            if now_date < datetime.strptime(registered_at, dts_format):
+            if now_date < datetime.strptime(registered_at, dst_df):
                 continue
 
             # 出力インターフェイスチェック
@@ -294,10 +294,10 @@ def GetItemInfo(item_lx) -> tuple[str, str, str, str]:
         AttributeError, TypeError: エントリパース失敗時
         ValueError: datetime.strptime 投稿日時解釈失敗時
     """
-    # td_format: RSSに記載されている日付形式
-    # dts_format: NNMMで扱う日付形式
-    td_format = "%a, %d %b %Y %H:%M:%S %z"
-    dts_format = "%Y-%m-%d %H:%M:%S"
+    # src_df: RSSに記載されている日付形式
+    # dst_df: NNMMで扱う日付形式
+    src_df = "%a, %d %b %Y %H:%M:%S %z"
+    dst_df = "%Y-%m-%d %H:%M:%S"
 
     title = item_lx.find("title").text
 
@@ -314,7 +314,7 @@ def GetItemInfo(item_lx) -> tuple[str, str, str, str]:
     video_id = re.findall(pattern, video_url)[0]
 
     pubDate_lx = item_lx.find("pubDate")
-    registered_at = datetime.strptime(pubDate_lx.text, td_format).strftime(dts_format)
+    registered_at = datetime.strptime(pubDate_lx.text, src_df).strftime(dst_df)
 
     return (video_id, title, registered_at, video_url)
 
@@ -532,8 +532,8 @@ async def GetUsernameFromApi(video_id_list: list[str]) -> dict:
     session = AsyncHTMLSession()
 
     base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
-    td_format = "%Y-%m-%dT%H:%M:%S%z"
-    dts_format = "%Y-%m-%d %H:%M:%S"
+    src_df = "%Y-%m-%dT%H:%M:%S%z"
+    dst_df = "%Y-%m-%d %H:%M:%S"
 
     title_list = []
     uploaded_at_list = []
@@ -567,7 +567,7 @@ async def GetUsernameFromApi(video_id_list: list[str]) -> dict:
 
             # 投稿日時
             uploaded_at_lx = thumb_lx.findall("first_retrieve")
-            uploaded_at = datetime.strptime(uploaded_at_lx[0].text, td_format).strftime(dts_format)
+            uploaded_at = datetime.strptime(uploaded_at_lx[0].text, src_df).strftime(dst_df)
             uploaded_at_list.append(uploaded_at)
 
             # 動画URL

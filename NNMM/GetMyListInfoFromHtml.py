@@ -148,7 +148,7 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
     #     "video_url_list": video_url_list,          # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
     #     "username_list": username_list,            # 投稿者リスト [投稿者1]
     # }
-    dts_format = "%Y-%m-%d %H:%M:%S"
+    dst_df = "%Y-%m-%d %H:%M:%S"
     try:
         if not (isinstance(showname, str) and isinstance(myshowname, str)):
             raise ValueError
@@ -175,8 +175,8 @@ async def GetMyListInfoFromHtml(url: str) -> list[dict]:
                 raise ValueError
             if title == "":
                 raise ValueError
-            dt = datetime.strptime(uploaded_at, dts_format)  # 日付形式が正しく変換されるかチェック
-            dt = datetime.strptime(registered_at, dts_format)  # 日付形式が正しく変換されるかチェック
+            dt = datetime.strptime(uploaded_at, dst_df)  # 日付形式が正しく変換されるかチェック
+            dt = datetime.strptime(registered_at, dst_df)  # 日付形式が正しく変換されるかチェック
             if not re.search("https://www.nicovideo.jp/watch/sm[0-9]+", video_url):
                 raise ValueError
             if username == "":
@@ -340,10 +340,10 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> dict:
     title_list = [str(t.text) for t in title_lx]
 
     # 投稿日時収集
-    # td_format: HTMLページに記載されている日付形式
-    # dts_format: NNMMで扱う日付形式
-    td_format = "%Y/%m/%d %H:%M"
-    dts_format = "%Y-%m-%d %H:%M:00"
+    # src_df: HTMLページに記載されている日付形式
+    # dst_df: NNMMで扱う日付形式
+    src_df = "%Y/%m/%d %H:%M"
+    dst_df = "%Y-%m-%d %H:%M:00"
     uploaded_at_list = []
     try:
         uploaded_at_lx = lxml.find_class(TCT_UPLOADED)
@@ -355,8 +355,8 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> dict:
             if "前" in tca or "今" in tca:
                 uploaded_at_list.append(tca)
             else:
-                dst = datetime.strptime(tca, td_format)
-                uploaded_at_list.append(dst.strftime(dts_format))
+                dst = datetime.strptime(tca, src_df)
+                uploaded_at_list.append(dst.strftime(dst_df))
     except ValueError:
         raise ValueError(MSG_UPLOADED2)
 
@@ -429,10 +429,10 @@ async def AnalysisMylistPage(lxml: HtmlElement) -> dict:
     title_list = [str(t.text) for t in title_lx]
 
     # 投稿日時収集
-    # td_format: HTMLページに記載されている日付形式
-    # dts_format: NNMMで扱う日付形式
-    td_format = "%Y/%m/%d %H:%M"
-    dts_format = "%Y-%m-%d %H:%M:00"
+    # src_df: HTMLページに記載されている日付形式
+    # dst_df: NNMMで扱う日付形式
+    src_df = "%Y/%m/%d %H:%M"
+    dst_df = "%Y-%m-%d %H:%M:00"
     uploaded_at_list = []
     try:
         uploaded_at_lx = lxml.find_class(TCT_UPLOADED)
@@ -444,8 +444,8 @@ async def AnalysisMylistPage(lxml: HtmlElement) -> dict:
             if "前" in tca or "今" in tca:
                 uploaded_at_list.append(tca)
             else:
-                dst = datetime.strptime(tca, td_format)
-                uploaded_at_list.append(dst.strftime(dts_format))
+                dst = datetime.strptime(tca, src_df)
+                uploaded_at_list.append(dst.strftime(dst_df))
     except ValueError:
         raise ValueError(MSG_UPLOADED2)
 
@@ -461,8 +461,8 @@ async def AnalysisMylistPage(lxml: HtmlElement) -> dict:
             if "前" in tca or "今" in tca:
                 registered_at_list.append(tca)
             else:
-                dst = datetime.strptime(tca, td_format)
-                registered_at_list.append(dst.strftime(dts_format))
+                dst = datetime.strptime(tca, src_df)
+                registered_at_list.append(dst.strftime(dst_df))
     except ValueError:
         raise ValueError(MSG_REGISTERED2)
 
@@ -513,8 +513,8 @@ async def GetUsernameFromApi(video_id_list: list[str]):
             }
     """
     base_url = "https://ext.nicovideo.jp/api/getthumbinfo/"
-    td_format = "%Y-%m-%dT%H:%M:%S%z"
-    dts_format = "%Y-%m-%d %H:%M:%S"
+    src_df = "%Y-%m-%dT%H:%M:%S%z"
+    dst_df = "%Y-%m-%d %H:%M:%S"
 
     title_list = []
     uploaded_at_list = []
@@ -534,7 +534,7 @@ async def GetUsernameFromApi(video_id_list: list[str]):
 
             # 投稿日時
             uploaded_at_lx = thumb_lx.findall("first_retrieve")
-            uploaded_at = datetime.strptime(uploaded_at_lx[0].text, td_format).strftime(dts_format)
+            uploaded_at = datetime.strptime(uploaded_at_lx[0].text, src_df).strftime(dst_df)
             uploaded_at_list.append(uploaded_at)
 
             # 動画URL
