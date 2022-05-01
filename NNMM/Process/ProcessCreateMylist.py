@@ -1,11 +1,12 @@
 # coding: utf-8
 import asyncio
 import urllib.parse
+import warnings
 from logging import INFO, getLogger
-from time import sleep
 
 import pyppeteer
 import PySimpleGUI as sg
+from bs4 import XMLParsedAsHTMLWarning
 from requests_html import AsyncHTMLSession
 
 from NNMM.MylistDBController import *
@@ -59,40 +60,42 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         session._browser = browser
 
         username = ""
-        test_count = 0
-        MAX_TEST_NUM = 5
-        while True:
-            # ブラウザエンジンでHTMLを生成
-            # 初回起動時はchromiumインストールのために時間がかかる
-            try:
-                response = await session.get(url)
-                await response.html.arender()
+        MAX_RETRY_NUM = 5
+        with warnings.catch_warnings():
+            # response.html.lxml アクセス時のワーニングを抑制
+            warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
 
-                # 投稿者収集
-                # ひとまず投稿動画の投稿者のみ（単一）
-                username = ""
-                username_lx = response.html.lxml.find_class("UserDetailsHeader-nickname")
-                if username_lx != []:
-                    username = username_lx[0].text
+            for _ in range(MAX_RETRY_NUM):
+                # ブラウザエンジンでHTMLを生成
+                # 初回起動時はchromiumインストールのために時間がかかる
+                try:
+                    response = await session.get(url)
+                    await response.html.arender()
 
-            except Exception as e:
-                logger.error(traceback.format_exc())
-                pass
+                    # 投稿者収集
+                    # ひとまず投稿動画の投稿者のみ（単一）
+                    username = ""
+                    username_lx = response.html.lxml.find_class("UserDetailsHeader-nickname")
+                    if username_lx != []:
+                        username = username_lx[0].text
 
-            if (username != "") or (test_count > MAX_TEST_NUM):
-                break
-            test_count = test_count + 1
-            sleep(3)
+                except Exception:
+                    logger.error(traceback.format_exc())
+                    pass
+
+                if (username != ""):
+                    break
+
+                await asyncio.sleep(1)
+            else:
+                # {MAX_RETRY_NUM}回レンダリングしても失敗した場合はエラー
+                logger.error("HTML pages request failed.")
+                return {}
 
         # responseの取得成否に関わらずセッションは閉じる
         await session.close()
 
-        # {MAX_TEST_NUM}回レンダリングしても失敗した場合はエラー
-        if test_count > MAX_TEST_NUM:
-            logger.error("HTML pages request failed.")
-            return {}
-
-        # マイリスト作成者情報が取得できなかった場合は空リストを返して終了
+        # マイリスト作成者情報が取得できなかった場合は空辞書を返して終了
         if username == "":
             logger.warning("HTML pages request is success , but username is nothing.")
             return {}

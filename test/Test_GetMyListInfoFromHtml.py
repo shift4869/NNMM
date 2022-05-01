@@ -9,12 +9,14 @@ import re
 import shutil
 import sys
 import unittest
+import warnings
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from urllib.error import HTTPError
 from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
 
+from bs4 import XMLParsedAsHTMLWarning
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
@@ -26,6 +28,8 @@ RSS_PATH = "./test/rss/"
 class TestGetMyListInfoFromHtml(unittest.TestCase):
 
     def setUp(self):
+        warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
+        warnings.simplefilter("ignore", ResourceWarning)
         pass
 
     def tearDown(self):

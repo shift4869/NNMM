@@ -17,7 +17,7 @@ from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
 from urllib.error import HTTPError
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 from requests_html import HTML
 
 from NNMM import GuiFunction
@@ -29,7 +29,7 @@ RSS_PATH = "./test/rss/"
 class TestGetMyListInfoFromRss(unittest.TestCase):
 
     def setUp(self):
-        # requestsのResourceWarning抑制
+        warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
         warnings.simplefilter("ignore", ResourceWarning)
         pass
 

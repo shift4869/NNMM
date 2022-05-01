@@ -4,10 +4,12 @@ import logging.config
 import pprint
 import re
 import traceback
-from datetime import datetime
+import warnings
+from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
 import pyppeteer
+from bs4 import XMLParsedAsHTMLWarning
 from requests_html import AsyncHTMLSession, HTMLResponse, HtmlElement
 
 from NNMM import ConfigMain, GuiFunction
@@ -243,23 +245,27 @@ async def GetAsyncSessionResponse(request_url: str, do_rendering: bool, session:
     response = None
 
     # 初回起動時はchromiumインストールのために時間がかかる
-    for _ in range(MAX_RETRY_NUM):
-        try:
-            response = await session.get(request_url)
-            response.raise_for_status()
+    with warnings.catch_warnings():
+        # response.html.lxml アクセス時のワーニングを抑制
+        warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
 
-            if do_rendering:
-                await response.html.arender(sleep=2)
-            response.raise_for_status()
+        for _ in range(MAX_RETRY_NUM):
+            try:
+                response = await session.get(request_url)
+                response.raise_for_status()
 
-            if (response is not None) and (response.html.lxml is not None):
-                break
+                if do_rendering:
+                    await response.html.arender(sleep=2)
+                response.raise_for_status()
 
-            await asyncio.sleep(1)
-        except Exception:
-            logger.error(traceback.format_exc())
-    else:
-        response = None
+                if (response is not None) and (response.html.lxml is not None):
+                    break
+
+                await asyncio.sleep(1)
+            except Exception:
+                logger.error(traceback.format_exc())
+        else:
+            response = None
 
     return (session, response)
 
