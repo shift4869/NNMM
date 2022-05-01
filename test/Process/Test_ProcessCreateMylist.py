@@ -72,8 +72,8 @@ class TestProcessCreateMylist(unittest.TestCase):
         Returns:
             str: 現在日時 "%Y-%m-%d %H:%M:%S" 形式
         """
-        dts_format = "%Y-%m-%d %H:%M:%S"
-        dst = datetime.now().strftime(dts_format)
+        dst_df = "%Y-%m-%d %H:%M:%S"
+        dst = datetime.now().strftime(dst_df)
         return dst
 
     def __GetURLType(self, url: str) -> str:

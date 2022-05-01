@@ -45,13 +45,13 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMy
         result = []
         m_list = self.mylist_db.Select()
 
-        td_format = "%Y/%m/%d %H:%M"
-        dts_format = "%Y-%m-%d %H:%M:%S"
+        src_df = "%Y/%m/%d %H:%M"
+        dst_df = "%Y-%m-%d %H:%M:%S"
         now_dst = datetime.now()
         try:
             for m in m_list:
                 # 前回チェック時日時取得
-                checked_dst = datetime.strptime(m["checked_at"], dts_format)
+                checked_dst = datetime.strptime(m["checked_at"], dst_df)
                 # インターバル文字列取得
                 interval_str = str(m["check_interval"])
 

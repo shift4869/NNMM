@@ -99,9 +99,9 @@ class ProcessTimer(ProcessBase.ProcessBase):
         self.timer_thread.start()
 
         # 次回起動時間の予測をログに出力
-        dts_format = "%Y-%m-%d %H:%M:%S"
+        dst_df = "%Y-%m-%d %H:%M:%S"
         dst = datetime.now() + timedelta(minutes=interval)
-        logger.info(f"Next auto-reload cycle start at {dst.strftime(dts_format)}.")
+        logger.info(f"Next auto-reload cycle start at {dst.strftime(dst_df)}.")
         return result
 
 

@@ -101,12 +101,12 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
             def ReturnExpect():
                 result = []
 
-                td_format = "%Y/%m/%d %H:%M"
-                dts_format = "%Y-%m-%d %H:%M:%S"
+                src_df = "%Y/%m/%d %H:%M"
+                dst_df = "%Y-%m-%d %H:%M:%S"
                 now_dst = datetime.now()
                 try:
                     for m in m_list:
-                        checked_dst = datetime.strptime(m["checked_at"], dts_format)
+                        checked_dst = datetime.strptime(m["checked_at"], dst_df)
                         interval_str = str(m["check_interval"])
                         dt = IntervalTranslation(interval_str) - 1
                         if dt < -1:

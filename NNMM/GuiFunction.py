@@ -42,9 +42,9 @@ def GetNowDatetime() -> str:
     Returns:
         str: 現在日時 "%Y-%m-%d %H:%M:%S" 形式
     """
-    td_format = "%Y/%m/%d %H:%M"
-    dts_format = "%Y-%m-%d %H:%M:%S"
-    dst = datetime.now().strftime(dts_format)
+    src_df = "%Y/%m/%d %H:%M"
+    dst_df = "%Y-%m-%d %H:%M:%S"
+    dst = datetime.now().strftime(dst_df)
     return dst
 
 

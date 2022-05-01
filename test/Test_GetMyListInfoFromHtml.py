@@ -91,16 +91,16 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
         n = userid[0]
 
         res = []
-        td_format = "%Y-%m-%dT%H:%M:%S%z"
-        dts_format = "%Y-%m-%d %H:%M:%S"
+        src_df = "%Y-%m-%dT%H:%M:%S%z"
+        dst_df = "%Y-%m-%d %H:%M:%S"
         for i in m_range:
             video_id = f"sm{n}00000{i:02}"
             video_info = self.__GetVideoInfo(video_id)
-            uploaded_at = datetime.strptime(video_info["uploaded_at"], td_format).strftime(dts_format)
+            uploaded_at = datetime.strptime(video_info["uploaded_at"], src_df).strftime(dst_df)
 
-            rd = datetime.strptime(video_info["uploaded_at"], td_format)
+            rd = datetime.strptime(video_info["uploaded_at"], src_df)
             rd += timedelta(minutes=1)
-            registered_at = rd.strftime(dts_format)
+            registered_at = rd.strftime(dst_df)
 
             video_info["uploaded_at"] = uploaded_at
             video_info["registered_at"] = registered_at
@@ -175,8 +175,8 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             mylist_info = self.__GetMylistInfoSet(mylist_url)
             video_info_list = self.__GetVideoInfoSet(mylist_url)
 
-            td_format = "%Y-%m-%d %H:%M:%S"
-            dts_format = "%Y/%m/%d %H:%M"
+            src_df = "%Y-%m-%d %H:%M:%S"
+            dst_df = "%Y/%m/%d %H:%M"
             if name == error_target:
                 result = []
             elif name == "NC-MediaObject-main":
@@ -184,9 +184,9 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             elif name == "NC-MediaObjectTitle":
                 result = [ReturnText(video_info["title"]) for video_info in video_info_list]
             elif name == "NC-VideoRegisteredAtText-text":
-                result = [ReturnText(datetime.strptime(video_info["uploaded_at"], td_format).strftime(dts_format)) for video_info in video_info_list]
+                result = [ReturnText(datetime.strptime(video_info["uploaded_at"], src_df).strftime(dst_df)) for video_info in video_info_list]
             elif name == "MylistItemAddition-addedAt":
-                result = [ReturnText(datetime.strptime(video_info["registered_at"], td_format).strftime(dts_format)) for video_info in video_info_list]
+                result = [ReturnText(datetime.strptime(video_info["registered_at"], src_df).strftime(dst_df)) for video_info in video_info_list]
             elif name == "UserDetailsHeader-nickname":
                 result = [ReturnText(mylist_info[2])]
             elif name == "MylistHeader-name":

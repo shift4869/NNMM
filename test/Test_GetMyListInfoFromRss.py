@@ -98,16 +98,16 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
         n = userid[0]
 
         res = []
-        td_format = "%Y-%m-%dT%H:%M:%S%z"
-        dts_format = "%Y-%m-%d %H:%M:%S"
+        src_df = "%Y-%m-%dT%H:%M:%S%z"
+        dst_df = "%Y-%m-%d %H:%M:%S"
         for i in m_range:
             video_id = f"sm{n}00000{i:02}"
             video_info = self.__GetVideoInfo(video_id)
-            uploaded_at = datetime.strptime(video_info["uploaded_at"], td_format).strftime(dts_format)
+            uploaded_at = datetime.strptime(video_info["uploaded_at"], src_df).strftime(dst_df)
 
-            rd = datetime.strptime(video_info["uploaded_at"], td_format)
+            rd = datetime.strptime(video_info["uploaded_at"], src_df)
             rd += timedelta(minutes=1)
-            registered_at = rd.strftime(dts_format)
+            registered_at = rd.strftime(dst_df)
 
             video_info["uploaded_at"] = uploaded_at
             video_info["registered_at"] = registered_at
@@ -583,8 +583,8 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
             item_lx = MakeItemLx(url)
 
             def GetItemInfo(item):
-                td_format = "%a, %d %b %Y %H:%M:%S %z"
-                dts_format = "%Y-%m-%d %H:%M:%S"
+                src_df = "%a, %d %b %Y %H:%M:%S %z"
+                dst_df = "%Y-%m-%d %H:%M:%S"
 
                 title = item.find("title").text
 
@@ -600,7 +600,7 @@ class TestGetMyListInfoFromRss(unittest.TestCase):
                 video_id = re.findall(pattern, video_url)[0]
 
                 pubDate_lx = item.find("pubDate")
-                uploaded = datetime.strptime(pubDate_lx.text, td_format).strftime(dts_format)
+                uploaded = datetime.strptime(pubDate_lx.text, src_df).strftime(dst_df)
 
                 return (video_id, title, uploaded, video_url)
 

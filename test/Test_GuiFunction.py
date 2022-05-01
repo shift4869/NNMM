@@ -209,8 +209,8 @@ class TestGetMyListInfo(unittest.TestCase):
     def test_GetNowDatetime(self):
         """タイムスタンプを返す機能のテスト
         """
-        td_format = "%Y/%m/%d %H:%M"
-        dts_format = "%Y-%m-%d %H:%M:%S"
+        src_df = "%Y/%m/%d %H:%M"
+        dst_df = "%Y-%m-%d %H:%M:%S"
         f_now = "2021-10-22 01:00:00"
         with freezegun.freeze_time(f_now):
             # 正常系
@@ -220,8 +220,8 @@ class TestGetMyListInfo(unittest.TestCase):
 
             # 異常系
             actual = GuiFunction.GetNowDatetime()
-            expect = datetime.strptime(f_now, dts_format) + timedelta(minutes=1)
-            expect = expect.strftime(dts_format)
+            expect = datetime.strptime(f_now, dst_df) + timedelta(minutes=1)
+            expect = expect.strftime(dst_df)
             self.assertNotEqual(expect, actual)
 
     def test_IsMylistIncludeNewVideo(self):

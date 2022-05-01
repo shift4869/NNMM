@@ -228,8 +228,8 @@ class TestMylistDBController(unittest.TestCase):
             t_id = random.randint(0, len(url_info) - 1)
             mylist_url = url_info[t_id]
 
-            dts_format = "%Y-%m-%d %H:%M:%S"
-            dst = datetime.now().strftime(dts_format)
+            dst_df = "%Y-%m-%d %H:%M:%S"
+            dst = datetime.now().strftime(dst_df)
             res = m_cont.UpdateUpdatedAt(mylist_url, dst)
             self.assertEqual(res, 0)
 
@@ -259,8 +259,8 @@ class TestMylistDBController(unittest.TestCase):
             t_id = random.randint(0, len(url_info) - 1)
             mylist_url = url_info[t_id]
 
-            dts_format = "%Y-%m-%d %H:%M:%S"
-            dst = datetime.now().strftime(dts_format)
+            dst_df = "%Y-%m-%d %H:%M:%S"
+            dst = datetime.now().strftime(dst_df)
             res = m_cont.UpdateCheckedAt(mylist_url, dst)
             self.assertEqual(res, 0)
 
