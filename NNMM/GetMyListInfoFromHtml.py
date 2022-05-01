@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
 import pyppeteer
+from lxml.html.soupparser import fromstring as soup_parse
 from requests_html import AsyncHTMLSession, HTMLResponse, HtmlElement
 
 from NNMM import ConfigMain, GuiFunction
@@ -251,6 +252,7 @@ async def GetAsyncSessionResponse(request_url: str, do_rendering: bool, session:
             if do_rendering:
                 await response.html.arender(sleep=2)
             response.raise_for_status()
+            # response.html._lxml = soup_parse(response.text, features="lxml-xml")
 
             if (response is not None) and (response.html.lxml is not None):
                 break

@@ -15,6 +15,7 @@ from urllib.error import HTTPError
 from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
 
+import freezegun
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
@@ -545,6 +546,52 @@ class TestGetMyListInfoFromHtml(unittest.TestCase):
             actual = loop.run_until_complete(GetMyListInfoFromHtml.GetAsyncSessionResponse(url, True, None))
             expect = (session, None)
             self.assertEqual(expect, actual)
+
+    def test_TranslatePageDate(self):
+        """TranslatePageDate のテスト
+        """
+        with ExitStack() as stack:
+            f_now = "2022-05-01 00:50:00"
+            mockfg = stack.enter_context(freezegun.freeze_time(f_now))
+
+            # 正常系
+            # "たった今" → 現在日時
+            td_str = "たった今"
+            actual = GetMyListInfoFromHtml.TranslatePageDate(td_str)
+            expect = f_now
+            self.assertEqual(expect, actual)
+
+            # "n分前" → 現在日時 - n分前
+            src_df = "%Y-%m-%d %H:%M:%S"
+            dst_df = "%Y-%m-%d %H:%M:%S"
+            n = 10
+            td_str = f"{n}分前"
+            actual = GetMyListInfoFromHtml.TranslatePageDate(td_str)
+            expect = (datetime.strptime(f_now, src_df) + timedelta(minutes=-n)).strftime(dst_df)
+            self.assertEqual(expect, actual)
+
+            # "n時間前" → 現在日時 - n時間前
+            n = 1
+            td_str = f"{n}時間前"
+            actual = GetMyListInfoFromHtml.TranslatePageDate(td_str)
+            expect = (datetime.strptime(f_now, src_df) + timedelta(hours=-n)).strftime(dst_df)
+            self.assertEqual(expect, actual)
+
+            # 異常系
+            # 不正な文字列
+            td_str = "不正な文字列"
+            actual = GetMyListInfoFromHtml.TranslatePageDate(td_str)
+            self.assertEqual("", actual)
+
+            # 空文字列
+            td_str = ""
+            actual = GetMyListInfoFromHtml.TranslatePageDate(td_str)
+            self.assertEqual("", actual)
+
+            # n分前だがnが不正
+            td_str = "不正分前"
+            actual = GetMyListInfoFromHtml.TranslatePageDate(td_str)
+            self.assertEqual("", actual)
 
     def test_AnalysisHtml(self):
         """AnalysisHtml のテスト
