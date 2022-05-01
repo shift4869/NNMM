@@ -302,7 +302,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         """ProcessCreateMylistのAsyncGetMyListInfoをテストする
         """
         with ExitStack() as stack:
-            mockslp = stack.enter_context(patch("asyncio.sleep"))
+            mockslp = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sleep"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.warning"))
             mockses = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self.__MakeSessionMock(200)))

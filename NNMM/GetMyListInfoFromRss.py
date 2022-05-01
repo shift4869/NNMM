@@ -5,13 +5,12 @@ import pprint
 import re
 import traceback
 import urllib.parse
-import warnings
 from datetime import datetime
 from logging import INFO, getLogger
 from pathlib import Path
 
 import requests
-from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
+from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession
 
 from NNMM import ConfigMain, GuiFunction
@@ -544,23 +543,19 @@ async def GetUsernameFromApi(video_id_list: list[str]) -> dict:
         url = base_url + video_id
         response = None
 
-        with warnings.catch_warnings():
-            # response.html.lxml アクセス時のワーニングを抑制
-            warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
+        for _ in range(MAX_RETRY_NUM):
+            try:
+                response = await session.get(url)
+                response.raise_for_status()
 
-            for _ in range(MAX_RETRY_NUM):
-                try:
-                    response = await session.get(url)
-                    response.raise_for_status()
+                if (response is not None) and (response.html.lxml is not None):
+                    break
 
-                    if (response is not None) and (response.html.lxml is not None):
-                        break
-
-                    await asyncio.sleep(1)
-                except Exception:
-                    logger.error(traceback.format_exc())
-            else:
-                response = None
+                await asyncio.sleep(1)
+            except Exception:
+                logger.error(traceback.format_exc())
+        else:
+            response = None
 
         if response:
             thumb_lx = response.html.lxml.findall("thumb")[0]
