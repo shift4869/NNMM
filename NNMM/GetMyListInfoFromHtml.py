@@ -264,6 +264,43 @@ async def GetAsyncSessionResponse(request_url: str, do_rendering: bool, session:
     return (session, response)
 
 
+def TranslatePageDate(td_str: str) -> str:
+    """動画掲載ページにある日時を解釈する関数
+
+    Note:
+        次のいずれかが想定されている
+        ["たった今","n分前","n時間前"]
+
+    Args:
+        td_str (str): 上記の想定文字列
+
+    Returns:
+        str: 成功時 "%Y-%m-%d %H:%M:00"、失敗時 空文字列
+    """
+    dst_df = "%Y-%m-%d %H:%M:%S"
+    try:
+        now_date = datetime.now()
+        if "今" in td_str:
+            return now_date.strftime(dst_df)
+
+        if "分前" in td_str:
+            pattern = "^([0-9]+)分前$"
+            if re.findall(pattern, td_str):
+                minutes = int(re.findall(pattern, td_str)[0])
+                dst_date = now_date + timedelta(minutes=-minutes)
+                return dst_date.strftime(dst_df)
+
+        if "時間前" in td_str:
+            pattern = "^([0-9]+)時間前$"
+            if re.findall(pattern, td_str):
+                hours = int(re.findall(pattern, td_str)[0])
+                dst_date = now_date + timedelta(hours=-hours)
+                return dst_date.strftime(dst_df)
+    except Exception:
+        pass
+    return ""
+
+
 async def AnalysisHtml(url_type: str, lxml: HtmlElement) -> dict:
     """htmlを解析する
 
@@ -353,7 +390,11 @@ async def AnalysisUploadedPage(lxml: HtmlElement) -> dict:
         for t in uploaded_at_lx:
             tca = str(t.text)
             if "前" in tca or "今" in tca:
-                uploaded_at_list.append(tca)
+                tca = TranslatePageDate(tca)
+                if tca != "":
+                    uploaded_at_list.append(tca)
+                else:
+                    raise ValueError
             else:
                 dst = datetime.strptime(tca, src_df)
                 uploaded_at_list.append(dst.strftime(dst_df))
@@ -442,7 +483,11 @@ async def AnalysisMylistPage(lxml: HtmlElement) -> dict:
         for t in uploaded_at_lx:
             tca = str(t.text)
             if "前" in tca or "今" in tca:
-                uploaded_at_list.append(tca)
+                tca = TranslatePageDate(tca)
+                if tca != "":
+                    uploaded_at_list.append(tca)
+                else:
+                    raise ValueError
             else:
                 dst = datetime.strptime(tca, src_df)
                 uploaded_at_list.append(dst.strftime(dst_df))
@@ -459,7 +504,11 @@ async def AnalysisMylistPage(lxml: HtmlElement) -> dict:
         for t in registered_at_lx:
             tca = str(t.text).replace(" マイリスト登録", "")
             if "前" in tca or "今" in tca:
-                registered_at_list.append(tca)
+                tca = TranslatePageDate(tca)
+                if tca != "":
+                    registered_at_list.append(tca)
+                else:
+                    raise ValueError
             else:
                 dst = datetime.strptime(tca, src_df)
                 registered_at_list.append(dst.strftime(dst_df))
