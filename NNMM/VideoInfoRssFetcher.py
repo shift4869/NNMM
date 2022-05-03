@@ -164,7 +164,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
         """
         # マイリスト作成者のユーザーIDとマイリストIDを取得
         pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
-        userid, mylistid = re.findall(pattern, url)[0]
+        userid, mylistid = re.findall(pattern, self.url)[0]
 
         # 対象のマイリストを作成したユーザー名を取得
         creator_lx = soup.find_all("dc:creator")
@@ -244,7 +244,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
             res = await self._analysis_mylist_page(soup)
 
         if not res:
-            raise ValueError("html analysis failed.")
+            raise ValueError("rss analysis failed.")
 
         return res
 
@@ -264,7 +264,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
         session, response = await self._get_session_response(self.request_url + self.RSS_URL_SUFFIX, False, "lxml-xml", None)
         await session.close()
         if not response:
-            raise HTTPError("RSS request failed.")
+            raise ValueError("rss request failed.")
 
         # RSS一時保存（DEBUG用）
         # config = ConfigMain.ProcessConfigBase.GetConfig()
@@ -302,11 +302,9 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
 
         # バリデーション
         if soup_d.get("title_list") != api_d.get("title_list"):
-            logger.error("video title from html and from api is different.")
-            return []
+            raise ValueError("video title from rss and from api is different.")
         if soup_d.get("video_url_list") != api_d.get("video_url_list"):
-            logger.error("video url from html and from api is different.")
-            return []
+            raise ValueError("video url from rss and from api is different.")
 
         # 動画情報をそれぞれ格納
         mylist_url = self.url
@@ -382,13 +380,12 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
                 if username == "":
                     raise ValueError
         except Exception:
-            ValueError("validation failed.")
+            raise ValueError("validation failed.")
 
         # config取得
         config = ConfigMain.ProcessConfigBase.GetConfig()
         if not config:
-            logger.error("config read failed.")
-            return []
+            raise ValueError("config read failed.")
 
         # RSS保存
         rd_str = config["general"].get("rss_save_path", "")
