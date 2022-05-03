@@ -301,7 +301,7 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
         session, response = await self._get_session_response(self.request_url, True, "html.parser", None)
         await session.close()
         if not response:
-            raise HTTPError("HTML pages request failed.")
+            raise ValueError("html request failed.")
 
         # すべての動画リンクを抽出
         # setであるresponse.html.linksを使うと順序の情報が保存できないためタグを見る
@@ -412,7 +412,7 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
                 if username == "":
                     raise ValueError
         except Exception:
-            ValueError("validation failed.")
+            raise ValueError("validation failed.")
 
         # 結合
         res = []
