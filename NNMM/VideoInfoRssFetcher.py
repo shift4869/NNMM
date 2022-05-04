@@ -8,7 +8,6 @@ import urllib.parse
 from datetime import datetime
 from logging import INFO, getLogger
 from pathlib import Path
-from urllib.error import HTTPError
 
 from bs4 import BeautifulSoup
 

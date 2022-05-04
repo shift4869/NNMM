@@ -3,10 +3,8 @@ import asyncio
 import logging.config
 import pprint
 import re
-import traceback
 from datetime import datetime, timedelta
 from logging import INFO, getLogger
-from urllib.error import HTTPError
 
 from requests_html import HtmlElement
 

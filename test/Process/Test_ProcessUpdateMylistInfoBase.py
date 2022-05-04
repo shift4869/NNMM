@@ -186,8 +186,8 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.error"))
-            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.GetMyListInfoFromHtml.GetMyListInfoFromHtml"))
-            mockagmilw = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.GetMyListInfoFromRss.GetMyListInfoFromRss"))
+            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.VideoInfoHtmlFetcher.fetch_videoinfo"))
+            mockagmilw = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.VideoInfoRssFetcher.fetch_videoinfo"))
 
             puami = ConcreteProcessUpdateMylistInfo()
 

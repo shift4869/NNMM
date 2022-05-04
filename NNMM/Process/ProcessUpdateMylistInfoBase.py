@@ -8,10 +8,11 @@ from logging import INFO, getLogger
 from typing import Callable
 
 import PySimpleGUI as sg
-from NNMM import GetMyListInfoFromHtml, GetMyListInfoFromRss
 from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
+from NNMM.VideoInfoHtmlFetcher import *
+from NNMM.VideoInfoRssFetcher import *
 from NNMM.Process import ProcessBase
 
 logger = getLogger("root")
@@ -71,10 +72,10 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
             prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
             if not prev_video_list:
                 # 初めての動画情報取得ならページをレンダリングして取得
-                func_list.append(GetMyListInfoFromHtml.GetMyListInfoFromHtml)
+                func_list.append(VideoInfoHtmlFetcher.fetch_videoinfo)
             else:
                 # 既に動画情報が存在するならRSSから取得
-                func_list.append(GetMyListInfoFromRss.GetMyListInfoFromRss)
+                func_list.append(VideoInfoRssFetcher.fetch_videoinfo)
         return func_list
 
     def GetPrevVideoLists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:

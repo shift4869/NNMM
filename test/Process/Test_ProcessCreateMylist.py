@@ -16,7 +16,6 @@ from logging import INFO, getLogger
 from mock import MagicMock, patch, AsyncMock
 
 from NNMM.Process import *
-from NNMM import GetMyListInfoFromRss
 
 
 class TestProcessCreateMylist(unittest.TestCase):
@@ -363,7 +362,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             mockpgt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.PopupGetText"))
             mockpu = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sg.popup"))
             mocknel = stack.enter_context(patch("asyncio.new_event_loop"))
-            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.GetMyListInfoFromHtml.GetMyListInfoFromHtml"))
+            mockagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.VideoInfoHtmlFetcher.fetch_videoinfo"))
             mocksagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.ProcessCreateMylist.AsyncGetMyListInfo"))
 
             pcm = ProcessCreateMylist.ProcessCreateMylist()
