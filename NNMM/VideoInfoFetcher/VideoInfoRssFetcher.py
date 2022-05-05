@@ -11,8 +11,8 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from NNMM import ConfigMain, GuiFunction, VideoInfoFetcherBase
-
+from NNMM import ConfigMain, GuiFunction
+from NNMM.VideoInfoFetcher import VideoInfoFetcherBase
 
 logger = getLogger("root")
 logger.setLevel(INFO)

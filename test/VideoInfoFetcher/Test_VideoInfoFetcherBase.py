@@ -20,7 +20,7 @@ import freezegun
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
-from NNMM import VideoInfoFetcherBase
+from NNMM.VideoInfoFetcher import VideoInfoFetcherBase
 
 RSS_PATH = "./test/rss/"
 
@@ -220,10 +220,10 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         """_get_session_response のテスト
         """
         with ExitStack() as stack:
-            mockle = stack.enter_context(patch("NNMM.VideoInfoFetcherBase.logger.error"))
-            mockas = stack.enter_context(patch("NNMM.VideoInfoFetcherBase.AsyncHTMLSession"))
-            mockpp = stack.enter_context(patch("NNMM.VideoInfoFetcherBase.pyppeteer.launch"))
-            mocksl = stack.enter_context(patch("NNMM.VideoInfoFetcherBase.asyncio.sleep"))
+            mockle = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.logger.error"))
+            mockas = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.AsyncHTMLSession"))
+            mockpp = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.pyppeteer.launch"))
+            mocksl = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.asyncio.sleep"))
 
             # 正常系
             MAX_RETRY_NUM = 5
@@ -340,7 +340,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         """_get_videoinfo_from_api のテスト
         """
         with ExitStack() as stack:
-            mockapises = stack.enter_context(patch("NNMM.VideoInfoFetcherBase.VideoInfoFetcherBase._get_session_response"))
+            mockapises = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.VideoInfoFetcherBase._get_session_response"))
 
             # 正常系
             mockapises = self.__MakeAPISessionResponseMock(mockapises, 200)
@@ -388,7 +388,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         """fetch_videoinfo のテスト
         """
         with ExitStack() as stack:
-            mockle = stack.enter_context(patch("NNMM.VideoInfoFetcherBase.logger.error"))
+            mockle = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.logger.error"))
 
             # 正常系
             url = self._get_url_set()[0]

@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
-from NNMM import VideoInfoRssFetcher
+from NNMM.VideoInfoFetcher import VideoInfoRssFetcher
 
 RSS_PATH = "./test/rss/"
 
@@ -645,8 +645,8 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         """_analysis_rss のテスト
         """
         with ExitStack() as stack:
-            mockaup = stack.enter_context(patch("NNMM.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_uploaded_page"))
-            mockamp = stack.enter_context(patch("NNMM.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_mylist_page"))
+            mockaup = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_uploaded_page"))
+            mockamp = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_mylist_page"))
 
             mockaup.return_value = "_analysis_uploaded_page result"
             mockamp.return_value = "_analysis_mylist_page result"
@@ -695,9 +695,9 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockcpb = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig", self._make_config_mock))
-            mockses = stack.enter_context(patch("NNMM.VideoInfoRssFetcher.VideoInfoRssFetcher._get_session_response"))
-            mocksoup = stack.enter_context(patch("NNMM.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_rss"))
-            mockhapi = stack.enter_context(patch("NNMM.VideoInfoRssFetcher.VideoInfoRssFetcher._get_videoinfo_from_api"))
+            mockses = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._get_session_response"))
+            mocksoup = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_rss"))
+            mockhapi = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._get_videoinfo_from_api"))
 
             # 正常系
             mockses = self._make_session_response_mock(mockses, 200)
@@ -780,7 +780,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         """_fetch_videoinfo のテスト
         """
         with ExitStack() as stack:
-            mockfvft = stack.enter_context(patch("NNMM.VideoInfoRssFetcher.VideoInfoRssFetcher._fetch_videoinfo_from_rss"))
+            mockfvft = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._fetch_videoinfo_from_rss"))
 
             expect = "VideoInfoRssFetcher._fetch_videoinfo() called"
             mockfvft.side_effect = lambda: str(expect)

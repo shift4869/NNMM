@@ -18,7 +18,7 @@ import freezegun
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
-from NNMM import VideoInfoHtmlFetcher
+from NNMM.VideoInfoFetcher import VideoInfoHtmlFetcher
 
 RSS_PATH = "./test/rss/"
 
@@ -417,14 +417,14 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             n = 10
             td_str = f"{n}分前"
             actual = vihf._translate_pagedate(td_str)
-            expect = (datetime.strptime(f_now, src_df) + timedelta(minutes=-n)).strftime(dst_df)
+            expect = (datetime.strptime(f_now, src_df) - timedelta(minutes=n)).strftime(dst_df)
             self.assertEqual(expect, actual)
 
             # "n時間前" → 現在日時 - n時間前
             n = 1
             td_str = f"{n}時間前"
             actual = vihf._translate_pagedate(td_str)
-            expect = (datetime.strptime(f_now, src_df) + timedelta(hours=-n)).strftime(dst_df)
+            expect = (datetime.strptime(f_now, src_df) - timedelta(hours=n)).strftime(dst_df)
             self.assertEqual(expect, actual)
 
             # 異常系
@@ -575,8 +575,8 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         """_analysis_html のテスト
         """
         with ExitStack() as stack:
-            mockaup = stack.enter_context(patch("NNMM.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._analysis_uploaded_page"))
-            mockamp = stack.enter_context(patch("NNMM.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._analysis_mylist_page"))
+            mockaup = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._analysis_uploaded_page"))
+            mockamp = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._analysis_mylist_page"))
 
             mockaup.return_value = "_analysis_uploaded_page result"
             mockamp.return_value = "_analysis_mylist_page result"
@@ -619,10 +619,10 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         """_fetch_videoinfo_from_html のテスト
         """
         with ExitStack() as stack:
-            mocklw = stack.enter_context(patch("NNMM.VideoInfoHtmlFetcher.logger.warning"))
-            mockses = stack.enter_context(patch("NNMM.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._get_session_response"))
-            mockhtml = stack.enter_context(patch("NNMM.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._analysis_html"))
-            mockhapi = stack.enter_context(patch("NNMM.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._get_videoinfo_from_api"))
+            mocklw = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher.logger.warning"))
+            mockses = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._get_session_response"))
+            mockhtml = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._analysis_html"))
+            mockhapi = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._get_videoinfo_from_api"))
 
             # 正常系
             # 動画情報が存在するマイリストを指定
@@ -708,7 +708,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         """_fetch_videoinfo のテスト
         """
         with ExitStack() as stack:
-            mockfvft = stack.enter_context(patch("NNMM.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._fetch_videoinfo_from_html"))
+            mockfvft = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher.VideoInfoHtmlFetcher._fetch_videoinfo_from_html"))
 
             expect = "VideoInfoHtmlFetcher._fetch_videoinfo() called"
             mockfvft.side_effect = lambda: str(expect)

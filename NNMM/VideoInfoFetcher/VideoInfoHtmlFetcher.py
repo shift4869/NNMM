@@ -8,7 +8,8 @@ from logging import INFO, getLogger
 
 from requests_html import HtmlElement
 
-from NNMM import ConfigMain, GuiFunction, VideoInfoFetcherBase
+from NNMM import ConfigMain, GuiFunction
+from NNMM.VideoInfoFetcher import VideoInfoFetcherBase
 
 
 logger = getLogger("root")
@@ -59,14 +60,14 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
                 pattern = "^([0-9]+)分前$"
                 if re.findall(pattern, td_str):
                     minutes = int(re.findall(pattern, td_str)[0])
-                    dst_date = now_date + timedelta(minutes=-minutes)
+                    dst_date = now_date - timedelta(minutes=minutes)
                     return dst_date.strftime(dst_df)
 
             if "時間前" in td_str:
                 pattern = "^([0-9]+)時間前$"
                 if re.findall(pattern, td_str):
                     hours = int(re.findall(pattern, td_str)[0])
-                    dst_date = now_date + timedelta(hours=-hours)
+                    dst_date = now_date - timedelta(hours=hours)
                     return dst_date.strftime(dst_df)
         except Exception:
             pass

@@ -12,7 +12,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
-from NNMM.VideoInfoHtmlFetcher import *
+from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import *
 from NNMM import ConfigMain
 
 
