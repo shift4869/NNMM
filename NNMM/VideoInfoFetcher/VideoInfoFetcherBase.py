@@ -2,50 +2,46 @@
 import asyncio
 import logging.config
 import pprint
-import re
 import traceback
-import urllib.parse
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from logging import INFO, getLogger
 
 import pyppeteer
 from lxml.html.soupparser import fromstring as soup_parse
 from requests_html import AsyncHTMLSession, HTMLResponse
 
-from NNMM import ConfigMain, GuiFunction
+from NNMM import ConfigMain
+from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.FetchURL import FetchURL
+from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedAPIVideoInfo
 
 
 logger = getLogger("root")
 logger.setLevel(INFO)
 
 
+# URLタイプ
+class SourceType(Enum):
+    HTML = "html"
+    RSS = "rss"
+
+
+@dataclass
 class VideoInfoFetcherBase(ABC):
-    def __init__(self, url: str, source_type: str):
-        # クエリ除去
-        url = urllib.parse.urlunparse(
-            urllib.parse.urlparse(url)._replace(query=None)
-        )
+    url: URL
+    request_url: FetchURL
+    source_type: SourceType
 
-        self.url = url
+    API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
+    MAX_RETRY_NUM = 5
+
+    def __init__(self, url: str, source_type: SourceType):
+        self.url = URL(url)
+        self.request_url = FetchURL(url)
         self.source_type = source_type
-
-        self.url_type = GuiFunction.GetURLType(self.url)
-        if self.url_type not in ["uploaded", "mylist"]:
-            raise ValueError("url_type is invalid , url is not target url.")
-
-        # マイリストのURLならRSSが取得できるURLに加工
-        self.request_url = url
-        if self.url_type == "mylist":
-            # "https://www.nicovideo.jp/mylist/[0-9]+/?rss=2.0" 形式でないとそのマイリストのRSSが取得できない
-            pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-            self.request_url = re.sub("/user/[0-9]+", "", self.request_url)  # /user/{userid} 部分を削除
-
-        # table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-        # table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
-        self.RESULT_DICT_COLS = ("no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname")
-        self.API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
-        self.MAX_RETRY_NUM = 5
 
     async def _get_session_response(self,
                                     request_url: str,
@@ -61,12 +57,11 @@ class VideoInfoFetcherBase(ABC):
             この回数リトライしてもページ取得できなかった場合、responseがNoneとなる
 
         Args:
-            request_url (str): 取得対象ページURL
             do_rendering (bool): 動的にレンダリングするかどうか
+            parse_features (str): soup_parse に渡すparserを表す文字列 ["html.parser", "lxml-xml"]
             session (AsyncHTMLSession, optional): 使い回すセッションがあれば指定
 
         Returns:
-            parse_features (str): soup_parse に渡すparserを表す文字列 ["html.parser", "lxml-xml"]
             session (AsyncHTMLSession): 非同期セッション
             response (HTMLResponse): ページ取得結果のレスポンス
                                     リトライ回数超過時None
@@ -108,7 +103,7 @@ class VideoInfoFetcherBase(ABC):
 
         return (session, response)
 
-    async def _get_videoinfo_from_api(self, video_id_list: list[str]) -> dict:
+    async def _get_videoinfo_from_api(self, video_id_list: list[str]) -> FetchedAPIVideoInfo:
         """動画IDからAPIを通して動画情報を取得する
 
         Notes:
@@ -119,14 +114,7 @@ class VideoInfoFetcherBase(ABC):
             video_id_list (list[str]): 動画IDリスト
 
         Returns:
-            dict: 解析結果をまとめた辞書
-                {
-                    "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
-                    "title_list": title_list,               # 動画タイトルリスト [テスト動画]
-                    "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-                    "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-                    "username_list": username_list,         # 投稿者リスト [投稿者1]
-                }
+            FetchedAPIVideoInfo: 解析結果            
         """
         src_df = "%Y-%m-%dT%H:%M:%S%z"
         dst_df = "%Y-%m-%d %H:%M:%S"
@@ -165,17 +153,16 @@ class VideoInfoFetcherBase(ABC):
         await session.close()
 
         num = len(video_id_list)
-        if not (len(title_list) == num and len(uploaded_at_list) == num and len(video_url_list) == num and len(username_list) == num):
-            raise ValueError
-
         res = {
+            "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
             "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
             "title_list": title_list,               # 動画タイトルリスト [テスト動画]
             "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
             "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
             "username_list": username_list,         # 投稿者リスト [投稿者1]
         }
-        return res
+
+        return FetchedAPIVideoInfo(**res)
 
     @abstractmethod
     async def _fetch_videoinfo(self) -> list[dict]:
