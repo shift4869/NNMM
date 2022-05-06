@@ -18,7 +18,10 @@ import freezegun
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
-from NNMM.VideoInfoFetcher import VideoInfoHtmlFetcher
+from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedAPIVideoInfo, FetchedPageVideoInfo
+from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
+from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType
+from NNMM.VideoInfoFetcher.URL import URL
 
 RSS_PATH = "./test/rss/"
 
@@ -255,26 +258,41 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
 
         mylist_info = self._get_mylist_info_set(mylist_url)
         video_info_list = self._get_video_info_set(mylist_url)
+        video_id_list = [video_info["video_id"] for video_info in video_info_list]
         title_list = [video_info["title"] for video_info in video_info_list]
         uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
         registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
+        video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
         if url_type == "uploaded":
+            # ユーザーID, マイリストID設定
+            pattern = URL.UPLOADED_URL_PATTERN
+            userid = re.findall(pattern, mylist_url)[0]
+            mylistid = ""  # 投稿動画の場合、マイリストIDは無し
             username = mylist_info[2]
             showname = f"{username}さんの投稿動画"
             myshowname = "投稿動画"
         elif url_type == "mylist":
+            pattern = URL.MYLIST_URL_PATTERN
+            userid, mylistid = re.findall(pattern, mylist_url)[0]
             username = mylist_info[2]
             myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
             showname = f"「{myshowname}」-{username}さんのマイリスト"
 
+        num = len(title_list)
         html_result = {
-            "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
-            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+            "no": list(range(1, num + 1)),              # No. [1, ..., len()-1]
+            "userid": userid,                           # ユーザーID 1234567
+            "mylistid": mylistid,                       # マイリストID 12345678
+            "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
+            "myshowname": myshowname,                   # マイリスト名 「投稿動画」
+            "mylist_url": mylist_url,                   # マイリストURL https://www.nicovideo.jp/user/11111111/video
+            "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
             "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
             "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
         }
+        html_result = FetchedPageVideoInfo(**html_result)
 
         def return_html(lxml):
             if kind == "AttributeError":
@@ -294,7 +312,9 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
         username_list = [video_info["username"] for video_info in video_info_list]
 
+        num = len(video_id_list)
         api_result = {
+            "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
             "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
             "title_list": title_list,               # 動画タイトルリスト [テスト動画]
             "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
@@ -308,6 +328,8 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             api_result["video_url_list"] = [v + "_不正なタイトル名" for v in video_url_list]
         if kind == "UsernameError":
             api_result["username_list"] = []
+
+        api_result = FetchedAPIVideoInfo(**api_result)
 
         def return_api(v):
             if kind == "ValueError":
@@ -359,40 +381,38 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
     def test_init(self):
         """VideoInfoHtmlFetcher の初期化後の状態をテストする
         """
-        source_type = "html"
+        source_type = SourceType.HTML
         urls = self._get_url_set()
         for url in urls:
-            vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
-
+            vihf = VideoInfoHtmlFetcher(url)
             self.assertEqual(source_type, vihf.source_type)
 
-            # 探索対象のクラスタグ定数
-            TCT_TITLE = "NC-MediaObjectTitle"
-            TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
-            TCT_USERNAME = "UserDetailsHeader-nickname"
-            TCT_REGISTERED = "MylistItemAddition-addedAt"
-            TCT_MYSHOWNAME = "MylistHeader-name"
-            self.assertEqual(TCT_TITLE, vihf.TCT_TITLE)
-            self.assertEqual(TCT_UPLOADED, vihf.TCT_UPLOADED)
-            self.assertEqual(TCT_USERNAME, vihf.TCT_USERNAME)
-            self.assertEqual(TCT_REGISTERED, vihf.TCT_REGISTERED)
-            self.assertEqual(TCT_MYSHOWNAME, vihf.TCT_MYSHOWNAME)
+        # 探索対象のクラスタグ定数
+        VF = VideoInfoHtmlFetcher
+        TCT_VIDEO_URL = "NC-MediaObject-main"
+        TCT_TITLE = "NC-MediaObjectTitle"
+        TCT_USERNAME = "UserDetailsHeader-nickname"
+        TCT_REGISTERED = "MylistItemAddition-addedAt"
+        TCT_MYSHOWNAME = "MylistHeader-name"
+        self.assertEqual(TCT_VIDEO_URL, VF.TCT_VIDEO_URL)
+        self.assertEqual(TCT_TITLE, VF.TCT_TITLE)
+        self.assertEqual(TCT_USERNAME, VF.TCT_USERNAME)
+        self.assertEqual(TCT_REGISTERED, VF.TCT_REGISTERED)
+        self.assertEqual(TCT_MYSHOWNAME, VF.TCT_MYSHOWNAME)
 
-            # エラーメッセージ定数
-            MSG_TITLE = f"title parse failed. '{TCT_TITLE}' is not found."
-            MSG_UPLOADED1 = f"uploaded_at parse failed. '{TCT_UPLOADED}' is not found."
-            MSG_UPLOADED2 = "uploaded_at date parse failed."
-            MSG_REGISTERED1 = f"registered_at parse failed. '{TCT_REGISTERED}' is not found."
-            MSG_REGISTERED2 = "registered_at date parse failed."
-            MSG_USERNAME = f"username parse failed. '{TCT_USERNAME}' is not found."
-            MSG_MYSHOWNAME = f"myshowname parse failed. '{TCT_MYSHOWNAME}' is not found."
-            self.assertEqual(MSG_TITLE, vihf.MSG_TITLE)
-            self.assertEqual(MSG_UPLOADED1, vihf.MSG_UPLOADED1)
-            self.assertEqual(MSG_UPLOADED2, vihf.MSG_UPLOADED2)
-            self.assertEqual(MSG_REGISTERED1, vihf.MSG_REGISTERED1)
-            self.assertEqual(MSG_REGISTERED2, vihf.MSG_REGISTERED2)
-            self.assertEqual(MSG_USERNAME, vihf.MSG_USERNAME)
-            self.assertEqual(MSG_MYSHOWNAME, vihf.MSG_MYSHOWNAME)
+        # エラーメッセージ定数
+        MSG_VIDEO_URL = "HTML pages request is success , but video info is nothing."
+        MSG_TITLE = f"title parse failed. '{TCT_TITLE}' is not found."
+        MSG_REGISTERED1 = f"registered_at parse failed. '{TCT_REGISTERED}' is not found."
+        MSG_REGISTERED2 = "registered_at date parse failed."
+        MSG_USERNAME = f"username parse failed. '{TCT_USERNAME}' is not found."
+        MSG_MYSHOWNAME = f"myshowname parse failed. '{TCT_MYSHOWNAME}' is not found."
+        self.assertEqual(MSG_VIDEO_URL, VF.MSG_VIDEO_URL)
+        self.assertEqual(MSG_TITLE, VF.MSG_TITLE)
+        self.assertEqual(MSG_REGISTERED1, VF.MSG_REGISTERED1)
+        self.assertEqual(MSG_REGISTERED2, VF.MSG_REGISTERED2)
+        self.assertEqual(MSG_USERNAME, VF.MSG_USERNAME)
+        self.assertEqual(MSG_MYSHOWNAME, VF.MSG_MYSHOWNAME)
 
     def test_translate_pagedate(self):
         """_translate_pagedate のテスト
@@ -402,7 +422,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             mockfg = stack.enter_context(freezegun.freeze_time(f_now))
 
             url = self._get_url_set()[0]
-            vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+            vihf = VideoInfoHtmlFetcher(url)
 
             # 正常系
             # "たった今" → 現在日時
@@ -449,6 +469,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         # 探索対象のクラスタグ定数
         TCT_TITLE = "NC-MediaObjectTitle"
         TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
+        TCT_REGISTERED = "MylistItemAddition-addedAt"
         TCT_USERNAME = "UserDetailsHeader-nickname"
 
         # 正常系
@@ -456,24 +477,36 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         mylist_url = self._get_url_set()[0]
         mylist_info = self._get_mylist_info_set(mylist_url)
         video_info_list = self._get_video_info_set(mylist_url)
+        pattern = URL.UPLOADED_URL_PATTERN
+        userid = re.findall(pattern, mylist_url)[0]
+        mylistid = ""  # 投稿動画の場合、マイリストIDは無し
+        video_id_list = [video_info["video_id"] for video_info in video_info_list]
         title_list = [video_info["title"] for video_info in video_info_list]
         uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
         registered_at_list = uploaded_at_list
+        video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
         username = mylist_info[2]
         showname = f"{username}さんの投稿動画"
         myshowname = "投稿動画"
 
+        num = len(title_list)
         expect = {
-            "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
-            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+            "no": list(range(1, num + 1)),              # No. [1, ..., len()-1]
+            "userid": userid,                           # ユーザーID 1234567
+            "mylistid": mylistid,                       # マイリストID 12345678
+            "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
+            "myshowname": myshowname,                   # マイリスト名 「投稿動画」
+            "mylist_url": mylist_url,                   # マイリストURL https://www.nicovideo.jp/user/11111111/video
+            "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
             "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
             "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
         }
+        expect = FetchedPageVideoInfo(**expect)
 
         response = self._make_response_mock(mylist_url)
-        vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(mylist_url)
+        vihf = VideoInfoHtmlFetcher(mylist_url)
         loop = asyncio.new_event_loop()
         actual = loop.run_until_complete(vihf._analysis_uploaded_page(response.html.lxml))
         self.assertEqual(expect, actual)
@@ -491,7 +524,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(vihf._analysis_uploaded_page(response.html.lxml))
 
-        # TODO::投稿日時収集は成功するが解釈に失敗
+        # TODO::登録日時収集は成功するが解釈に失敗
 
         # 投稿者収集失敗
         with self.assertRaises(AttributeError):
@@ -504,34 +537,43 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         """
         # 探索対象のクラスタグ定数
         TCT_TITLE = "NC-MediaObjectTitle"
-        TCT_UPLOADED = "NC-VideoRegisteredAtText-text"
         TCT_REGISTERED = "MylistItemAddition-addedAt"
         TCT_USERNAME = "UserDetailsHeader-nickname"
         TCT_MYSHOWNAME = "MylistHeader-name"
 
         # 正常系
         expect = {}
-        mylist_url = self._get_url_set()[0]
+        mylist_url = self._get_url_set()[2]
         mylist_info = self._get_mylist_info_set(mylist_url)
         video_info_list = self._get_video_info_set(mylist_url)
+        pattern = URL.MYLIST_URL_PATTERN
+        userid, mylistid = re.findall(pattern, mylist_url)[0]
+        video_id_list = [video_info["video_id"] for video_info in video_info_list]
         title_list = [video_info["title"] for video_info in video_info_list]
-        uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
         registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
+        video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
         username = mylist_info[2]
         myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
         showname = f"「{myshowname}」-{username}さんのマイリスト"
 
+        num = len(title_list)
         expect = {
-            "showname": showname,                       # マイリスト表示名 「まとめマイリスト」-投稿者1さんのマイリスト
-            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+            "no": list(range(1, num + 1)),              # No. [1, ..., len()-1]
+            "userid": userid,                           # ユーザーID 1234567
+            "mylistid": mylistid,                       # マイリストID 12345678
+            "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
+            "myshowname": myshowname,                   # マイリスト名 「投稿動画」
+            "mylist_url": mylist_url,                   # マイリストURL https://www.nicovideo.jp/user/11111111/video
+            "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
             "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,       # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
             "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
         }
+        expect = FetchedPageVideoInfo(**expect)
 
         response = self._make_response_mock(mylist_url)
-        vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(mylist_url)
+        vihf = VideoInfoHtmlFetcher(mylist_url)
         loop = asyncio.new_event_loop()
         actual = loop.run_until_complete(vihf._analysis_mylist_page(response.html.lxml))
         self.assertEqual(expect, actual)
@@ -542,14 +584,6 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             response = self._make_response_mock(mylist_url, 200, TCT_TITLE)
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(vihf._analysis_mylist_page(response.html.lxml))
-
-        # 投稿日時収集失敗
-        with self.assertRaises(AttributeError):
-            response = self._make_response_mock(mylist_url, 200, TCT_UPLOADED)
-            loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(vihf._analysis_mylist_page(response.html.lxml))
-
-        # TODO::投稿日時収集は成功するが解釈に失敗
 
         # 登録日時収集失敗
         with self.assertRaises(AttributeError):
@@ -583,7 +617,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
 
             # 投稿動画ページ
             url = self._get_url_set()[0]
-            vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+            vihf = VideoInfoHtmlFetcher(url)
             video_id_list = []
             lxml = None
             loop = asyncio.new_event_loop()
@@ -597,7 +631,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
 
             # マイリストページ
             url = self._get_url_set()[2]
-            vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+            vihf = VideoInfoHtmlFetcher(url)
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(vihf._analysis_html(lxml))
             expect = "_analysis_mylist_page result"
@@ -606,14 +640,6 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             mockaup.reset_mock()
             mockamp.assert_called_once_with(lxml)
             mockamp.reset_mock()
-
-            # 異常系
-            # 不正なurlタイプ
-            with self.assertRaises(ValueError):
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
-                vihf.url_type = "invalid url type"
-                loop = asyncio.new_event_loop()
-                actual = loop.run_until_complete(vihf._analysis_html(lxml))
 
     def test_fetch_videoinfo_from_html(self):
         """_fetch_videoinfo_from_html のテスト
@@ -632,7 +658,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
                 mockhtml = self._make_analysis_html_mock(mockhtml, url)
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url)
 
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+                vihf = VideoInfoHtmlFetcher(url)
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
                 expect = self._make_expect_result(url)
@@ -640,24 +666,26 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
 
             # 動画情報が1つもないマイリストを指定
             # 正確にはエラーではない(warning)が結果として空リストが返ってくる
-            url = "https://www.nicovideo.jp/user/99999999/mylist/99999999"
-            vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
-            actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
-            self.assertEqual([], actual)
+            # url = "https://www.nicovideo.jp/user/99999999/mylist/99999999"
+            # mockhtml = self._make_analysis_html_mock(mockhtml, url)
+            # mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url)
+            # vihf = VideoInfoHtmlFetcher(url)
+            # actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
+            # self.assertEqual([], actual)
 
             # 異常系
             # session.getが常に失敗
             with self.assertRaises(ValueError):
                 mockses = self._make_session_response_mock(mockses, 503)
                 url = urls[0]
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+                vihf = VideoInfoHtmlFetcher(url)
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
 
             # session.getが例外送出
             with self.assertRaises(ValueError):
                 mockses = self._make_session_response_mock(mockses, 503, "ValueError")
                 url = urls[0]
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+                vihf = VideoInfoHtmlFetcher(url)
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
 
             # htmlからの動画情報収集に失敗
@@ -666,7 +694,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url)
                 mockses = self._make_session_response_mock(mockses, 200)
                 url = urls[0]
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+                vihf = VideoInfoHtmlFetcher(url)
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
 
             # apiからの動画情報収集に失敗
@@ -675,7 +703,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url, "ValueError")
                 mockses = self._make_session_response_mock(mockses, 200)
                 url = urls[0]
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+                vihf = VideoInfoHtmlFetcher(url)
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
 
             # 取得したtitleの情報がhtmlとapiで異なる
@@ -683,7 +711,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url, "TitleError")
                 mockses = self._make_session_response_mock(mockses, 200)
                 url = urls[0]
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+                vihf = VideoInfoHtmlFetcher(url)
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
 
             # 取得したvideo_urlの情報がhtmlとapiで異なる
@@ -691,7 +719,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url, "VideoUrlError")
                 mockses = self._make_session_response_mock(mockses, 200)
                 url = urls[0]
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+                vihf = VideoInfoHtmlFetcher(url)
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
 
             # username_listの大きさが不正
@@ -699,7 +727,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url, "UsernameError")
                 mockses = self._make_session_response_mock(mockses, 200)
                 url = urls[0]
-                vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+                vihf = VideoInfoHtmlFetcher(url)
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
 
             # TODO::結合時のエラーを模倣する
@@ -714,7 +742,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             mockfvft.side_effect = lambda: str(expect)
 
             url = self._get_url_set()[0]
-            vihf = VideoInfoHtmlFetcher.VideoInfoHtmlFetcher(url)
+            vihf = VideoInfoHtmlFetcher(url)
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(vihf._fetch_videoinfo())
             self.assertEqual(expect, actual)

@@ -9,26 +9,25 @@ import re
 import shutil
 import sys
 import unittest
-import urllib.parse
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from urllib.error import HTTPError
 from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
 
-import freezegun
 from requests_html import AsyncHTMLSession, HTML
 
-from NNMM import GuiFunction
-from NNMM.VideoInfoFetcher import VideoInfoFetcherBase
+from NNMM.VideoInfoFetcher.FetchURL import FetchURL
+from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
 
 RSS_PATH = "./test/rss/"
 
 
 # テスト用具体化ProcessBase
-class ConcreteVideoInfoFetcher(VideoInfoFetcherBase.VideoInfoFetcherBase):
+class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
     
-    def __init__(self, url: str, source_type: str = "test") -> None:
+    def __init__(self, url: str, source_type: SourceType = SourceType.HTML) -> None:
         super().__init__(url, source_type)
 
     async def _fetch_videoinfo(self) -> list[dict]:
@@ -184,31 +183,20 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         """VideoInfoFetcherBase の初期化後の状態をテストする
         """
         # 正常系
-        source_type = "test"
+        source_type = SourceType.HTML
         urls = self._get_url_set()
         for url in urls:
             cvif = ConcreteVideoInfoFetcher(url)
 
-            self.assertEqual(url, cvif.url)
+            self.assertEqual(URL(url), cvif.url)
+            self.assertEqual(FetchURL(url), cvif.request_url)
             self.assertEqual(source_type, cvif.source_type)
 
-            url_type = GuiFunction.GetURLType(url)
-            self.assertEqual(url_type, cvif.url_type)
-
-            request_url = url
-            if url_type == "mylist":
-                pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-                request_url = re.sub("/user/[0-9]+", "", request_url)
-            self.assertEqual(request_url, cvif.request_url)
-
-            RESULT_DICT_COLS = ("no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname")
-            self.assertEqual(RESULT_DICT_COLS, cvif.RESULT_DICT_COLS)
-
             API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
-            self.assertEqual(API_URL_BASE, cvif.API_URL_BASE)
+            self.assertEqual(API_URL_BASE, VideoInfoFetcherBase.API_URL_BASE)
 
             MAX_RETRY_NUM = 5
-            self.assertEqual(MAX_RETRY_NUM, cvif.MAX_RETRY_NUM)
+            self.assertEqual(MAX_RETRY_NUM, VideoInfoFetcherBase.MAX_RETRY_NUM)
 
         # 異常系
         # urlが不正
@@ -255,7 +243,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             url = self._get_url_set()[0]
             cvif = ConcreteVideoInfoFetcher(url)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(url, True, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
 
@@ -289,25 +277,25 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
                 self.assertIsNotNone(response.html.lxml)
                 response.reset_mock()
 
-            assertMockCall(url, True, None)
+            assertMockCall(cvif.request_url.request_url, True, None)
 
             # do_renderingがFalse, sessionがNone
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(url, False, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, False, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, False, None)
 
             # do_renderingがTrue, sessionがNoneでない
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(url, True, "html.parser", session))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", session))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, True, session)
 
             # do_renderingがFalse, sessionがNoneでない
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(url, False, "html.parser", session))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, False, "html.parser", session))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, False, session)
@@ -315,7 +303,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # リトライして成功するパターン
             session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM - 1, False)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(url, True, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
 
@@ -325,14 +313,14 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # MAX_RETRY_NUM回リトライしたが失敗したパターン
             session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM, False)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(url, True, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", None))
             expect = (session, None)
             self.assertEqual(expect, actual)
 
             # responseの取得に成功したがresponse.html.lxmlが存在しないパターン
             session.get.side_effect = MakeReturnGet(0, True)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(url, True, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", None))
             expect = (session, None)
             self.assertEqual(expect, actual)
 
@@ -353,8 +341,10 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
             video_url_list = [video_info["video_url"] for video_info in video_info_list]
             username_list = [video_info["username"] for video_info in video_info_list]
+            num = len(video_id_list)
 
             expect = {
+                "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
                 "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
                 "title_list": title_list,               # 動画タイトルリスト [テスト動画]
                 "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
@@ -365,12 +355,11 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             cvif = ConcreteVideoInfoFetcher(mylist_url)
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
-            self.assertEqual(expect, actual)
+            self.assertEqual(expect, actual.to_dict())
 
             # 異常系
             # _get_session_response に失敗
             mockapises = self.__MakeAPISessionResponseMock(mockapises, 503)
-
             loop = asyncio.new_event_loop()
             with self.assertRaises(ValueError):
                 actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
@@ -399,7 +388,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # 異常系
             # VideoInfoFetcherBase の fetch_videoinfo を直接呼んでも内部でインスタンス化できないので失敗する
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(VideoInfoFetcherBase.VideoInfoFetcherBase.fetch_videoinfo(url))
+            actual = loop.run_until_complete(VideoInfoFetcherBase.fetch_videoinfo(url))
             self.assertEqual([], actual)
 
 
