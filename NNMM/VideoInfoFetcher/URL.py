@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 import re
 import urllib.parse
-from enum import Enum, auto
+from enum import Enum
 
 
 # URLタイプ
@@ -53,20 +53,6 @@ class URL():
             return URLType.MYLIST
 
         raise ValueError("Getting URL type failed.")
-
-    # def __str__(self):
-    #     return self._url
-
-    # def __repr__(self):
-    #     return self._url
-
-    # @property
-    # def url(self):
-    #     return self._url
-
-    # @property
-    # def type(self):
-    #     return self._type
 
 
 if __name__ == "__main__":
