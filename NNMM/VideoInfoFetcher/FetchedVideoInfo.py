@@ -25,6 +25,7 @@ class FetchedVideoInfo():
     registered_at_list: list[str]       # 登録日時リスト [%Y-%m-%d %H:%M:%S]
     video_url_list: list[str]           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
     username_list: list[str]            # 投稿者リスト [投稿者1]
+
     result_dict: ClassVar[list[dict]]   # 結果の辞書 [{key=RESULT_DICT_COLS, value=キーに対応する上記項目}]
 
     RESULT_DICT_COLS = ("no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname")

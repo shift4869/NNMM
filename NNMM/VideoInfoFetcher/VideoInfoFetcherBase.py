@@ -114,7 +114,7 @@ class VideoInfoFetcherBase(ABC):
             video_id_list (list[str]): 動画IDリスト
 
         Returns:
-            FetchedAPIVideoInfo: 解析結果            
+            FetchedAPIVideoInfo: 解析結果
         """
         src_df = "%Y-%m-%dT%H:%M:%S%z"
         dst_df = "%Y-%m-%d %H:%M:%S"

@@ -22,7 +22,7 @@ class FetchedPageVideoInfo():
     USERID_PATTERN = r"[0-9]"
     MYLISTID_PATTERN = r"[0-9]"
     VIDEO_ID_PATTERN = r"sm[0-9]"
-    VIDEO_URL_PATTERN = r"https://www.nicovideo.jp/watch/sm[0-9]+"
+    VIDEO_URL_PATTERN = r"https://www.nicovideo.jp/watch/(sm[0-9]+)"
 
     def __post_init__(self):
         self._is_valid()

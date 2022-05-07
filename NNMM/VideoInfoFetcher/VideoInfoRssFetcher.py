@@ -12,10 +12,11 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 
 from NNMM import ConfigMain
-from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedPageVideoInfo, FetchedVideoInfo
+from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedVideoInfo
+from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
+from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
 from NNMM.VideoInfoFetcher.URL import URL, URLType
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
-from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
 
 logger = getLogger("root")
 logger.setLevel(INFO)
