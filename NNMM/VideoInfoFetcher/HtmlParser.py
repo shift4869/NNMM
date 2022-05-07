@@ -274,8 +274,8 @@ if __name__ == "__main__":
 
     loop = asyncio.new_event_loop()
     for url in urls:
-        vhif = VideoInfoHtmlFetcher(url)
-        session, response = loop.run_until_complete(vhif._get_session_response(vhif.request_url.request_url, True, "html.parser", None))
+        vihf = VideoInfoHtmlFetcher(url)
+        session, response = loop.run_until_complete(vihf._get_session_response(vihf.request_url.request_url, True, "html.parser", None))
         loop.run_until_complete(session.close())
 
         hp = HtmlParser(url, response.html.lxml)
