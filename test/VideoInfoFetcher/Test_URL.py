@@ -4,28 +4,14 @@
 URL の各種機能をテストする
 """
 import re
-import shutil
 import sys
 import unittest
 import urllib.parse
-from mock import MagicMock, AsyncMock, patch, call
-from pathlib import Path
 
 from NNMM.VideoInfoFetcher.URL import URL, URLType
 
-RSS_PATH = "./test/rss/"
-
 
 class TestURL(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        if Path(RSS_PATH).exists():
-            shutil.rmtree(RSS_PATH)
-        pass
-
     def _get_url_set(self) -> list[str]:
         """urlセットを返す
         """
