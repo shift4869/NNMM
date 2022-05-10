@@ -1,5 +1,6 @@
 # coding: utf-8
 import asyncio
+from dataclasses import dataclass
 import logging.config
 import pprint
 from logging import INFO, getLogger
@@ -10,6 +11,8 @@ from NNMM import ConfigMain
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedVideoInfo
 from NNMM.VideoInfoFetcher.HtmlParser import HtmlParser
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
 
 
@@ -17,10 +20,16 @@ logger = getLogger("root")
 logger.setLevel(INFO)
 
 
+@dataclass
 class VideoInfoHtmlFetcher(VideoInfoFetcherBase):
+    mylist_url: UploadedURL | MylistURL
+
     def __init__(self, url: str):
         super().__init__(url, SourceType.HTML)
-        self._html_parser: HtmlParser = None
+        if UploadedURL.is_valid(url):
+            self.mylist_url = UploadedURL.factory(url)
+        elif MylistURL.is_valid(url):
+            self.mylist_url = MylistURL.factory(url)
 
     async def _analysis_html(self, lxml: HtmlElement) -> FetchedPageVideoInfo:
         """htmlを解析する
@@ -37,9 +46,9 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase):
         Raises:
             AttributeError | ValueError: html解析失敗時
         """
-        mylist_url = self.url.url
-        self._html_parser: HtmlParser = HtmlParser(mylist_url, lxml)
-        res = await self._html_parser.parse()
+        mylist_url = self.mylist_url.non_query_url
+        parser: HtmlParser = HtmlParser(mylist_url, lxml)
+        res = await parser.parse()
 
         if not res:
             raise ValueError("html analysis failed.")
@@ -61,7 +70,7 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase):
             FetchedVideoInfo.result (list[dict]): 動画情報をまとめた辞書リスト キーはFetchedVideoInfoを参照
         """
         # ページ取得
-        session, response = await self._get_session_response(self.request_url.request_url, True, "html.parser", None)
+        session, response = await self._get_session_response(self.mylist_url.non_query_url, True, "html.parser", None)
         await session.close()
         if not response:
             raise ValueError("html request failed.")
