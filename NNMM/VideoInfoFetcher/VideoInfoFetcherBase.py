@@ -14,9 +14,10 @@ from lxml.html.soupparser import fromstring as soup_parse
 from requests_html import AsyncHTMLSession, HTMLResponse
 
 from NNMM import ConfigMain
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.URL import URL
-from NNMM.VideoInfoFetcher.FetchURL import FetchURL
 from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedAPIVideoInfo
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 
 
 logger = getLogger("root")
@@ -32,15 +33,16 @@ class SourceType(Enum):
 @dataclass
 class VideoInfoFetcherBase(ABC):
     url: URL
-    request_url: FetchURL
     source_type: SourceType
 
     API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
     MAX_RETRY_NUM = 5
 
     def __init__(self, url: str, source_type: SourceType):
-        self.url = URL(url)
-        self.request_url = FetchURL(url)
+        if UploadedURL.is_valid(url):
+            self.url = UploadedURL.factory(url)
+        elif MylistURL.is_valid(url):
+            self.url = MylistURL.factory(url)
         self.source_type = source_type
 
     async def _get_session_response(self,
@@ -185,6 +187,13 @@ if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     ConfigMain.ProcessConfigBase.SetConfig()
 
+    class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
+        def __init__(self, url: str):
+            super().__init__(url, SourceType.HTML)
+
+        async def _fetch_videoinfo(self) -> list[dict]:
+            return await self._get_videoinfo_from_api(["sm9"])
+
     urls = [
         "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
         # "https://www.nicovideo.jp/user/12899156/mylist/39194985",  # 中量マイリスト
@@ -195,9 +204,7 @@ if __name__ == "__main__":
 
     loop = asyncio.new_event_loop()
     for url in urls:
-        video_list = loop.run_until_complete(VideoInfoFetcherBase.fetch_videoinfo(url, "html"))
-        pprint.pprint(video_list)
-        video_list = loop.run_until_complete(VideoInfoFetcherBase.fetch_videoinfo(url, "rss"))
+        video_list = loop.run_until_complete(ConcreteVideoInfoFetcher.fetch_videoinfo(url))
         pprint.pprint(video_list)
 
     pass

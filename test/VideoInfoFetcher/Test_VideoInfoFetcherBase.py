@@ -16,9 +16,10 @@ from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
 
 from requests_html import AsyncHTMLSession, HTML
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
 
-from NNMM.VideoInfoFetcher.FetchURL import FetchURL
 from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
 
 RSS_PATH = "./test/rss/"
@@ -188,8 +189,12 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         for url in urls:
             cvif = ConcreteVideoInfoFetcher(url)
 
-            self.assertEqual(URL(url), cvif.url)
-            self.assertEqual(FetchURL(url), cvif.request_url)
+            if UploadedURL.is_valid(url):
+                expect_url = UploadedURL.factory(url)
+            elif MylistURL.is_valid(url):
+                expect_url = MylistURL.factory(url)
+
+            self.assertEqual(expect_url, cvif.url)
             self.assertEqual(source_type, cvif.source_type)
 
             API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
@@ -200,7 +205,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
         # 異常系
         # urlが不正
-        url = "https://不正なURL/user/11111111/video"
+        url = "不正なURL"
         with self.assertRaises(ValueError):
             cvif = ConcreteVideoInfoFetcher(url)
 
@@ -243,7 +248,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             url = self._get_url_set()[0]
             cvif = ConcreteVideoInfoFetcher(url)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
 
@@ -277,25 +282,25 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
                 self.assertIsNotNone(response.html.lxml)
                 response.reset_mock()
 
-            assertMockCall(cvif.request_url.request_url, True, None)
+            assertMockCall(cvif.url.non_query_url, True, None)
 
             # do_renderingがFalse, sessionがNone
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, False, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, False, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, False, None)
 
             # do_renderingがTrue, sessionがNoneでない
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", session))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", session))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, True, session)
 
             # do_renderingがFalse, sessionがNoneでない
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, False, "html.parser", session))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, False, "html.parser", session))
             expect = (session, response)
             self.assertEqual(expect, actual)
             assertMockCall(url, False, session)
@@ -303,7 +308,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # リトライして成功するパターン
             session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM - 1, False)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
 
@@ -313,14 +318,14 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # MAX_RETRY_NUM回リトライしたが失敗したパターン
             session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM, False)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
             expect = (session, None)
             self.assertEqual(expect, actual)
 
             # responseの取得に成功したがresponse.html.lxmlが存在しないパターン
             session.get.side_effect = MakeReturnGet(0, True)
             loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.request_url.request_url, True, "html.parser", None))
+            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
             expect = (session, None)
             self.assertEqual(expect, actual)
 
