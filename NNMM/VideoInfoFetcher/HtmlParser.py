@@ -4,18 +4,18 @@ from dataclasses import dataclass
 import pprint
 import re
 from datetime import datetime, timedelta
-from typing import ClassVar
+from numpy import isin
 
 from requests_html import HtmlElement
 
 from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedPageVideoInfo
-from NNMM.VideoInfoFetcher.URL import URL, URLType
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 
 
 @dataclass
 class HtmlParser():
-    mylist_url: str
-    type: ClassVar[URLType]
+    mylist_url: UploadedURL | MylistURL
     lxml: HtmlElement
 
     # 日付フォーマット
@@ -41,8 +41,12 @@ class HtmlParser():
     MSG_USERNAME = f"username parse failed. '{TCT_USERNAME}' is not found."
     MSG_MYSHOWNAME = f"myshowname parse failed. '{TCT_MYSHOWNAME}' is not found."
 
-    def __post_init__(self):
-        self.type = URL(self.mylist_url).type
+    def __init__(self, url: str, lxml: HtmlElement):
+        if UploadedURL.is_valid(url):
+            self.mylist_url = UploadedURL.factory(url)
+        elif MylistURL.is_valid(url):
+            self.mylist_url = MylistURL.factory(url)
+        self.lxml = lxml
 
     def _translate_pagedate(self, dt_str: str) -> str:
         """動画掲載ページにある日時を解釈する関数
@@ -83,23 +87,15 @@ class HtmlParser():
     def _get_mylist_url(self):
         """マイリストURL
         """
-        mylist_url = self.mylist_url
+        mylist_url = self.mylist_url.non_query_url
         return mylist_url
 
     def _get_userid_mylistid(self):
         """ユーザーID, マイリストID設定
         """
-        mylist_url = self._get_mylist_url()
-
-        if self.type == URLType.UPLOADED:
-            pattern = URL.UPLOADED_URL_PATTERN
-            userid = re.findall(pattern, mylist_url)[0]
-            return (userid, "")  # 投稿動画の場合、マイリストIDは空文字列
-        if self.type == URLType.MYLIST:
-            pattern = URL.MYLIST_URL_PATTERN
-            userid, mylistid = re.findall(pattern, mylist_url)[0]
-            return (userid, mylistid)
-        raise AttributeError("(userid, mylistid) parse failed.")
+        userid = self.mylist_url.userid
+        mylistid = self.mylist_url.mylistid
+        return (userid, mylistid)
 
     def _get_video_url_list(self):
         """すべての動画リンクを抽出
@@ -185,11 +181,11 @@ class HtmlParser():
         """
         HP = HtmlParser
         username = self._get_username()
-        if self.type == URLType.UPLOADED:
+        if isinstance(self.mylist_url, UploadedURL):
             showname = f"{username}さんの投稿動画"
             myshowname = "投稿動画"
             return (showname, myshowname)
-        if self.type == URLType.MYLIST:
+        elif isinstance(self.mylist_url, MylistURL):
             myshowname_lx = self.lxml.find_class(HP.TCT_MYSHOWNAME)
             if myshowname_lx == []:
                 raise AttributeError(HP.MSG_MYSHOWNAME)
@@ -232,12 +228,12 @@ class HtmlParser():
 
         # 登録日時収集
         registered_at_list = []
-        if self.type == URLType.UPLOADED:
+        if isinstance(self.mylist_url, UploadedURL):
             # 投稿動画ページは登録日時の情報がないため
             # 投稿日時を登録日時として使用する
             uploaded_at_list = self._get_uploaded_at_list()
             registered_at_list = uploaded_at_list
-        if self.type == URLType.MYLIST:
+        elif isinstance(self.mylist_url, MylistURL):
             registered_at_list = self._get_registered_at_list()
 
         # 投稿者収集
@@ -275,7 +271,7 @@ if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     for url in urls:
         vihf = VideoInfoHtmlFetcher(url)
-        session, response = loop.run_until_complete(vihf._get_session_response(vihf.request_url.request_url, True, "html.parser", None))
+        session, response = loop.run_until_complete(vihf._get_session_response(vihf.mylist_url.non_query_url, True, "html.parser", None))
         loop.run_until_complete(session.close())
 
         hp = HtmlParser(url, response.html.lxml)

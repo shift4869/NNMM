@@ -15,8 +15,10 @@ import freezegun
 from requests_html import HTML
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 
-from NNMM.VideoInfoFetcher.URL import URL, URLType
 from NNMM.VideoInfoFetcher.HtmlParser import HtmlParser
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.URL import URL
 
 
 class TestHtmlParser(unittest.TestCase):
@@ -105,8 +107,12 @@ class TestHtmlParser(unittest.TestCase):
             lxml = HTML(html=html)
             hp = HtmlParser(url, lxml.lxml)
 
-            self.assertEqual(url, hp.mylist_url)
-            self.assertEqual(URL(url).type, hp.type)
+            if UploadedURL.is_valid(url):
+                mylist_url = UploadedURL.factory(url)
+            elif MylistURL.is_valid(url):
+                mylist_url = MylistURL.factory(url)
+
+            self.assertEqual(mylist_url, hp.mylist_url)
             self.assertEqual(lxml.lxml, hp.lxml)
 
             # TODO::入力値チェックを入れる
@@ -171,18 +177,13 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
         for url in urls:
-            mylist_url = URL(url).url
+            if UploadedURL.is_valid(url):
+                mylist_url = UploadedURL.factory(url)
+            elif MylistURL.is_valid(url):
+                mylist_url = MylistURL.factory(url)
             expect = None
-            hp = HtmlParser(mylist_url, lxml.lxml)
-
-            if URL(url).type == URLType.UPLOADED:
-                pattern = URL.UPLOADED_URL_PATTERN
-                userid = re.findall(pattern, mylist_url)[0]
-                expect = (userid, "")  # 投稿動画の場合、マイリストIDは空文字列
-            if URL(url).type == URLType.MYLIST:
-                pattern = URL.MYLIST_URL_PATTERN
-                userid, mylistid = re.findall(pattern, mylist_url)[0]
-                expect = (userid, mylistid)
+            hp = HtmlParser(mylist_url.non_query_url, lxml.lxml)
+            expect = (mylist_url.userid, mylist_url.mylistid)
 
             actual = hp._get_userid_mylistid()
             self.assertEqual(expect, actual)
@@ -194,7 +195,7 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         video_url_list = []
@@ -216,7 +217,7 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         video_url_list = []
@@ -238,7 +239,7 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         title_lx = lxml.lxml.find_class(HtmlParser.TCT_TITLE)
@@ -255,7 +256,7 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         uploaded_at_list = []
@@ -276,7 +277,7 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         registered_at_list = []
@@ -297,7 +298,7 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         username_lx = hp.lxml.find_class(HtmlParser.TCT_USERNAME)
@@ -314,20 +315,19 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
         for url in urls:
-            mylist_url = URL(url).url
             expect = None
-            hp = HtmlParser(mylist_url, lxml.lxml)
-
+            hp = HtmlParser(URL(url).non_query_url, lxml.lxml)
             username = hp._get_username()
-            if URL(url).type == URLType.UPLOADED:
+
+            if UploadedURL.is_valid(url):
                 showname = f"{username}さんの投稿動画"
                 myshowname = "投稿動画"
-                expect = (showname, myshowname)
-            if URL(url).type == URLType.MYLIST:
+            elif MylistURL.is_valid(url):
                 myshowname_lx = lxml.lxml.find_class(HtmlParser.TCT_MYSHOWNAME)
                 myshowname = myshowname_lx[0].text
                 showname = f"「{myshowname}」-{username}さんのマイリスト"
-                expect = (showname, myshowname)
+
+            expect = (showname, myshowname)
 
             actual = hp._get_showname_myshowname()
             self.assertEqual(expect, actual)
@@ -358,20 +358,20 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
         for url in urls:
-            mylist_url = URL(url).url
-            hp = HtmlParser(mylist_url, lxml.lxml)
+            hp = HtmlParser(URL(url).non_query_url, lxml.lxml)
 
             username = username_list[0]
-            if URL(url).type == URLType.UPLOADED:
-                pattern = URL.UPLOADED_URL_PATTERN
-                userid = re.findall(pattern, mylist_url)[0]
-                mylistid = ""  # 投稿動画の場合、マイリストIDは空文字列
+            if UploadedURL.is_valid(url):
+                mylist_url = UploadedURL.factory(url)
+                userid = mylist_url.userid
+                mylistid = mylist_url.mylistid  # 投稿動画の場合、マイリストIDは空文字列
                 showname = f"{username}さんの投稿動画"
                 myshowname = "投稿動画"
                 e_registered_at_list = list(uploaded_at_list)
-            if URL(url).type == URLType.MYLIST:
-                pattern = URL.MYLIST_URL_PATTERN
-                userid, mylistid = re.findall(pattern, mylist_url)[0]
+            elif MylistURL.is_valid(url):
+                mylist_url = MylistURL.factory(url)
+                userid = mylist_url.userid
+                mylistid = mylist_url.mylistid
                 myshowname_lx = lxml.lxml.find_class(HtmlParser.TCT_MYSHOWNAME)
                 myshowname = myshowname_lx[0].text
                 showname = f"「{myshowname}」-{username}さんのマイリスト"
@@ -383,7 +383,7 @@ class TestHtmlParser(unittest.TestCase):
                 "mylistid": mylistid,                        # マイリストID 12345678
                 "showname": showname,                        # マイリスト表示名 「投稿者1さんの投稿動画」
                 "myshowname": myshowname,                    # マイリスト名 「投稿動画」
-                "mylist_url": mylist_url,                    # マイリストURL https://www.nicovideo.jp/user/11111111/video
+                "mylist_url": mylist_url.mylist_url,         # マイリストURL https://www.nicovideo.jp/user/11111111/video
                 "video_id_list": video_id_list,              # 動画IDリスト [sm12345678]
                 "title_list": title_list,                    # 動画タイトルリスト [テスト動画]
                 "registered_at_list": e_registered_at_list,  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
