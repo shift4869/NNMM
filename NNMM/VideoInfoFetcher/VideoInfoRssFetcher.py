@@ -1,38 +1,40 @@
 # coding: utf-8
 import asyncio
+from dataclasses import dataclass
 import logging.config
 import pprint
-import re
 import traceback
-import urllib.parse
-from datetime import datetime
 from logging import INFO, getLogger
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 
 from NNMM import ConfigMain
-from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedVideoInfo
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
+from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedVideoInfo
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.RSSParser import RSSParser
-from NNMM.VideoInfoFetcher.URL import URLType
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
 
 logger = getLogger("root")
 logger.setLevel(INFO)
 
 
+@dataclass
 class VideoInfoRssFetcher(VideoInfoFetcherBase):
+    mylist_url: UploadedURL | MylistURL
+
     # 日付フォーマット
     SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-    # RSSリクエストURLサフィックス
-    RSS_URL_SUFFIX = "?rss=2.0"
-
     def __init__(self, url: str):
         super().__init__(url, SourceType.RSS)
-        self._rss_parser: RSSParser = None
+        if UploadedURL.is_valid(url):
+            self.mylist_url = UploadedURL.factory(url)
+        elif MylistURL.is_valid(url):
+            self.mylist_url = MylistURL.factory(url)
 
     async def _analysis_rss(self, soup: BeautifulSoup) -> FetchedPageVideoInfo:
         """RSSを解析する
@@ -51,9 +53,9 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             IndexError, TypeError: html解析失敗時
             ValueError: url_typeが不正 または html解析失敗時
         """
-        mylist_url = self.url.url
-        self._rss_parser: RSSParser = RSSParser(mylist_url, soup)
-        res = await self._rss_parser.parse()
+        mylist_url = self.mylist_url.non_query_url
+        parser: RSSParser = RSSParser(mylist_url, soup)
+        res = await parser.parse()
 
         if not res:
             raise ValueError("rss analysis failed.")
@@ -75,7 +77,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
         VF = VideoInfoRssFetcher
 
         # RSS取得
-        session, response = await self._get_session_response(self.request_url.request_url + self.RSS_URL_SUFFIX, False, "lxml-xml", None)
+        session, response = await self._get_session_response(self.mylist_url.fetch_url, False, "lxml-xml", None)
         await session.close()
         if not response:
             raise ValueError("rss request failed.")

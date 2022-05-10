@@ -21,6 +21,11 @@ from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
 from NNMM.VideoInfoFetcher import VideoInfoRssFetcher
+from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
+from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType
 
 RSS_PATH = "./test/rss/"
 
@@ -318,40 +323,36 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         return mock
 
     def _make_analysis_rss_mock(self, mock, url: str = "", kind: str = ""):
-        url_type = GuiFunction.GetURLType(url)
-        mylist_url = url
-
-        # マイリストのURLならRSSが取得できるURLに加工
-        pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-        if re.search(pattern, mylist_url):
-            mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
-
-        mylist_info = self._get_mylist_info_set(mylist_url)
-        video_info_list = self._get_video_info_set(mylist_url)
+        mylist_info = self._get_mylist_info_set(url)
+        video_info_list = self._get_video_info_set(url)
         video_id_list = [video_info["video_id"] for video_info in video_info_list]
         title_list = [video_info["title"] for video_info in video_info_list]
         registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
-        if url_type == "uploaded":
-            pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
-            userid = re.findall(pattern, url)[0]
-            mylistid = ""
+        if UploadedURL.is_valid(url):
+            mylist_url = UploadedURL.factory(url)
+            userid = mylist_url.userid
+            mylistid = mylist_url.mylistid
             username = mylist_info[2]
             showname = f"{username}さんの投稿動画"
             myshowname = "投稿動画"
-        elif url_type == "mylist":
-            pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
-            userid, mylistid = re.findall(pattern, url)[0]
+        elif MylistURL.is_valid(url):
+            mylist_url = MylistURL.factory(url)
+            userid = mylist_url.userid
+            mylistid = mylist_url.mylistid
             username = mylist_info[2]
             myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
             showname = f"「{myshowname}」-{username}さんのマイリスト"
 
+        num = len(title_list)
         rss_result = {
+            "no": range(1, num + 1),                    # No. [1, ..., len()-1]
             "userid": userid,                           # ユーザーID 1234567
             "mylistid": mylistid,                       # マイリストID 12345678
             "showname": showname,                       # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
             "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
+            "mylist_url": mylist_url.non_query_url,     # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
             "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
             "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
             "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
@@ -361,7 +362,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         def return_rss(soup: BeautifulSoup):
             if kind == "ValueError":
                 raise ValueError
-            return rss_result
+            return FetchedPageVideoInfo(**rss_result)
 
         mock.side_effect = return_rss
         return mock
@@ -376,7 +377,9 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
         username_list = [video_info["username"] for video_info in video_info_list]
 
+        num = len(video_id_list)
         api_result = {
+            "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
             "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
             "title_list": title_list,               # 動画タイトルリスト [テスト動画]
             "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
@@ -394,7 +397,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         def return_api(v):
             if kind == "ValueError":
                 raise ValueError
-            return api_result
+            return FetchedAPIVideoInfo(**api_result)
 
         mock.side_effect = return_api
         return mock
@@ -441,215 +444,29 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
     def test_init(self):
         """VideoInfoRssFetcher の初期化後の状態をテストする
         """
-        RSS_URL_SUFFIX = "?rss=2.0"
-        source_type = "rss"
+        source_type = SourceType.RSS
         urls = self._get_url_set()
         for url in urls:
             virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
 
+            if UploadedURL.is_valid(url):
+                expect_mylist_url = UploadedURL.factory(url)
+            elif MylistURL.is_valid(url):
+                expect_mylist_url = MylistURL.factory(url)
+
+            self.assertEqual(expect_mylist_url, virf.mylist_url)
             self.assertEqual(source_type, virf.source_type)
-            self.assertEqual(RSS_URL_SUFFIX, virf.RSS_URL_SUFFIX)
-
-    def test_get_iteminfo(self):
-        """_get_iteminfo のテスト
-        """
-        # 正常系
-        url = self._get_url_set()[0]
-
-        def make_item_lx(url, error_target=""):
-            xml = self._get_xml_from_rss(url)
-            if error_target != "":
-                xml = xml.replace(error_target, "invalid")
-            soup = BeautifulSoup(xml, "lxml-xml")
-            items_lx = soup.find_all("item")
-            return items_lx[0]
-
-        item_lx = make_item_lx(url)
-
-        def make_iteminfo(item):
-            src_df = "%a, %d %b %Y %H:%M:%S %z"
-            dst_df = "%Y-%m-%d %H:%M:%S"
-
-            title = item.find("title").text
-
-            link_lx = item.find("link")
-            pattern = "^https://www.nicovideo.jp/watch/sm[0-9]+"
-            if re.findall(pattern, link_lx.text):
-                # クエリ除去してURL部分のみ保持
-                video_url = urllib.parse.urlunparse(
-                    urllib.parse.urlparse(link_lx.text)._replace(query=None)
-                )
-
-            pattern = "^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-            video_id = re.findall(pattern, video_url)[0]
-
-            pubDate_lx = item.find("pubDate")
-            uploaded = datetime.strptime(pubDate_lx.text, src_df).strftime(dst_df)
-
-            return (video_id, title, uploaded, video_url)
-
-        expect = make_iteminfo(item_lx)
-        virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
-        actual = virf._get_iteminfo(item_lx)
-        self.assertEqual(expect, actual)
-
-        # 異常系
-        # title取得失敗
-        virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
-        item_lx = make_item_lx(url, "title")
-        with self.assertRaises(AttributeError):
-            actual = virf._get_iteminfo(item_lx)
-
-        # link取得失敗
-        item_lx = make_item_lx(url, "link")
-        with self.assertRaises(AttributeError):
-            actual = virf._get_iteminfo(item_lx)
-
-        # pubDate取得失敗
-        item_lx = make_item_lx(url, "pubDate")
-        with self.assertRaises(AttributeError):
-            actual = virf._get_iteminfo(item_lx)
-
-    def test_analysis_uploaded_page(self):
-        """_analysis_uploaded_page のテスト
-        """
-        # 正常系
-        mylist_url = self._get_mylist_url_set()[0]
-        mylist_title, _, mylist_username = self._get_mylist_info_set(mylist_url)
-        video_info = self._get_video_info_set(mylist_url)
-        video_info.reverse()
-        pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/video"
-        userid = re.findall(pattern, mylist_url)[0]
-        myshowname = "投稿動画"
-        showname = f"{mylist_username}さんの投稿動画"
-
-        video_id_list = [v["video_id"] for v in video_info]
-        title_list = [v["title"] for v in video_info]
-        registered_at_list = [v["registered_at"] for v in video_info]
-        video_url_list = [v["video_url"] for v in video_info]
-
-        expect = {
-            "userid": userid,
-            "mylistid": "",
-            "showname": showname,
-            "myshowname": myshowname,
-            "video_id_list": video_id_list,
-            "title_list": title_list,
-            "registered_at_list": registered_at_list,
-            "video_url_list": video_url_list,
-        }
-
-        def make_soup(url, error_target=""):
-            xml = self._get_xml_from_rss(url)
-            if error_target != "":
-                xml = xml.replace(error_target, "invalid")
-            return BeautifulSoup(xml, "lxml-xml")
-
-        soup = make_soup(mylist_url)
-        virf = VideoInfoRssFetcher.VideoInfoRssFetcher(mylist_url)
-        loop = asyncio.new_event_loop()
-        actual = loop.run_until_complete(virf._analysis_uploaded_page(soup))
-        self.assertEqual(expect, actual)
-
-        # 異常系
-        # 動画名収集失敗
-        with self.assertRaises(IndexError):
-            soup = make_soup(mylist_url, "title")
-            loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(virf._analysis_uploaded_page(soup))
-
-        # 登録日時収集失敗
-        with self.assertRaises(AttributeError):
-            soup = make_soup(mylist_url, "pubDate")
-            loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(virf._analysis_uploaded_page(soup))
-
-        # TODO::登録日時収集は成功するが解釈に失敗
-
-        # 動画URL収集失敗
-        with self.assertRaises(AttributeError):
-            soup = make_soup(mylist_url, "link")
-            loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(virf._analysis_uploaded_page(soup))
-
-    def test_analysis_mylist_page(self):
-        """_analysis_mylist_page のテスト
-        """
-        # 正常系
-        url = self._get_url_set()[2]
-        mylist_url = url
-
-        # マイリストのURLならRSSが取得できるURLに加工
-        pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-        if re.search(pattern, mylist_url):
-            mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
-        mylist_title, _, mylist_username = self._get_mylist_info_set(mylist_url)
-        video_info = self._get_video_info_set(mylist_url)
-        video_info.reverse()
-        pattern = "^http[s]*://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)"
-        userid, mylistid = re.findall(pattern, url)[0]
-        pattern = "^マイリスト (.*)‐ニコニコ動画$"
-        myshowname = re.findall(pattern, mylist_title)[0]
-        showname = f"「{myshowname}」-{mylist_username}さんのマイリスト"
-
-        video_id_list = [v["video_id"] for v in video_info]
-        title_list = [v["title"] for v in video_info]
-        registered_at_list = [v["registered_at"] for v in video_info]
-        video_url_list = [v["video_url"] for v in video_info]
-
-        expect = {
-            "userid": userid,
-            "mylistid": mylistid,
-            "showname": showname,
-            "myshowname": myshowname,
-            "video_id_list": video_id_list,
-            "title_list": title_list,
-            "registered_at_list": registered_at_list,
-            "video_url_list": video_url_list,
-        }
-
-        def make_soup(url, error_target=""):
-            xml = self._get_xml_from_rss(url)
-            if error_target != "":
-                xml = xml.replace(error_target, "invalid")
-            return BeautifulSoup(xml, "lxml-xml")
-
-        soup = make_soup(mylist_url)
-        virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
-        loop = asyncio.new_event_loop()
-        actual = loop.run_until_complete(virf._analysis_mylist_page(soup))
-        self.assertEqual(expect, actual)
-
-        # 異常系
-        # 動画名収集失敗
-        with self.assertRaises(IndexError):
-            soup = make_soup(mylist_url, "title")
-            loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(virf._analysis_mylist_page(soup))
-
-        # 登録日時収集失敗
-        with self.assertRaises(AttributeError):
-            soup = make_soup(mylist_url, "pubDate")
-            loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(virf._analysis_mylist_page(soup))
-
-        # TODO::登録日時収集は成功するが解釈に失敗
-
-        # 動画URL収集失敗
-        with self.assertRaises(AttributeError):
-            soup = make_soup(mylist_url, "link")
-            loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(virf._analysis_mylist_page(soup))
 
     def test_analysis_rss(self):
         """_analysis_rss のテスト
         """
         with ExitStack() as stack:
-            mockaup = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_uploaded_page"))
-            mockamp = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_mylist_page"))
+            mockps = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.RSSParser"))
 
-            mockaup.return_value = "_analysis_uploaded_page result"
-            mockamp.return_value = "_analysis_mylist_page result"
+            expect = "rss parse success."
+            r = AsyncMock()
+            r.parse.side_effect = lambda: expect
+            mockps.return_value = r
 
             # 正常系
             # 投稿動画ページ
@@ -660,33 +477,15 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(virf._analysis_rss(soup))
-            expect = "_analysis_uploaded_page result"
             self.assertEqual(expect, actual)
-            mockaup.assert_called_once_with(soup)
-            mockaup.reset_mock()
-            mockamp.assert_not_called()
-            mockamp.reset_mock()
-
-            # マイリストページ
-            url = self._get_url_set()[2]
-            xml = self._get_xml_from_rss(url)
-            soup = BeautifulSoup(xml, "lxml-xml")
-
-            virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
-            loop = asyncio.new_event_loop()
-            actual = loop.run_until_complete(virf._analysis_rss(soup))
-            expect = "_analysis_mylist_page result"
-            self.assertEqual(expect, actual)
-            mockaup.assert_not_called()
-            mockaup.reset_mock()
-            mockamp.assert_called_once_with(soup)
-            mockamp.reset_mock()
 
             # 異常系
-            # 不正なurlタイプ
+            expect = None
+            r = AsyncMock()
+            r.parse.side_effect = lambda: expect
+            mockps.return_value = r
             with self.assertRaises(ValueError):
                 virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
-                virf.url_type = "invalid url type"
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(virf._analysis_rss(soup))
 
