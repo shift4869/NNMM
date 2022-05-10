@@ -10,18 +10,6 @@ from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
 
 
 class TestItemInfo(unittest.TestCase):
-    def _get_url_set(self) -> list[str]:
-        """urlセットを返す
-        """
-        url_info = [
-            "https://www.nicovideo.jp/user/11111111/video",
-            "https://www.nicovideo.jp/user/22222222/video?ref=pc_mypage_nicorepo",
-            "https://www.nicovideo.jp/user/11111111/mylist/00000011",
-            "https://www.nicovideo.jp/user/11111111/mylist/00000012?ref=pc_mypage_nicorepo",
-            "https://www.nicovideo.jp/user/33333333/mylist/00000031",
-        ]
-        return url_info
-
     def _make_iteminfo(self, error_target="", error_value="") -> list[dict]:
         """iteminfo を表す辞書のセットを返す
         """

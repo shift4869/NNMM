@@ -4,11 +4,10 @@ import pprint
 import re
 import urllib.parse
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import ClassVar
-from bs4 import BeautifulSoup
 
-from requests_html import HtmlElement
+from bs4 import BeautifulSoup
 
 from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
