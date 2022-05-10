@@ -2,30 +2,33 @@
 import asyncio
 import pprint
 import re
-import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime
-from typing import ClassVar
 
 from bs4 import BeautifulSoup
 
 from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
-from NNMM.VideoInfoFetcher.URL import URL, URLType
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.VideoURL import VideoURL
 
 
 @dataclass
 class RSSParser():
-    mylist_url: str
-    type: ClassVar[URLType]
+    mylist_url: UploadedURL | MylistURL
     soup: BeautifulSoup
 
     # 日付フォーマット
     SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-    def __post_init__(self):
-        self.type = URL(self.mylist_url).type
+    def __init__(self, url: str, soup: BeautifulSoup):
+        if UploadedURL.is_valid(url):
+            self.mylist_url = UploadedURL.factory(url)
+        elif MylistURL.is_valid(url):
+            self.mylist_url = MylistURL.factory(url)
+        self.soup = soup
 
     def _get_iteminfo(self, item_lx) -> ItemInfo:
         """一つのentryから動画ID, 動画タイトル, 投稿日時, 動画URLを抽出する
@@ -49,53 +52,36 @@ class RSSParser():
         title = item_lx.find("title").text
 
         link_lx = item_lx.find("link")
-        video_url = link_lx.text
-        pattern = ItemInfo.VIDEO_URL_PATTERN
-        if re.findall(pattern, video_url):
-            # クエリ除去してURL部分のみ保持
-            video_url = urllib.parse.urlunparse(
-                urllib.parse.urlparse(video_url)._replace(query=None)
-            )
-
-        pattern = ItemInfo.VIDEO_URL_PATTERN
-        video_id = re.findall(pattern, video_url)[0]
+        video_url = VideoURL.factory(link_lx.text)
 
         pubDate_lx = item_lx.find("pubDate")
         dst = datetime.strptime(pubDate_lx.text, RP.SOURCE_DATETIME_FORMAT)
         registered_at = dst.strftime(RP.DESTINATION_DATETIME_FORMAT)
 
-        return ItemInfo(video_id, title, registered_at, video_url)
+        return ItemInfo(title, registered_at, video_url)
 
     def _get_mylist_url(self):
         """マイリストURL
         """
-        mylist_url = self.mylist_url
+        mylist_url = self.mylist_url.non_query_url
         return mylist_url
 
     def _get_userid_mylistid(self):
         """ユーザーID, マイリストID設定
         """
-        mylist_url = self._get_mylist_url()
-
-        if self.type == URLType.UPLOADED:
-            pattern = URL.UPLOADED_URL_PATTERN
-            userid = re.findall(pattern, mylist_url)[0]
-            return (userid, "")  # 投稿動画の場合、マイリストIDは空文字列
-        if self.type == URLType.MYLIST:
-            pattern = URL.MYLIST_URL_PATTERN
-            userid, mylistid = re.findall(pattern, mylist_url)[0]
-            return (userid, mylistid)
-        raise AttributeError("(userid, mylistid) parse failed.")
+        userid = self.mylist_url.userid
+        mylistid = self.mylist_url.mylistid
+        return (userid, mylistid)
 
     def _get_username(self):
         """投稿者収集
         """
-        if self.type == URLType.UPLOADED:
+        if isinstance(self.mylist_url, UploadedURL):
             # タイトルからユーザー名を取得
             title_lx = self.soup.find_all("title")
             pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
             username = re.findall(pattern, title_lx[0].text)[0]
-        if self.type == URLType.MYLIST:
+        elif isinstance(self.mylist_url, MylistURL):
             creator_lx = self.soup.find_all("dc:creator")
             username = creator_lx[0].text
         return username
@@ -104,11 +90,11 @@ class RSSParser():
         """マイリスト名収集
         """
         username = self._get_username()
-        if self.type == URLType.UPLOADED:
+        if isinstance(self.mylist_url, UploadedURL):
             showname = f"{username}さんの投稿動画"
             myshowname = "投稿動画"
             return (showname, myshowname)
-        if self.type == URLType.MYLIST:
+        elif isinstance(self.mylist_url, MylistURL):
             # マイリストの場合はタイトルから取得
             title_lx = self.soup.find_all("title")
             pattern = "^マイリスト (.*)‐ニコニコ動画$"

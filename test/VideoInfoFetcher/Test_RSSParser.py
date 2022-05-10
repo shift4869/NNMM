@@ -16,9 +16,12 @@ import freezegun
 from bs4 import BeautifulSoup
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
 
 from NNMM.VideoInfoFetcher.RSSParser import RSSParser
-from NNMM.VideoInfoFetcher.URL import URL, URLType
+from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.VideoURL import VideoURL
 
 
 class TestRSSParser(unittest.TestCase):
@@ -36,7 +39,7 @@ class TestRSSParser(unittest.TestCase):
 
     def _get_mylist_info(self, mylist_url: str) -> dict:
         urls = self._get_url_set()
-        urls = [URL(url).url for url in urls]
+        urls = [URL(url).non_query_url for url in urls]
         cols = ["mylist_url", "mylist_name", "username"]
         d = {
             urls[0]: [urls[0], "投稿者1さんの投稿動画‐ニコニコ動画", "投稿者1"],
@@ -66,7 +69,7 @@ class TestRSSParser(unittest.TestCase):
         SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
         DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-        mylist_url = URL(mylist_url).url
+        mylist_url = URL(mylist_url).non_query_url
         mylist_info = self._get_mylist_info(mylist_url)
         mylist_name = mylist_info["mylist_name"]
         username = mylist_info["username"]
@@ -109,20 +112,12 @@ class TestRSSParser(unittest.TestCase):
         title = item_lx.find("title").text
 
         link_lx = item_lx.find("link")
-        video_url = link_lx.text
-        pattern = ItemInfo.VIDEO_URL_PATTERN
-        if re.findall(pattern, video_url):
-            video_url = urllib.parse.urlunparse(
-                urllib.parse.urlparse(video_url)._replace(query=None)
-            )
-
-        pattern = ItemInfo.VIDEO_URL_PATTERN
-        video_id = re.findall(pattern, video_url)[0]
+        video_url = VideoURL.factory(link_lx.text)
 
         pubDate_lx = item_lx.find("pubDate")
         dst = datetime.strptime(pubDate_lx.text, RP.SOURCE_DATETIME_FORMAT)
         registered_at = dst.strftime(RP.DESTINATION_DATETIME_FORMAT)
-        return ItemInfo(video_id, title, registered_at, video_url)
+        return ItemInfo(title, registered_at, video_url)
 
     def test_RSSParserInit(self):
         """RSSParser の初期化後の状態をテストする
@@ -133,8 +128,12 @@ class TestRSSParser(unittest.TestCase):
             soup = BeautifulSoup(xml, "lxml-xml")
             rp = RSSParser(url, soup)
 
-            self.assertEqual(url, rp.mylist_url)
-            self.assertEqual(URL(url).type, rp.type)
+            if UploadedURL.is_valid(url):
+                mylist_url = UploadedURL.factory(url)
+            elif MylistURL.is_valid(url):
+                mylist_url = MylistURL.factory(url)
+
+            self.assertEqual(mylist_url, rp.mylist_url)
             self.assertEqual(soup, rp.soup)
 
             # TODO::入力値チェックを入れる
@@ -173,22 +172,16 @@ class TestRSSParser(unittest.TestCase):
         """
         urls = self._get_url_set()
         for url in urls:
+            if UploadedURL.is_valid(url):
+                mylist_url = UploadedURL.factory(url)
+            elif MylistURL.is_valid(url):
+                mylist_url = MylistURL.factory(url)
             xml = self._make_xml(url)
             soup = BeautifulSoup(xml, "lxml-xml")
 
-            mylist_url = URL(url).url
-            expect = None
-            rp = RSSParser(mylist_url, soup)
+            rp = RSSParser(URL(url).non_query_url, soup)
 
-            if URL(url).type == URLType.UPLOADED:
-                pattern = URL.UPLOADED_URL_PATTERN
-                userid = re.findall(pattern, mylist_url)[0]
-                expect = (userid, "")  # 投稿動画の場合、マイリストIDは空文字列
-            if URL(url).type == URLType.MYLIST:
-                pattern = URL.MYLIST_URL_PATTERN
-                userid, mylistid = re.findall(pattern, mylist_url)[0]
-                expect = (userid, mylistid)
-
+            expect = (mylist_url.userid, mylist_url.mylistid)
             actual = rp._get_userid_mylistid()
             self.assertEqual(expect, actual)
 
@@ -200,7 +193,7 @@ class TestRSSParser(unittest.TestCase):
         xml = self._make_xml(url)
         soup = BeautifulSoup(xml, "lxml-xml")
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         rp = RSSParser(mylist_url, soup)
 
         title_lx = soup.find_all("title")
@@ -214,7 +207,7 @@ class TestRSSParser(unittest.TestCase):
         xml = self._make_xml(url)
         soup = BeautifulSoup(xml, "lxml-xml")
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         rp = RSSParser(mylist_url, soup)
 
         creator_lx = soup.find_all("dc:creator")
@@ -230,7 +223,7 @@ class TestRSSParser(unittest.TestCase):
         xml = self._make_xml(url)
         soup = BeautifulSoup(xml, "lxml-xml")
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         rp = RSSParser(mylist_url, soup)
 
         username = rp._get_username()
@@ -245,7 +238,7 @@ class TestRSSParser(unittest.TestCase):
         xml = self._make_xml(url)
         soup = BeautifulSoup(xml, "lxml-xml")
 
-        mylist_url = URL(url).url
+        mylist_url = URL(url).non_query_url
         rp = RSSParser(mylist_url, soup)
 
         username = rp._get_username()
@@ -266,26 +259,26 @@ class TestRSSParser(unittest.TestCase):
             xml = self._make_xml(url)
             soup = BeautifulSoup(xml, "lxml-xml")
 
-            mylist_url = URL(url).url
-            rp = RSSParser(mylist_url, soup)
+            rp = RSSParser(URL(url).non_query_url, soup)
 
-            if URL(url).type == URLType.UPLOADED:
+            if UploadedURL.is_valid(url):
+                mylist_url = UploadedURL.factory(url)
+                userid = mylist_url.userid
+                mylistid = mylist_url.mylistid  # 投稿動画の場合、マイリストIDは空文字列
+
                 title_lx = soup.find_all("title")
                 pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
                 username = re.findall(pattern, title_lx[0].text)[0]
 
-                pattern = URL.UPLOADED_URL_PATTERN
-                userid = re.findall(pattern, mylist_url)[0]
-                mylistid = ""  # 投稿動画の場合、マイリストIDは空文字列
-
                 showname = f"{username}さんの投稿動画"
                 myshowname = "投稿動画"
-            if URL(url).type == URLType.MYLIST:
+            elif MylistURL.is_valid(url):
+                mylist_url = MylistURL.factory(url)
+                userid = mylist_url.userid
+                mylistid = mylist_url.mylistid
+
                 creator_lx = soup.find_all("dc:creator")
                 username = creator_lx[0].text
-
-                pattern = URL.MYLIST_URL_PATTERN
-                userid, mylistid = re.findall(pattern, mylist_url)[0]
 
                 title_lx = soup.find_all("title")
                 pattern = "^マイリスト (.*)‐ニコニコ動画$"
@@ -311,7 +304,7 @@ class TestRSSParser(unittest.TestCase):
                 "mylistid": mylistid,                        # マイリストID 12345678
                 "showname": showname,                        # マイリスト表示名 「投稿者1さんの投稿動画」
                 "myshowname": myshowname,                    # マイリスト名 「投稿動画」
-                "mylist_url": mylist_url,                    # マイリストURL https://www.nicovideo.jp/user/11111111/video
+                "mylist_url": mylist_url.non_query_url,      # マイリストURL https://www.nicovideo.jp/user/11111111/video
                 "video_id_list": video_id_list,              # 動画IDリスト [sm12345678]
                 "title_list": title_list,                    # 動画タイトルリスト [テスト動画]
                 "registered_at_list": registered_at_list,    # 登録日時リスト [%Y-%m-%d %H:%M:%S]
