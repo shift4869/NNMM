@@ -1,58 +1,32 @@
 # coding: utf-8
 from dataclasses import dataclass
-import re
+from typing import ClassVar
 import urllib.parse
-from enum import Enum
-
-
-# URLタイプ
-class URLType(Enum):
-    UPLOADED = "uploaded"
-    MYLIST = "mylist"
 
 
 @dataclass
 class URL():
-    url: str
-    type: URLType
-
-    # 対象URLのパターン
-    UPLOADED_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/video$"
-    MYLIST_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)$"
+    non_query_url: str
+    original_url: ClassVar[str]
 
     def __init__(self, url: "str | URL") -> None:
         if isinstance(url, URL):
             url = url.url
 
+        if not self.is_valid(url):
+            raise ValueError("args is not URL string.")
+
         # クエリ除去
-        exclude_query_url = urllib.parse.urlunparse(
+        non_query_url = urllib.parse.urlunparse(
             urllib.parse.urlparse(str(url))._replace(query=None)
         )
-        self.url = exclude_query_url
+        self.non_query_url = non_query_url
+        self.original_url = url
 
-        # 対象URLか判定
-        if not self._is_valid():
-            # 対象URLでなければエラー
-            raise ValueError("URL is not target.")
-
-        # URLタイプを判別して設定
-        self.type = self._get_type()
-
-    def _is_valid(self) -> bool:
-        VALID_URL_PATTERN = [
-            URL.UPLOADED_URL_PATTERN,
-            URL.MYLIST_URL_PATTERN,
-        ]
-        return any([re.search(p, self.url) is not None for p in VALID_URL_PATTERN])
-
-    def _get_type(self) -> URLType:
-        if re.search(URL.UPLOADED_URL_PATTERN, self.url):
-            return URLType.UPLOADED
-
-        if re.search(URL.MYLIST_URL_PATTERN, self.url):
-            return URLType.MYLIST
-
-        raise ValueError("Getting URL type failed.")
+    @classmethod
+    def is_valid(self, estimated_url: str):
+        p = urllib.parse.urlparse(estimated_url)
+        return len(p.scheme) > 0
 
 
 if __name__ == "__main__":
@@ -63,10 +37,7 @@ if __name__ == "__main__":
         "https://不正なURLアドレス/user/6063658/mylist/72036443",  # 不正なURLアドレス
     ]
 
-    try:
-        for url in urls:
-            u = URL(url)
-            print("Target URL : " + u.url)
-    except ValueError:
-        print("Not Target URL : " + url)
-        pass
+    for url in urls:
+        u = URL(url)
+        print(u)
+        print(u.original_url)
