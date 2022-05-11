@@ -266,9 +266,9 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
         if UploadedURL.is_valid(url):
-            mylist_url = UploadedURL.factory(url)
+            mylist_url = UploadedURL.create(url)
         elif MylistURL.is_valid(url):
-            mylist_url = MylistURL.factory(url)
+            mylist_url = MylistURL.create(url)
 
         if url_type == "uploaded":
             # ユーザーID, マイリストID設定

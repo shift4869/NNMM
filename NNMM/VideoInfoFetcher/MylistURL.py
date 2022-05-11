@@ -52,7 +52,7 @@ class MylistURL():
         return mylistid
 
     @classmethod
-    def factory(cls, url: str) -> "MylistURL":
+    def create(cls, url: str) -> "MylistURL":
         return cls(URL(url))
 
     @classmethod
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     for url in urls:
         if MylistURL.is_valid(url):
-            u = MylistURL.factory(url)
+            u = MylistURL.create(url)
             print(u.non_query_url)
             print(u.fetch_url)
         else:

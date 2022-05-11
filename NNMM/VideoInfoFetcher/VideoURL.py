@@ -45,7 +45,7 @@ class VideoURL():
         return video_id
 
     @classmethod
-    def factory(cls, url: str) -> "VideoURL":
+    def create(cls, url: str) -> "VideoURL":
         return cls(URL(url))
 
     @classmethod
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     for url in urls:
         if VideoURL.is_valid(url):
-            u = VideoURL.factory(url)
+            u = VideoURL.create(url)
             print(u.non_query_url)
             print(u.video_id)
         else:

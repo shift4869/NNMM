@@ -20,7 +20,7 @@ class TestItemInfo(unittest.TestCase):
             video_id = f"sm1000000{i}"
             title = f"動画タイトル_{i}"
             registered_at = f"2022-05-08 00:01:0{i}"
-            video_url = VideoURL.factory("https://www.nicovideo.jp/watch/" + video_id)
+            video_url = VideoURL.create("https://www.nicovideo.jp/watch/" + video_id)
 
             r = {
                 "title": title,

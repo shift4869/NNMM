@@ -43,9 +43,9 @@ class HtmlParser():
 
     def __init__(self, url: str, lxml: HtmlElement):
         if UploadedURL.is_valid(url):
-            self.mylist_url = UploadedURL.factory(url)
+            self.mylist_url = UploadedURL.create(url)
         elif MylistURL.is_valid(url):
-            self.mylist_url = MylistURL.factory(url)
+            self.mylist_url = MylistURL.create(url)
         self.lxml = lxml
 
     def _translate_pagedate(self, dt_str: str) -> str:

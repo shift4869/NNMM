@@ -58,5 +58,5 @@ class ItemInfo():
 
 if __name__ == "__main__":
     fvi = ItemInfo("テスト動画", "2022-05-06 00:01:01",
-                   VideoURL.factory("https://www.nicovideo.jp/watch/sm12345678"))
+                   VideoURL.create("https://www.nicovideo.jp/watch/sm12345678"))
     pprint(fvi.to_dict())

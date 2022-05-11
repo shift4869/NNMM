@@ -112,7 +112,7 @@ class TestRSSParser(unittest.TestCase):
         title = item_lx.find("title").text
 
         link_lx = item_lx.find("link")
-        video_url = VideoURL.factory(link_lx.text)
+        video_url = VideoURL.create(link_lx.text)
 
         pubDate_lx = item_lx.find("pubDate")
         dst = datetime.strptime(pubDate_lx.text, RP.SOURCE_DATETIME_FORMAT)
@@ -129,9 +129,9 @@ class TestRSSParser(unittest.TestCase):
             rp = RSSParser(url, soup)
 
             if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.factory(url)
+                mylist_url = UploadedURL.create(url)
             elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.factory(url)
+                mylist_url = MylistURL.create(url)
 
             self.assertEqual(mylist_url, rp.mylist_url)
             self.assertEqual(soup, rp.soup)
@@ -173,9 +173,9 @@ class TestRSSParser(unittest.TestCase):
         urls = self._get_url_set()
         for url in urls:
             if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.factory(url)
+                mylist_url = UploadedURL.create(url)
             elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.factory(url)
+                mylist_url = MylistURL.create(url)
             xml = self._make_xml(url)
             soup = BeautifulSoup(xml, "lxml-xml")
 
@@ -262,7 +262,7 @@ class TestRSSParser(unittest.TestCase):
             rp = RSSParser(URL(url).non_query_url, soup)
 
             if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.factory(url)
+                mylist_url = UploadedURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid  # 投稿動画の場合、マイリストIDは空文字列
 
@@ -273,7 +273,7 @@ class TestRSSParser(unittest.TestCase):
                 showname = f"{username}さんの投稿動画"
                 myshowname = "投稿動画"
             elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.factory(url)
+                mylist_url = MylistURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid
 

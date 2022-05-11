@@ -108,9 +108,9 @@ class TestHtmlParser(unittest.TestCase):
             hp = HtmlParser(url, lxml.lxml)
 
             if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.factory(url)
+                mylist_url = UploadedURL.create(url)
             elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.factory(url)
+                mylist_url = MylistURL.create(url)
 
             self.assertEqual(mylist_url, hp.mylist_url)
             self.assertEqual(lxml.lxml, hp.lxml)
@@ -178,9 +178,9 @@ class TestHtmlParser(unittest.TestCase):
         lxml = HTML(html=html)
         for url in urls:
             if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.factory(url)
+                mylist_url = UploadedURL.create(url)
             elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.factory(url)
+                mylist_url = MylistURL.create(url)
             expect = None
             hp = HtmlParser(mylist_url.non_query_url, lxml.lxml)
             expect = (mylist_url.userid, mylist_url.mylistid)
@@ -362,14 +362,14 @@ class TestHtmlParser(unittest.TestCase):
 
             username = username_list[0]
             if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.factory(url)
+                mylist_url = UploadedURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid  # 投稿動画の場合、マイリストIDは空文字列
                 showname = f"{username}さんの投稿動画"
                 myshowname = "投稿動画"
                 e_registered_at_list = list(uploaded_at_list)
             elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.factory(url)
+                mylist_url = MylistURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid
                 myshowname_lx = lxml.lxml.find_class(HtmlParser.TCT_MYSHOWNAME)

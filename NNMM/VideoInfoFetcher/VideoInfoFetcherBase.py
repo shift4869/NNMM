@@ -40,9 +40,9 @@ class VideoInfoFetcherBase(ABC):
 
     def __init__(self, url: str, source_type: SourceType):
         if UploadedURL.is_valid(url):
-            self.url = UploadedURL.factory(url)
+            self.url = UploadedURL.create(url)
         elif MylistURL.is_valid(url):
-            self.url = MylistURL.factory(url)
+            self.url = MylistURL.create(url)
         self.source_type = source_type
 
     async def _get_session_response(self,

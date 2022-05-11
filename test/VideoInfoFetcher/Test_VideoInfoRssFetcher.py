@@ -331,14 +331,14 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
         if UploadedURL.is_valid(url):
-            mylist_url = UploadedURL.factory(url)
+            mylist_url = UploadedURL.create(url)
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
             username = mylist_info[2]
             showname = f"{username}さんの投稿動画"
             myshowname = "投稿動画"
         elif MylistURL.is_valid(url):
-            mylist_url = MylistURL.factory(url)
+            mylist_url = MylistURL.create(url)
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
             username = mylist_info[2]
@@ -450,9 +450,9 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
 
             if UploadedURL.is_valid(url):
-                expect_mylist_url = UploadedURL.factory(url)
+                expect_mylist_url = UploadedURL.create(url)
             elif MylistURL.is_valid(url):
-                expect_mylist_url = MylistURL.factory(url)
+                expect_mylist_url = MylistURL.create(url)
 
             self.assertEqual(expect_mylist_url, virf.mylist_url)
             self.assertEqual(source_type, virf.source_type)

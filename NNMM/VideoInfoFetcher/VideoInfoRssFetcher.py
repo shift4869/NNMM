@@ -32,9 +32,9 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
     def __init__(self, url: str):
         super().__init__(url, SourceType.RSS)
         if UploadedURL.is_valid(url):
-            self.mylist_url = UploadedURL.factory(url)
+            self.mylist_url = UploadedURL.create(url)
         elif MylistURL.is_valid(url):
-            self.mylist_url = MylistURL.factory(url)
+            self.mylist_url = MylistURL.create(url)
 
     async def _analysis_rss(self, soup: BeautifulSoup) -> FetchedPageVideoInfo:
         """RSSを解析する

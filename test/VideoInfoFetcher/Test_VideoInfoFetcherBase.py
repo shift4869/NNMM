@@ -190,9 +190,9 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             cvif = ConcreteVideoInfoFetcher(url)
 
             if UploadedURL.is_valid(url):
-                expect_url = UploadedURL.factory(url)
+                expect_url = UploadedURL.create(url)
             elif MylistURL.is_valid(url):
-                expect_url = MylistURL.factory(url)
+                expect_url = MylistURL.create(url)
 
             self.assertEqual(expect_url, cvif.url)
             self.assertEqual(source_type, cvif.source_type)

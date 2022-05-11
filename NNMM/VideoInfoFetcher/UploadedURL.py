@@ -45,7 +45,7 @@ class UploadedURL():
         return ""  # 投稿動画の場合、マイリストIDは空文字列
 
     @classmethod
-    def factory(cls, url: str) -> "UploadedURL":
+    def create(cls, url: str) -> "UploadedURL":
         return cls(URL(url))
 
     @classmethod
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     for url in urls:
         if UploadedURL.is_valid(url):
-            u = UploadedURL.factory(url)
+            u = UploadedURL.create(url)
             print(u.non_query_url)
             print(u.original_url)
         else:

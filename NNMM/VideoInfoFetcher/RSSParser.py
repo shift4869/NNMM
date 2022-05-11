@@ -25,9 +25,9 @@ class RSSParser():
 
     def __init__(self, url: str, soup: BeautifulSoup):
         if UploadedURL.is_valid(url):
-            self.mylist_url = UploadedURL.factory(url)
+            self.mylist_url = UploadedURL.create(url)
         elif MylistURL.is_valid(url):
-            self.mylist_url = MylistURL.factory(url)
+            self.mylist_url = MylistURL.create(url)
         self.soup = soup
 
     def _get_iteminfo(self, item_lx) -> ItemInfo:
@@ -52,7 +52,7 @@ class RSSParser():
         title = item_lx.find("title").text
 
         link_lx = item_lx.find("link")
-        video_url = VideoURL.factory(link_lx.text)
+        video_url = VideoURL.create(link_lx.text)
 
         pubDate_lx = item_lx.find("pubDate")
         dst = datetime.strptime(pubDate_lx.text, RP.SOURCE_DATETIME_FORMAT)
