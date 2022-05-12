@@ -3,14 +3,14 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Username():
-    _name: str  # マイリスト作成者名
+class Title():
+    _name: str  # 動画タイトル
 
     def __post_init__(self) -> None:
         if not isinstance(self._name, str):
-            raise TypeError("name is not string, invalid Username.")
+            raise TypeError("name is not string, invalid Title.")
         if self._name == "":
-            raise ValueError("empty string, invalid Username")
+            raise ValueError("empty string, invalid Title")
 
     @property
     def name(self):
@@ -19,14 +19,14 @@ class Username():
 
 if __name__ == "__main__":
     names = [
-        "作成者1",
+        "動画タイトル1",
         "",
         -1,
     ]
 
     for name in names:
         try:
-            username = Username(name)
-            print(username)
+            title = Title(name)
+            print(title)
         except (ValueError, TypeError) as e:
             print(e.args[0])
