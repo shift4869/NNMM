@@ -3,9 +3,10 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from NNMM.VideoInfoFetcher.VideoURL import VideoURL
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 
 
-@dataclass
+@dataclass(frozen=True)
 class VideoURLList(Iterable):
     _list: list[VideoURL]
 
@@ -22,7 +23,7 @@ class VideoURLList(Iterable):
         return self._list.__len__()
 
     @property
-    def video_id_list(self):
+    def video_id_list(self) -> list[str]:
         return [v.video_id for v in self._list]
 
     @classmethod

@@ -9,6 +9,8 @@ from NNMM.VideoInfoFetcher.RegisteredAt import RegisteredAt
 class RegisteredAtList(Iterable):
     _list: list[RegisteredAt]
 
+    DESTINATION_DATETIME_FORMAT = RegisteredAt.DESTINATION_DATETIME_FORMAT
+
     def __post_init__(self) -> None:
         if not isinstance(self._list, list):
             raise TypeError("list is not list[], invalid RegisteredAtList.")
@@ -20,11 +22,6 @@ class RegisteredAtList(Iterable):
 
     def __len__(self):
         return self._list.__len__()
-
-    @property
-    @classmethod
-    def DESTINATION_DATETIME_FORMAT(cls):
-        return RegisteredAt.DESTINATION_DATETIME_FORMAT
 
     @classmethod
     def create(cls, registered_at_list: list[str]) -> "RegisteredAtList":
