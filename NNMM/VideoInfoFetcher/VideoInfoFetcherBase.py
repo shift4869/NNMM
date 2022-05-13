@@ -16,7 +16,7 @@ from requests_html import AsyncHTMLSession, HTMLResponse
 from NNMM import ConfigMain
 from NNMM.VideoInfoFetcher.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.URL import URL
-from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedAPIVideoInfo
+from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 
 

@@ -1,5 +1,4 @@
 # coding: utf-8
-import re
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pprint import pprint
@@ -127,7 +126,8 @@ class FetchedVideoInfo():
         return res
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        # return asdict(self)  # asdictだとキーと値が文字列になるため型情報が失われる
+        return self.__dict__
 
     @property
     def result(self) -> dict:
@@ -156,19 +156,14 @@ if __name__ == "__main__":
     username_list = UsernameList.create(["投稿者1"])
     no = list(range(1, len(video_id_list) + 1))
 
-    fvi = FetchedVideoInfo([1], userid, mylistid,
-                           showname, myshowname,
-                           mylist_url,
+    fvi = FetchedVideoInfo([1], userid, mylistid, showname, myshowname, mylist_url,
                            video_id_list, title_list, uploaded_at_list, registered_at_list,
                            video_url_list, username_list)
     # pprint(fvi.to_dict())
-    fvi_page = FetchedPageVideoInfo([1], "1234567", "12345678",
-                                    "「まとめマイリスト」-shift4869さんのマイリスト", "「まとめマイリスト」",
-                                    "https://www.nicovideo.jp/user/1234567/mylist/12345678",
-                                    ["sm12345678"], ["テスト動画"], ["2022-05-06 00:01:01"],
-                                    ["https://www.nicovideo.jp/watch/sm12345678"])
-    fvi_api = FetchedAPIVideoInfo([1], ["sm12345678"], ["テスト動画"], ["2022-05-06 00:00:01"],
-                                  ["https://www.nicovideo.jp/watch/sm12345678"], ["投稿者1"])
+    fvi_page = FetchedPageVideoInfo([1], userid, mylistid, showname, myshowname, mylist_url,
+                                    video_id_list, title_list, registered_at_list, video_url_list)
+    fvi_api = FetchedAPIVideoInfo([1], video_id_list, title_list, uploaded_at_list,
+                                  video_url_list, username_list)
     fvi_d = FetchedVideoInfo.merge(fvi_page, fvi_api)
     print(fvi == fvi_d)
     pprint(fvi.result)
