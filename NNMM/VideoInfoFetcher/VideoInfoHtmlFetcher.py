@@ -110,9 +110,9 @@ if __name__ == "__main__":
     ConfigMain.ProcessConfigBase.SetConfig()
 
     urls = [
-        "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
+        # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
         # "https://www.nicovideo.jp/user/31784111/video",  # 投稿動画0件
-        # "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト
+        "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト
         # "https://www.nicovideo.jp/user/31784111/mylist/73141814",  # 0件マイリスト
         # "https://www.nicovideo.jp/user/12899156/mylist/99999999",  # 存在しないマイリスト
     ]

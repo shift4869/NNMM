@@ -11,8 +11,8 @@ import PySimpleGUI as sg
 from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import *
-from NNMM.VideoInfoFetcher.VideoInfoRssFetcher import *
+from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
+from NNMM.VideoInfoFetcher.VideoInfoRssFetcher import VideoInfoRssFetcher
 from NNMM.Process import ProcessBase
 
 logger = getLogger("root")

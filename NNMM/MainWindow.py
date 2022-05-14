@@ -12,8 +12,22 @@ from NNMM import PopupWindowMain
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.GuiFunction import *
-from NNMM.Process import *
-
+from NNMM.Process import ProcessWatched
+from NNMM.Process import ProcessNotWatched
+from NNMM.Process import ProcessVideoPlay
+from NNMM.Process import ProcessShowMylistInfo
+from NNMM.Process import ProcessShowMylistInfoAll
+from NNMM.Process import ProcessCreateMylist
+from NNMM.Process import ProcessDeleteMylist
+from NNMM.Process import ProcessUpdateMylistInfo
+from NNMM.Process import ProcessUpdateAllMylistInfo
+from NNMM.Process import ProcessUpdatePartialMylistInfo
+from NNMM.Process import ProcessMoveUp
+from NNMM.Process import ProcessMoveDown
+from NNMM.Process import ProcessWatchedMylist
+from NNMM.Process import ProcessWatchedAllMylist
+from NNMM.Process import ProcessSearch
+from NNMM.Process import ProcessDownload
 
 logger = getLogger("root")
 logger.setLevel(INFO)
