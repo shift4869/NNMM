@@ -2,7 +2,9 @@
 from dataclasses import dataclass
 import re
 
+from NNMM.VideoInfoFetcher.Mylistid import Mylistid
 from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.Userid import Userid
 
 
 @dataclass
@@ -21,35 +23,35 @@ class MylistURL():
             raise ValueError("URL is not Mylist URL.")
 
     @property
-    def non_query_url(self):
+    def non_query_url(self) -> str:
         return self.url.non_query_url
 
     @property
-    def original_url(self):
+    def original_url(self) -> str:
         return self.url.original_url
 
     @property
-    def fetch_url(self):
+    def fetch_url(self) -> str:
         # "https://www.nicovideo.jp/mylist/[0-9]+/?rss=2.0" 形式でないとそのマイリストのRSSが取得できない
         non_user_url = re.sub("/user/[0-9]+", "", str(self.non_query_url))  # /user/{userid} 部分を削除
         fetch_url = non_user_url + self.RSS_URL_SUFFIX
         return fetch_url
 
     @property
-    def mylist_url(self):
+    def mylist_url(self) -> str:
         return self.url.non_query_url
 
     @property
-    def userid(self):
+    def userid(self) -> Userid:
         mylist_url = self.url.non_query_url
         userid, mylistid = re.findall(MylistURL.MYLIST_URL_PATTERN, mylist_url)[0]
-        return userid
+        return Userid(userid)
 
     @property
-    def mylistid(self):
+    def mylistid(self) -> Mylistid:
         mylist_url = self.url.non_query_url
         userid, mylistid = re.findall(MylistURL.MYLIST_URL_PATTERN, mylist_url)[0]
-        return mylistid
+        return Mylistid(mylistid)
 
     @classmethod
     def create(cls, url: str) -> "MylistURL":

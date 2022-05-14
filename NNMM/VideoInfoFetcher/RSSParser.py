@@ -5,9 +5,10 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
-from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedPageVideoInfo
+from NNMM.VideoInfoFetcher import *
+from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
 from NNMM.VideoInfoFetcher.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
@@ -30,7 +31,7 @@ class RSSParser():
             self.mylist_url = MylistURL.create(url)
         self.soup = soup
 
-    def _get_iteminfo(self, item_lx) -> ItemInfo:
+    def _get_iteminfo(self, item_lx: Tag) -> ItemInfo:
         """一つのentryから動画ID, 動画タイトル, 投稿日時, 動画URLを抽出する
 
         Notes:
@@ -49,31 +50,30 @@ class RSSParser():
         """
         RP = RSSParser
 
-        title = item_lx.find("title").text
+        title = Title(item_lx.find("title").text)
 
         link_lx = item_lx.find("link")
         video_url = VideoURL.create(link_lx.text)
 
         pubDate_lx = item_lx.find("pubDate")
         dst = datetime.strptime(pubDate_lx.text, RP.SOURCE_DATETIME_FORMAT)
-        registered_at = dst.strftime(RP.DESTINATION_DATETIME_FORMAT)
+        registered_at = RegisteredAt(dst.strftime(RP.DESTINATION_DATETIME_FORMAT))
 
         return ItemInfo(title, registered_at, video_url)
 
-    def _get_mylist_url(self):
+    def _get_mylist_url(self) -> UploadedURL | MylistURL:
         """マイリストURL
         """
-        mylist_url = self.mylist_url.non_query_url
-        return mylist_url
+        return self.mylist_url
 
-    def _get_userid_mylistid(self):
+    def _get_userid_mylistid(self) -> tuple[Userid, Mylistid]:
         """ユーザーID, マイリストID設定
         """
         userid = self.mylist_url.userid
         mylistid = self.mylist_url.mylistid
         return (userid, mylistid)
 
-    def _get_username(self):
+    def _get_username(self) -> Username:
         """投稿者収集
         """
         if isinstance(self.mylist_url, UploadedURL):
@@ -84,22 +84,23 @@ class RSSParser():
         elif isinstance(self.mylist_url, MylistURL):
             creator_lx = self.soup.find_all("dc:creator")
             username = creator_lx[0].text
-        return username
+        return Username(username)
 
-    def _get_showname_myshowname(self):
+    def _get_showname_myshowname(self) -> tuple[Showname, Myshowname]:
         """マイリスト名収集
         """
         username = self._get_username()
         if isinstance(self.mylist_url, UploadedURL):
-            showname = f"{username}さんの投稿動画"
-            myshowname = "投稿動画"
+            myshowname = Myshowname("投稿動画")
+            showname = Showname.create(username, None)
             return (showname, myshowname)
         elif isinstance(self.mylist_url, MylistURL):
             # マイリストの場合はタイトルから取得
             title_lx = self.soup.find_all("title")
             pattern = "^マイリスト (.*)‐ニコニコ動画$"
-            myshowname = re.findall(pattern, title_lx[0].text)[0]
-            showname = f"「{myshowname}」-{username}さんのマイリスト"
+            page_title = title_lx[0].text
+            myshowname = Myshowname(re.findall(pattern, page_title)[0])
+            showname = Showname.create(username, myshowname)
             return (showname, myshowname)
         raise AttributeError("(showname, myshowname) parse failed.")
 
@@ -146,6 +147,12 @@ class RSSParser():
             registered_at_list.append(registered_at)
             video_url_list.append(video_url)
 
+        # ValueObjectに変換
+        video_id_list = VideoidList(video_id_list)
+        title_list = TitleList(title_list)
+        registered_at_list = RegisteredAtList(registered_at_list)
+        video_url_list = VideoURLList(video_url_list)
+
         # 返り値設定
         num = len(title_list)
         res = {
@@ -166,22 +173,22 @@ class RSSParser():
 if __name__ == "__main__":
     from NNMM.VideoInfoFetcher.VideoInfoRssFetcher import VideoInfoRssFetcher
     urls = [
-        # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
-        # "https://www.nicovideo.jp/user/31784111/video",  # 投稿動画0件
+        "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
+        "https://www.nicovideo.jp/user/31784111/video",  # 投稿動画0件
         "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト
-        # "https://www.nicovideo.jp/user/31784111/mylist/73141814",  # 0件マイリスト
+        "https://www.nicovideo.jp/user/31784111/mylist/73141814",  # 0件マイリスト
         # "https://www.nicovideo.jp/user/12899156/mylist/99999999",  # 存在しないマイリスト
     ]
 
     loop = asyncio.new_event_loop()
     for url in urls:
         virf = VideoInfoRssFetcher(url)
-        session, response = loop.run_until_complete(virf._get_session_response(virf.request_url.request_url + virf.RSS_URL_SUFFIX, True, "html.parser", None))
+        session, response = loop.run_until_complete(virf._get_session_response(virf.mylist_url.fetch_url, False, "lxml-xml", None))
         loop.run_until_complete(session.close())
         soup = BeautifulSoup(response.text, "lxml-xml")
 
         rp = RSSParser(url, soup)
         soup_d = loop.run_until_complete(rp.parse())
 
-        pprint.pprint(soup_d)
+        pprint.pprint(soup_d.to_dict())
     pass
