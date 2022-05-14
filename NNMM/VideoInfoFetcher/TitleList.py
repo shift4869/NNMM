@@ -5,15 +5,16 @@ from typing import Iterable
 from NNMM.VideoInfoFetcher.Title import Title
 
 
-@dataclass
+@dataclass(frozen=True)
 class TitleList(Iterable):
     _list: list[Title]
 
     def __post_init__(self) -> None:
         if not isinstance(self._list, list):
             raise TypeError("list is not list[], invalid TitleList.")
-        if not any([isinstance(r, Title) for r in self._list]):
-            raise ValueError(f"include not Title element, invalid TitleList")
+        if self._list:
+            if not all([isinstance(r, Title) for r in self._list]):
+                raise ValueError(f"include not Title element, invalid TitleList")
 
     def __iter__(self):
         return self._list.__iter__()
@@ -22,8 +23,14 @@ class TitleList(Iterable):
         return self._list.__len__()
 
     @classmethod
-    def create(cls, title_list: list[str]) -> "TitleList":
-        return cls([Title(r) for r in title_list])
+    def create(cls, title_list: list[Title] | list[str]) -> "TitleList":
+        if not title_list:
+            return cls([])
+        if isinstance(title_list[0], Title):
+            return cls(title_list)
+        if isinstance(title_list[0], str):
+            return cls([Title(r) for r in title_list])
+        raise ValueError("Create TitleList failed.")
 
 
 if __name__ == "__main__":
@@ -31,6 +38,7 @@ if __name__ == "__main__":
     base_url = "動画タイトル{}"
     titles = [base_url.format(i) for i in range(1, NUM + 1)]
 
+    title_list = TitleList.create([])
     title_list = TitleList.create(titles)
     for t in title_list:
         print(t)

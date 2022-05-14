@@ -14,8 +14,9 @@ class RegisteredAtList(Iterable):
     def __post_init__(self) -> None:
         if not isinstance(self._list, list):
             raise TypeError("list is not list[], invalid RegisteredAtList.")
-        if not any([isinstance(r, RegisteredAt) for r in self._list]):
-            raise ValueError(f"include not RegisteredAt element, invalid RegisteredAtList")
+        if self._list:
+            if not all([isinstance(r, RegisteredAt) for r in self._list]):
+                raise ValueError(f"include not RegisteredAt element, invalid RegisteredAtList")
 
     def __iter__(self):
         return self._list.__iter__()
@@ -24,8 +25,14 @@ class RegisteredAtList(Iterable):
         return self._list.__len__()
 
     @classmethod
-    def create(cls, registered_at_list: list[str]) -> "RegisteredAtList":
-        return cls([RegisteredAt(r) for r in registered_at_list])
+    def create(cls, registered_at_list: list[RegisteredAt] | list[str]) -> "RegisteredAtList":
+        if not registered_at_list:
+            return cls([])
+        if isinstance(registered_at_list[0], RegisteredAt):
+            return cls(registered_at_list)
+        if isinstance(registered_at_list[0], str):
+            return cls([RegisteredAt(r) for r in registered_at_list])
+        raise ValueError("Create RegisteredAtList failed.")
 
 
 if __name__ == "__main__":

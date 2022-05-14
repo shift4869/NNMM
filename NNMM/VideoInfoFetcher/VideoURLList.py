@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from NNMM.VideoInfoFetcher.VideoURL import VideoURL
-from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 
 
 @dataclass(frozen=True)
@@ -13,8 +12,9 @@ class VideoURLList(Iterable):
     def __post_init__(self) -> None:
         if not isinstance(self._list, list):
             raise TypeError("list is not list[], invalid VideoURLList.")
-        if not any([isinstance(r, VideoURL) for r in self._list]):
-            raise ValueError(f"include not VideoURL element, invalid VideoURLList")
+        if self._list:
+            if not all([isinstance(r, VideoURL) for r in self._list]):
+                raise ValueError(f"include not VideoURL element, invalid VideoURLList")
 
     def __iter__(self):
         return self._list.__iter__()
@@ -27,8 +27,14 @@ class VideoURLList(Iterable):
         return [v.video_id for v in self._list]
 
     @classmethod
-    def create(cls, video_url_list: list[str]) -> "VideoURLList":
-        return cls([VideoURL.create(r) for r in video_url_list])
+    def create(cls, video_url_list: list[VideoURL] | list[str]) -> "VideoURLList":
+        if not video_url_list:
+            return cls([])
+        if isinstance(video_url_list[0], VideoURL):
+            return cls(video_url_list)
+        if isinstance(video_url_list[0], str):
+            return cls([VideoURL.create(r) for r in video_url_list])
+        raise ValueError("Create VideoURLList failed.")
 
 
 if __name__ == "__main__":

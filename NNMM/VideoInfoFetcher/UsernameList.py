@@ -12,8 +12,9 @@ class UsernameList(Iterable):
     def __post_init__(self) -> None:
         if not isinstance(self._list, list):
             raise TypeError("list is not list[], invalid UsernameList.")
-        if not any([isinstance(r, Username) for r in self._list]):
-            raise ValueError(f"include not Username element, invalid UsernameList")
+        if self._list:
+            if not all([isinstance(r, Username) for r in self._list]):
+                raise ValueError(f"include not Username element, invalid UsernameList")
 
     def __iter__(self):
         return self._list.__iter__()
@@ -22,8 +23,14 @@ class UsernameList(Iterable):
         return self._list.__len__()
 
     @classmethod
-    def create(cls, registered_at_list: list[str]) -> "UsernameList":
-        return cls([Username(r) for r in registered_at_list])
+    def create(cls, username_list: list[Username] | list[str]) -> "UsernameList":
+        if not username_list:
+            return cls([])
+        if isinstance(username_list[0], Username):
+            return cls(username_list)
+        if isinstance(username_list[0], str):
+            return cls([Username(r) for r in username_list])
+        raise ValueError("Create UsernameList failed.")
 
 
 if __name__ == "__main__":

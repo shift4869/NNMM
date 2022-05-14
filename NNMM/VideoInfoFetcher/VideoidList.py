@@ -12,8 +12,9 @@ class VideoidList(Iterable):
     def __post_init__(self) -> None:
         if not isinstance(self._list, list):
             raise TypeError("list is not list[], invalid VideoidList.")
-        if not any([isinstance(r, Videoid) for r in self._list]):
-            raise ValueError(f"include not Videoid element, invalid VideoidList")
+        if self._list:
+            if not all([isinstance(r, Videoid) for r in self._list]):
+                raise ValueError(f"include not Videoid element, invalid VideoidList")
 
     def __iter__(self):
         return self._list.__iter__()
@@ -22,8 +23,14 @@ class VideoidList(Iterable):
         return self._list.__len__()
 
     @classmethod
-    def create(cls, video_id_list: list[str]) -> "VideoidList":
-        return cls([Videoid(r) for r in video_id_list])
+    def create(cls, video_id_list: list[Videoid] | list[str]) -> "VideoidList":
+        if not video_id_list:
+            return cls([])
+        if isinstance(video_id_list[0], Videoid):
+            return cls(video_id_list)
+        if isinstance(video_id_list[0], str):
+            return cls([Videoid(r) for r in video_id_list])
+        raise ValueError("Create VideoidList failed.")
 
 
 if __name__ == "__main__":
