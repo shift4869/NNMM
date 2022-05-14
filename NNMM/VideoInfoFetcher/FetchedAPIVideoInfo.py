@@ -1,5 +1,5 @@
 # coding: utf-8
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pprint import pprint
 
 from NNMM.VideoInfoFetcher import *

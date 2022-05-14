@@ -14,10 +14,8 @@ from lxml.html.soupparser import fromstring as soup_parse
 from requests_html import AsyncHTMLSession, HTMLResponse
 
 from NNMM import ConfigMain
-from NNMM.VideoInfoFetcher.MylistURL import MylistURL
-from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher import *
 from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
-from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 
 
 logger = getLogger("root")
@@ -154,6 +152,13 @@ class VideoInfoFetcherBase(ABC):
 
         await session.close()
 
+        # ValueObjectに変換
+        title_list = TitleList.create(title_list)
+        uploaded_at_list = UploadedAtList.create(uploaded_at_list)
+        video_url_list = VideoURLList.create(video_url_list)
+        username_list = UsernameList.create(username_list)
+        video_id_list = VideoidList.create(video_url_list.video_id_list)
+
         num = len(video_id_list)
         res = {
             "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
@@ -195,7 +200,7 @@ if __name__ == "__main__":
             return await self._get_videoinfo_from_api(["sm9"])
 
     urls = [
-        "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
+        # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
         # "https://www.nicovideo.jp/user/12899156/mylist/39194985",  # 中量マイリスト
         # "https://www.nicovideo.jp/user/12899156/mylist/67376990",  # 少量マイリスト
         "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト

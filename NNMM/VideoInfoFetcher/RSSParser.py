@@ -145,10 +145,10 @@ class RSSParser():
             video_url_list.append(video_url)
 
         # ValueObjectに変換
-        video_id_list = VideoidList(video_id_list)
-        title_list = TitleList(title_list)
-        registered_at_list = RegisteredAtList(registered_at_list)
-        video_url_list = VideoURLList(video_url_list)
+        video_id_list = VideoidList.create(video_id_list)
+        title_list = TitleList.create(title_list)
+        registered_at_list = RegisteredAtList.create(registered_at_list)
+        video_url_list = VideoURLList.create(video_url_list)
 
         # 返り値設定
         num = len(title_list)
