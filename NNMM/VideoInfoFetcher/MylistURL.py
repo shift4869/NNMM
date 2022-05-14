@@ -1,6 +1,6 @@
 # coding: utf-8
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 
 from NNMM.VideoInfoFetcher.Mylistid import Mylistid
 from NNMM.VideoInfoFetcher.URL import URL

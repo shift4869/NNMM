@@ -7,9 +7,22 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup, Tag
 
-from NNMM.VideoInfoFetcher import *
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
+from NNMM.VideoInfoFetcher.Mylistid import Mylistid
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.Myshowname import Myshowname
+from NNMM.VideoInfoFetcher.RegisteredAt import RegisteredAt
+from NNMM.VideoInfoFetcher.RegisteredAtList import RegisteredAtList
+from NNMM.VideoInfoFetcher.Showname import Showname
+from NNMM.VideoInfoFetcher.Title import Title
+from NNMM.VideoInfoFetcher.TitleList import TitleList
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.Userid import Userid
+from NNMM.VideoInfoFetcher.Username import Username
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.VideoURL import VideoURL
+from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 
 @dataclass

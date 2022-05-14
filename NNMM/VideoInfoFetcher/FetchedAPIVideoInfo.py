@@ -2,7 +2,11 @@
 from dataclasses import dataclass
 from pprint import pprint
 
-from NNMM.VideoInfoFetcher import *
+from NNMM.VideoInfoFetcher.TitleList import TitleList
+from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
+from NNMM.VideoInfoFetcher.UsernameList import UsernameList
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 
 @dataclass

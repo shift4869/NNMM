@@ -8,10 +8,11 @@ from logging import INFO, getLogger
 from requests_html import HtmlElement
 
 from NNMM import ConfigMain
-from NNMM.VideoInfoFetcher import *
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedVideoInfo
 from NNMM.VideoInfoFetcher.HtmlParser import HtmlParser
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
 
 

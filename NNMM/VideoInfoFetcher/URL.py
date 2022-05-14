@@ -1,7 +1,7 @@
 # coding: utf-8
+import urllib.parse
 from dataclasses import dataclass
 from typing import ClassVar
-import urllib.parse
 
 
 @dataclass

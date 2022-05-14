@@ -14,8 +14,19 @@ from lxml.html.soupparser import fromstring as soup_parse
 from requests_html import AsyncHTMLSession, HTMLResponse
 
 from NNMM import ConfigMain
-from NNMM.VideoInfoFetcher import *
 from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.Title import Title
+from NNMM.VideoInfoFetcher.TitleList import TitleList
+from NNMM.VideoInfoFetcher.UploadedAt import UploadedAt
+from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
+from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.Username import Username
+from NNMM.VideoInfoFetcher.UsernameList import UsernameList
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.VideoURL import VideoURL
+from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 
 logger = getLogger("root")

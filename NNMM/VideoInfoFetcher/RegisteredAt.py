@@ -1,7 +1,6 @@
 # coding: utf-8
-from datetime import datetime
 from dataclasses import dataclass
-import re
+from datetime import datetime
 
 
 @dataclass(frozen=True)
