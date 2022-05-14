@@ -4,13 +4,11 @@ from dataclasses import dataclass
 import pprint
 import re
 from datetime import datetime, timedelta
-from numpy import isin
 
 from requests_html import HtmlElement
 
-from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedPageVideoInfo
-from NNMM.VideoInfoFetcher.MylistURL import MylistURL
-from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher import *
+from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 
 
 @dataclass
@@ -84,41 +82,40 @@ class HtmlParser():
         dst_date = datetime.strptime(dt_str, HP.SOURCE_DATETIME_FORMAT)
         return dst_date.strftime(HP.DESTINATION_DATETIME_FORMAT)
 
-    def _get_mylist_url(self):
+    def _get_mylist_url(self) -> UploadedURL | MylistURL:
         """マイリストURL
         """
-        mylist_url = self.mylist_url.non_query_url
-        return mylist_url
+        return self.mylist_url
 
-    def _get_userid_mylistid(self):
+    def _get_userid_mylistid(self) -> tuple[Userid, Mylistid]:
         """ユーザーID, マイリストID設定
         """
         userid = self.mylist_url.userid
         mylistid = self.mylist_url.mylistid
         return (userid, mylistid)
 
-    def _get_video_url_list(self):
+    def _get_video_url_list(self) -> VideoURLList:
         """すべての動画リンクを抽出
         """
         HP = HtmlParser
         video_url_list = []
-        pattern = FetchedPageVideoInfo.VIDEO_URL_PATTERN
+        pattern = VideoURL.VIDEO_URL_PATTERN
         video_link_lx = self.lxml.find_class(HP.TCT_VIDEO_URL)
         for video_link in video_link_lx:
             a = video_link.find("a")
             if re.search(pattern, a.attrib["href"]):
-                video_url_list.append(a.attrib["href"])
-        return video_url_list
+                video_url = VideoURL.create(a.attrib["href"])
+                video_url_list.append(video_url)
+        return VideoURLList.create(video_url_list)
 
-    def _get_video_id_list(self):
+    def _get_video_id_list(self) -> VideoidList:
         """動画ID収集
         """
         video_url_list = self._get_video_url_list()
-        pattern = FetchedPageVideoInfo.VIDEO_URL_PATTERN
-        video_id_list = [re.findall(pattern, s)[0] for s in video_url_list]
-        return video_id_list
+        video_id_list = video_url_list.video_id_list
+        return VideoidList.create(video_id_list)
 
-    def _get_title_list(self):
+    def _get_title_list(self) -> TitleList:
         """動画名収集
         """
         # 全角スペースは\u3000(unicode-escape)となっている
@@ -128,9 +125,9 @@ class HtmlParser():
         # if title_lx == []:
         #     raise AttributeError(HP.MSG_TITLE)
         title_list = [str(t.text) for t in title_lx]
-        return title_list
+        return TitleList.create(title_list)
 
-    def _get_uploaded_at_list(self):
+    def _get_uploaded_at_list(self) -> UploadedAtList:
         """投稿日時収集
         """
         HP = HtmlParser
@@ -146,9 +143,9 @@ class HtmlParser():
                 uploaded_at_list.append(dst)
         except ValueError:
             raise ValueError(HP.MSG_UPLOADED2)
-        return uploaded_at_list
+        return UploadedAtList.create(uploaded_at_list)
 
-    def _get_registered_at_list(self):
+    def _get_registered_at_list(self) -> RegisteredAtList:
         """登録日時収集
         """
         HP = HtmlParser
@@ -164,9 +161,9 @@ class HtmlParser():
                 registered_at_list.append(dst)
         except ValueError:
             raise ValueError(HP.MSG_REGISTERED2)
-        return registered_at_list
+        return RegisteredAtList.create(registered_at_list)
 
-    def _get_username(self):
+    def _get_username(self) -> Username:
         """投稿者収集
         """
         HP = HtmlParser
@@ -174,23 +171,23 @@ class HtmlParser():
         if username_lx == []:
             raise AttributeError(HP.MSG_USERNAME)
         username = username_lx[0].text
-        return username
+        return Username(username)
 
-    def _get_showname_myshowname(self):
+    def _get_showname_myshowname(self) -> tuple[Showname, Myshowname]:
         """マイリスト名収集
         """
         HP = HtmlParser
         username = self._get_username()
         if isinstance(self.mylist_url, UploadedURL):
-            showname = f"{username}さんの投稿動画"
-            myshowname = "投稿動画"
+            myshowname = Myshowname("投稿動画")
+            showname = Showname.create(username, None)
             return (showname, myshowname)
         elif isinstance(self.mylist_url, MylistURL):
             myshowname_lx = self.lxml.find_class(HP.TCT_MYSHOWNAME)
             if myshowname_lx == []:
                 raise AttributeError(HP.MSG_MYSHOWNAME)
-            myshowname = myshowname_lx[0].text
-            showname = f"「{myshowname}」-{username}さんのマイリスト"
+            myshowname = Myshowname(myshowname_lx[0].text)
+            showname = Showname.create(username, myshowname)
             return (showname, myshowname)
         raise AttributeError("(showname, myshowname) parse failed.")
 
@@ -232,7 +229,7 @@ class HtmlParser():
             # 投稿動画ページは登録日時の情報がないため
             # 投稿日時を登録日時として使用する
             uploaded_at_list = self._get_uploaded_at_list()
-            registered_at_list = uploaded_at_list
+            registered_at_list = RegisteredAtList.create([uploaded_at.dt_str for uploaded_at in uploaded_at_list])
         elif isinstance(self.mylist_url, MylistURL):
             registered_at_list = self._get_registered_at_list()
 
@@ -277,6 +274,5 @@ if __name__ == "__main__":
         hp = HtmlParser(url, response.html.lxml)
         html_d = loop.run_until_complete(hp.parse())
 
-        pprint.pprint(html_d)
-
+        pprint.pprint(html_d.to_dict())
     pass
