@@ -103,7 +103,7 @@ class VideoInfoFetcherBase(ABC):
 
         return (session, response)
 
-    async def _get_videoinfo_from_api(self, video_id_list: list[str]) -> FetchedAPIVideoInfo:
+    async def _get_videoinfo_from_api(self, video_id_list: VideoidList) -> FetchedAPIVideoInfo:
         """動画IDからAPIを通して動画情報を取得する
 
         Notes:
@@ -111,7 +111,7 @@ class VideoInfoFetcherBase(ABC):
             動画情報API："https://ext.nicovideo.jp/api/getthumbinfo/{動画ID}"
 
         Args:
-            video_id_list (list[str]): 動画IDリスト
+            video_id_list (VideoidList): 動画IDリスト
 
         Returns:
             FetchedAPIVideoInfo: 解析結果
@@ -119,13 +119,16 @@ class VideoInfoFetcherBase(ABC):
         src_df = "%Y-%m-%dT%H:%M:%S%z"
         dst_df = "%Y-%m-%d %H:%M:%S"
 
+        if not isinstance(video_id_list, VideoidList):
+            raise ValueError("Get videoinfo from api failed, video_id_list is not VideoidList.")
+
         title_list = []
         uploaded_at_list = []
         video_url_list = []
         username_list = []
         session = None
         for video_id in video_id_list:
-            url = self.API_URL_BASE + video_id
+            url = self.API_URL_BASE + video_id.id
             session, response = await self._get_session_response(url, False, "lxml-xml", session)
             if response:
                 thumb_lx = response.html.lxml.findall("thumb")[0]
@@ -133,22 +136,22 @@ class VideoInfoFetcherBase(ABC):
                 # 動画タイトル
                 title_lx = thumb_lx.findall("title")
                 title = title_lx[0].text
-                title_list.append(title)
+                title_list.append(Title(title))
 
                 # 投稿日時
                 uploaded_at_lx = thumb_lx.findall("first_retrieve")
                 uploaded_at = datetime.strptime(uploaded_at_lx[0].text, src_df).strftime(dst_df)
-                uploaded_at_list.append(uploaded_at)
+                uploaded_at_list.append(UploadedAt(uploaded_at))
 
                 # 動画URL
                 video_url_lx = thumb_lx.findall("watch_url")
                 video_url = video_url_lx[0].text
-                video_url_list.append(video_url)
+                video_url_list.append(VideoURL.create(video_url))
 
                 # 投稿者
                 username_lx = thumb_lx.findall("user_nickname")
                 username = username_lx[0].text
-                username_list.append(username)
+                username_list.append(Username(username))
 
         await session.close()
 
@@ -157,7 +160,6 @@ class VideoInfoFetcherBase(ABC):
         uploaded_at_list = UploadedAtList.create(uploaded_at_list)
         video_url_list = VideoURLList.create(video_url_list)
         username_list = UsernameList.create(username_list)
-        video_id_list = VideoidList.create(video_url_list.video_id_list)
 
         num = len(video_id_list)
         res = {
@@ -197,7 +199,7 @@ if __name__ == "__main__":
             super().__init__(url, SourceType.HTML)
 
         async def _fetch_videoinfo(self) -> list[dict]:
-            return await self._get_videoinfo_from_api(["sm9"])
+            return await self._get_videoinfo_from_api(VideoidList.create(["sm2959233", "sm500873", "sm9"]))
 
     urls = [
         # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画

@@ -1,20 +1,19 @@
 # coding: utf-8
 import asyncio
-from dataclasses import dataclass
 import logging.config
 import pprint
 import traceback
+from dataclasses import dataclass
 from logging import INFO, getLogger
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 
 from NNMM import ConfigMain
+from NNMM.VideoInfoFetcher import *
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedVideoInfo
-from NNMM.VideoInfoFetcher.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.RSSParser import RSSParser
-from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
 
 logger = getLogger("root")
@@ -116,9 +115,9 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
         rd_str = config["general"].get("rss_save_path", "")
         rd_path = Path(rd_str)
         rd_path.mkdir(exist_ok=True, parents=True)
-        rss_file_name = f"{userid}.xml"
-        if mylistid != "":
-            rss_file_name = f"{userid}_{mylistid}.xml"
+        rss_file_name = f"{userid.id}.xml"
+        if mylistid.id != "":
+            rss_file_name = f"{userid.id}_{mylistid.id}.xml"
         try:
             with (rd_path / rss_file_name).open("w", encoding="utf-8") as fout:
                 fout.write(response.text)
