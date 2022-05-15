@@ -9,7 +9,7 @@ from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 
-@dataclass
+@dataclass(frozen=True)
 class FetchedAPIVideoInfo():
     no: list[int]                     # No. [1, ..., len()-1]
     video_id_list: VideoidList        # 動画IDリスト [sm12345678]
