@@ -1,16 +1,16 @@
 # coding: utf-8
 """ProcessUpdatePartialMylistInfo のテスト
 """
-
-import freezegun
 import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from mock import MagicMock, patch, call
 
+import freezegun
+
 from NNMM.GuiFunction import IntervalTranslation
-from NNMM.Process import *
+from NNMM.Process import ProcessUpdatePartialMylistInfo
 
 
 class TestProcessUpdatePartialMylistInfo(unittest.TestCase):

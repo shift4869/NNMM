@@ -1,14 +1,13 @@
 # coding: utf-8
 """ProcessMoveUp のテスト
 """
-
 import random
 import sys
 import unittest
 from contextlib import ExitStack
 from mock import MagicMock, patch, call
 
-from NNMM.Process import *
+from NNMM.Process import ProcessMoveUp
 
 
 class TestProcessMoveUp(unittest.TestCase):

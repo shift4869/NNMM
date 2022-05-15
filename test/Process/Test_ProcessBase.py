@@ -1,10 +1,8 @@
 # coding: utf-8
 """ProcessBase のテスト
 """
-
 import sys
 import unittest
-from logging import INFO, getLogger
 
 from NNMM.Process import ProcessBase
 

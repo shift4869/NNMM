@@ -1,15 +1,13 @@
 # coding: utf-8
 """ProcessWatched のテスト
 """
-
 import random
 import sys
 import unittest
-import warnings
 from contextlib import ExitStack
 from mock import MagicMock, patch, call
 
-from NNMM.Process import *
+from NNMM.Process import ProcessWatched
 
 
 class TestProcessWatched(unittest.TestCase):

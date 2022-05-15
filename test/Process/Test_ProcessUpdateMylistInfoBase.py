@@ -1,15 +1,13 @@
 # coding: utf-8
 """ProcessUpdateMylistInfoBase のテスト
 """
-
 import sys
 import unittest
 from contextlib import ExitStack
 
 from mock import AsyncMock, MagicMock, call, patch
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
-from NNMM.Process import *
+
+from NNMM.Process import ProcessUpdateMylistInfoBase
 
 
 class ConcreteProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoBase):
@@ -40,7 +38,7 @@ class ConcreteProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateM
             res.append(d)
         return res
 
-    def GetTargetMylist(self) -> list[Mylist]:
+    def GetTargetMylist(self) -> list[dict]:
         m_list = self.MakeMylistDB()
         return m_list
 

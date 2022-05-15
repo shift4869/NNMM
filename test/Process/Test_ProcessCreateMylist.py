@@ -1,10 +1,9 @@
 # coding: utf-8
 """ProcessCreateMylist のテスト
 """
-
 import asyncio
-import re
 import random
+import re
 import sys
 import unittest
 import urllib.parse
@@ -12,10 +11,9 @@ import warnings
 from asyncio import new_event_loop
 from contextlib import ExitStack
 from datetime import datetime
-from logging import INFO, getLogger
 from mock import MagicMock, patch, AsyncMock
 
-from NNMM.Process import *
+from NNMM.Process import ProcessCreateMylist
 
 
 class TestProcessCreateMylist(unittest.TestCase):

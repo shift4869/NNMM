@@ -1,16 +1,13 @@
 # coding: utf-8
 """ProcessMoveDown のテスト
 """
-
 import random
 import sys
 import unittest
-import warnings
 from contextlib import ExitStack
-from logging import INFO, getLogger
 from mock import MagicMock, patch, call
 
-from NNMM.Process import *
+from NNMM.Process import ProcessMoveDown
 
 
 class TestProcessMoveDown(unittest.TestCase):

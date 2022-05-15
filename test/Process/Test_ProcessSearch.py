@@ -1,16 +1,13 @@
 # coding: utf-8
 """ProcessSearch のテスト
 """
-
-import random
 import re
 import sys
 import unittest
-import warnings
 from contextlib import ExitStack
 from mock import MagicMock, patch, call
 
-from NNMM.Process import *
+from NNMM.Process import ProcessSearch
 
 
 class TestProcessSearch(unittest.TestCase):

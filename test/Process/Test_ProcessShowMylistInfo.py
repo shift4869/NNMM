@@ -1,13 +1,12 @@
 # coding: utf-8
 """ProcessShowMylistInfo のテスト
 """
-
 import sys
 import unittest
 from contextlib import ExitStack
 from mock import MagicMock, patch, call
 
-from NNMM.Process import *
+from NNMM.Process import ProcessShowMylistInfo
 
 
 class TestProcessShowMylistInfo(unittest.TestCase):

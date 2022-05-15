@@ -1,15 +1,12 @@
 # coding: utf-8
 """ProcessDeleteMylist のテスト
 """
-
 import sys
 import unittest
-import warnings
 from contextlib import ExitStack
-from logging import INFO, getLogger
-from mock import MagicMock, patch, AsyncMock
+from mock import MagicMock, patch
 
-from NNMM.Process import *
+from NNMM.Process import ProcessDeleteMylist
 
 
 class TestProcessDeleteMylist(unittest.TestCase):

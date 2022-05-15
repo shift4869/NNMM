@@ -1,16 +1,13 @@
 # coding: utf-8
 """ProcessDownload のテスト
 """
-
 import asyncio
 import sys
 import unittest
-import warnings
 from contextlib import ExitStack
-from logging import INFO, getLogger
-from mock import MagicMock, patch, AsyncMock, call
+from mock import MagicMock, patch, call
 
-from NNMM.Process import *
+from NNMM.Process import ProcessDownload
 
 
 class TestProcessDownload(unittest.TestCase):

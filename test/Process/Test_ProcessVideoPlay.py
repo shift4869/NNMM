@@ -1,14 +1,13 @@
 # coding: utf-8
 """ProcessVideoPlay のテスト
 """
-
 import sys
 import unittest
 from contextlib import ExitStack
 from mock import MagicMock, patch, call
 from pathlib import Path
 
-from NNMM.Process import *
+from NNMM.Process import ProcessVideoPlay
 
 
 class TestProcessVideoPlay(unittest.TestCase):
