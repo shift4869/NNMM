@@ -7,21 +7,26 @@ import asyncio
 import re
 import sys
 import unittest
-import urllib.parse
-from contextlib import ExitStack
-from datetime import datetime, timedelta
-from mock import MagicMock, AsyncMock, patch, call
+from datetime import datetime
 
-import freezegun
 from bs4 import BeautifulSoup
+
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
 from NNMM.VideoInfoFetcher.MylistURL import MylistURL
-
+from NNMM.VideoInfoFetcher.Myshowname import Myshowname
+from NNMM.VideoInfoFetcher.RegisteredAt import RegisteredAt
+from NNMM.VideoInfoFetcher.RegisteredAtList import RegisteredAtList
 from NNMM.VideoInfoFetcher.RSSParser import RSSParser
-from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.Showname import Showname
+from NNMM.VideoInfoFetcher.Title import Title
+from NNMM.VideoInfoFetcher.TitleList import TitleList
 from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.Username import Username
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.VideoURL import VideoURL
+from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 
 class TestRSSParser(unittest.TestCase):
@@ -109,14 +114,14 @@ class TestRSSParser(unittest.TestCase):
     def iteminfo(self, item_lx) -> ItemInfo:
         RP = RSSParser
 
-        title = item_lx.find("title").text
+        title = Title(item_lx.find("title").text)
 
         link_lx = item_lx.find("link")
         video_url = VideoURL.create(link_lx.text)
 
         pubDate_lx = item_lx.find("pubDate")
         dst = datetime.strptime(pubDate_lx.text, RP.SOURCE_DATETIME_FORMAT)
-        registered_at = dst.strftime(RP.DESTINATION_DATETIME_FORMAT)
+        registered_at = RegisteredAt(dst.strftime(RP.DESTINATION_DATETIME_FORMAT))
         return ItemInfo(title, registered_at, video_url)
 
     def test_RSSParserInit(self):
@@ -159,13 +164,13 @@ class TestRSSParser(unittest.TestCase):
         xml = self._make_xml(url)
         soup = BeautifulSoup(xml, "lxml-xml")
         rp = RSSParser(url, soup)
-        self.assertEqual(url, rp._get_mylist_url())
+        self.assertEqual(UploadedURL.create(url), rp._get_mylist_url())
 
         url = self._get_url_set()[2]
         xml = self._make_xml(url)
         soup = BeautifulSoup(xml, "lxml-xml")
         rp = RSSParser(url, soup)
-        self.assertEqual(url, rp._get_mylist_url())
+        self.assertEqual(MylistURL.create(url), rp._get_mylist_url())
 
     def test_get_userid_mylistid(self):
         """_get_userid_mylistid のテスト
@@ -198,7 +203,7 @@ class TestRSSParser(unittest.TestCase):
 
         title_lx = soup.find_all("title")
         pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
-        expect = re.findall(pattern, title_lx[0].text)[0]
+        expect = Username(re.findall(pattern, title_lx[0].text)[0])
         actual = rp._get_username()
         self.assertEqual(expect, actual)
 
@@ -211,7 +216,7 @@ class TestRSSParser(unittest.TestCase):
         rp = RSSParser(mylist_url, soup)
 
         creator_lx = soup.find_all("dc:creator")
-        expect = creator_lx[0].text
+        expect = Username(creator_lx[0].text)
         actual = rp._get_username()
         self.assertEqual(expect, actual)
 
@@ -227,8 +232,8 @@ class TestRSSParser(unittest.TestCase):
         rp = RSSParser(mylist_url, soup)
 
         username = rp._get_username()
-        showname = f"{username}さんの投稿動画"
-        myshowname = "投稿動画"
+        myshowname = Myshowname("投稿動画")
+        showname = Showname.create(username, None)
         expect = (showname, myshowname)
         actual = rp._get_showname_myshowname()
         self.assertEqual(expect, actual)
@@ -244,8 +249,11 @@ class TestRSSParser(unittest.TestCase):
         username = rp._get_username()
         title_lx = soup.find_all("title")
         pattern = "^マイリスト (.*)‐ニコニコ動画$"
-        myshowname = re.findall(pattern, title_lx[0].text)[0]
-        showname = f"「{myshowname}」-{username}さんのマイリスト"
+        
+        myshowname = Myshowname("投稿動画")
+
+        myshowname = Myshowname(re.findall(pattern, title_lx[0].text)[0])
+        showname = Showname.create(username, myshowname)
         expect = (showname, myshowname)
         actual = rp._get_showname_myshowname()
         self.assertEqual(expect, actual)
@@ -268,22 +276,22 @@ class TestRSSParser(unittest.TestCase):
 
                 title_lx = soup.find_all("title")
                 pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
-                username = re.findall(pattern, title_lx[0].text)[0]
+                username = Username(re.findall(pattern, title_lx[0].text)[0])
 
-                showname = f"{username}さんの投稿動画"
-                myshowname = "投稿動画"
+                myshowname = Myshowname("投稿動画")
+                showname = Showname.create(username, None)
             elif MylistURL.is_valid(url):
                 mylist_url = MylistURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid
 
                 creator_lx = soup.find_all("dc:creator")
-                username = creator_lx[0].text
+                username = Username(creator_lx[0].text)
 
                 title_lx = soup.find_all("title")
                 pattern = "^マイリスト (.*)‐ニコニコ動画$"
-                myshowname = re.findall(pattern, title_lx[0].text)[0]
-                showname = f"「{myshowname}」-{username}さんのマイリスト"
+                myshowname = Myshowname(re.findall(pattern, title_lx[0].text)[0])
+                showname = Showname.create(username, myshowname)
 
             video_id_list = []
             title_list = []
@@ -297,6 +305,11 @@ class TestRSSParser(unittest.TestCase):
                 registered_at_list.append(iteminfo.registered_at)
                 video_url_list.append(iteminfo.video_url)
 
+            video_id_list = VideoidList.create(video_id_list)
+            title_list = TitleList.create(title_list)
+            registered_at_list = RegisteredAtList.create(registered_at_list)
+            video_url_list = VideoURLList.create(video_url_list)
+
             num = len(title_list)
             res = {
                 "no": list(range(1, num + 1)),               # No. [1, ..., len()-1]
@@ -304,7 +317,7 @@ class TestRSSParser(unittest.TestCase):
                 "mylistid": mylistid,                        # マイリストID 12345678
                 "showname": showname,                        # マイリスト表示名 「投稿者1さんの投稿動画」
                 "myshowname": myshowname,                    # マイリスト名 「投稿動画」
-                "mylist_url": mylist_url.non_query_url,      # マイリストURL https://www.nicovideo.jp/user/11111111/video
+                "mylist_url": mylist_url,                    # マイリストURL https://www.nicovideo.jp/user/11111111/video
                 "video_id_list": video_id_list,              # 動画IDリスト [sm12345678]
                 "title_list": title_list,                    # 動画タイトルリスト [テスト動画]
                 "registered_at_list": registered_at_list,    # 登録日時リスト [%Y-%m-%d %H:%M:%S]

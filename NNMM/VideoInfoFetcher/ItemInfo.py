@@ -18,7 +18,7 @@ class ItemInfo():
 
     def __post_init__(self):
         self._is_valid()
-        object.__setattr__(self, "video_id", Videoid(self.video_url.video_id))
+        object.__setattr__(self, "video_id", self.video_url.video_id)
         pass
 
     def _is_valid(self) -> bool | TypeError | ValueError:
