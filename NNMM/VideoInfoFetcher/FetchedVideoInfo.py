@@ -18,7 +18,7 @@ from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 
-@dataclass
+@dataclass(frozen=True)
 class FetchedVideoInfo():
     # table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
     # table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
@@ -41,10 +41,7 @@ class FetchedVideoInfo():
 
     def __post_init__(self):
         self._is_valid()
-
-        # result_dictを作成する
-        self.result_dict = self._make_result_dict()
-        pass
+        object.__setattr__(self, "result_dict", self._make_result_dict())
 
     def _is_valid(self) -> bool | TypeError | ValueError:
         """バリデーション
@@ -85,7 +82,6 @@ class FetchedVideoInfo():
                     len(self.video_url_list) == num,
                     len(self.username_list) == num]):
             raise ValueError("There are different size (*_list).")
-
         return True
 
     def _make_result_dict(self) -> list[dict]:
