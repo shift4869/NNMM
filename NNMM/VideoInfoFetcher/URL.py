@@ -11,7 +11,7 @@ class URL():
 
     def __init__(self, url: "str | URL") -> None:
         if isinstance(url, URL):
-            url = url.url
+            url = url.original_url
 
         if not self.is_valid(url):
             raise ValueError("args is not URL string.")
@@ -34,10 +34,10 @@ if __name__ == "__main__":
         "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
         "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト
         "https://www.nicovideo.jp/user/37896001/video?ref=pc_mypage_nicorepo",  # 投稿動画(クエリつき)
-        "https://不正なURLアドレス/user/6063658/mylist/72036443",  # 不正なURLアドレス
+        # "https://不正なURLアドレス/user/6063658/mylist/72036443",  # 不正なURLアドレス
     ]
 
     for url in urls:
         u = URL(url)
-        print(u)
+        print(u.non_query_url)
         print(u.original_url)

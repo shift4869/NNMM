@@ -7,7 +7,7 @@ from NNMM.VideoInfoFetcher.URL import URL
 from NNMM.VideoInfoFetcher.Userid import Userid
 
 
-@dataclass
+@dataclass(frozen=True)
 class UploadedURL():
     url: URL
 
@@ -50,11 +50,11 @@ class UploadedURL():
         return Mylistid("")  # 投稿動画の場合、マイリストIDは空文字列
 
     @classmethod
-    def create(cls, url: str) -> "UploadedURL":
+    def create(cls, url: str | URL) -> "UploadedURL":
         return cls(URL(url))
 
     @classmethod
-    def is_valid(cls, url: str) -> bool:
+    def is_valid(cls, url: str | URL) -> bool:
         non_query_url = URL(url).non_query_url
         return re.search(UploadedURL.UPLOADED_URL_PATTERN, non_query_url) is not None
 

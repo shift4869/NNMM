@@ -5,7 +5,7 @@ from typing import Iterable
 from NNMM.VideoInfoFetcher.Username import Username
 
 
-@dataclass
+@dataclass(frozen=True)
 class UsernameList(Iterable):
     _list: list[Username]
 
@@ -24,6 +24,8 @@ class UsernameList(Iterable):
 
     @classmethod
     def create(cls, username_list: list[Username] | list[str]) -> "UsernameList":
+        if not isinstance(username_list, list):
+            raise TypeError("Args is not list.")
         if not username_list:
             return cls([])
         if isinstance(username_list[0], Username):
@@ -35,9 +37,9 @@ class UsernameList(Iterable):
 
 if __name__ == "__main__":
     NUM = 5
-    base_url = "作成者{}"
-    urls = [base_url.format(i) for i in range(1, NUM + 1)]
+    base_name = "作成者{}"
+    names = [base_name.format(i) for i in range(1, NUM + 1)]
 
-    username_list = UsernameList.create(urls)
+    username_list = UsernameList.create(names)
     for username in username_list:
         print(username)

@@ -30,6 +30,7 @@ class TestURL(unittest.TestCase):
         urls = self._get_url_set()
         for original_url in urls:
             url = URL(original_url)
+            url_in_url = URL(url)
 
             non_query_url = urllib.parse.urlunparse(
                 urllib.parse.urlparse(original_url)._replace(query=None)
@@ -49,7 +50,7 @@ class TestURL(unittest.TestCase):
             url = URL(original_url)
 
     def test_is_valid(self):
-        """_is_valid のテスト
+        """is_valid のテスト
         """
         original_url = self._get_url_set()[0]
         actual = URL.is_valid(original_url)

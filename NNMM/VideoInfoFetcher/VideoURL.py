@@ -3,18 +3,16 @@ import re
 from dataclasses import dataclass
 
 from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.Videoid import Videoid
 
 
-@dataclass
+@dataclass(frozen=True)
 class VideoURL():
     url: URL
 
     # 対象URLのパターン
     VIDEO_URL_PATTERN = r"^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
     VIDEO_ID_PATTERN = r"sm[0-9]"
-
-    # RSSリクエストURLサフィックス
-    RSS_URL_SUFFIX = "?rss=2.0"
 
     def __post_init__(self) -> None:
         non_query_url = self.url.non_query_url
@@ -42,14 +40,14 @@ class VideoURL():
     def video_id(self):
         video_url = self.url.non_query_url
         video_id = re.findall(VideoURL.VIDEO_URL_PATTERN, video_url)[0]
-        return video_id
+        return Videoid(video_id)
 
     @classmethod
-    def create(cls, url: str) -> "VideoURL":
+    def create(cls, url: str | URL) -> "VideoURL":
         return cls(URL(url))
 
     @classmethod
-    def is_valid(cls, url: str) -> bool:
+    def is_valid(cls, url: str | URL) -> bool:
         # video_url の形として正しいか
         non_query_url = URL(url).non_query_url
         if re.search(VideoURL.VIDEO_URL_PATTERN, non_query_url) is None:

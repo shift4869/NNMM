@@ -28,6 +28,8 @@ class VideoURLList(Iterable):
 
     @classmethod
     def create(cls, video_url_list: list[VideoURL] | list[str]) -> "VideoURLList":
+        if not isinstance(video_url_list, list):
+            raise TypeError("Args is not list.")
         if not video_url_list:
             return cls([])
         if isinstance(video_url_list[0], VideoURL):

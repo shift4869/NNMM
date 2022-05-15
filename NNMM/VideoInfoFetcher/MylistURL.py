@@ -7,7 +7,7 @@ from NNMM.VideoInfoFetcher.URL import URL
 from NNMM.VideoInfoFetcher.Userid import Userid
 
 
-@dataclass
+@dataclass(frozen=True)
 class MylistURL():
     url: URL
 

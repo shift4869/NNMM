@@ -24,6 +24,8 @@ class TitleList(Iterable):
 
     @classmethod
     def create(cls, title_list: list[Title] | list[str]) -> "TitleList":
+        if not isinstance(title_list, list):
+            raise TypeError("Args is not list.")
         if not title_list:
             return cls([])
         if isinstance(title_list[0], Title):
@@ -35,8 +37,8 @@ class TitleList(Iterable):
 
 if __name__ == "__main__":
     NUM = 5
-    base_url = "動画タイトル{}"
-    titles = [base_url.format(i) for i in range(1, NUM + 1)]
+    base_title = "動画タイトル{}"
+    titles = [base_title.format(i) for i in range(1, NUM + 1)]
 
     title_list = TitleList.create([])
     title_list = TitleList.create(titles)

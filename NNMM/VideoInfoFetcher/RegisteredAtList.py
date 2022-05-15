@@ -5,7 +5,7 @@ from typing import Iterable
 from NNMM.VideoInfoFetcher.RegisteredAt import RegisteredAt
 
 
-@dataclass
+@dataclass(frozen=True)
 class RegisteredAtList(Iterable):
     _list: list[RegisteredAt]
 
@@ -26,6 +26,8 @@ class RegisteredAtList(Iterable):
 
     @classmethod
     def create(cls, registered_at_list: list[RegisteredAt] | list[str]) -> "RegisteredAtList":
+        if not isinstance(registered_at_list, list):
+            raise TypeError("Args is not list.")
         if not registered_at_list:
             return cls([])
         if isinstance(registered_at_list[0], RegisteredAt):
@@ -37,9 +39,9 @@ class RegisteredAtList(Iterable):
 
 if __name__ == "__main__":
     NUM = 5
-    base_url = "2022-05-12 00:01:0{}"
-    urls = [base_url.format(i) for i in range(1, NUM + 1)]
+    base_dt_str = "2022-05-12 00:01:0{}"
+    registered_ats = [base_dt_str.format(i) for i in range(1, NUM + 1)]
 
-    registered_at_list = RegisteredAtList.create(urls)
+    registered_at_list = RegisteredAtList.create(registered_ats)
     for dt_str in registered_at_list:
         print(dt_str)
