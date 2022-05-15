@@ -14,7 +14,7 @@ from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 
-@dataclass
+@dataclass(frozen=True)
 class FetchedPageVideoInfo():
     no: list[int]                         # No. [1, ..., len()-1]
     userid: Userid                        # ユーザーID 1234567
