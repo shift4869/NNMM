@@ -14,9 +14,7 @@ from NNMM.VideoInfoFetcher.Myshowname import Myshowname
 from NNMM.VideoInfoFetcher.RegisteredAtList import RegisteredAtList
 from NNMM.VideoInfoFetcher.Showname import Showname
 from NNMM.VideoInfoFetcher.TitleList import TitleList
-from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
 from NNMM.VideoInfoFetcher.Userid import Userid
-from NNMM.VideoInfoFetcher.UsernameList import UsernameList
 from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
