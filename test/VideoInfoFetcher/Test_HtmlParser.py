@@ -13,8 +13,8 @@ from datetime import datetime, timedelta
 import freezegun
 from requests_html import HTML
 
-from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.HtmlParser import HtmlParser
+from NNMM.VideoInfoFetcher.ValueObjects.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname
 from NNMM.VideoInfoFetcher.ValueObjects.RegisteredAt import RegisteredAt

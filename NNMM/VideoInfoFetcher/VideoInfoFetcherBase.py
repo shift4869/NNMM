@@ -14,7 +14,7 @@ from lxml.html.soupparser import fromstring as soup_parse
 from requests_html import AsyncHTMLSession, HTMLResponse
 
 from NNMM import ConfigMain
-from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
+from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.Title import Title
 from NNMM.VideoInfoFetcher.ValueObjects.TitleList import TitleList

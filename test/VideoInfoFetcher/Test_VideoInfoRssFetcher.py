@@ -20,8 +20,8 @@ from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
-from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
-from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
+from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo
+from NNMM.VideoInfoFetcher.ValueObjects.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname
 from NNMM.VideoInfoFetcher.ValueObjects.RegisteredAtList import RegisteredAtList

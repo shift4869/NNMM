@@ -7,7 +7,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedVideoInfo
+from NNMM.VideoInfoFetcher.ValueObjects.FetchedVideoInfo import FetchedVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.Mylistid import Mylistid
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname

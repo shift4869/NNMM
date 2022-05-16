@@ -147,8 +147,8 @@ class FetchedVideoInfo():
 
 
 if __name__ == "__main__":
-    from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
-    from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
+    from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo
+    from NNMM.VideoInfoFetcher.ValueObjects.FetchedPageVideoInfo import FetchedPageVideoInfo
 
     userid = Userid("1234567")
     mylistid = Mylistid("12345678")

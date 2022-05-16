@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from requests_html import HtmlElement
 
-from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
+from NNMM.VideoInfoFetcher.ValueObjects.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.Mylistid import Mylistid
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname
