@@ -11,16 +11,28 @@ import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from urllib.error import HTTPError
 from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
+from urllib.error import HTTPError
 
 from requests_html import AsyncHTMLSession, HTML
-from NNMM.VideoInfoFetcher.MylistURL import MylistURL
 
-from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.RegisteredAt import RegisteredAt
+from NNMM.VideoInfoFetcher.Title import Title
+from NNMM.VideoInfoFetcher.TitleList import TitleList
+from NNMM.VideoInfoFetcher.UploadedAt import UploadedAt
+from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
 from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
-from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
+from NNMM.VideoInfoFetcher.Userid import Userid
+from NNMM.VideoInfoFetcher.Username import Username
+from NNMM.VideoInfoFetcher.UsernameList import UsernameList
+from NNMM.VideoInfoFetcher.Videoid import Videoid
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType
+from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase
+from NNMM.VideoInfoFetcher.VideoURL import VideoURL
+from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 RSS_PATH = "./test/rss/"
 
@@ -57,7 +69,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         ]
         return url_info
 
-    def __GetMylistURLSet(self) -> list[str]:
+    def _get_mylist_url_set(self) -> list[str]:
         """mylist_urlセットを返す
 
         Notes:
@@ -72,10 +84,10 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         """
         return self._get_url_set()
 
-    def __GetVideoInfoSet(self, mylist_url: str) -> list[tuple[str, str, str]]:
+    def _get_videoinfo_set(self, mylist_url: str) -> list[tuple[str, str, str]]:
         """動画情報セットを返す
         """
-        mylist_url_info = self.__GetMylistURLSet()
+        mylist_url_info = self._get_mylist_url_set()
         m_range = {
             mylist_url_info[0]: range(1, 10),
             mylist_url_info[1]: range(1, 10),
@@ -85,20 +97,20 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         }.get(mylist_url, range(1, 10))
 
         pattern = r"https://www.nicovideo.jp/user/([0-9]{8})/.*"
-        userid = re.findall(pattern, mylist_url)[0]
-        n = userid[0]
+        userid = Userid(re.findall(pattern, mylist_url)[0])
+        n = userid.id[0]
 
         res = []
         src_df = "%Y-%m-%dT%H:%M:%S%z"
         dst_df = "%Y-%m-%d %H:%M:%S"
         for i in m_range:
-            video_id = f"sm{n}00000{i:02}"
-            video_info = self.__GetVideoInfo(video_id)
-            uploaded_at = datetime.strptime(video_info["uploaded_at"], src_df).strftime(dst_df)
+            video_id = Videoid(f"sm{n}00000{i:02}")
+            video_info = self._get_videoinfo(video_id.id)
+            uploaded_at = video_info["uploaded_at"]
 
-            rd = datetime.strptime(video_info["uploaded_at"], src_df)
+            rd = datetime.strptime(uploaded_at.dt_str, dst_df)
             rd += timedelta(minutes=1)
-            registered_at = rd.strftime(dst_df)
+            registered_at = RegisteredAt(rd.strftime(dst_df))
 
             video_info["uploaded_at"] = uploaded_at
             video_info["registered_at"] = registered_at
@@ -106,37 +118,41 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
         return res
 
-    def __GetVideoInfo(self, video_id: str) -> list[tuple[str, str, str]]:
+    def _get_videoinfo(self, video_id: str) -> list[tuple[str, str, str]]:
         """動画情報を返す
         """
         # video_idのパターンはsm{投稿者id}00000{動画識別2桁}
         pattern = r"sm([0-9]{1})00000([0-9]{2})"
         n, m = re.findall(pattern, video_id)[0]
         title = f"動画タイトル{n}_{m}"
-        uploaded_at = f"2022-04-29T0{n}:{m}:00+09:00"
+        uploaded_at = f"2022-04-29 0{n}:{m}:00"
         video_url = "https://www.nicovideo.jp/watch/" + video_id
         user_id = n * 8
         username = f"動画投稿者{n}"
 
         res = {
-            "video_id": video_id,         # 動画ID [sm12345678]
-            "title": title,               # 動画タイトル [テスト動画]
-            "uploaded_at": uploaded_at,   # 投稿日時 [%Y-%m-%d %H:%M:%S]
-            "video_url": video_url,       # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
-            "user_id": user_id,           # 投稿者id [投稿者1]
-            "username": username,         # 投稿者 [投稿者1]
+            "video_id": Videoid(video_id),            # 動画ID [sm12345678]
+            "title": Title(title),                    # 動画タイトル [テスト動画]
+            "uploaded_at": UploadedAt(uploaded_at),   # 投稿日時 [%Y-%m-%d %H:%M:%S]
+            "video_url": VideoURL.create(video_url),  # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
+            "user_id": Userid(user_id),               # 投稿者id [投稿者1]
+            "username": Username(username),           # 投稿者 [投稿者1]
         }
         return res
 
-    def __GetXMLFromAPI(self, video_id: str) -> str:
+    def _get_xml_from_api(self, video_id: str) -> str:
         """APIから返ってくる動画情報セットxmlを返す
         """
-        video_info = self.__GetVideoInfo(video_id)
-        title = video_info.get("title")
-        first_retrieve = video_info.get("uploaded_at")
-        watch_url = video_info.get("video_url")
-        user_id = video_info.get("user_id")
-        user_nickname = video_info.get("username")
+        video_info = self._get_videoinfo(video_id)
+        title = video_info.get("title").name
+        watch_url = video_info.get("video_url").original_url
+        user_id = video_info.get("user_id").id
+        user_nickname = video_info.get("username").name
+
+        src_df = "%Y-%m-%dT%H:%M:%S+0900"
+        dst_df = "%Y-%m-%d %H:%M:%S"
+        first_retrieve = video_info.get("uploaded_at").dt_str
+        first_retrieve = datetime.strptime(first_retrieve, dst_df).strftime(src_df)
 
         xml = """<?xml version="1.0" encoding="utf-8"?>
                     <nicovideo_thumb_response status="ok">
@@ -152,18 +168,18 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
         return xml
 
-    def __MakeAPIResponseMock(self, request_url, status_code: int = 200, error_target: str = ""):
+    def _make_api_response_mock(self, request_url, status_code: int = 200, error_target: str = ""):
         mock = MagicMock()
 
         pattern = "^https://ext.nicovideo.jp/api/getthumbinfo/(sm[0-9]+)$"
         video_id = re.findall(pattern, request_url)[0]
-        xml = self.__GetXMLFromAPI(video_id)
+        xml = self._get_xml_from_api(video_id)
         html = HTML(html=xml)
 
         mock.html = html
         return mock
 
-    def __MakeAPISessionResponseMock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
+    def _make_api_session_response_mock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
         async def ReturnSessionResponse(request_url: str,
                                         do_rendering: bool,
                                         parse_features: str = "html.parser",
@@ -174,7 +190,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             if status_code == 503:
                 return (ar_session, None)
 
-            r_response = self.__MakeAPIResponseMock(request_url, status_code, error_target)
+            r_response = self._make_api_response_mock(request_url, status_code, error_target)
             return (ar_session, r_response)
 
         mock.side_effect = ReturnSessionResponse
@@ -336,11 +352,11 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             mockapises = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.VideoInfoFetcherBase._get_session_response"))
 
             # 正常系
-            mockapises = self.__MakeAPISessionResponseMock(mockapises, 200)
+            mockapises = self._make_api_session_response_mock(mockapises, 200)
 
             expect = {}
             mylist_url = self._get_url_set()[0]
-            video_info_list = self.__GetVideoInfoSet(mylist_url)
+            video_info_list = self._get_videoinfo_set(mylist_url)
             video_id_list = [video_info["video_id"] for video_info in video_info_list]
             title_list = [video_info["title"] for video_info in video_info_list]
             uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
@@ -348,6 +364,12 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             username_list = [video_info["username"] for video_info in video_info_list]
             num = len(video_id_list)
 
+            video_id_list = VideoidList.create(video_id_list)
+            title_list = TitleList.create(title_list)
+            uploaded_at_list = UploadedAtList.create(uploaded_at_list)
+            video_url_list = VideoURLList.create(video_url_list)
+            username_list = UsernameList.create(username_list)
+            
             expect = {
                 "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
                 "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
@@ -364,7 +386,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             # 異常系
             # _get_session_response に失敗
-            mockapises = self.__MakeAPISessionResponseMock(mockapises, 503)
+            mockapises = self._make_api_session_response_mock(mockapises, 503)
             loop = asyncio.new_event_loop()
             with self.assertRaises(ValueError):
                 actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
