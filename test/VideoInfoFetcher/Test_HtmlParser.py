@@ -9,16 +9,28 @@ import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from mock import MagicMock, AsyncMock, patch, call
 
 import freezegun
 from requests_html import HTML
-from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 
+from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.HtmlParser import HtmlParser
 from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.Myshowname import Myshowname
+from NNMM.VideoInfoFetcher.RegisteredAt import RegisteredAt
+from NNMM.VideoInfoFetcher.RegisteredAtList import RegisteredAtList
+from NNMM.VideoInfoFetcher.Showname import Showname
+from NNMM.VideoInfoFetcher.Title import Title
+from NNMM.VideoInfoFetcher.TitleList import TitleList
+from NNMM.VideoInfoFetcher.UploadedAt import UploadedAt
+from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
 from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
 from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.Username import Username
+from NNMM.VideoInfoFetcher.Videoid import Videoid
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.VideoURL import VideoURL
+from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 
 class TestHtmlParser(unittest.TestCase):
@@ -36,13 +48,13 @@ class TestHtmlParser(unittest.TestCase):
 
     def _get_video_info(self, n: int) -> dict:
         d = {
-            "video_id": f"sm1000000{n}",
-            "video_url": "https://www.nicovideo.jp/watch/" + f"sm1000000{n}",
-            "title": f"動画タイトル_{n}",
-            "username": f"投稿者{n}",
-            "uploaded_at": f"2022/05/08 00:0{n}",
-            "registered_at": f"2022/05/08 01:0{n}",
-            "myshowname": f"マイリスト名{n}",
+            "video_id": Videoid(f"sm1000000{n}"),
+            "video_url": VideoURL.create("https://www.nicovideo.jp/watch/" + f"sm1000000{n}"),
+            "title": Title(f"動画タイトル_{n}"),
+            "username": Username(f"投稿者{n}"),
+            "uploaded_at": UploadedAt(f"2022-05-08 00:0{n}:00"),
+            "registered_at": RegisteredAt(f"2022-05-08 01:0{n}:00"),
+            "myshowname": Myshowname(f"マイリスト名{n}"),
         }
         return d
 
@@ -73,12 +85,12 @@ class TestHtmlParser(unittest.TestCase):
             if error_target != "":
                 d[error_target] = error_value
 
-            video_url = d["video_url"]
-            title = d["title"]
-            username = d["username"]
-            uploaded_at = d["uploaded_at"]
-            registered_at = d["registered_at"]
-            myshowname = d["myshowname"]
+            video_url = d["video_url"].non_query_url
+            title = d["title"].name
+            username = d["username"].name
+            uploaded_at = datetime.strptime(d["uploaded_at"].dt_str, DESTINATION_DATETIME_FORMAT).strftime(SOURCE_DATETIME_FORMAT)
+            registered_at = datetime.strptime(d["registered_at"].dt_str, DESTINATION_DATETIME_FORMAT).strftime(SOURCE_DATETIME_FORMAT)
+            myshowname = d["myshowname"].name
 
             html += "<div>"
             if not error_del and error_target != "video_url":
@@ -164,11 +176,11 @@ class TestHtmlParser(unittest.TestCase):
         html = self._make_html()
         lxml = HTML(html=html)
         hp = HtmlParser(url, lxml.lxml)
-        self.assertEqual(url, hp._get_mylist_url())
+        self.assertEqual(UploadedURL.create(url), hp._get_mylist_url())
 
         url = self._get_url_set()[2]
         hp = HtmlParser(url, lxml.lxml)
-        self.assertEqual(url, hp._get_mylist_url())
+        self.assertEqual(MylistURL.create(url), hp._get_mylist_url())
 
     def test_get_userid_mylistid(self):
         """_get_userid_mylistid のテスト
@@ -199,14 +211,14 @@ class TestHtmlParser(unittest.TestCase):
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         video_url_list = []
-        pattern = FetchedPageVideoInfo.VIDEO_URL_PATTERN
+        pattern = VideoURL.VIDEO_URL_PATTERN
         video_link_lx = lxml.lxml.find_class(HtmlParser.TCT_VIDEO_URL)
         for video_link in video_link_lx:
             a = video_link.find("a")
             if re.search(pattern, a.attrib["href"]):
                 video_url_list.append(a.attrib["href"])
 
-        expect = video_url_list
+        expect = VideoURLList.create(video_url_list)
         actual = hp._get_video_url_list()
         self.assertEqual(expect, actual)
 
@@ -221,14 +233,14 @@ class TestHtmlParser(unittest.TestCase):
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         video_url_list = []
-        pattern = FetchedPageVideoInfo.VIDEO_URL_PATTERN
+        pattern = VideoURL.VIDEO_URL_PATTERN
         video_link_lx = lxml.lxml.find_class(HtmlParser.TCT_VIDEO_URL)
         for video_link in video_link_lx:
             a = video_link.find("a")
             if re.search(pattern, a.attrib["href"]):
                 video_url_list.append(a.attrib["href"])
 
-        expect = [re.findall(pattern, s)[0] for s in video_url_list]
+        expect = VideoidList.create([re.findall(pattern, s)[0] for s in video_url_list])
         actual = hp._get_video_id_list()
         self.assertEqual(expect, actual)
 
@@ -245,7 +257,7 @@ class TestHtmlParser(unittest.TestCase):
         title_lx = lxml.lxml.find_class(HtmlParser.TCT_TITLE)
         title_list = [str(t.text) for t in title_lx]
 
-        expect = title_list
+        expect = TitleList.create(title_list)
         actual = hp._get_title_list()
         self.assertEqual(expect, actual)
 
@@ -266,7 +278,7 @@ class TestHtmlParser(unittest.TestCase):
             dst = hp._translate_pagedate(dt_str)
             uploaded_at_list.append(dst)
 
-        expect = uploaded_at_list
+        expect = UploadedAtList.create(uploaded_at_list)
         actual = hp._get_uploaded_at_list()
         self.assertEqual(expect, actual)
 
@@ -287,7 +299,7 @@ class TestHtmlParser(unittest.TestCase):
             dst = hp._translate_pagedate(dt_str)
             registered_at_list.append(dst)
 
-        expect = registered_at_list
+        expect = RegisteredAtList.create(registered_at_list)
         actual = hp._get_registered_at_list()
         self.assertEqual(expect, actual)
 
@@ -302,7 +314,7 @@ class TestHtmlParser(unittest.TestCase):
         hp = HtmlParser(mylist_url, lxml.lxml)
 
         username_lx = hp.lxml.find_class(HtmlParser.TCT_USERNAME)
-        username = username_lx[0].text
+        username = Username(username_lx[0].text)
 
         expect = username
         actual = hp._get_username()
@@ -320,15 +332,14 @@ class TestHtmlParser(unittest.TestCase):
             username = hp._get_username()
 
             if UploadedURL.is_valid(url):
-                showname = f"{username}さんの投稿動画"
-                myshowname = "投稿動画"
+                myshowname = Myshowname("投稿動画")
+                showname = Showname.create(username, None)
             elif MylistURL.is_valid(url):
                 myshowname_lx = lxml.lxml.find_class(HtmlParser.TCT_MYSHOWNAME)
-                myshowname = myshowname_lx[0].text
-                showname = f"「{myshowname}」-{username}さんのマイリスト"
+                myshowname = Myshowname(myshowname_lx[0].text)
+                showname = Showname.create(username, myshowname)
 
             expect = (showname, myshowname)
-
             actual = hp._get_showname_myshowname()
             self.assertEqual(expect, actual)
 
@@ -341,16 +352,16 @@ class TestHtmlParser(unittest.TestCase):
             d = self._get_video_info(i)
             video_info_list.append(d)
 
-        def dt(dt_str):
-            dst_date = datetime.strptime(dt_str, HtmlParser.SOURCE_DATETIME_FORMAT)
-            return dst_date.strftime(HtmlParser.DESTINATION_DATETIME_FORMAT)
-
         video_id_list = [t["video_id"] for t in video_info_list]
         title_list = [t["title"] for t in video_info_list]
-        uploaded_at_list = [dt(t["uploaded_at"]) for t in video_info_list]
-        registered_at_list = [dt(t["registered_at"]) for t in video_info_list]
+        uploaded_at_strs = [t["uploaded_at"].dt_str for t in video_info_list]
+        registered_at_strs = [t["registered_at"].dt_str for t in video_info_list]
         video_url_list = [t["video_url"] for t in video_info_list]
         username_list = [t["username"] for t in video_info_list]
+
+        video_id_list = VideoidList.create(video_id_list)
+        title_list = TitleList.create(title_list)
+        video_url_list = VideoURLList.create(video_url_list)
         num = len(title_list)
 
         loop = asyncio.new_event_loop()
@@ -365,17 +376,17 @@ class TestHtmlParser(unittest.TestCase):
                 mylist_url = UploadedURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid  # 投稿動画の場合、マイリストIDは空文字列
-                showname = f"{username}さんの投稿動画"
-                myshowname = "投稿動画"
-                e_registered_at_list = list(uploaded_at_list)
+                myshowname = Myshowname("投稿動画")
+                showname = Showname.create(username, None)
+                registered_at_list = RegisteredAtList.create(uploaded_at_strs)
             elif MylistURL.is_valid(url):
                 mylist_url = MylistURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid
                 myshowname_lx = lxml.lxml.find_class(HtmlParser.TCT_MYSHOWNAME)
-                myshowname = myshowname_lx[0].text
-                showname = f"「{myshowname}」-{username}さんのマイリスト"
-                e_registered_at_list = list(registered_at_list)
+                myshowname = Myshowname(myshowname_lx[0].text)
+                showname = Showname.create(username, myshowname)
+                registered_at_list = RegisteredAtList.create(registered_at_strs)
 
             res = {
                 "no": list(range(1, num + 1)),               # No. [1, ..., len()-1]
@@ -383,10 +394,10 @@ class TestHtmlParser(unittest.TestCase):
                 "mylistid": mylistid,                        # マイリストID 12345678
                 "showname": showname,                        # マイリスト表示名 「投稿者1さんの投稿動画」
                 "myshowname": myshowname,                    # マイリスト名 「投稿動画」
-                "mylist_url": mylist_url.mylist_url,         # マイリストURL https://www.nicovideo.jp/user/11111111/video
+                "mylist_url": mylist_url,                    # マイリストURL https://www.nicovideo.jp/user/11111111/video
                 "video_id_list": video_id_list,              # 動画IDリスト [sm12345678]
                 "title_list": title_list,                    # 動画タイトルリスト [テスト動画]
-                "registered_at_list": e_registered_at_list,  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+                "registered_at_list": registered_at_list,    # 登録日時リスト [%Y-%m-%d %H:%M:%S]
                 "video_url_list": video_url_list,            # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
             }
             expect = FetchedPageVideoInfo(**res)
