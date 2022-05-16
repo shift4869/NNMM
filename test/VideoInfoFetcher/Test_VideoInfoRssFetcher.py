@@ -20,12 +20,21 @@ from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
-from NNMM.VideoInfoFetcher import VideoInfoRssFetcher
 from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.Myshowname import Myshowname
+from NNMM.VideoInfoFetcher.RegisteredAtList import RegisteredAtList
+from NNMM.VideoInfoFetcher.Showname import Showname
+from NNMM.VideoInfoFetcher.TitleList import TitleList
+from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
 from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.Username import Username
+from NNMM.VideoInfoFetcher.UsernameList import UsernameList
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType
+from NNMM.VideoInfoFetcher.VideoInfoRssFetcher import VideoInfoRssFetcher
+from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 RSS_PATH = "./test/rss/"
 
@@ -334,16 +343,21 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             mylist_url = UploadedURL.create(url)
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
-            username = mylist_info[2]
-            showname = f"{username}さんの投稿動画"
-            myshowname = "投稿動画"
+            username = Username(mylist_info[2])
+            myshowname = Myshowname("投稿動画")
+            showname = Showname.create(username, None)
         elif MylistURL.is_valid(url):
             mylist_url = MylistURL.create(url)
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
-            username = mylist_info[2]
-            myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
-            showname = f"「{myshowname}」-{username}さんのマイリスト"
+            username = Username(mylist_info[2])
+            myshowname = Myshowname(mylist_info[0].replace("‐ニコニコ動画", ""))
+            showname = Showname.create(username, myshowname)
+
+        video_id_list = VideoidList.create(video_id_list)
+        title_list = TitleList.create(title_list)
+        registered_at_list = RegisteredAtList.create(registered_at_list)
+        video_url_list = VideoURLList.create(video_url_list)
 
         num = len(title_list)
         rss_result = {
@@ -352,7 +366,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             "mylistid": mylistid,                       # マイリストID 12345678
             "showname": showname,                       # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
             "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
-            "mylist_url": mylist_url.non_query_url,     # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
+            "mylist_url": mylist_url,                   # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
             "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
             "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
             "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
@@ -377,6 +391,12 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
         username_list = [video_info["username"] for video_info in video_info_list]
 
+        title_list = TitleList.create(title_list)
+        uploaded_at_list = UploadedAtList.create(uploaded_at_list)
+        video_id_list = VideoidList.create(video_id_list)
+        video_url_list = VideoURLList.create(video_url_list)
+        username_list = UsernameList.create(username_list)
+
         num = len(video_id_list)
         api_result = {
             "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
@@ -388,11 +408,11 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         }
 
         if kind == "TitleError":
-            api_result["title_list"] = [t + "_不正なタイトル名" for t in title_list]
+            api_result["title_list"] = TitleList([t.name + "_不正なタイトル名" for t in title_list])
         if kind == "VideoUrlError":
-            api_result["video_url_list"] = [v + "_不正なタイトル名" for v in video_url_list]
+            api_result["video_url_list"] = VideoURLList([v.non_query_url + "_不正なタイトル名" for v in video_url_list])
         if kind == "UsernameError":
-            api_result["username_list"] = []
+            api_result["username_list"] = UsernameList([])
 
         def return_api(v):
             if kind == "ValueError":
@@ -447,7 +467,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         source_type = SourceType.RSS
         urls = self._get_url_set()
         for url in urls:
-            virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+            virf = VideoInfoRssFetcher(url)
 
             if UploadedURL.is_valid(url):
                 expect_mylist_url = UploadedURL.create(url)
@@ -474,7 +494,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             xml = self._get_xml_from_rss(url)
             soup = BeautifulSoup(xml, "lxml-xml")
 
-            virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+            virf = VideoInfoRssFetcher(url)
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(virf._analysis_rss(soup))
             self.assertEqual(expect, actual)
@@ -485,7 +505,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             r.parse.side_effect = lambda: expect
             mockps.return_value = r
             with self.assertRaises(ValueError):
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(virf._analysis_rss(soup))
 
@@ -505,7 +525,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 mocksoup = self._make_analysis_rss_mock(mocksoup, url)
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url)
 
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 loop = asyncio.new_event_loop()
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
                 expect = self._make_expect_result(url)
@@ -516,14 +536,14 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             with self.assertRaises(ValueError):
                 mockses = self._make_session_response_mock(mockses, 503)
                 url = urls[0]
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
 
             # session.getが例外送出
             with self.assertRaises(ValueError):
                 mockses = self._make_session_response_mock(mockses, 503, "ValueError")
                 url = urls[0]
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
 
             # config取得に失敗
@@ -533,7 +553,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     mockses = self._make_session_response_mock(mockses, 200)
                     url = urls[0]
-                    virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                    virf = VideoInfoRssFetcher(url)
                     actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
 
             # rssからの動画情報収集に失敗
@@ -541,7 +561,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 mocksoup = self._make_analysis_rss_mock(mocksoup, url, "ValueError")
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url)
                 url = urls[0]
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
 
             # apiからの動画情報収集に失敗
@@ -549,28 +569,28 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 mocksoup = self._make_analysis_rss_mock(mocksoup, url)
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url, "ValueError")
                 url = urls[0]
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
 
             # 取得したtitleの情報がrssとapiで異なる
             with self.assertRaises(ValueError):
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url, "TitleError")
                 url = urls[0]
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
 
             # 取得したvideo_urlの情報がrssとapiで異なる
             with self.assertRaises(ValueError):
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url, "VideoUrlError")
                 url = urls[0]
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
 
             # username_listの大きさが不正
             with self.assertRaises(ValueError):
                 mockhapi = self._make_get_videoinfo_from_api_mock(mockhapi, url, "UsernameError")
                 url = urls[0]
-                virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+                virf = VideoInfoRssFetcher(url)
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
 
             # TODO::結合時のエラーを模倣する
@@ -585,7 +605,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             mockfvft.side_effect = lambda: str(expect)
 
             url = self._get_url_set()[0]
-            virf = VideoInfoRssFetcher.VideoInfoRssFetcher(url)
+            virf = VideoInfoRssFetcher(url)
             loop = asyncio.new_event_loop()
             actual = loop.run_until_complete(virf._fetch_videoinfo())
             self.assertEqual(expect, actual)

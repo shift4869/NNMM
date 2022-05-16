@@ -129,7 +129,6 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
 
         # 結合
         video_d = FetchedVideoInfo.merge(soup_d, api_d)
-
         return video_d.result
 
     async def _fetch_videoinfo(self) -> list[dict]:
