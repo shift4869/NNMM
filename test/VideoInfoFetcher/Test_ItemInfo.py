@@ -7,6 +7,9 @@ import sys
 import unittest
 
 from NNMM.VideoInfoFetcher.ItemInfo import ItemInfo
+from NNMM.VideoInfoFetcher.RegisteredAt import RegisteredAt
+from NNMM.VideoInfoFetcher.Title import Title
+from NNMM.VideoInfoFetcher.Videoid import Videoid
 from NNMM.VideoInfoFetcher.VideoURL import VideoURL
 
 
@@ -17,15 +20,16 @@ class TestItemInfo(unittest.TestCase):
         NUM = 5
         res = []
         for i in range(NUM):
-            video_id = f"sm1000000{i}"
-            title = f"動画タイトル_{i}"
-            registered_at = f"2022-05-08 00:01:0{i}"
-            video_url = VideoURL.create("https://www.nicovideo.jp/watch/" + video_id)
+            video_id = Videoid(f"sm1000000{i}")
+            title = Title(f"動画タイトル_{i}")
+            registered_at = RegisteredAt(f"2022-05-08 00:01:0{i}")
+            video_url = VideoURL.create("https://www.nicovideo.jp/watch/" + video_id.id)
 
             r = {
+                # "video_id": video_id,
                 "title": title,
                 "registered_at": registered_at,
-                "_video_url": video_url,
+                "video_url": video_url,
             }
 
             if error_target != "":
@@ -43,7 +47,8 @@ class TestItemInfo(unittest.TestCase):
             r = ItemInfo(**item)
             self.assertEqual(item.get("title"), r.title)
             self.assertEqual(item.get("registered_at"), r.registered_at)
-            self.assertEqual(item.get("_video_url"), r._video_url)
+            self.assertEqual(item.get("video_url"), r.video_url)
+            self.assertEqual(item.get("video_url").video_id, r.video_id)
 
     def test_is_valid(self):
         """_is_valid のテスト
@@ -53,26 +58,13 @@ class TestItemInfo(unittest.TestCase):
         r = ItemInfo(**item)
         self.assertEqual(True, r._is_valid())
 
-        # 異常系
-        # title が空リスト
-        with self.assertRaises(TypeError):
-            item = self._make_iteminfo("title", [])[0]
-            r = ItemInfo(**item)
-
-        # registered_at が不正な文字列
-        with self.assertRaises(ValueError):
-            item = self._make_iteminfo("registered_at", "不正な登録日時")[0]
-            r = ItemInfo(**item)
-
     def test_to_dict(self):
         """to_dict のテスト
         """
         item = self._make_iteminfo()[0]
         r = ItemInfo(**item)
 
-        item["video_url"] = item["_video_url"].video_url
-        item["video_id"] = item["_video_url"].video_id
-        del item["_video_url"]
+        item["video_id"] = item["video_url"].video_id
         self.assertEqual(item, r.to_dict())
 
     def test_result(self):
@@ -81,9 +73,7 @@ class TestItemInfo(unittest.TestCase):
         item = self._make_iteminfo()[0]
         r = ItemInfo(**item)
 
-        item["video_url"] = item["_video_url"].video_url
-        item["video_id"] = item["_video_url"].video_id
-        del item["_video_url"]
+        item["video_id"] = item["video_url"].video_id
         self.assertEqual(item, r.result)
 
         self.assertEqual(r.result, r.to_dict())
