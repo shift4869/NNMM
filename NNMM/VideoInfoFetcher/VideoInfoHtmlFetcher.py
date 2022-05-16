@@ -11,8 +11,8 @@ from NNMM import ConfigMain
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedVideoInfo
 from NNMM.VideoInfoFetcher.HtmlParser import HtmlParser
-from NNMM.VideoInfoFetcher.MylistURL import MylistURL
-from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.ValueObjects.UploadedURL import UploadedURL
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
 
 

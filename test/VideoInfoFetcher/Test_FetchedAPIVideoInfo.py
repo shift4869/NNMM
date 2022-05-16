@@ -8,11 +8,11 @@ import unittest
 from dataclasses import FrozenInstanceError
 
 from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
-from NNMM.VideoInfoFetcher.TitleList import TitleList
-from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
-from NNMM.VideoInfoFetcher.UsernameList import UsernameList
-from NNMM.VideoInfoFetcher.VideoidList import VideoidList
-from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
+from NNMM.VideoInfoFetcher.ValueObjects.TitleList import TitleList
+from NNMM.VideoInfoFetcher.ValueObjects.UploadedAtList import UploadedAtList
+from NNMM.VideoInfoFetcher.ValueObjects.UsernameList import UsernameList
+from NNMM.VideoInfoFetcher.ValueObjects.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 
 
 class TestFetchedAPIVideoInfo(unittest.TestCase):

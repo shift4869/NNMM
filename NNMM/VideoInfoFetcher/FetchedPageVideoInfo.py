@@ -2,16 +2,16 @@
 from dataclasses import dataclass
 from pprint import pprint
 
-from NNMM.VideoInfoFetcher.Mylistid import Mylistid
-from NNMM.VideoInfoFetcher.MylistURL import MylistURL
-from NNMM.VideoInfoFetcher.Myshowname import Myshowname
-from NNMM.VideoInfoFetcher.RegisteredAtList import RegisteredAtList
-from NNMM.VideoInfoFetcher.Showname import Showname
-from NNMM.VideoInfoFetcher.TitleList import TitleList
-from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
-from NNMM.VideoInfoFetcher.Userid import Userid
-from NNMM.VideoInfoFetcher.VideoidList import VideoidList
-from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
+from NNMM.VideoInfoFetcher.ValueObjects.Mylistid import Mylistid
+from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname
+from NNMM.VideoInfoFetcher.ValueObjects.RegisteredAtList import RegisteredAtList
+from NNMM.VideoInfoFetcher.ValueObjects.Showname import Showname
+from NNMM.VideoInfoFetcher.ValueObjects.TitleList import TitleList
+from NNMM.VideoInfoFetcher.ValueObjects.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.ValueObjects.Userid import Userid
+from NNMM.VideoInfoFetcher.ValueObjects.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 
 
 @dataclass(frozen=True)

@@ -22,19 +22,19 @@ from requests_html import AsyncHTMLSession, HTML
 from NNMM import GuiFunction
 from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
-from NNMM.VideoInfoFetcher.MylistURL import MylistURL
-from NNMM.VideoInfoFetcher.Myshowname import Myshowname
-from NNMM.VideoInfoFetcher.RegisteredAtList import RegisteredAtList
-from NNMM.VideoInfoFetcher.Showname import Showname
-from NNMM.VideoInfoFetcher.TitleList import TitleList
-from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
-from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
-from NNMM.VideoInfoFetcher.Username import Username
-from NNMM.VideoInfoFetcher.UsernameList import UsernameList
-from NNMM.VideoInfoFetcher.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname
+from NNMM.VideoInfoFetcher.ValueObjects.RegisteredAtList import RegisteredAtList
+from NNMM.VideoInfoFetcher.ValueObjects.Showname import Showname
+from NNMM.VideoInfoFetcher.ValueObjects.TitleList import TitleList
+from NNMM.VideoInfoFetcher.ValueObjects.UploadedAtList import UploadedAtList
+from NNMM.VideoInfoFetcher.ValueObjects.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.ValueObjects.Username import Username
+from NNMM.VideoInfoFetcher.ValueObjects.UsernameList import UsernameList
+from NNMM.VideoInfoFetcher.ValueObjects.VideoidList import VideoidList
+from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType
 from NNMM.VideoInfoFetcher.VideoInfoRssFetcher import VideoInfoRssFetcher
-from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 RSS_PATH = "./test/rss/"
 
