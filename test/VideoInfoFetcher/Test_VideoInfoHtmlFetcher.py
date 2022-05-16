@@ -11,19 +11,33 @@ import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from mock import MagicMock, AsyncMock, patch, call
+from mock import MagicMock, AsyncMock, patch
 from pathlib import Path
 
-import freezegun
 from requests_html import AsyncHTMLSession, HTML
 
 from NNMM import GuiFunction
-from NNMM.VideoInfoFetcher.FetchedVideoInfo import FetchedAPIVideoInfo, FetchedPageVideoInfo
+from NNMM.VideoInfoFetcher.FetchedAPIVideoInfo import FetchedAPIVideoInfo
+from NNMM.VideoInfoFetcher.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.MylistURL import MylistURL
+from NNMM.VideoInfoFetcher.Myshowname import Myshowname
+from NNMM.VideoInfoFetcher.RegisteredAt import RegisteredAt
+from NNMM.VideoInfoFetcher.RegisteredAtList import RegisteredAtList
+from NNMM.VideoInfoFetcher.Showname import Showname
+from NNMM.VideoInfoFetcher.Title import Title
+from NNMM.VideoInfoFetcher.TitleList import TitleList
+from NNMM.VideoInfoFetcher.UploadedAt import UploadedAt
+from NNMM.VideoInfoFetcher.UploadedAtList import UploadedAtList
 from NNMM.VideoInfoFetcher.UploadedURL import UploadedURL
-from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
+from NNMM.VideoInfoFetcher.Userid import Userid
+from NNMM.VideoInfoFetcher.Username import Username
+from NNMM.VideoInfoFetcher.UsernameList import UsernameList
+from NNMM.VideoInfoFetcher.Videoid import Videoid
+from NNMM.VideoInfoFetcher.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType
-from NNMM.VideoInfoFetcher.URL import URL
+from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
+from NNMM.VideoInfoFetcher.VideoURL import VideoURL
+from NNMM.VideoInfoFetcher.VideoURLList import VideoURLList
 
 RSS_PATH = "./test/rss/"
 
@@ -111,11 +125,11 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         for i in m_range:
             video_id = f"sm{n}00000{i:02}"
             video_info = self._get_video_info(video_id)
-            uploaded_at = datetime.strptime(video_info["uploaded_at"], src_df).strftime(dst_df)
+            uploaded_at = UploadedAt(video_info["uploaded_at"].dt_str)
 
-            rd = datetime.strptime(video_info["uploaded_at"], src_df)
+            rd = datetime.strptime(video_info["uploaded_at"].dt_str, dst_df)
             rd += timedelta(minutes=1)
-            registered_at = rd.strftime(dst_df)
+            registered_at = RegisteredAt(rd.strftime(dst_df))
 
             video_info["uploaded_at"] = uploaded_at
             video_info["registered_at"] = registered_at
@@ -130,18 +144,18 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         pattern = r"sm([0-9]{1})00000([0-9]{2})"
         n, m = re.findall(pattern, video_id)[0]
         title = f"動画タイトル{n}_{m}"
-        uploaded_at = f"2022-04-29T0{n}:{m}:00+09:00"
+        uploaded_at = f"2022-04-29 0{n}:{m}:00"
         video_url = "https://www.nicovideo.jp/watch/" + video_id
         user_id = n * 8
         username = f"動画投稿者{n}"
 
         res = {
-            "video_id": video_id,         # 動画ID [sm12345678]
-            "title": title,               # 動画タイトル [テスト動画]
-            "uploaded_at": uploaded_at,   # 投稿日時 [%Y-%m-%d %H:%M:%S]
-            "video_url": video_url,       # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
-            "user_id": user_id,           # 投稿者id [投稿者1]
-            "username": username,         # 投稿者 [投稿者1]
+            "video_id": Videoid(video_id),            # 動画ID [sm12345678]
+            "title": Title(title),                    # 動画タイトル [テスト動画]
+            "uploaded_at": UploadedAt(uploaded_at),   # 投稿日時 [%Y-%m-%d %H:%M:%S]
+            "video_url": VideoURL.create(video_url),  # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
+            "user_id": Userid(user_id),               # 投稿者id [投稿者1]
+            "username": Username(username),           # 投稿者 [投稿者1]
         }
         return res
 
@@ -261,8 +275,8 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         video_info_list = self._get_video_info_set(url)
         video_id_list = [video_info["video_id"] for video_info in video_info_list]
         title_list = [video_info["title"] for video_info in video_info_list]
-        uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
-        registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
+        uploaded_at_strs = [video_info["uploaded_at"].dt_str for video_info in video_info_list]
+        registered_at_strs = [video_info["registered_at"].dt_str for video_info in video_info_list]
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
         if UploadedURL.is_valid(url):
@@ -274,15 +288,21 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             # ユーザーID, マイリストID設定
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid  # 投稿動画の場合、マイリストIDは無し
-            username = mylist_info[2]
-            showname = f"{username}さんの投稿動画"
-            myshowname = "投稿動画"
+            username = Username(mylist_info[2])
+            myshowname = Myshowname("投稿動画")
+            showname = Showname.create(username, None)
+            registered_at_list = RegisteredAtList.create(uploaded_at_strs)
         elif url_type == "mylist":
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
-            username = mylist_info[2]
-            myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
-            showname = f"「{myshowname}」-{username}さんのマイリスト"
+            username = Username(mylist_info[2])
+            myshowname = Myshowname(mylist_info[0].replace("‐ニコニコ動画", ""))
+            showname = Showname.create(username, myshowname)
+            registered_at_list = RegisteredAtList.create(registered_at_strs)
+
+        video_id_list = VideoidList.create(video_id_list)
+        title_list = TitleList.create(title_list)
+        video_url_list = VideoURLList.create(video_url_list)
 
         num = len(title_list)
         html_result = {
@@ -291,7 +311,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             "mylistid": mylistid,                       # マイリストID 12345678
             "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
             "myshowname": myshowname,                   # マイリスト名 「投稿動画」
-            "mylist_url": mylist_url.non_query_url,     # マイリストURL https://www.nicovideo.jp/user/11111111/video
+            "mylist_url": mylist_url,                   # マイリストURL https://www.nicovideo.jp/user/11111111/video
             "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
             "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
             "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
@@ -317,6 +337,12 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
         username_list = [video_info["username"] for video_info in video_info_list]
 
+        title_list = TitleList.create(title_list)
+        uploaded_at_list = UploadedAtList.create(uploaded_at_list)
+        video_id_list = VideoidList.create(video_id_list)
+        video_url_list = VideoURLList.create(video_url_list)
+        username_list = UsernameList.create(username_list)
+
         num = len(video_id_list)
         api_result = {
             "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
@@ -328,11 +354,11 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         }
 
         if kind == "TitleError":
-            api_result["title_list"] = [t + "_不正なタイトル名" for t in title_list]
+            api_result["title_list"] = TitleList.create([t.name + "_不正なタイトル名" for t in title_list])
         if kind == "VideoUrlError":
-            api_result["video_url_list"] = [v + "_不正なタイトル名" for v in video_url_list]
+            api_result["video_url_list"] = VideoURLList.create([v.non_query_url + "_不正なタイトル名" for v in video_url_list])
         if kind == "UsernameError":
-            api_result["username_list"] = []
+            api_result["username_list"] = UsernameList.create([])
 
         api_result = FetchedAPIVideoInfo(**api_result)
 
@@ -350,17 +376,18 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
 
         mylist_info = self._get_mylist_info_set(mylist_url)
         video_info_list = self._get_video_info_set(mylist_url)
-        title_list = [video_info["title"] for video_info in video_info_list]
-        uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
-        registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
-        video_id_list = [video_info["video_id"] for video_info in video_info_list]
-        video_url_list = [video_info["video_url"] for video_info in video_info_list]
-        username_list = [video_info["username"] for video_info in video_info_list]
+        title_list = [video_info["title"].name for video_info in video_info_list]
+        uploaded_at_list = [video_info["uploaded_at"].dt_str for video_info in video_info_list]
+        registered_at_list = [video_info["registered_at"].dt_str for video_info in video_info_list]
+        video_id_list = [video_info["video_id"].id for video_info in video_info_list]
+        video_url_list = [video_info["video_url"].non_query_url for video_info in video_info_list]
+        username_list = [video_info["username"].name for video_info in video_info_list]
 
         if url_type == "uploaded":
             username = mylist_info[2]
             showname = f"{username}さんの投稿動画"
             myshowname = "投稿動画"
+            registered_at_list = list(uploaded_at_list)
         elif url_type == "mylist":
             username = mylist_info[2]
             myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
