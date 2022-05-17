@@ -5,9 +5,27 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Mylistid():
+    """マイリストID
+
+    Notes:
+        マイリストIDは基本的には(8桁の)数字からなる 例：12345678
+        マイリストIDは空白も許容される（動画投稿ページにはマイリストIDがないため）
+
+    Raises:
+        TypeError: 引数が文字列でない場合
+        ValueError: 引数が数字のみ, もしくは空文字列でない場合
+
+    Returns:
+        Mylistid: マイリストID
+    """
     _id: str  # マイリストID 12345678
 
     def __post_init__(self) -> None:
+        """初期化後処理
+
+        Notes:
+            バリデーションのみ
+        """
         if not isinstance(self._id, str):
             raise TypeError("id is not string, invalid Mylistid.")
         # マイリストIDは空白も有り得る
@@ -15,7 +33,9 @@ class Mylistid():
             raise ValueError(f"'{self._id}' is invalid Mylistid")
 
     @property
-    def id(self):
+    def id(self) -> str:
+        """保持しているマイリストIDを返す
+        """
         return self._id
 
 

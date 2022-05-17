@@ -8,6 +8,17 @@ from NNMM.VideoInfoFetcher.ValueObjects.Username import Username
 
 @dataclass(frozen=True)
 class Showname():
+    """マイリスト表示名
+
+    実際にNNMM上でマイリストペインに表示される際の表示名
+
+    Raises:
+        TypeError: 引数が文字列でない場合
+        ValueError: 引数が表示名のパターンでない場合
+
+    Returns:
+        _type_: _description_
+    """
     _name: str  # マイリスト表示名
 
     # 以下のどちらかの形式のみ受け付ける
@@ -15,6 +26,10 @@ class Showname():
     MYLIST_PATTERN = "^「(.*)」-(.*)さんのマイリスト$"  # 「{myshowname}」-{username}さんのマイリスト
 
     def __post_init__(self) -> None:
+        """初期化後処理
+
+        バリデーションのみ
+        """
         PATTERN_LIST = [
             self.UPLOADED_PATTERN,
             self.MYLIST_PATTERN
@@ -25,11 +40,24 @@ class Showname():
             raise ValueError(f"'{self._name}' is invalid Showname")
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """保持しているマイリスト表示名を返す
+        """
         return self._name
 
     @classmethod
     def create(cls, username: Username, myshowname: Myshowname | None = None) -> "Showname":
+        """Showname インスタンスを生成する
+
+        myshowname がNone のとき、投稿動画のマイリスト表示名が設定される
+
+        Args:
+            username (Username): ユーザー名インスタンス
+            myshowname (Myshowname, optional): マイリスト名インスタンス or None
+
+        Returns:
+            Showname: マイリスト表示名
+        """
         showname = ""
         if myshowname is None:
             showname = f"{username.name}さんの投稿動画"

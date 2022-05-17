@@ -16,6 +16,18 @@ from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 
 @dataclass(frozen=True)
 class FetchedPageVideoInfo():
+    """htmlページから取得される動画情報をまとめたデータクラス
+
+    Notes:
+        HtmlParser, RSSParser参照
+
+    Raises:
+        TypeError: 初期化時の引数の型が不正な場合
+        ValueError: List系の入力の大きさが異なる場合
+
+    Returns:
+        FetchedPageVideoInfo: htmlページから取得される動画情報
+    """
     no: list[int]                         # No. [1, ..., len()-1]
     userid: Userid                        # ユーザーID 1234567
     mylistid: Mylistid                    # マイリストID 12345678
@@ -27,9 +39,13 @@ class FetchedPageVideoInfo():
     registered_at_list: RegisteredAtList  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
     video_url_list: VideoURLList          # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """初期化後処理
+
+        Notes:
+            バリデーションのみ
+        """
         self._is_valid()
-        pass
 
     def _is_valid(self) -> bool | TypeError | ValueError:
         """バリデーション
@@ -67,6 +83,14 @@ class FetchedPageVideoInfo():
         return True
 
     def to_dict(self) -> dict:
+        """データクラスの項目を辞書として取得する
+
+        Notes:
+            値は各ValueObject が設定される
+
+        Returns:
+            dict: {データクラスの項目: 対応するValueObject}
+        """
         # return asdict(self)  # asdictだとキーと値が文字列になるため型情報が失われる
         return self.__dict__
 
