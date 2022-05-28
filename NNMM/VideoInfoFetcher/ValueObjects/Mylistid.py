@@ -7,13 +7,12 @@ from dataclasses import dataclass
 class Mylistid():
     """マイリストID
 
-    Notes:
-        マイリストIDは基本的には(8桁の)数字からなる 例：12345678
-        マイリストIDは空白も許容される（動画投稿ページにはマイリストIDがないため）
+    マイリストIDは基本的には(8桁の)数字からなる 例：12345678
+    マイリストIDは空白も許容される（動画投稿ページにはマイリストIDがないため）
 
     Raises:
         TypeError: 引数が文字列でない場合
-        ValueError: 引数が数字のみ, もしくは空文字列でない場合
+        ValueError: 引数が数字のみでなく, かつ空文字列でもない場合
 
     Returns:
         Mylistid: マイリストID
@@ -23,8 +22,7 @@ class Mylistid():
     def __post_init__(self) -> None:
         """初期化後処理
 
-        Notes:
-            バリデーションのみ
+        バリデーションのみ
         """
         if not isinstance(self._id, str):
             raise TypeError("id is not string, invalid Mylistid.")

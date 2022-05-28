@@ -3,13 +3,30 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from NNMM.VideoInfoFetcher.ValueObjects.VideoURL import VideoURL
+from NNMM.VideoInfoFetcher.ValueObjects.Videoid import Videoid
 
 
 @dataclass(frozen=True)
 class VideoURLList(Iterable):
+    """動画URLリスト
+
+    動画URLについてはVideoURL を参照
+    空リストも許容する
+
+    Raises:
+        TypeError: 引数がリストでない場合
+        ValueError: 引数のリストの要素が一つでもVideoURL でない場合
+
+    Returns:
+        VideoURLList: 動画URLリスト
+    """
     _list: list[VideoURL]
 
     def __post_init__(self) -> None:
+        """初期化後処理
+
+        バリデーションのみ
+        """
         if not isinstance(self._list, list):
             raise TypeError("list is not list[], invalid VideoURLList.")
         if self._list:
@@ -23,11 +40,27 @@ class VideoURLList(Iterable):
         return self._list.__len__()
 
     @property
-    def video_id_list(self) -> list[str]:
+    def video_id_list(self) -> list[Videoid]:
+        """動画IDリストを返す
+        """
         return [v.video_id for v in self._list]
 
     @classmethod
     def create(cls, video_url_list: list[VideoURL] | list[str]) -> "VideoURLList":
+        """VideoURLList インスタンスを作成する
+
+        Args:
+            VideoURL_list (list[VideoURL] | list[str]):
+                VideoURL のリスト、文字列リスト
+                空リストも許容される
+
+        Raises:
+            TypeError: VideoURL_list がリストでない場合
+            ValueError: その他インスタンス生成できない型の引数の場合
+
+        Returns:
+            VideoURLList: 投稿者名リスト
+        """
         if not isinstance(video_url_list, list):
             raise TypeError("Args is not list.")
         if not video_url_list:
