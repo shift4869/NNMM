@@ -22,12 +22,11 @@ from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 class FetchedVideoInfo():
     """html/rssから取得される動画情報をまとめたデータクラス
 
-    Notes:
-        VideoInfoHtmlFetcher, VideoInfoRSSFetcher 参照
-        このデータクラスの情報がfetchingの最終的な出力となる
-        _make_result_dict() にて以下の項目をキーとする辞書が返却される
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
+    VideoInfoHtmlFetcher, VideoInfoRSSFetcher 参照
+    このデータクラスの情報がfetchingの最終的な出力となる
+    _make_result_dict() にて以下の項目をキーとする辞書が返却される
+    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+    table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
 
     Raises:
         TypeError: 初期化時の引数の型が不正な場合
@@ -49,15 +48,14 @@ class FetchedVideoInfo():
     video_url_list: VideoURLList          # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
     username_list: UsernameList           # 投稿者リスト [投稿者1]
 
-    result_dict: ClassVar[list[dict]]   # 結果の辞書 [{key=RESULT_DICT_COLS, value=キーに対応する上記項目}]
+    result_dict: ClassVar[list[dict]]     # 結果の辞書 [{key=RESULT_DICT_COLS, value=キーに対応する上記項目}]
 
     RESULT_DICT_COLS = ("no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname")
 
     def __post_init__(self) -> None:
         """初期化後処理
 
-        Notes:
-            バリデーションとresult_dict の返り値設定を行う
+        バリデーションとresult_dict の返り値設定を行う
         """
         self._is_valid()
         object.__setattr__(self, "result_dict", self._make_result_dict())
@@ -106,8 +104,7 @@ class FetchedVideoInfo():
     def _make_result_dict(self) -> list[dict]:
         """結果の辞書を返す
 
-        Notes:
-            結果の辞書 [{key=RESULT_DICT_COLS, value=キーに対応する項目(文字列)}]
+        結果の辞書 [{key=RESULT_DICT_COLS, value=キーに対応する項目(文字列)}]
 
         Returns:
             list[dict]: 結果の辞書のリスト
@@ -154,8 +151,7 @@ class FetchedVideoInfo():
     def to_dict(self) -> list[dict]:
         """データクラスの項目を辞書として取得する
 
-        Notes:
-            result とは異なり、値は各ValueObject が設定される
+        result とは異なり、値は各ValueObject が設定される
 
         Returns:
             dict: {データクラスの項目: 対応するValueObject}
@@ -167,8 +163,7 @@ class FetchedVideoInfo():
     def result(self) -> list[dict]:
         """最終的な出力結果をまとめた辞書を返す
 
-        Notes:
-            _make_result_dict()参照
+        _make_result_dict()参照
 
         Returns:
             list[dict]: [{key=RESULT_DICT_COLS, value=キーに対応する項目(文字列)}]
@@ -179,10 +174,9 @@ class FetchedVideoInfo():
     def merge(cls, fvi_page: "FetchedPageVideoInfo", fvi_api: "FetchedAPIVideoInfo") -> "FetchedVideoInfo":
         """マージ
 
-        Notes:
-            FetchedPageVideoInfo とFetchedAPIVideoInfo の結果をマージして
-            FetchedVideoInfo のインスタンスを作成する
-            同じキーがある場合はとFetchedAPIVideoInfo の値を優先する
+        FetchedPageVideoInfo とFetchedAPIVideoInfo の結果をマージして
+        FetchedVideoInfo のインスタンスを作成する
+        同じキーがある場合はFetchedAPIVideoInfo の値を優先する
 
         Returns:
             FetchedVideoInfo: fetchingの最終的な出力となるデータクラス

@@ -13,9 +13,8 @@ from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 class FetchedAPIVideoInfo():
     """APIから取得される動画情報をまとめたデータクラス
 
-    Notes:
-        動画情報API："https://ext.nicovideo.jp/api/getthumbinfo/{動画ID}"
-        VideoInfoFetcherBase._get_videoinfo_from_api() 参照
+    動画情報API："https://ext.nicovideo.jp/api/getthumbinfo/{動画ID}"
+    VideoInfoFetcherBase._get_videoinfo_from_api() 参照
 
     Raises:
         TypeError: 初期化時の引数の型が不正な場合
@@ -34,8 +33,7 @@ class FetchedAPIVideoInfo():
     def __post_init__(self) -> None:
         """初期化後処理
 
-        Notes:
-            バリデーションのみ
+        バリデーションのみ
         """
         self._is_valid()
 
@@ -68,8 +66,7 @@ class FetchedAPIVideoInfo():
     def to_dict(self) -> dict:
         """データクラスの項目を辞書として取得する
 
-        Notes:
-            値は各ValueObject が設定される
+        値は各ValueObject が設定される
 
         Returns:
             dict: {データクラスの項目: 対応するValueObject}

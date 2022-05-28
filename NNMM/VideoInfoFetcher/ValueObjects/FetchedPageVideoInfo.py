@@ -18,8 +18,7 @@ from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 class FetchedPageVideoInfo():
     """htmlページから取得される動画情報をまとめたデータクラス
 
-    Notes:
-        HtmlParser, RSSParser参照
+    HtmlParser, RSSParser参照
 
     Raises:
         TypeError: 初期化時の引数の型が不正な場合
@@ -42,8 +41,7 @@ class FetchedPageVideoInfo():
     def __post_init__(self) -> None:
         """初期化後処理
 
-        Notes:
-            バリデーションのみ
+        バリデーションのみ
         """
         self._is_valid()
 
@@ -85,8 +83,7 @@ class FetchedPageVideoInfo():
     def to_dict(self) -> dict:
         """データクラスの項目を辞書として取得する
 
-        Notes:
-            値は各ValueObject が設定される
+        値は各ValueObject が設定される
 
         Returns:
             dict: {データクラスの項目: 対応するValueObject}
