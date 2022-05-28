@@ -36,11 +36,6 @@ class TestMylistURL(unittest.TestCase):
             mylist_url = MylistURL(url)
             mylist_url.url = URL("https://www.nicovideo.jp/user/1234567/mylist/23456789")
 
-        # マイリストページのURLでない
-        url = URL("https://不正なURLアドレス/user/1234567/mylist/12345678")
-        with self.assertRaises(ValueError):
-            mylist_url = MylistURL(url)
-
     def test_create(self):
         """create のテスト
         """
@@ -78,8 +73,8 @@ class TestMylistURL(unittest.TestCase):
         # 異常系
         # マイリストページのURLでない
         url = "https://不正なURLアドレス/user/1234567/mylist/12345678"
-        actual = MylistURL.is_valid(url)
-        self.assertEqual(False, actual)
+        with self.assertRaises(ValueError):
+            actual = MylistURL.is_valid(url)
 
 
 if __name__ == "__main__":

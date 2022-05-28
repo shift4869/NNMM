@@ -29,8 +29,8 @@ class TestURL(unittest.TestCase):
         # 正常系
         urls = self._get_url_set()
         for original_url in urls:
-            url = URL(original_url)
-            url_in_url = URL(url)
+            url = URL(original_url)  # 文字列からの生成チェック
+            url_in_url = URL(url)  # URLからの生成チェック
 
             non_query_url = urllib.parse.urlunparse(
                 urllib.parse.urlparse(original_url)._replace(query=None)

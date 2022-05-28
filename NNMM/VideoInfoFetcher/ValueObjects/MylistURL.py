@@ -11,9 +11,8 @@ from NNMM.VideoInfoFetcher.ValueObjects.Userid import Userid
 class MylistURL():
     """マイリストURL
 
-    Notes:
-        マイリストURLはMYLIST_URL_PATTERN に合致するURLを扱う
-        （投稿動画でなく）作成されたマイリストのURLを表す
+    マイリストURLはMYLIST_URL_PATTERN に合致するURLを扱う
+    （投稿動画でなく）作成されたマイリストのURLを表す
 
     Raises:
         ValueError: 引数がマイリストURLのパターンでなかった場合
@@ -32,8 +31,7 @@ class MylistURL():
     def __post_init__(self) -> None:
         """初期化後処理
 
-        Notes:
-            バリデーションのみ
+        バリデーションのみ
         """
         non_query_url = self.url.non_query_url
         if not self.is_valid(non_query_url):
@@ -55,8 +53,7 @@ class MylistURL():
     def fetch_url(self) -> str:
         """RSS取得用のURLを返す
 
-        Notes:
-            https://www.nicovideo.jp/mylist/[0-9]+/?rss=2.0 形式でないとそのマイリストのRSSが取得できない
+        https://www.nicovideo.jp/mylist/[0-9]+/?rss=2.0 形式でないとそのマイリストのRSSが取得できない
         """
         # /user/{userid} 部分を削除
         non_user_url = re.sub("/user/[0-9]+", "", str(self.non_query_url))
@@ -68,8 +65,7 @@ class MylistURL():
     def mylist_url(self) -> str:
         """マイリストURLを返す
 
-        Notes:
-            クエリなしURLと同じ
+        クエリなしURLと同じ
         """
         return self.url.non_query_url
 
@@ -77,8 +73,7 @@ class MylistURL():
     def userid(self) -> Userid:
         """ユーザーIDを返す
 
-        Notes:
-            クエリなしURLからユーザーID部分を切り出す
+        クエリなしURLからユーザーID部分を切り出す
         """
         mylist_url = self.url.non_query_url
         userid, mylistid = re.findall(MylistURL.MYLIST_URL_PATTERN, mylist_url)[0]
@@ -88,8 +83,7 @@ class MylistURL():
     def mylistid(self) -> Mylistid:
         """マイリストIDを返す
 
-        Notes:
-            クエリなしURLからマイリストID部分を切り出す
+        クエリなしURLからマイリストID部分を切り出す
         """
         mylist_url = self.url.non_query_url
         userid, mylistid = re.findall(MylistURL.MYLIST_URL_PATTERN, mylist_url)[0]
@@ -99,9 +93,8 @@ class MylistURL():
     def create(cls, url: str | URL) -> "MylistURL":
         """MylistURL インスタンスを作成する
 
-        Notes:
-            URL インスタンスを作成して
-            それをもとにしてMylistURL インスタンス作成する
+        URL インスタンスを作成して
+        それをもとにしてMylistURL インスタンス作成する
 
         Args:
             url (str | URL): 対象URLを表す文字列 or URL
@@ -115,10 +108,9 @@ class MylistURL():
     def is_valid(cls, url: str | URL) -> bool:
         """マイリストURLのパターンかどうかを返す
 
-        Notes:
-            このメソッドがTrueならばMylistURL インスタンスが作成できる
-            また、このメソッドがTrueならば引数のurl がMylistURL の形式であることが判別できる
-            (v.v.)
+        このメソッドがTrueならばMylistURL インスタンスが作成できる
+        また、このメソッドがTrueならば引数のurl がMylistURL の形式であることが判別できる
+        (v.v.)
 
         Args:
             url (str | URL): チェック対象のURLを表す文字列 or URL

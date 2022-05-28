@@ -48,10 +48,9 @@ class URL():
     def is_valid(self, estimated_url: str) -> bool:
         """URLのパターンかどうかを返す
 
-        Notes:
-            このメソッドがTrueならばURL インスタンスが作成できる
-            また、このメソッドがTrueならば引数のestimated_url が真にURL の形式であることが判別できる
-            (v.v.)
+        このメソッドがTrueならばURL インスタンスが作成できる
+        また、このメソッドがTrueならば引数のestimated_url が真にURL の形式であることが判別できる
+        (v.v.)
 
         Args:
             estimated_url (str): チェック対象の候補URLを表す文字列

@@ -85,9 +85,8 @@ class UploadedURL():
     def create(cls, url: str | URL) -> "UploadedURL":
         """UploadedURL インスタンスを作成する
 
-        Notes:
-            URL インスタンスを作成して
-            それをもとにしてUploadedURL インスタンス作成する
+        URL インスタンスを作成して
+        それをもとにしてUploadedURL インスタンス作成する
 
         Args:
             url (str | URL): 対象URLを表す文字列 or URL
@@ -101,10 +100,9 @@ class UploadedURL():
     def is_valid(cls, url: str | URL) -> bool:
         """投稿ページURLのパターンかどうかを返す
 
-        Notes:
-            このメソッドがTrueならばUploadedURL インスタンスが作成できる
-            また、このメソッドがTrueならば引数のurl がUploadedURL の形式であることが判別できる
-            (v.v.)
+        このメソッドがTrueならばUploadedURL インスタンスが作成できる
+        また、このメソッドがTrueならば引数のurl がUploadedURL の形式であることが判別できる
+        (v.v.)
 
         Args:
             url (str | URL): チェック対象のURLを表す文字列 or URL

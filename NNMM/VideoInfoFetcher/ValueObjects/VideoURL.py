@@ -76,9 +76,8 @@ class VideoURL():
     def create(cls, url: str | URL) -> "VideoURL":
         """VideoURL インスタンスを作成する
 
-        Notes:
-            URL インスタンスを作成して
-            それをもとにしてVideoURL インスタンス作成する
+        URL インスタンスを作成して
+        それをもとにしてVideoURL インスタンス作成する
 
         Args:
             url (str | URL): 対象URLを表す文字列 or URL
@@ -89,13 +88,12 @@ class VideoURL():
         return cls(URL(url))
 
     @classmethod
-    def is_valid(cls, url: str | URL) -> bool:
+    def is_valid(cls, url: str | URL) -> bool | ValueError:
         """動画URLのパターンかどうかを返す
 
-        Notes:
-            このメソッドがTrueならばVideoURL インスタンスが作成できる
-            また、このメソッドがTrueならば引数のurl がVideoURL の形式であることが判別できる
-            (v.v.)
+        このメソッドがTrueならばVideoURL インスタンスが作成できる
+        また、このメソッドがTrueならば引数のurl がVideoURL の形式であることが判別できる
+        (v.v.)
 
         Args:
             url (str | URL): チェック対象のURLを表す文字列 or URL
@@ -103,6 +101,9 @@ class VideoURL():
         Returns:
             bool: 引数がVideoURL.VIDEO_URL_PATTERN パターンに則っているならばTrue,
                   そうでないならFalse
+
+        Raises:
+            ValueError: URLインスタンスとして不正な場合
         """
         # video_url の形として正しいか
         non_query_url = URL(url).non_query_url

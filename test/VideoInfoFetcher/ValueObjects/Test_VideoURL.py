@@ -37,11 +37,6 @@ class TestVideoURL(unittest.TestCase):
             video_url = VideoURL(url)
             video_url.url = URL("https://www.nicovideo.jp/watch/sm23456789")
 
-        # 動画URLでない
-        url = URL("https://不正なURLアドレス/watch/sm12345678")
-        with self.assertRaises(ValueError):
-            video_url = VideoURL(url)
-
     def test_create(self):
         """create のテスト
         """
@@ -84,8 +79,8 @@ class TestVideoURL(unittest.TestCase):
 
         # 動画URLでない
         url = "https://不正なURLアドレス/watch/sm12345678"
-        actual = VideoURL.is_valid(url)
-        self.assertEqual(False, actual)
+        with self.assertRaises(ValueError):
+            actual = VideoURL.is_valid(url)
 
 
 if __name__ == "__main__":

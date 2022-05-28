@@ -34,11 +34,6 @@ class TestUploadedURL(unittest.TestCase):
             uploaded_url = UploadedURL(url)
             uploaded_url.url = URL("https://www.nicovideo.jp/user/2345678/video")
 
-        # 投稿動画ページのURLでない
-        url = URL("https://不正なURLアドレス/user/1234567/video")
-        with self.assertRaises(ValueError):
-            uploaded_url = UploadedURL(url)
-
     def test_create(self):
         """create のテスト
         """
@@ -76,8 +71,8 @@ class TestUploadedURL(unittest.TestCase):
         # 異常系
         # 投稿動画ページのURLでない
         url = "https://不正なURLアドレス/user/1234567/video"
-        actual = UploadedURL.is_valid(url)
-        self.assertEqual(False, actual)
+        with self.assertRaises(ValueError):
+            actual = UploadedURL.is_valid(url)
 
 
 if __name__ == "__main__":
