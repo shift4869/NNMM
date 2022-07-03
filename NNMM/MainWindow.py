@@ -59,6 +59,8 @@ class MainWindow():
         # ウィンドウレイアウト作成後に行わないとstdout,stderrへの出力がうまくキャッチされない
         # この設定の後からloggerが使用可能になる
         logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
+        for name in logging.root.manager.loggerDict:
+            getLogger(name).disabled = True
 
         # マイリスト一覧初期化
         # DBからマイリスト一覧を取得する
