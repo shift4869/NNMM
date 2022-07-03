@@ -29,6 +29,8 @@ from NNMM.VideoInfoFetcher.ValueObjects.VideoURL import VideoURL
 from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 
 
+for name in logging.root.manager.loggerDict:
+    getLogger(name).disabled = True
 logger = getLogger("root")
 logger.setLevel(INFO)
 
@@ -165,6 +167,8 @@ class VideoInfoFetcherBase(ABC):
                 username_list.append(Username(username))
 
         if session:
+            if session._browser:
+                await session._browser.disconnect()
             await session.close()
 
         # ValueObjectに変換
