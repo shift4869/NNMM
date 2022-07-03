@@ -137,7 +137,7 @@ class VideoInfoFetcherBase(ABC):
         uploaded_at_list = []
         video_url_list = []
         username_list = []
-        session = None
+        session: AsyncHTMLSession = None
         for video_id in video_id_list:
             url = self.API_URL_BASE + video_id.id
             session, response = await self._get_session_response(url, False, "lxml-xml", session)
@@ -164,7 +164,8 @@ class VideoInfoFetcherBase(ABC):
                 username = username_lx[0].text
                 username_list.append(Username(username))
 
-        await session.close()
+        if session:
+            await session.close()
 
         # ValueObjectに変換
         title_list = TitleList.create(title_list)
