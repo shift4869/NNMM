@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 import logging.config
 import traceback
 from logging import INFO, getLogger
@@ -61,6 +62,9 @@ class MainWindow():
         logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
         for name in logging.root.manager.loggerDict:
             getLogger(name).disabled = True
+
+        # Windows特有のRuntimeError抑止
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
         # マイリスト一覧初期化
         # DBからマイリスト一覧を取得する
