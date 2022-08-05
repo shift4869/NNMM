@@ -22,6 +22,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylist
         """
         super().__init__(True, False, "全マイリスト内容更新")
 
+        self.POST_PROCESS = ProcessUpdateAllMylistInfoThreadDone
         self.L_KIND = "All mylist"
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
 

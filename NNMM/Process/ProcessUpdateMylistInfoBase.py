@@ -38,6 +38,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
 
         self.lock = threading.Lock()
         self.done_count = 0
+        self.POST_PROCESS = ProcessUpdateMylistInfoThreadDoneBase
         self.L_KIND = "UpdateMylist Base"
         self.E_DONE = ""
 
@@ -127,12 +128,12 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         # 登録されたすべてのマイリストから現在のマイリスト情報を取得する
         # 処理中もGUIイベントを処理するため別スレッドで起動
         threading.Thread(target=self.UpdateMylistInfoThread,
-                         args=(), daemon=True).start()
+                         args=(mw, ), daemon=True).start()
 
         logger.info(f"{self.L_KIND} update thread start success.")
         return 0
 
-    def UpdateMylistInfoThread(self):
+    def UpdateMylistInfoThread(self, mw):
         """マイリスト情報を更新する（マルチスレッド前提）
 
         Notes:
@@ -175,7 +176,10 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         logger.info(f"{self.L_KIND} update done elapsed time : {elapsed_time:.2f} [sec]")
 
         # 後続処理へ
-        self.window.write_event_value(self.E_DONE, "")
+        threading.Thread(target=self.ThreadDone,
+                         args=(mw, ), daemon=False).start()
+
+        # self.window.write_event_value(self.E_DONE, "")
         logger.info(f"{self.L_KIND} update thread done.")
         return 0
 
@@ -438,6 +442,14 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         self.window["-INPUT2-"].update(value=p_str)
         logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
         return 0
+
+    def ThreadDone(self, mw):
+        logger.info(f"{self.L_KIND} update post process start.")
+
+        pb = self.POST_PROCESS()
+        pb.Run(mw)
+
+        logger.info(f"{self.L_KIND} update post process done.")
 
 
 class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):

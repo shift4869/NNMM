@@ -24,6 +24,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMy
         """
         super().__init__(True, False, "複数マイリスト内容更新")
 
+        self.POST_PROCESS = ProcessUpdatePartialMylistInfoThreadDone
         self.L_KIND = "Partial mylist"
         self.E_DONE = "-PARTIAL_UPDATE_THREAD_DONE-"
 
