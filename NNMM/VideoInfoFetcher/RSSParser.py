@@ -191,6 +191,7 @@ if __name__ == "__main__":
     ]
 
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     for url in urls:
         virf = VideoInfoRssFetcher(url)
         session, response = loop.run_until_complete(virf._get_session_response(virf.mylist_url.fetch_url, False, "lxml-xml", None))

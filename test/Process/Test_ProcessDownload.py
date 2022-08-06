@@ -174,6 +174,7 @@ class TestProcessDownload(unittest.TestCase):
             mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
             record = self.__ReturnSelectFromIDURL(video_id_s, mylist_url_s)[0]
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(pdl.DownloadThreadWorker(record))
             self.assertEqual(0, actual)
 
@@ -195,6 +196,7 @@ class TestProcessDownload(unittest.TestCase):
             # レコードが不正
             record = {"invalid": "invalid record"}
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(pdl.DownloadThreadWorker(record))
             self.assertEqual(-1, actual)
 

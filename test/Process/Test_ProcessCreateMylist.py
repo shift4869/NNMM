@@ -310,6 +310,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             # 正常系
             urls = self.__GetURLSet()
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             for url in urls:
                 actual = loop.run_until_complete(pcm.AsyncGetMyListInfo(url))
                 expect = self.__MakeExpectResult(url)

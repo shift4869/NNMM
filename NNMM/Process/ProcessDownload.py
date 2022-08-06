@@ -105,6 +105,7 @@ class ProcessDownload(ProcessBase.ProcessBase):
             return -1
 
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         res = loop.run_until_complete(self.DownloadThreadWorker(record))
 
         video_url = record["video_url"]

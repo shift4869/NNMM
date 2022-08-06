@@ -278,6 +278,7 @@ if __name__ == "__main__":
     ]
 
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     for url in urls:
         vihf = VideoInfoHtmlFetcher(url)
         session, response = loop.run_until_complete(vihf._get_session_response(vihf.mylist_url.non_query_url, True, "html.parser", None))

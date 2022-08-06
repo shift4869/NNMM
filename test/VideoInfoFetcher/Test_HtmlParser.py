@@ -365,6 +365,7 @@ class TestHtmlParser(unittest.TestCase):
         num = len(title_list)
 
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         urls = self._get_url_set()
         html = self._make_html()
         lxml = HTML(html=html)

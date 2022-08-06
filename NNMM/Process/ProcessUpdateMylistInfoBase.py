@@ -253,6 +253,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         # マイリスト情報取得
         # asyncなのでイベントループを張る
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         res = loop.run_until_complete(func(url))
         loop.close()
 

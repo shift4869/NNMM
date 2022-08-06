@@ -196,6 +196,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         # pyppeteerでページをレンダリングしてhtmlからスクレイピングする
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         now_video_list = loop.run_until_complete(VideoInfoHtmlFetcher.fetch_videoinfo(mylist_url))
         s_record = {}
         if len(now_video_list) > 0:

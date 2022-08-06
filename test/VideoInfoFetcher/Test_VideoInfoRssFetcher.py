@@ -496,6 +496,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
 
             virf = VideoInfoRssFetcher(url)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(virf._analysis_rss(soup))
             self.assertEqual(expect, actual)
 
@@ -507,6 +508,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             with self.assertRaises(ValueError):
                 virf = VideoInfoRssFetcher(url)
                 loop = asyncio.new_event_loop()
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
                 actual = loop.run_until_complete(virf._analysis_rss(soup))
 
     def test_fetch_videoinfo_from_rss(self):
@@ -527,6 +529,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
 
                 virf = VideoInfoRssFetcher(url)
                 loop = asyncio.new_event_loop()
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
                 expect = self._make_expect_result(url)
                 self.assertEqual(expect, actual)
@@ -607,6 +610,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             url = self._get_url_set()[0]
             virf = VideoInfoRssFetcher(url)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(virf._fetch_videoinfo())
             self.assertEqual(expect, actual)
             mockfvft.assert_called_once()

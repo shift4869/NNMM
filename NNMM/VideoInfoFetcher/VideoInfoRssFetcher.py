@@ -148,6 +148,7 @@ if __name__ == "__main__":
     ]
 
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     for url in urls:
         video_list = loop.run_until_complete(VideoInfoRssFetcher.fetch_videoinfo(url))
         pprint.pprint(video_list)

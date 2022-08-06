@@ -436,6 +436,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             vihf = VideoInfoHtmlFetcher(url)
             lxml = None
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(vihf._analysis_html(lxml))
             self.assertEqual(expect, actual)
 
@@ -447,6 +448,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             with self.assertRaises(ValueError):
                 vihf = VideoInfoHtmlFetcher(url)
                 loop = asyncio.new_event_loop()
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
                 actual = loop.run_until_complete(vihf._analysis_html(lxml))
 
     def test_fetch_videoinfo_from_html(self):
@@ -468,6 +470,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
 
                 vihf = VideoInfoHtmlFetcher(url)
                 loop = asyncio.new_event_loop()
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
                 actual = loop.run_until_complete(vihf._fetch_videoinfo_from_html())
                 expect = self._make_expect_result(url)
                 self.assertEqual(expect, actual)
@@ -552,6 +555,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
             url = self._get_url_set()[0]
             vihf = VideoInfoHtmlFetcher(url)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(vihf._fetch_videoinfo())
             self.assertEqual(expect, actual)
             mockfvft.assert_called_once()

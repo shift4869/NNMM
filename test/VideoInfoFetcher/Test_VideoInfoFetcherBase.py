@@ -264,6 +264,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             url = self._get_url_set()[0]
             cvif = ConcreteVideoInfoFetcher(url)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
@@ -302,6 +303,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             # do_renderingがFalse, sessionがNone
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, False, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
@@ -309,6 +311,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             # do_renderingがTrue, sessionがNoneでない
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", session))
             expect = (session, response)
             self.assertEqual(expect, actual)
@@ -316,6 +319,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             # do_renderingがFalse, sessionがNoneでない
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, False, "html.parser", session))
             expect = (session, response)
             self.assertEqual(expect, actual)
@@ -324,6 +328,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # リトライして成功するパターン
             session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM - 1, False)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
             expect = (session, response)
             self.assertEqual(expect, actual)
@@ -334,6 +339,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # MAX_RETRY_NUM回リトライしたが失敗したパターン
             session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM, False)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
             expect = (session, None)
             self.assertEqual(expect, actual)
@@ -341,6 +347,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # responseの取得に成功したがresponse.html.lxmlが存在しないパターン
             session.get.side_effect = MakeReturnGet(0, True)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
             expect = (session, None)
             self.assertEqual(expect, actual)
@@ -381,6 +388,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             cvif = ConcreteVideoInfoFetcher(mylist_url)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
             self.assertEqual(expect, actual.to_dict())
 
@@ -388,6 +396,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # _get_session_response に失敗
             mockapises = self._make_api_session_response_mock(mockapises, 503)
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             with self.assertRaises(ValueError):
                 actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
 
@@ -397,6 +406,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         url = self._get_url_set()[0]
         cvif = ConcreteVideoInfoFetcher(url)
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         actual = loop.run_until_complete(cvif._fetch_videoinfo())
         self.assertEqual(["test_fetch_videoinfo"], actual)
 
@@ -409,12 +419,14 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # 正常系
             url = self._get_url_set()[0]
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(ConcreteVideoInfoFetcher.fetch_videoinfo(url))
             self.assertEqual(["test_fetch_videoinfo"], actual)
 
             # 異常系
             # VideoInfoFetcherBase の fetch_videoinfo を直接呼んでも内部でインスタンス化できないので失敗する
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(VideoInfoFetcherBase.fetch_videoinfo(url))
             self.assertEqual([], actual)
 

@@ -262,6 +262,7 @@ class TestRSSParser(unittest.TestCase):
         """parse のテスト
         """
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         urls = self._get_url_set()
         for url in urls:
             xml = self._make_xml(url)
