@@ -52,8 +52,14 @@ class MainWindow():
         # ウィンドウレイアウト作成
         layout = self.MakeMainWindowLayout()
 
+        # アイコン画像取得
+        ICON_PATH = "./image/check_sheet_icon.png"
+        icon_binary = None
+        with Path(ICON_PATH).open("rb") as fin:
+            icon_binary = fin.read()
+
         # ウィンドウオブジェクト作成
-        self.window = sg.Window("NNMM", layout, size=(1330, 900), finalize=True, resizable=True)
+        self.window = sg.Window("NNMM", layout, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
         self.window["-LIST-"].bind("<Double-Button-1>", "+DOUBLE CLICK+")
 
         # ログ設定
