@@ -69,14 +69,15 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
 
         func_list = []
         for record in m_list:
-            mylist_url = record.get("url")
-            prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
-            if not prev_video_list:
-                # 初めての動画情報取得ならページをレンダリングして取得
-                func_list.append(VideoInfoHtmlFetcher.fetch_videoinfo)
-            else:
-                # 既に動画情報が存在するならRSSから取得
-                func_list.append(VideoInfoRssFetcher.fetch_videoinfo)
+            # mylist_url = record.get("url")
+            # prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            # if not prev_video_list:
+            #     # 初めての動画情報取得ならページをレンダリングして取得
+            #     func_list.append(VideoInfoHtmlFetcher.fetch_videoinfo)
+            # else:
+            #     # 既に動画情報が存在するならRSSから取得
+            #     func_list.append(VideoInfoRssFetcher.fetch_videoinfo)
+            func_list.append(VideoInfoRssFetcher.fetch_videoinfo)
         return func_list
 
     def GetPrevVideoLists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
