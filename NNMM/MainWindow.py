@@ -53,7 +53,7 @@ class MainWindow():
         layout = self.MakeMainWindowLayout()
 
         # アイコン画像取得
-        ICON_PATH = "./image/check_sheet_icon.png"
+        ICON_PATH = "./image/icon.png"
         icon_binary = None
         with Path(ICON_PATH).open("rb") as fin:
             icon_binary = fin.read()

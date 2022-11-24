@@ -85,6 +85,7 @@ class ProcessTimer(ProcessBase.ProcessBase):
             result = 1
             logger.info("-ALL_UPDATE- running now ... skip this auto-reload cycle.")
         else:
+            logger.info("Auto-reload start.")
             # すべて更新ボタンが押された場合の処理を起動する
             # self.window.write_event_value("-ALL_UPDATE-", "")
             # 一部更新ボタンが押された場合の処理を起動する
