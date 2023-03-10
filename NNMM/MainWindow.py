@@ -7,28 +7,12 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM import ConfigMain
-from NNMM import Timer
-from NNMM import PopupWindowMain
+from NNMM import ConfigMain, PopupWindowMain, Timer
+from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.GuiFunction import *
-from NNMM.Process import ProcessWatched
-from NNMM.Process import ProcessNotWatched
-from NNMM.Process import ProcessVideoPlay
-from NNMM.Process import ProcessShowMylistInfo
-from NNMM.Process import ProcessShowMylistInfoAll
-from NNMM.Process import ProcessCreateMylist
-from NNMM.Process import ProcessDeleteMylist
-from NNMM.Process import ProcessUpdateMylistInfo
-from NNMM.Process import ProcessUpdateAllMylistInfo
-from NNMM.Process import ProcessUpdatePartialMylistInfo
-from NNMM.Process import ProcessMoveUp
-from NNMM.Process import ProcessMoveDown
-from NNMM.Process import ProcessWatchedMylist
-from NNMM.Process import ProcessWatchedAllMylist
-from NNMM.Process import ProcessSearch
-from NNMM.Process import ProcessDownload
+from NNMM.Process import ProcessCreateMylist, ProcessDeleteMylist, ProcessDownload, ProcessMoveDown, ProcessMoveUp, ProcessNotWatched, ProcessSearch, ProcessShowMylistInfo, ProcessShowMylistInfoAll, ProcessUpdateAllMylistInfo, ProcessUpdateMylistInfo
+from NNMM.Process import ProcessUpdatePartialMylistInfo, ProcessVideoPlay, ProcessWatched, ProcessWatchedAllMylist, ProcessWatchedMylist
 
 logger = getLogger("root")
 logger.setLevel(INFO)
@@ -176,7 +160,7 @@ class MainWindow():
                 "---",
                 "情報表示::-TR-",
                 "---",
-                "動画ダウンロード::-TR-",
+                "!動画ダウンロード::-TR-",
             ]
         ]
         table_style = {

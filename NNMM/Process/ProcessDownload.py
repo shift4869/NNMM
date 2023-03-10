@@ -3,7 +3,7 @@ import asyncio
 import threading
 from logging import INFO, getLogger
 
-import niconico_dl
+# import niconico_dl
 
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
@@ -132,9 +132,9 @@ class ProcessDownload(ProcessBase.ProcessBase):
 
         video_url = record["video_url"]
         # TODO::プログレス表示
-        with niconico_dl.NicoNicoVideo(video_url, log=True) as nico:
-            data = nico.get_info()
-            nico.download(data["video"]["title"] + ".mp4", load_chunk_size=8 * 1024 * 1024)
+        # with niconico_dl.NicoNicoVideo(video_url, log=True) as nico:
+        #     data = nico.get_info()
+        #     nico.download(data["video"]["title"] + ".mp4", load_chunk_size=8 * 1024 * 1024)
         return 0
 
 
