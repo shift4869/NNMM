@@ -7,13 +7,13 @@ import sys
 import unittest
 from contextlib import ExitStack
 from logging import INFO, getLogger
-from mock import MagicMock, patch
 
 import PySimpleGUI as sg
+from mock import MagicMock, patch
 
+from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.GuiFunction import *
 from NNMM.PopupWindowMain import *
 
 

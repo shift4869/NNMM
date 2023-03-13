@@ -4,6 +4,7 @@
 import sys
 import unittest
 from contextlib import ExitStack
+
 from mock import MagicMock, patch
 
 from NNMM.Process import ProcessDeleteMylist

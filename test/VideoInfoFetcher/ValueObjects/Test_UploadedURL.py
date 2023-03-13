@@ -8,8 +8,8 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.VideoInfoFetcher.ValueObjects.URL import URL
 from NNMM.VideoInfoFetcher.ValueObjects.UploadedURL import UploadedURL
+from NNMM.VideoInfoFetcher.ValueObjects.URL import URL
 
 
 class TestUploadedURL(unittest.TestCase):

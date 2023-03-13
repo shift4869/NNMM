@@ -3,12 +3,13 @@ import asyncio
 import threading
 from logging import INFO, getLogger
 
-# import niconico_dl
-
+from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
+
+# import niconico_dl
+
 
 
 logger = getLogger("root")

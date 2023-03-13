@@ -3,11 +3,10 @@ from logging import INFO, getLogger
 
 import PySimpleGUI as sg
 
+from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.GuiFunction import *
 from NNMM.Process import ProcessUpdateMylistInfoBase
-
 
 logger = getLogger("root")
 logger.setLevel(INFO)

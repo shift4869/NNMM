@@ -5,17 +5,17 @@ GuiFunction の各種機能をテストする
 Guiの処理部分はモックで動作確認する(実際にGUIは表示されない)
 """
 
-import re
 import random
+import re
 import sys
 import unittest
 from contextlib import ExitStack
 from datetime import date, datetime, timedelta
 from logging import INFO, getLogger
-from mock import MagicMock, patch, AsyncMock, PropertyMock
 from pathlib import Path
 
 import freezegun
+from mock import AsyncMock, MagicMock, PropertyMock, patch
 from sqlalchemy import *
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import *

@@ -2,8 +2,8 @@
 from dataclasses import dataclass
 from typing import Iterable
 
-from NNMM.VideoInfoFetcher.ValueObjects.VideoURL import VideoURL
 from NNMM.VideoInfoFetcher.ValueObjects.Videoid import Videoid
+from NNMM.VideoInfoFetcher.ValueObjects.VideoURL import VideoURL
 
 
 @dataclass(frozen=True)

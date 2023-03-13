@@ -8,13 +8,12 @@ import pyppeteer
 import PySimpleGUI as sg
 from requests_html import AsyncHTMLSession
 
+from NNMM import ConfigMain
+from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
 from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
-from NNMM import ConfigMain
-
 
 logger = getLogger("root")
 logger.setLevel(INFO)

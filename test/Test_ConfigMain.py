@@ -9,16 +9,16 @@ import sys
 import unittest
 from contextlib import ExitStack
 from logging import INFO, getLogger
-from mock import MagicMock, patch, mock_open
 from pathlib import Path
 
 import PySimpleGUI as sg
+from mock import MagicMock, mock_open, patch
 
+from NNMM.ConfigMain import *
 from NNMM.CSVSaveLoad import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
-from NNMM.ConfigMain import *
 
 CONFIG_FILE_PATH = "./config/config.ini"
 

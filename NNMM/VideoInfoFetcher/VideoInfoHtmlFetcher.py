@@ -13,8 +13,7 @@ from NNMM.VideoInfoFetcher.ValueObjects.FetchedPageVideoInfo import FetchedPageV
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedVideoInfo import FetchedVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.UploadedURL import UploadedURL
-from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase, SourceType
-
+from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType, VideoInfoFetcherBase
 
 logger = getLogger("root")
 logger.setLevel(INFO)

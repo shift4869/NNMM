@@ -2,12 +2,10 @@
 from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
-
+from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.GuiFunction import *
 from NNMM.Process import ProcessUpdateMylistInfoBase
-
 
 logger = getLogger("root")
 logger.setLevel(INFO)

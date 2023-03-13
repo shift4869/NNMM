@@ -11,11 +11,11 @@ import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from mock import MagicMock, AsyncMock, patch, call
 from pathlib import Path
 from urllib.error import HTTPError
 
-from requests_html import AsyncHTMLSession, HTML
+from mock import AsyncMock, MagicMock, call, patch
+from requests_html import HTML, AsyncHTMLSession
 
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.RegisteredAt import RegisteredAt
@@ -31,8 +31,7 @@ from NNMM.VideoInfoFetcher.ValueObjects.Videoid import Videoid
 from NNMM.VideoInfoFetcher.ValueObjects.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.ValueObjects.VideoURL import VideoURL
 from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
-from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType
-from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import VideoInfoFetcherBase
+from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType, VideoInfoFetcherBase
 
 RSS_PATH = "./test/rss/"
 

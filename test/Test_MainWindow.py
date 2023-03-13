@@ -6,15 +6,15 @@ import sys
 import unittest
 from contextlib import ExitStack
 from logging import INFO, getLogger
-from mock import MagicMock, patch, mock_open
 from pathlib import Path
 
 import PySimpleGUI as sg
+from mock import MagicMock, mock_open, patch
 
+from NNMM.GuiFunction import *
 from NNMM.MainWindow import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.GuiFunction import *
 from NNMM.Process import *
 
 TEST_DB_PATH = "./test/test.db"

@@ -5,9 +5,9 @@ import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from mock import MagicMock, patch, call
 
 import freezegun
+from mock import MagicMock, call, patch
 
 from NNMM.GuiFunction import IntervalTranslation
 from NNMM.Process import ProcessUpdatePartialMylistInfo

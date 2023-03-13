@@ -4,14 +4,12 @@ import time
 import traceback
 from pathlib import Path
 
-import sqlalchemy
-from sqlalchemy import *
-from sqlalchemy.orm import *
-from sqlalchemy.orm.exc import *
+from sqlalchemy import and_, asc
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 
 from NNMM.DBControllerBase import DBControllerBase
-from NNMM.Model import *
-
+from NNMM.Model import MylistInfo
 
 DEBUG = False
 
@@ -20,7 +18,7 @@ class MylistInfoDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def Upsert(self, video_id: str, title: str, username: str, status: str,
+    def upsert(self, video_id: str, title: str, username: str, status: str,
                uploaded_at: str, registered_at: str, video_url: str, mylist_url: str, created_at: str) -> int:
         """MylistInfoにUPSERTする
 
@@ -52,7 +50,7 @@ class MylistInfoDBController(DBControllerBase):
         try:
             q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
             p = q.one()
-        except sqlalchemy.orm.exc.NoResultFound:
+        except NoResultFound:
             # INSERT
             session.add(r)
             res = 0
@@ -122,7 +120,7 @@ class MylistInfoDBController(DBControllerBase):
                 try:
                     q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
                     p = q.with_for_update().one()
-                except sqlalchemy.orm.exc.NoResultFound:
+                except NoResultFound:
                     # INSERT
                     session.add(r)
                     r_res.append(0)
@@ -140,7 +138,7 @@ class MylistInfoDBController(DBControllerBase):
                     r_res.append(1)
 
             session.commit()
-            success = true
+            success = True
         except Exception as e:
             # commitに失敗した場合は何もしないで終了させる
             # TODO::何かうまい処理を考える
@@ -323,7 +321,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
 
         res = session.query(MylistInfo).order_by(asc(MylistInfo.created_at)).with_for_update().all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
         res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
@@ -348,7 +346,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
 
         res = session.query(MylistInfo).filter_by(video_id=video_id).with_for_update().all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
         res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
@@ -376,7 +374,7 @@ class MylistInfoDBController(DBControllerBase):
         res = session.query(MylistInfo).filter(
             and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url)
         ).with_for_update().all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         session.close()
         return res_dict
@@ -397,7 +395,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
 
         res = session.query(MylistInfo).filter_by(video_url=video_url).with_for_update().all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
         res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
@@ -422,7 +420,7 @@ class MylistInfoDBController(DBControllerBase):
 
         # res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).order_by(desc(MylistInfo.video_id)).all()
         res = session.query(MylistInfo).filter_by(mylist_url=mylist_url).with_for_update().all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
         res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
@@ -446,7 +444,7 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
 
         res = session.query(MylistInfo).filter_by(username=username).with_for_update().all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
         res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)

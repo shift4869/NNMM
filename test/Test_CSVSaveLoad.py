@@ -9,11 +9,12 @@ import sys
 import unittest
 from contextlib import ExitStack
 from logging import INFO, getLogger
-from mock import MagicMock, PropertyMock, patch, mock_open
 from pathlib import Path
 
-from NNMM.MylistDBController import *
+from mock import MagicMock, PropertyMock, mock_open, patch
+
 from NNMM import CSVSaveLoad
+from NNMM.MylistDBController import *
 
 TEST_DB_PATH = "./test/test.db"
 CSV_PATH = "./test/result.csv"
@@ -105,7 +106,7 @@ class TestCSVSaveLoad(unittest.TestCase):
             r = self.__MakeMylistSample(i)
             session.add(r)
 
-            d = r.toDict()
+            d = r.to_dict()
             d["id"] = id_num
             id_num = id_num + 1
             expect.append(d)

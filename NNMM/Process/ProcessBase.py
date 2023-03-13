@@ -2,7 +2,6 @@
 from abc import ABC, abstractmethod
 from logging import INFO, getLogger
 
-
 logger = getLogger("root")
 logger.setLevel(INFO)
 

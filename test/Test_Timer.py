@@ -6,10 +6,10 @@ import sys
 import unittest
 from contextlib import ExitStack
 from logging import INFO, getLogger
-from mock import MagicMock, patch, mock_open
 
 import freezegun
 import PySimpleGUI as sg
+from mock import MagicMock, mock_open, patch
 
 from NNMM.GuiFunction import *
 from NNMM.Timer import ProcessTimer

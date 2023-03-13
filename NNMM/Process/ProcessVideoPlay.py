@@ -4,12 +4,11 @@ from logging import INFO, getLogger
 import PySimpleGUI as sg
 
 from NNMM import ConfigMain
+from NNMM.GuiFunction import *
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
-from NNMM.GuiFunction import *
-from NNMM.Process.ProcessWatched import *
 from NNMM.Process import ProcessBase
-
+from NNMM.Process.ProcessWatched import *
 
 logger = getLogger("root")
 logger.setLevel(INFO)

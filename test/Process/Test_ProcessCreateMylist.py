@@ -11,7 +11,8 @@ import warnings
 from asyncio import new_event_loop
 from contextlib import ExitStack
 from datetime import datetime
-from mock import MagicMock, patch, AsyncMock
+
+from mock import AsyncMock, MagicMock, patch
 
 from NNMM.Process import ProcessCreateMylist
 

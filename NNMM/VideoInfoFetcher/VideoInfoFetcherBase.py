@@ -28,7 +28,6 @@ from NNMM.VideoInfoFetcher.ValueObjects.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.ValueObjects.VideoURL import VideoURL
 from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 
-
 for name in logging.root.manager.loggerDict:
     getLogger(name).disabled = True
 logger = getLogger("root")

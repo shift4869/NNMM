@@ -6,9 +6,9 @@ from logging import INFO, getLogger
 
 import PySimpleGUI as sg
 
+from NNMM.ConfigMain import ProcessConfigBase
 from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
-from NNMM.ConfigMain import ProcessConfigBase
 
 logger = getLogger("root")
 logger.setLevel(INFO)

@@ -1,16 +1,15 @@
 # coding: utf-8
 import pickle
 import re
+from abc import ABCMeta, abstractmethod
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from abc import ABCMeta, abstractmethod
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from sqlalchemy.orm.exc import *
 
 from NNMM.Model import *
-
 
 DEBUG = False
 

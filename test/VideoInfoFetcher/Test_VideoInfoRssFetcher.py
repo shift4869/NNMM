@@ -13,11 +13,11 @@ import urllib.parse
 import warnings
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from mock import MagicMock, patch, AsyncMock
 from pathlib import Path
 
 from bs4 import BeautifulSoup
-from requests_html import AsyncHTMLSession, HTML
+from mock import AsyncMock, MagicMock, patch
+from requests_html import HTML, AsyncHTMLSession
 
 from NNMM import GuiFunction
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo

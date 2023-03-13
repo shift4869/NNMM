@@ -10,7 +10,6 @@ from sqlalchemy.orm.exc import *
 from NNMM.DBControllerBase import DBControllerBase
 from NNMM.Model import *
 
-
 DEBUG = False
 
 
@@ -260,7 +259,7 @@ class MylistDBController(DBControllerBase):
         dst_record.id = src_id
 
         # 返り値作成
-        res = (src_record.toDict(), dst_record.toDict())
+        res = (src_record.to_dict(), dst_record.to_dict())
 
         # セッション終了
         session.commit()
@@ -312,7 +311,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
 
         res = session.query(Mylist).order_by(asc(Mylist.id)).all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         session.close()
         return res_dict
@@ -333,7 +332,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
 
         res = session.query(Mylist).filter_by(showname=showname).all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         session.close()
         return res_dict
@@ -354,7 +353,7 @@ class MylistDBController(DBControllerBase):
         session = Session()
 
         res = session.query(Mylist).filter_by(url=url).all()
-        res_dict = [r.toDict() for r in res]  # 辞書リストに変換
+        res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         session.close()
         return res_dict

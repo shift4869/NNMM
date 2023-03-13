@@ -9,7 +9,6 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 
-
 logger = getLogger("root")
 logger.setLevel(INFO)
 

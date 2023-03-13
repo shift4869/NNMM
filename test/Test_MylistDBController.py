@@ -4,16 +4,16 @@
 MylistDBController.MylistDBController()の各種機能をテストする
 """
 
-import re
 import random
+import re
 import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime
 from logging import WARNING, getLogger
-from mock import MagicMock, PropertyMock, patch
 from pathlib import Path
 
+from mock import MagicMock, PropertyMock, patch
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from sqlalchemy.orm.exc import *
@@ -111,7 +111,7 @@ class TestMylistDBController(unittest.TestCase):
             r = self.__MakeMylistSample(i)
             session.add(r)
 
-            d = r.toDict()
+            d = r.to_dict()
             d["id"] = id_num
             id_num = id_num + 1
             expect.append(d)
@@ -164,7 +164,7 @@ class TestMylistDBController(unittest.TestCase):
                 res = m_cont.Upsert(r.id, r.username, r.mylistname, r.type, r.showname, r.url, r.created_at, r.updated_at, r.checked_at, r.check_interval, r.is_include_new)
                 self.assertEqual(res, 0)
 
-                d = r.toDict()
+                d = r.to_dict()
                 d["id"] = id_num
                 id_num = id_num + 1
                 expect.append(d)
