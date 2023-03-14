@@ -19,7 +19,7 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
         pass
 
     def MakeMylistInfoDB(self):
-        """mylist_info_db.Select()で取得される動画情報データセット
+        """mylist_info_db.select()で取得される動画情報データセット
         """
         NUM = 5
         res = []
@@ -63,7 +63,7 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
         mockwindow.__contains__.side_effect = expect_window_dict.__contains__
         type(r).window = mockwindow
 
-        r.mylist_info_db.Select = self.MakeMylistInfoDB
+        r.mylist_info_db.select = self.MakeMylistInfoDB
         return r
 
     def test_PSMIARun(self):

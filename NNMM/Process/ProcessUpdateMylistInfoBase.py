@@ -71,7 +71,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         func_list = []
         for record in m_list:
             # mylist_url = record.get("url")
-            # prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            # prev_video_list = self.mylist_info_db.selectFromMylistURL(mylist_url)
             # if not prev_video_list:
             #     # 初めての動画情報取得ならページをレンダリングして取得
             #     func_list.append(VideoInfoHtmlFetcher.fetch_videoinfo)
@@ -99,7 +99,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         prev_video_lists = []
         for record in m_list:
             mylist_url = record.get("url")
-            prev_video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            prev_video_list = self.mylist_info_db.selectFromMylistURL(mylist_url)
             prev_video_lists.append(prev_video_list)
         return prev_video_lists
 
@@ -401,7 +401,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         #         # マイリストの名前を更新する
         #         mylist_db.UpdateUsername(mylist_url, now_username)
         #         # 格納済の動画情報の投稿者名を更新する
-        #         mylist_info_db.UpdateUsernameInMylist(mylist_url, now_username)
+        #         mylist_info_db.update_username_in_mylist(mylist_url, now_username)
         #         logger.info(f"Mylist username changed , {prev_username} -> {now_username}")
 
         # DBに格納
@@ -426,7 +426,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         except KeyError:
             logger.error(f"{self.L_KIND} UpdateMylistInfoWorker failed, key error")
             return -1
-        mylist_info_db.UpsertFromList(records)
+        mylist_info_db.upsert_from_list(records)
 
         # マイリストの更新確認日時更新
         # 新しい動画情報が追加されたかに関わらずchecked_atを更新する
@@ -502,7 +502,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
         m_list = self.mylist_db.Select()
         for m in m_list:
             mylist_url = m.get("url")
-            video_list = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            video_list = self.mylist_info_db.selectFromMylistURL(mylist_url)
             table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
             def_data = []
             for i, t in enumerate(video_list):

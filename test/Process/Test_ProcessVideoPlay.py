@@ -38,7 +38,7 @@ class TestProcessVideoPlay(unittest.TestCase):
         return res
 
     def MakeMylistInfoDB(self, mylist_url, num: int = 5) -> list[dict]:
-        """mylist_info_db.SelectFromMylistURL()で取得される動画情報データセット
+        """mylist_info_db.selectFromMylistURL()で取得される動画情報データセット
         """
         res = []
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
@@ -95,7 +95,7 @@ class TestProcessVideoPlay(unittest.TestCase):
             table_list = self.MakeMylistInfoDB(mylist_url)
             return [r for r in table_list if r["video_id"] == video_id]
 
-        r.mylist_info_db.SelectFromVideoID.side_effect = ReturnSelectFromVideoID
+        r.mylist_info_db.selectFromVideoID.side_effect = ReturnSelectFromVideoID
         return r
 
     def test_PVPRun(self):
@@ -155,7 +155,7 @@ class TestProcessVideoPlay(unittest.TestCase):
                 self.assertEqual(call.values.__getitem__("-TABLE-"), mc[0])
                 self.assertEqual(call.values.__getitem__("-TABLE-"), mc[1])
                 self.assertEqual(call.window.__getitem__("-TABLE-"), mc[2])
-                self.assertEqual(call.mylist_info_db.SelectFromVideoID(selected[1]), mc[3])
+                self.assertEqual(call.mylist_info_db.selectFromVideoID(selected[1]), mc[3])
                 mockmw.reset_mock()
 
             assertMockCall()

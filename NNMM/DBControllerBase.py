@@ -5,11 +5,10 @@ from abc import ABCMeta, abstractmethod
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from sqlalchemy import *
-from sqlalchemy.orm import *
-from sqlalchemy.orm.exc import *
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 
-from NNMM.Model import *
+from NNMM.Model import Base
 
 DEBUG = False
 
@@ -17,11 +16,25 @@ DEBUG = False
 class DBControllerBase(metaclass=ABCMeta):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         self.dbname = db_fullpath
-        self.engine = create_engine(f"sqlite:///{self.dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
+        if self.dbname in ["", ":memory:", "sqlite//"]:
+            self.db_url = "sqlite://"
+        else:
+            self.db_url = f"sqlite:///{self.dbname}"
+
+        self.engine = create_engine(
+            self.db_url,
+            echo=False,
+            poolclass=StaticPool,
+            # pool_recycle=5,
+            connect_args={
+                "timeout": 30,
+                "check_same_thread": False,
+            }
+        )
         Base.metadata.create_all(self.engine)
 
     @abstractmethod
-    def Select(self):
+    def select(self):
         """FavoriteからSELECTする
 
         Note:

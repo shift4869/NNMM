@@ -59,7 +59,7 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
             # マイリスト情報ステータスDB更新
             table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
             selected = def_data[row]
-            res = self.mylist_info_db.UpdateStatus(selected[1], selected[8], "未視聴")
+            res = self.mylist_info_db.update_status(selected[1], selected[8], "未視聴")
             if res == 0:
                 logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "non-watched".')
             else:

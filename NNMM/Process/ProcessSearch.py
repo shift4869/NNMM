@@ -159,7 +159,7 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
 
             # マイリスト内の動画情報を探索
             mylist_url = m["url"]
-            records = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+            records = self.mylist_info_db.selectFromMylistURL(mylist_url)
             for r in records:
                 if re.search(pattern, r["title"]):
                     match_index_list.append(i)
@@ -240,7 +240,7 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
             index = min([int(v) for v in self.values["-TABLE-"]])
 
         # マイリスト内の動画情報を探索
-        # records = self.mylist_info_db.SelectFromMylistURL(mylist_url)
+        # records = self.mylist_info_db.selectFromMylistURL(mylist_url)
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
         records = self.window["-TABLE-"].Values  # 現在のtableの全リスト

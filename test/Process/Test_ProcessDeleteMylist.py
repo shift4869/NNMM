@@ -70,7 +70,7 @@ class TestProcessDeleteMylist(unittest.TestCase):
 
                 mc = mockmw.mock_calls
                 self.assertEqual(7, len(mc))
-                self.assertEqual("mylist_info_db.DeleteFromMylistURL", mc[0][0])
+                self.assertEqual("mylist_info_db.delete_in_mylist", mc[0][0])
                 self.assertEqual((mylist_url_s,), mc[0][1])
                 self.assertEqual("window.__getitem__", mc[1][0])
                 self.assertEqual(("-TABLE-",), mc[1][1])

@@ -70,7 +70,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
         return res
 
     def MakeMylistInfoDB(self, num: int = 5) -> list[dict]:
-        """mylist_info_db.Select()で取得される動画情報データセット
+        """mylist_info_db.select()で取得される動画情報データセット
         """
         res = []
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
@@ -192,7 +192,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             # 正常系
             prev_video_list = self.MakeMylistInfoDB(num=3)
 
-            def ReturnSelectFromMylistURL(mylist_url):
+            def Returnselect_from_mylist_url(mylist_url):
                 res = []
                 for record in prev_video_list:
                     if record.get("mylist_url") == mylist_url:
@@ -200,7 +200,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 return res
 
             r = MagicMock()
-            r.SelectFromMylistURL = ReturnSelectFromMylistURL
+            r.select_from_mylist_url = Returnselect_from_mylist_url
             puami.mylist_info_db = r
 
             m_list = self.MakeMylistDB(num=5)
@@ -230,7 +230,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             # 正常系
             prev_video_list = self.MakeMylistInfoDB()
 
-            def ReturnSelectFromMylistURL(mylist_url):
+            def Returnselect_from_mylist_url(mylist_url):
                 res = []
                 for record in prev_video_list:
                     if record.get("mylist_url") == mylist_url:
@@ -238,11 +238,11 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 return res
 
             r = MagicMock()
-            r.SelectFromMylistURL = ReturnSelectFromMylistURL
+            r.select_from_mylist_url = Returnselect_from_mylist_url
             puami.mylist_info_db = r
 
             m_list = self.MakeMylistDB()
-            expect = [ReturnSelectFromMylistURL(m["url"]) for m in m_list]
+            expect = [Returnselect_from_mylist_url(m["url"]) for m in m_list]
             actual = puami.GetPrevVideoLists(m_list)
             self.assertEqual(expect, actual)
 
@@ -381,7 +381,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             p_list = []
             n_list = []
 
-            def ReturnSelectFromMylistURL(mylist_url):
+            def Returnselect_from_mylist_url(mylist_url):
                 res = []
                 records = self.MakeMylistInfoDB(NUM)
                 for record in records:
@@ -393,8 +393,8 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             for m in m_list:
                 mylist_url = m.get("url")
                 expect.append(mylist_url)
-                p_list.append(ReturnSelectFromMylistURL(mylist_url))
-                n_list.append(ReturnSelectFromMylistURL(mylist_url))
+                p_list.append(Returnselect_from_mylist_url(mylist_url))
+                n_list.append(Returnselect_from_mylist_url(mylist_url))
 
             r = MagicMock()
             r.submit.side_effect = lambda f, m, p, n: MagicMock()
@@ -444,7 +444,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             p_list = []
             n_list = []
 
-            def ReturnSelectFromMylistURL(mylist_url):
+            def Returnselect_from_mylist_url(mylist_url):
                 res = []
                 records = self.MakeMylistInfoDB(NUM)
                 for i, record in enumerate(records):
@@ -466,7 +466,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
 
             for m in m_list:
                 mylist_url = m.get("url")
-                p_list.append(ReturnSelectFromMylistURL(mylist_url))
+                p_list.append(Returnselect_from_mylist_url(mylist_url))
                 n_list.append((mylist_url, ReturnGetMylistInfo(mylist_url)))
             p = p_list[0]
 
@@ -512,7 +512,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                     if prev_username != now_username:
                         self.assertEqual(call().UpdateUsername(mylist_url, now_username), mc_i[i])
                         i = i + 1
-                        self.assertEqual(call().UpdateUsernameInMylist(mylist_url, now_username), mc_j[j])
+                        self.assertEqual(call().update_username_in_mylist(mylist_url, now_username), mc_j[j])
                         j = j + 1
 
                 records = []
@@ -530,7 +530,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                     }
                     records.append(r)
 
-                self.assertEqual(call().UpsertFromList(records), mc_j[j])
+                self.assertEqual(call().upsert_from_list(records), mc_j[j])
                 j = j + 1
 
                 self.assertEqual(call().UpdateCheckedAt(mylist_url, dst), mc_i[i])
@@ -632,7 +632,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             # 引数が不正：動画情報のリストに想定外のキーがある
             for m in m_list:
                 mylist_url = m.get("url")
-                p_list.append(ReturnSelectFromMylistURL(mylist_url))
+                p_list.append(Returnselect_from_mylist_url(mylist_url))
                 n_list.append((mylist_url, ReturnGetMylistInfo(mylist_url)))
             p = p_list[0]
             p[0]["不正なキー"] = "不正な値"
@@ -681,7 +681,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             puamitd = ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoThreadDoneBase()
 
             # 正常系
-            def ReturnSelectFromMylistURL(mylist_url):
+            def Returnselect_from_mylist_url(mylist_url):
                 res = []
                 records = self.MakeMylistInfoDB(num=5)
                 for i, record in enumerate(records):
@@ -706,7 +706,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             mockmdb.Select.side_effect = lambda: self.MakeMylistDB()
             mockmw.mylist_db = mockmdb
             mockmidb = MagicMock()
-            mockmidb.SelectFromMylistURL.side_effect = ReturnSelectFromMylistURL
+            mockmidb.select_from_mylist_url.side_effect = Returnselect_from_mylist_url
             mockmw.mylist_info_db = mockmidb
             actual = puamitd.Run(mockmw)
             self.assertEqual(0, actual)
@@ -735,7 +735,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             self.assertEqual(5, len(mc))
             for i, m in enumerate(m_list):
                 mylist_url = m.get("url")
-                self.assertEqual(call.SelectFromMylistURL(mylist_url), mc[i])
+                self.assertEqual(call.select_from_mylist_url(mylist_url), mc[i])
             mockmw.mylist_info_db.reset_mock()
 
             mylist_url = m_list[0].get("url")

@@ -54,7 +54,7 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
                 continue
 
             # マイリスト情報内の視聴済フラグを更新
-            self.mylist_info_db.UpdateStatusInMylist(mylist_url, "")
+            self.mylist_info_db.update_status_in_mylist(mylist_url, "")
             # マイリストの新着フラグを更新
             self.mylist_db.UpdateIncludeFlag(mylist_url, False)
 

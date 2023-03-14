@@ -168,7 +168,7 @@ class TestMylistDBController(unittest.TestCase):
                 d["id"] = id_num
                 id_num = id_num + 1
                 expect.append(d)
-            actual = m_cont.Select()
+            actual = m_cont.select()
             expect = sorted(expect, key=lambda x: x["id"])
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
@@ -182,7 +182,7 @@ class TestMylistDBController(unittest.TestCase):
                 res = m_cont.Upsert(r["id"], r["username"], r["mylistname"], r["type"], r["showname"], r["url"],
                                     r["created_at"], r["updated_at"], r["checked_at"], r["check_interval"], r["is_include_new"])
                 self.assertEqual(res, 1)
-            actual = m_cont.Select()
+            actual = m_cont.select()
             expect = sorted(expect, key=lambda x: x["id"])
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
@@ -207,7 +207,7 @@ class TestMylistDBController(unittest.TestCase):
                     r["is_include_new"] = True
             expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.Select()
+            actual = m_cont.select()
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
 
@@ -238,7 +238,7 @@ class TestMylistDBController(unittest.TestCase):
                     r["updated_at"] = dst
             expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.Select()
+            actual = m_cont.select()
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
 
@@ -269,7 +269,7 @@ class TestMylistDBController(unittest.TestCase):
                     r["checked_at"] = dst
             expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.Select()
+            actual = m_cont.select()
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
 
@@ -299,7 +299,7 @@ class TestMylistDBController(unittest.TestCase):
                     r["showname"] = m_cont.GetListname(mylist_url, now_username, r["showname"])
             expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.Select()
+            actual = m_cont.select()
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
 
@@ -329,7 +329,7 @@ class TestMylistDBController(unittest.TestCase):
 
             expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.Select()
+            actual = m_cont.select()
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
 
@@ -358,7 +358,7 @@ class TestMylistDBController(unittest.TestCase):
             expect = [e for e in expect if e["url"] != mylist_url]
             expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.Select()
+            actual = m_cont.select()
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
 
@@ -376,7 +376,7 @@ class TestMylistDBController(unittest.TestCase):
             expect = self.__LoadToTable()
             expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.Select()
+            actual = m_cont.select()
             actual = sorted(actual, key=lambda x: x["id"])
             self.assertEqual(expect, actual)
             pass

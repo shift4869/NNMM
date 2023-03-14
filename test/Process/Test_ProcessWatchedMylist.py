@@ -86,7 +86,7 @@ class TestProcessWatchedMylist(unittest.TestCase):
                 self.assertEqual(call.values.__getitem__("-LIST-"), mc[0])
                 self.assertEqual(call.values.__getitem__("-LIST-"), mc[1])
                 self.assertEqual(call.mylist_db.SelectFromShowname(showname), mc[2])
-                self.assertEqual(call.mylist_info_db.UpdateStatusInMylist(mylist_url, ""), mc[3])
+                self.assertEqual(call.mylist_info_db.update_status_in_mylist(mylist_url, ""), mc[3])
                 self.assertEqual(call.mylist_db.UpdateIncludeFlag(mylist_url, False), mc[4])
                 mockmw.reset_mock()
 

@@ -37,7 +37,7 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         return res
 
     def MakeMylistInfoDB(self, num: int = 5) -> list[dict]:
-        """mylist_info_db.Select()で取得される動画情報データセット
+        """mylist_info_db.select()で取得される動画情報データセット
         """
         res = []
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",

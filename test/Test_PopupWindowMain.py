@@ -454,7 +454,7 @@ class TestPopupWindowMain(unittest.TestCase):
             type(mw).window = {"-TABLE-": v_mock}
             type(mw).values = {"-TABLE-": [0]}
             sfiu_mock = MagicMock()
-            type(sfiu_mock).SelectFromIDURL = lambda s, v, m: [v + "_" + m]
+            type(sfiu_mock).select_from_id_url = lambda s, v, m: [v + "_" + m]
             type(mw).mylist_info_db = sfiu_mock
             type(mw).mylist_db = "mylist_db"
 
@@ -467,7 +467,7 @@ class TestPopupWindowMain(unittest.TestCase):
 
             # 異常系
             # 動画情報レコードオブジェクト取得失敗
-            type(sfiu_mock).SelectFromIDURL = lambda s, v, m: []
+            type(sfiu_mock).select_from_id_url = lambda s, v, m: []
             actual = pvw.Init(mw)
             self.assertEqual(-1, actual)
 

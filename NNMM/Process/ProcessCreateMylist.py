@@ -255,7 +255,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
                 "created_at": dst,
             }
             records.append(r)
-        self.mylist_info_db.UpsertFromList(records)
+        self.mylist_info_db.upsert_from_list(records)
 
         # 後続処理へ
         self.window["-INPUT1-"].update(value=mylist_url)

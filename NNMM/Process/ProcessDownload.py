@@ -67,7 +67,7 @@ class ProcessDownload(ProcessBase.ProcessBase):
             video_id = selected[1]
             video_url = selected[6]
             mylist_url = selected[7]
-            records = self.mylist_info_db.SelectFromIDURL(video_id, mylist_url)
+            records = self.mylist_info_db.selectFromIDURL(video_id, mylist_url)
 
             if records == []:
                 logger.error("Selected row is invalid.")

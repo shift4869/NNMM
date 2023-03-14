@@ -442,7 +442,7 @@ class PopupVideoWindow(PopupWindowBase):
         # 動画情報を取得する
         video_id = selected[1]
         mylist_url = selected[8]
-        records = self.mylist_info_db.SelectFromIDURL(video_id, mylist_url)
+        records = self.mylist_info_db.selectFromIDURL(video_id, mylist_url)
 
         if records == [] or len(records) != 1:
             logger.error("Selected row is invalid.")

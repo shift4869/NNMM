@@ -46,7 +46,7 @@ class TestProcessSearch(unittest.TestCase):
         return res
 
     def MakeMylistInfoDB(self, mylist_url):
-        """mylist_info_db.SelectFromMylistURL(mylist_url)で取得されるマイリストデータセット
+        """mylist_info_db.selectFromMylistURL(mylist_url)で取得されるマイリストデータセット
         """
         NUM = 5
         res = []
@@ -235,7 +235,7 @@ class TestProcessSearch(unittest.TestCase):
                 type(r).window = mockwindow
 
                 r.mylist_db.Select.return_value = self.MakeMylistDB()
-                r.mylist_info_db.SelectFromMylistURL = self.MakeMylistInfoDB
+                r.mylist_info_db.selectFromMylistURL = self.MakeMylistInfoDB
                 return r
 
             mockmw = ReturnMW()

@@ -70,7 +70,7 @@ class TestProcessWatched(unittest.TestCase):
                 mockvalue.__iter__.side_effect = expect_values_dict.__iter__
                 mockvalue.__contains__.side_effect = expect_values_dict.__contains__
                 type(r).values = mockvalue
-                r.mylist_info_db.UpdateStatus.return_value = 0
+                r.mylist_info_db.update_status.return_value = 0
                 return r
 
             mockmw = ReturnMW()
@@ -100,8 +100,8 @@ class TestProcessWatched(unittest.TestCase):
                 for s_index in selected_num_s:
                     v = table_records_s[s_index][1]
                     m = table_records_s[s_index][8]
-                    self.assertEqual(call.mylist_info_db.UpdateStatus(v, m, ""), mc[c_index])
-                    self.assertEqual(call.mylist_info_db.SelectFromMylistURL(m), mc[c_index + 1])
+                    self.assertEqual(call.mylist_info_db.update_status(v, m, ""), mc[c_index])
+                    self.assertEqual(call.mylist_info_db.selectFromMylistURL(m), mc[c_index + 1])
                     self.assertEqual(call.mylist_db.UpdateIncludeFlag(m, False), mc[c_index + 2])
                     c_index = c_index + 3
                 mockmw.reset_mock()

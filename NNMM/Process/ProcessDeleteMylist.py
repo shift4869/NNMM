@@ -82,7 +82,7 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
             return 1
 
         # マイリスト情報から対象動画の情報を削除する
-        self.mylist_info_db.DeleteFromMylistURL(mylist_url)
+        self.mylist_info_db.delete_in_mylist(mylist_url)
 
         # マイリストからも削除する
         self.mylist_db.DeleteFromURL(mylist_url)

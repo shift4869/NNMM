@@ -26,7 +26,7 @@ class TestProcessDownload(unittest.TestCase):
         }
         return record_list
 
-    def __ReturnSelectFromIDURL(self, video_id, mylist_url):
+    def __Returnselect_from_id_url(self, video_id, mylist_url):
         res = {}
         record_list = self.__GetRecordList()
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url", "showname", "mylistname"]
@@ -78,7 +78,7 @@ class TestProcessDownload(unittest.TestCase):
             mockvalue.__contains__.side_effect = expect_values_dict.__contains__
             type(mockmw).values = mockvalue
             mockmylist_info_db = MagicMock()
-            type(mockmylist_info_db).SelectFromIDURL = self.__ReturnSelectFromIDURL
+            type(mockmylist_info_db).select_from_id_url = self.__Returnselect_from_id_url
             type(mockmw).mylist_info_db = mockmylist_info_db
 
             actual = pdl.Run(mockmw)
@@ -100,7 +100,7 @@ class TestProcessDownload(unittest.TestCase):
                 mockmw.values.reset_mock()
 
                 mc = mockthread.mock_calls
-                record = self.__ReturnSelectFromIDURL(video_id_s, mylist_url_s)[0]
+                record = self.__Returnselect_from_id_url(video_id_s, mylist_url_s)[0]
                 mockthread.assert_called_with(target=pdl.DownloadThread, args=(record, ), daemon=True)
                 mockthread.reset_mock()
 
@@ -108,7 +108,7 @@ class TestProcessDownload(unittest.TestCase):
 
             # 異常系
             # 動画情報取得に失敗
-            type(mockmylist_info_db).SelectFromIDURL = lambda s, video_id, mylist_url: []
+            type(mockmylist_info_db).select_from_id_url = lambda s, video_id, mylist_url: []
             actual = pdl.Run(mockmw)
             self.assertEqual(-1, actual)
 
@@ -143,7 +143,7 @@ class TestProcessDownload(unittest.TestCase):
             pdl.window = MagicMock()
             video_id_s = "sm11111111"
             mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
-            record = self.__ReturnSelectFromIDURL(video_id_s, mylist_url_s)[0]
+            record = self.__Returnselect_from_id_url(video_id_s, mylist_url_s)[0]
             actual = pdl.DownloadThread(record)
             self.assertEqual(0, actual)
 
@@ -173,7 +173,7 @@ class TestProcessDownload(unittest.TestCase):
             # 正常系
             video_id_s = "sm11111111"
             mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
-            record = self.__ReturnSelectFromIDURL(video_id_s, mylist_url_s)[0]
+            record = self.__Returnselect_from_id_url(video_id_s, mylist_url_s)[0]
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(pdl.DownloadThreadWorker(record))

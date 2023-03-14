@@ -18,7 +18,7 @@ def SaveMylist(mylist_db: MylistDBController, save_file_path: str) -> int:
         int: 成功時0
     """
     sd_path = Path(save_file_path)
-    records = mylist_db.Select()
+    records = mylist_db.select()
     mylist_cols = Mylist.__table__.c.keys()
     param_list = []
 

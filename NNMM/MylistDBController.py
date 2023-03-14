@@ -295,7 +295,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return 0
 
-    def Select(self) -> list[dict]:
+    def select(self) -> list[dict]:
         """MylistからSELECTする
 
         Note:

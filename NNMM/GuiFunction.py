@@ -157,7 +157,7 @@ def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController) -> int:
     # マイリスト画面表示更新
     NEW_MARK = "*:"
     list_data = window["-LIST-"].Values
-    m_list = mylist_db.Select()
+    m_list = mylist_db.select()
     include_new_index_list = []
     for i, m in enumerate(m_list):
         if m["is_include_new"]:
@@ -211,7 +211,7 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
             index = window["-LIST-"].get_indexes()[0]
     else:
         # 現在のマイリストURLからlistboxのindexを求める
-        m_list = mylist_db.Select()
+        m_list = mylist_db.select()
         mylist_url_list = [m["url"] for m in m_list]
         for i, url in enumerate(mylist_url_list):
             if mylist_url == url:
@@ -219,7 +219,7 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
                 break
 
         # 現在のマイリストURLからテーブル情報を求める
-        records = mylist_info_db.SelectFromMylistURL(mylist_url)
+        records = mylist_info_db.selectFromMylistURL(mylist_url)
         for i, m in enumerate(records):
             a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"], m["registered_at"], m["video_url"], m["mylist_url"]]
             def_data.append(a)

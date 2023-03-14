@@ -445,7 +445,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             type(mockmw).mylist_db = mockmb
 
             mockmib = MagicMock()
-            type(mockmib).UpsertFromList = lambda s, records: 0
+            type(mockmib).upsert_from_list = lambda s, records: 0
             type(mockmw).mylist_info_db = mockmib
 
             # 正常系

@@ -366,7 +366,7 @@ class TestGetMyListInfo(unittest.TestCase):
 
         # mock呼び出し確認
         NEW_MARK = "*:"
-        m_list = m_cont.Select()
+        m_list = m_cont.select()
         e_include_new_index_list = []
         expect = []
         for i, m in enumerate(m_list):
@@ -442,7 +442,7 @@ class TestGetMyListInfo(unittest.TestCase):
 
         # mock呼び出し確認
         expect = []
-        records = mb_cont.SelectFromMylistURL(mylist_url)
+        records = mb_cont.select_from_mylist_url(mylist_url)
         for i, m in enumerate(records):
             a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"], m["registered_at"], m["video_url"], m["mylist_url"]]
             expect.append(a)

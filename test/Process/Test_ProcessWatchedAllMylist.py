@@ -101,7 +101,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
                 self.assertEqual(call.mylist_db.Select(), mc[0])
                 for i, record in enumerate(records):
                     mylist_url = record.get("url")
-                    self.assertEqual(call.mylist_info_db.UpdateStatusInMylist(mylist_url, ""), mc[index])
+                    self.assertEqual(call.mylist_info_db.update_status_in_mylist(mylist_url, ""), mc[index])
                     self.assertEqual(call.mylist_db.UpdateIncludeFlag(mylist_url, False), mc[index + 1])
                     index += 2
 

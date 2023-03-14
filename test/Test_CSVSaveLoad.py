@@ -171,7 +171,7 @@ class TestCSVSaveLoad(unittest.TestCase):
             # DB初期化
             for r in records:
                 m_cont.DeleteFromURL(r["url"])
-            self.assertEqual(m_cont.Select(), [])
+            self.assertEqual(m_cont.select(), [])
 
             # ロード呼び出し
             res = CSVSaveLoad.LoadMylist(m_cont, CSV_PATH)
@@ -189,7 +189,7 @@ class TestCSVSaveLoad(unittest.TestCase):
 
             # 実行後DBチェック
             expect = copy.deepcopy(records)
-            actual = m_cont.Select()
+            actual = m_cont.select()
             self.assertEqual(expect, actual)
         pass
 
