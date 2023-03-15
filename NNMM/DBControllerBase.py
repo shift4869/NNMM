@@ -16,10 +16,7 @@ DEBUG = False
 class DBControllerBase(metaclass=ABCMeta):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         self.dbname = db_fullpath
-        if self.dbname in ["", ":memory:", "sqlite//"]:
-            self.db_url = "sqlite://"
-        else:
-            self.db_url = f"sqlite:///{self.dbname}"
+        self.db_url = f"sqlite:///{self.dbname}"
 
         self.engine = create_engine(
             self.db_url,

@@ -102,7 +102,7 @@ class TestProcessWatched(unittest.TestCase):
                     m = table_records_s[s_index][8]
                     self.assertEqual(call.mylist_info_db.update_status(v, m, ""), mc[c_index])
                     self.assertEqual(call.mylist_info_db.selectFromMylistURL(m), mc[c_index + 1])
-                    self.assertEqual(call.mylist_db.UpdateIncludeFlag(m, False), mc[c_index + 2])
+                    self.assertEqual(call.mylist_db.update_include_flag(m, False), mc[c_index + 2])
                     c_index = c_index + 3
                 mockmw.reset_mock()
 

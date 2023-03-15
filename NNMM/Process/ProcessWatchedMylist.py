@@ -52,7 +52,7 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
         NEW_MARK = "*:"
         if v[:2] == NEW_MARK:
             v = v[2:]
-        record = self.mylist_db.SelectFromShowname(v)[0]
+        record = self.mylist_db.select_from_showname(v)[0]
         mylist_url = record.get("url")
 
         # マイリストの新着フラグがFalseなら何もしない
@@ -63,7 +63,7 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
         # マイリスト情報内の視聴済フラグを更新
         self.mylist_info_db.update_status_in_mylist(mylist_url, "")
         # マイリストの新着フラグを更新
-        self.mylist_db.UpdateIncludeFlag(mylist_url, False)
+        self.mylist_db.update_include_flag(mylist_url, False)
 
         logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
 

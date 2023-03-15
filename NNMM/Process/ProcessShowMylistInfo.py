@@ -51,7 +51,7 @@ class ProcessShowMylistInfo(ProcessBase.ProcessBase):
             v = v[2:]
 
         # 対象マイリストをmylist_dbにshownameで問い合わせ
-        record = self.mylist_db.SelectFromShowname(v)[0]
+        record = self.mylist_db.select_from_showname(v)[0]
         mylist_url = record.get("url")
         self.window["-INPUT1-"].update(value=mylist_url)  # 対象マイリストのアドレスをテキストボックスに表示
 

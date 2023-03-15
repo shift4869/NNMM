@@ -170,7 +170,7 @@ class TestCSVSaveLoad(unittest.TestCase):
 
             # DB初期化
             for r in records:
-                m_cont.DeleteFromURL(r["url"])
+                m_cont.delete_from_mylist_url(r["url"])
             self.assertEqual(m_cont.select(), [])
 
             # ロード呼び出し

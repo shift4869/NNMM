@@ -230,7 +230,7 @@ class TestPopupWindowMain(unittest.TestCase):
             NEW_MARK = "*:"
             mw = MagicMock()
             sfs_mock = MagicMock()
-            type(sfs_mock).SelectFromShowname = lambda s, v: [v]
+            type(sfs_mock).select_from_showname = lambda s, v: [v]
             type(mw).mylist_db = sfs_mock
             type(mw).mylist_info_db = "mylist_info_db"
             type(mw).values = {"-LIST-": [f"{NEW_MARK}mylist showname"]}
@@ -245,7 +245,7 @@ class TestPopupWindowMain(unittest.TestCase):
 
             # 異常系
             # マイリストレコードオブジェクト取得失敗
-            type(sfs_mock).SelectFromShowname = lambda s, v: []
+            type(sfs_mock).select_from_showname = lambda s, v: []
             actual = pmw.Init(mw)
             self.assertEqual(-1, actual)
 

@@ -8,46 +8,30 @@ import random
 import re
 import sys
 import unittest
-from contextlib import ExitStack
 from datetime import datetime
-from logging import WARNING, getLogger
-from pathlib import Path
 
-from mock import MagicMock, PropertyMock, patch
-from sqlalchemy import *
-from sqlalchemy.orm import *
-from sqlalchemy.orm.exc import *
-
-from NNMM.Model import *
-from NNMM.MylistDBController import *
-
-logger = getLogger("root")
-logger.setLevel(WARNING)
-TEST_DB_PATH = "./test/test.db"
+from NNMM.Model import Mylist
+from NNMM.MylistDBController import MylistDBController
 
 
 class TestMylistDBController(unittest.TestCase):
-
     def setUp(self):
-        pass
+        self.test_db_path = ":memory:"
+        self.controller = MylistDBController(self.test_db_path)
 
-    def tearDown(self):
-        Path(TEST_DB_PATH).unlink(missing_ok=True)
-        pass
-
-    def __GetMylistInfoSet(self) -> list[tuple]:
+    def _get_mylist_list(self) -> list[tuple]:
         """Mylistオブジェクトの情報セットを返す（mylist_url以外）
         """
-        mylist_info = [
+        mylist_list = [
             (1, "投稿者1", "投稿動画", "uploaded", "投稿者1さんの投稿動画", "2021-05-29 00:00:11", "2021-10-16 00:00:11", "2021-10-17 00:00:11", "15分", False),
             (2, "投稿者2", "投稿動画", "uploaded", "投稿者2さんの投稿動画", "2021-05-29 00:00:22", "2021-10-16 00:00:22", "2021-10-17 00:00:22", "15分", False),
             (3, "投稿者1", "マイリスト1", "mylist", "「マイリスト1」-投稿者1さんのマイリスト", "2021-05-29 00:11:11", "2021-10-16 00:11:11", "2021-10-17 00:11:11", "15分", False),
             (4, "投稿者1", "マイリスト2", "mylist", "「マイリスト2」-投稿者1さんのマイリスト", "2021-05-29 00:22:11", "2021-10-16 00:22:11", "2021-10-17 00:22:11", "15分", False),
             (5, "投稿者3", "マイリスト3", "mylist", "「マイリスト3」-投稿者3さんのマイリスト", "2021-05-29 00:11:33", "2021-10-16 00:11:33", "2021-10-17 00:11:33", "15分", False),
         ]
-        return mylist_info
+        return mylist_list
 
-    def __GetURLInfoSet(self) -> list[str]:
+    def _get_mylist_url_list(self) -> list[str]:
         """mylist_urlの情報セットを返す
         """
         url_info = [
@@ -59,7 +43,7 @@ class TestMylistDBController(unittest.TestCase):
         ]
         return url_info
 
-    def __MakeMylistSample(self, id: str) -> Mylist:
+    def _make_mylist_sample(self, id: str) -> Mylist:
         """Mylistオブジェクトを作成する
 
         Note:
@@ -84,348 +68,318 @@ class TestMylistDBController(unittest.TestCase):
         Returns:
             Mylist: Mylistオブジェクト
         """
-        ml = self.__GetMylistInfoSet()[id]
-        mylist_url = self.__GetURLInfoSet()[id]
+        ml = self._get_mylist_list()[id]
+        mylist_url = self._get_mylist_url_list()[id]
         r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9])
         return r
 
-    def __LoadToTable(self) -> list[dict]:
+    def _load_table(self) -> list[dict]:
         """テスト用の初期レコードを格納したテーブルを用意する
 
         Returns:
-            expect (dict[]): 全SELECTした場合の予測値
+            expect (list[dict]): 全SELECTした場合の予測値
         """
-        Path(TEST_DB_PATH).unlink(missing_ok=True)
-
-        dbname = TEST_DB_PATH
-        engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
-        Base.metadata.create_all(engine)
-
-        Session = sessionmaker(bind=engine, autoflush=False)
-        session = Session()
-
+        controller = self.controller
         MAX_RECORD_NUM = 5
         expect = []
-        id_num = 1
-        for i in range(0, MAX_RECORD_NUM):
-            r = self.__MakeMylistSample(i)
-            session.add(r)
+        id_num = 0
+        for i in range(MAX_RECORD_NUM):
+            r = self._make_mylist_sample(i)
+            res = controller.upsert(
+                i,
+                r.username,
+                r.mylistname,
+                r.type,
+                r.showname,
+                r.url,
+                r.created_at,
+                r.updated_at,
+                r.checked_at,
+                r.check_interval,
+                r.is_include_new,
+            )
+            self.assertEqual(res, 0)
 
             d = r.to_dict()
             d["id"] = id_num
             id_num = id_num + 1
             expect.append(d)
-
-        session.commit()
-        session.close()
         return expect
 
-    def test_GetListname(self):
+    def test_get_showname(self):
         """shownameを取得する機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            def GetListname(url, username, old_showname) -> str:
-                pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
-                if re.search(pattern, url):
-                    return f"{username}さんの投稿動画"
+        def get_showname(url: str, username: str, old_showname: str) -> str:
+            pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
+            if re.search(pattern, url):
+                return f"{username}さんの投稿動画"
 
-                pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-                if re.search(pattern, url):
-                    # TODO::マイリスト名の一部のみしか反映できていない
-                    res_str = re.sub("-(.*)さんのマイリスト", f"-{username}さんのマイリスト", old_showname)
-                    return res_str
-                return ""
+            pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
+            if re.search(pattern, url):
+                res_str = re.sub("-(.*)さんのマイリスト", f"-{username}さんのマイリスト", old_showname)
+                return res_str
+            return ""
 
-            for r in expect:
-                now_username = "新しい" + r["username"]
-                url = r["url"]
-                old_showname = r["username"]
-                actual_showname = m_cont.GetListname(url, now_username, old_showname)
-                expect_showname = GetListname(url, now_username, old_showname)
-                self.assertEqual(expect_showname, actual_showname)
+        for r in expect:
+            now_username = "新しい" + r["username"]
+            url = r["url"]
+            old_showname = r["username"]
+            actual_showname = controller.get_showname(url, now_username, old_showname)
+            expect_showname = get_showname(url, now_username, old_showname)
+            self.assertEqual(expect_showname, actual_showname)
 
-    def test_Upsert(self):
+    def test_upsert(self):
         """MylistにUPSERTする機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
+        controller = self.controller
 
-            # INSERT
-            MAX_RECORD_NUM = 5
-            expect = []
-            id_num = 1
-            for i in range(0, MAX_RECORD_NUM):
-                r = self.__MakeMylistSample(i)
-                res = m_cont.Upsert(r.id, r.username, r.mylistname, r.type, r.showname, r.url, r.created_at, r.updated_at, r.checked_at, r.check_interval, r.is_include_new)
-                self.assertEqual(res, 0)
+        # INSERT
+        MAX_RECORD_NUM = 5
+        expect = []
+        id_num = 1
+        for i in range(0, MAX_RECORD_NUM):
+            r = self._make_mylist_sample(i)
+            res = controller.upsert(r.id, r.username, r.mylistname, r.type, r.showname, r.url, r.created_at, r.updated_at, r.checked_at, r.check_interval, r.is_include_new)
+            self.assertEqual(res, 0)
 
-                d = r.to_dict()
-                d["id"] = id_num
-                id_num = id_num + 1
-                expect.append(d)
-            actual = m_cont.select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+            d = r.to_dict()
+            d["id"] = id_num
+            id_num = id_num + 1
+            expect.append(d)
+        actual = controller.select()
+        expect = sorted(expect, key=lambda x: x["id"])
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-            # UPDATE
-            # idをランダムに選定し、statusを更新する
-            t_id = random.sample(range(0, MAX_RECORD_NUM - 1), 2)
-            for i in t_id:
-                expect[i]["check_interval"] = "30分"
-                r = expect[i]
-                res = m_cont.Upsert(r["id"], r["username"], r["mylistname"], r["type"], r["showname"], r["url"],
+        # UPDATE
+        # idをランダムに選定し、statusを更新する
+        t_id = random.sample(range(0, MAX_RECORD_NUM - 1), 2)
+        for i in t_id:
+            expect[i]["check_interval"] = "30分"
+            r = expect[i]
+            res = controller.upsert(r["id"], r["username"], r["mylistname"], r["type"], r["showname"], r["url"],
                                     r["created_at"], r["updated_at"], r["checked_at"], r["check_interval"], r["is_include_new"])
-                self.assertEqual(res, 1)
-            actual = m_cont.select()
-            expect = sorted(expect, key=lambda x: x["id"])
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
-            pass
+            self.assertEqual(res, 1)
+        actual = controller.select()
+        expect = sorted(expect, key=lambda x: x["id"])
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-    def test_UpdateIncludeFlag(self):
+    def test_update_include_flag(self):
         """Mylistの特定のレコードについて新着フラグを更新する機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            url_info = self.__GetURLInfoSet()
-            t_id = random.randint(0, len(url_info) - 1)
-            mylist_url = url_info[t_id]
-            res = m_cont.UpdateIncludeFlag(mylist_url, True)
-            self.assertEqual(res, 0)
+        url_info = self._get_mylist_url_list()
+        t_id = random.randint(0, len(url_info) - 1)
+        mylist_url = url_info[t_id]
+        res = controller.update_include_flag(mylist_url, True)
+        self.assertEqual(res, 0)
 
-            for r in expect:
-                if r["url"] == mylist_url:
-                    r["is_include_new"] = True
-            expect = sorted(expect, key=lambda x: x["id"])
+        for r in expect:
+            if r["url"] == mylist_url:
+                r["is_include_new"] = True
+        expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.select()
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+        actual = controller.select()
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-            # 存在しないマイリストを指定する
-            res = m_cont.UpdateIncludeFlag("https://www.nicovideo.jp/user/99999999/video", True)
-            self.assertEqual(res, -1)
-            pass
+        # 存在しないマイリストを指定する
+        res = controller.update_include_flag("https://www.nicovideo.jp/user/99999999/video", True)
+        self.assertEqual(res, -1)
 
-    def test_UpdateUpdatedAt(self):
+    def test_update_updated_at(self):
         """Mylistの特定のレコードについて更新日時を更新する機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            url_info = self.__GetURLInfoSet()
-            t_id = random.randint(0, len(url_info) - 1)
-            mylist_url = url_info[t_id]
+        url_info = self._get_mylist_url_list()
+        t_id = random.randint(0, len(url_info) - 1)
+        mylist_url = url_info[t_id]
 
-            dst_df = "%Y-%m-%d %H:%M:%S"
-            dst = datetime.now().strftime(dst_df)
-            res = m_cont.UpdateUpdatedAt(mylist_url, dst)
-            self.assertEqual(res, 0)
+        dst_df = "%Y-%m-%d %H:%M:%S"
+        dst = datetime.now().strftime(dst_df)
+        res = controller.update_updated_at(mylist_url, dst)
+        self.assertEqual(res, 0)
 
-            for r in expect:
-                if r["url"] == mylist_url:
-                    r["updated_at"] = dst
-            expect = sorted(expect, key=lambda x: x["id"])
+        for r in expect:
+            if r["url"] == mylist_url:
+                r["updated_at"] = dst
+        expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.select()
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+        actual = controller.select()
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-            # 存在しないマイリストを指定する
-            res = m_cont.UpdateUpdatedAt("https://www.nicovideo.jp/user/99999999/video", dst)
-            self.assertEqual(res, -1)
-            pass
+        # 存在しないマイリストを指定する
+        res = controller.update_updated_at("https://www.nicovideo.jp/user/99999999/video", dst)
+        self.assertEqual(res, -1)
 
-    def test_UpdateCheckedAt(self):
+    def test_update_checked_at(self):
         """Mylistの特定のレコードについて更新確認日時を更新する機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            url_info = self.__GetURLInfoSet()
-            t_id = random.randint(0, len(url_info) - 1)
-            mylist_url = url_info[t_id]
+        url_info = self._get_mylist_url_list()
+        t_id = random.randint(0, len(url_info) - 1)
+        mylist_url = url_info[t_id]
 
-            dst_df = "%Y-%m-%d %H:%M:%S"
-            dst = datetime.now().strftime(dst_df)
-            res = m_cont.UpdateCheckedAt(mylist_url, dst)
-            self.assertEqual(res, 0)
+        dst_df = "%Y-%m-%d %H:%M:%S"
+        dst = datetime.now().strftime(dst_df)
+        res = controller.update_checked_at(mylist_url, dst)
+        self.assertEqual(res, 0)
 
-            for r in expect:
-                if r["url"] == mylist_url:
-                    r["checked_at"] = dst
-            expect = sorted(expect, key=lambda x: x["id"])
+        for r in expect:
+            if r["url"] == mylist_url:
+                r["checked_at"] = dst
+        expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.select()
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+        actual = controller.select()
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-            # 存在しないマイリストを指定する
-            res = m_cont.UpdateCheckedAt("https://www.nicovideo.jp/user/99999999/video", dst)
-            self.assertEqual(res, -1)
-            pass
+        # 存在しないマイリストを指定する
+        res = controller.update_checked_at("https://www.nicovideo.jp/user/99999999/video", dst)
+        self.assertEqual(res, -1)
 
-    def test_UpdateUsername(self):
+    def test_update_username(self):
         """Mylistの特定のレコードについてusernameを更新する機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            url_info = self.__GetURLInfoSet()
-            t_id = random.randint(0, len(url_info) - 1)
-            mylist_url = url_info[t_id]
-            now_username = "新しい" + expect[t_id]["username"]
-            res = m_cont.UpdateUsername(mylist_url, now_username)
-            self.assertEqual(res, 0)
+        url_info = self._get_mylist_url_list()
+        t_id = random.randint(0, len(url_info) - 1)
+        mylist_url = url_info[t_id]
+        now_username = "新しい" + expect[t_id]["username"]
+        res = controller.update_username(mylist_url, now_username)
+        self.assertEqual(res, 0)
 
-            for r in expect:
-                if r["url"] == mylist_url:
-                    r["username"] = now_username
-                    r["showname"] = m_cont.GetListname(mylist_url, now_username, r["showname"])
-            expect = sorted(expect, key=lambda x: x["id"])
+        for r in expect:
+            if r["url"] == mylist_url:
+                r["username"] = now_username
+                r["showname"] = controller.get_showname(mylist_url, now_username, r["showname"])
+        expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.select()
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+        actual = controller.select()
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-            # 存在しないマイリストを指定する
-            res = m_cont.UpdateUsername("https://www.nicovideo.jp/user/99999999/video", now_username)
-            self.assertEqual(res, -1)
-            pass
+        # 存在しないマイリストを指定する
+        res = controller.update_username("https://www.nicovideo.jp/user/99999999/video", now_username)
+        self.assertEqual(res, -1)
 
-    def test_SwapId(self):
+    def test_swap_id(self):
         """idを交換する機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            # 交換元と交換先のidを選定する
-            t_id = random.sample(range(0, len(expect)), 2)
-            src_id = t_id[0] + 1
-            dst_id = t_id[1] + 1
+        # 交換元と交換先のidを選定する
+        t_id = random.sample(range(0, len(expect) - 1), 2)
+        src_id, dst_id = t_id
 
-            actual = m_cont.SwapId(src_id, dst_id)
-            expect_src = expect[src_id - 1]
-            expect_dst = expect[dst_id - 1]
-            expect_src["id"], expect_dst["id"] = expect_dst["id"], expect_src["id"]
-            self.assertEqual((expect_src, expect_dst), actual)
+        actual = controller.swap_id(src_id, dst_id)
+        expect_src = expect[src_id]
+        expect_dst = expect[dst_id]
+        expect_src["id"], expect_dst["id"] = expect_dst["id"], expect_src["id"]
+        self.assertEqual((expect_src, expect_dst), actual)
 
-            expect = sorted(expect, key=lambda x: x["id"])
+        expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.select()
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+        actual = controller.select()
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-            # 交換元と交換先に同じidを指定する
-            actual = m_cont.SwapId(src_id, src_id)
-            self.assertEqual((None, None), actual)
+        # 交換元と交換先に同じidを指定する
+        actual = controller.swap_id(src_id, src_id)
+        self.assertEqual((None, None), actual)
 
-            # 交換元と交換先に存在しないidを指定する
-            actual = m_cont.SwapId(-src_id, -dst_id)
-            self.assertEqual((None, None), actual)
+        # 交換元と交換先に存在しないidを指定する
+        actual = controller.swap_id(-src_id, -dst_id)
+        self.assertEqual((None, None), actual)
 
-    def test_DeleteFromURL(self):
+    def test_delete_from_mylist_url(self):
         """Mylistのレコードを削除する機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            url_info = self.__GetURLInfoSet()
-            t_id = random.randint(0, len(url_info) - 1)
-            mylist_url = url_info[t_id]
-            res = m_cont.DeleteFromURL(mylist_url)
-            self.assertEqual(res, 0)
+        url_info = self._get_mylist_url_list()
+        t_id = random.randint(0, len(url_info) - 1)
+        mylist_url = url_info[t_id]
+        res = controller.delete_from_mylist_url(mylist_url)
+        self.assertEqual(res, 0)
 
-            expect = [e for e in expect if e["url"] != mylist_url]
-            expect = sorted(expect, key=lambda x: x["id"])
+        expect = [e for e in expect if e["url"] != mylist_url]
+        expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.select()
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
+        actual = controller.select()
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-            # 存在しないマイリストを指定する
-            res = m_cont.DeleteFromURL("https://www.nicovideo.jp/user/99999999/video")
-            self.assertEqual(res, -1)
-            pass
+        # 存在しないマイリストを指定する
+        res = controller.delete_from_mylist_url("https://www.nicovideo.jp/user/99999999/video")
+        self.assertEqual(res, -1)
 
-    def test_Select(self):
+    def test_select(self):
         """MylistからSELECTする
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
-            expect = sorted(expect, key=lambda x: x["id"])
+        controller = self.controller
+        expect = self._load_table()
+        expect = sorted(expect, key=lambda x: x["id"])
 
-            actual = m_cont.select()
-            actual = sorted(actual, key=lambda x: x["id"])
-            self.assertEqual(expect, actual)
-            pass
+        actual = controller.select()
+        actual = sorted(actual, key=lambda x: x["id"])
+        self.assertEqual(expect, actual)
 
-    def test_SelectFromShowname(self):
+    def test_select_from_showname(self):
         """Mylistからshownameを条件としてSELECTする機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            t_id = random.randint(0, len(expect) - 1)
-            showname = expect[t_id]["showname"]
-            actual = m_cont.SelectFromShowname(showname)
+        t_id = random.randint(0, len(expect) - 1)
+        showname = expect[t_id]["showname"]
+        actual = controller.select_from_showname(showname)
 
-            expect = [e for e in expect if e["showname"] == showname]
-            self.assertEqual(1, len(actual))
-            self.assertEqual(expect, actual)
+        expect = [e for e in expect if e["showname"] == showname]
+        self.assertEqual(1, len(actual))
+        self.assertEqual(expect, actual)
 
-            # 存在しないshownameを指定する
-            actual = m_cont.SelectFromShowname("存在しないマイリストshowname")
-            self.assertEqual([], actual)
-            pass
+        # 存在しないshownameを指定する
+        actual = controller.select_from_showname("存在しないマイリストshowname")
+        self.assertEqual([], actual)
 
-    def test_SelectFromURL(self):
+    def test_select_from_url(self):
         """Mylistからurlを条件としてSELECTする機能のテスト
         """
-        with ExitStack() as stack:
-            # mock = stack.enter_context(patch("NNMM.MylistDBController.MylistDBController.Func"))
-            m_cont = MylistDBController(TEST_DB_PATH)
-            expect = self.__LoadToTable()
+        controller = self.controller
+        expect = self._load_table()
 
-            url_info = self.__GetURLInfoSet()
-            t_id = random.randint(0, len(url_info) - 1)
-            mylist_url = url_info[t_id]
-            actual = m_cont.SelectFromURL(mylist_url)
+        url_info = self._get_mylist_url_list()
+        t_id = random.randint(0, len(url_info) - 1)
+        mylist_url = url_info[t_id]
+        actual = controller.select_from_url(mylist_url)
 
-            expect = [e for e in expect if e["url"] == mylist_url]
-            self.assertEqual(1, len(actual))
-            self.assertEqual(expect, actual)
+        expect = [e for e in expect if e["url"] == mylist_url]
+        self.assertEqual(1, len(actual))
+        self.assertEqual(expect, actual)
 
-            # 存在しないurlを指定する
-            actual = m_cont.SelectFromURL("存在しないマイリストurl")
-            self.assertEqual([], actual)
-            pass
+        # 存在しないurlを指定する
+        actual = controller.select_from_url("存在しないマイリストurl")
+        self.assertEqual([], actual)
 
 
 if __name__ == "__main__":
     if sys.argv:
         del sys.argv[1:]
+    unittest.main(warnings="ignore")
     unittest.main(warnings="ignore")

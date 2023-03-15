@@ -58,7 +58,7 @@ def LoadMylist(mylist_db: MylistDBController, load_file_path: str) -> int:
                 return -1
 
             param_dict = dict(zip(mylist_cols, elements))
-            r = mylist_db.SelectFromURL(param_dict["url"])
+            r = mylist_db.select_from_url(param_dict["url"])
             if r:
                 continue  # 既に存在しているなら登録せずに処理続行
 
@@ -69,7 +69,7 @@ def LoadMylist(mylist_db: MylistDBController, load_file_path: str) -> int:
 
     # THINK::Mylistにもrecords一括Upsertのメソッドを作る？
     for r in records:
-        mylist_db.Upsert(r["id"], r["username"], r["mylistname"], r["type"], r["showname"], r["url"],
+        mylist_db.upsert(r["id"], r["username"], r["mylistname"], r["type"], r["showname"], r["url"],
                          r["created_at"], r["updated_at"], r["checked_at"], r["check_interval"], r["is_include_new"])
   
     return 0

@@ -102,7 +102,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
                 for i, record in enumerate(records):
                     mylist_url = record.get("url")
                     self.assertEqual(call.mylist_info_db.update_status_in_mylist(mylist_url, ""), mc[index])
-                    self.assertEqual(call.mylist_db.UpdateIncludeFlag(mylist_url, False), mc[index + 1])
+                    self.assertEqual(call.mylist_db.update_include_flag(mylist_url, False), mc[index + 1])
                     index += 2
 
                 self.assertEqual(call.window.__getitem__("-INPUT1-"), mc[index])

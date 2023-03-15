@@ -57,14 +57,14 @@ class TestProcessShowMylistInfo(unittest.TestCase):
         mockvalues.__contains__.side_effect = expect_values_dict.__contains__
         type(r).values = mockvalues
 
-        def ReturnSelectFromShowname(showname):
+        def Returnselect_from_showname(showname):
             m_list = self.MakeMylistDB()
             for m in m_list:
                 if m.get("showname") == showname:
                     return [m]
             return []
 
-        r.mylist_db.SelectFromShowname = ReturnSelectFromShowname
+        r.mylist_db.select_from_showname = Returnselect_from_showname
         return r
 
     def test_PSMIRun(self):

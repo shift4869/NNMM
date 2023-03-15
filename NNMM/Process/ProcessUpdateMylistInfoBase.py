@@ -399,7 +399,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         #     now_username = now_video_list[0].get("username")
         #     if prev_username != now_username:
         #         # マイリストの名前を更新する
-        #         mylist_db.UpdateUsername(mylist_url, now_username)
+        #         mylist_db.update_username(mylist_url, now_username)
         #         # 格納済の動画情報の投稿者名を更新する
         #         mylist_info_db.update_username_in_mylist(mylist_url, now_username)
         #         logger.info(f"Mylist username changed , {prev_username} -> {now_username}")
@@ -431,13 +431,13 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         # マイリストの更新確認日時更新
         # 新しい動画情報が追加されたかに関わらずchecked_atを更新する
         dst = GetNowDatetime()
-        mylist_db.UpdateCheckedAt(mylist_url, dst)
+        mylist_db.update_checked_at(mylist_url, dst)
 
         # マイリストの更新日時更新
         # 新しい動画情報が追加されたときにupdated_atを更新する
         if add_new_video_flag:
             dst = GetNowDatetime()
-            mylist_db.UpdateUpdatedAt(mylist_url, dst)
+            mylist_db.update_updated_at(mylist_url, dst)
 
         # プログレス表示
         all_index_num = len(now_video_lists)
@@ -513,7 +513,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
             # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
             if IsMylistIncludeNewVideo(def_data):
                 # マイリストDB更新
-                self.mylist_db.UpdateIncludeFlag(mylist_url, True)
+                self.mylist_db.update_include_flag(mylist_url, True)
 
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)

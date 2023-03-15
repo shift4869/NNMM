@@ -53,10 +53,10 @@ class TestProcessWatchedMylist(unittest.TestCase):
         mockvalues.__contains__.side_effect = expect_values_dict.__contains__
         r.values = mockvalues
 
-        def ReturnSelectFromShowname(v):
+        def Returnselect_from_showname(v):
             return [m for m in m_list if m["showname"] == v]
 
-        r.mylist_db.SelectFromShowname.side_effect = ReturnSelectFromShowname
+        r.mylist_db.select_from_showname.side_effect = Returnselect_from_showname
         return r
 
     def test_PVPRun(self):
@@ -85,9 +85,9 @@ class TestProcessWatchedMylist(unittest.TestCase):
                 self.assertEqual(5, len(mc))
                 self.assertEqual(call.values.__getitem__("-LIST-"), mc[0])
                 self.assertEqual(call.values.__getitem__("-LIST-"), mc[1])
-                self.assertEqual(call.mylist_db.SelectFromShowname(showname), mc[2])
+                self.assertEqual(call.mylist_db.select_from_showname(showname), mc[2])
                 self.assertEqual(call.mylist_info_db.update_status_in_mylist(mylist_url, ""), mc[3])
-                self.assertEqual(call.mylist_db.UpdateIncludeFlag(mylist_url, False), mc[4])
+                self.assertEqual(call.mylist_db.update_include_flag(mylist_url, False), mc[4])
                 mockmw.reset_mock()
 
                 mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)

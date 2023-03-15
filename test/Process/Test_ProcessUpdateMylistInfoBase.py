@@ -510,7 +510,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 if now_video_list:
                     now_username = now_video_list[0].get("username")
                     if prev_username != now_username:
-                        self.assertEqual(call().UpdateUsername(mylist_url, now_username), mc_i[i])
+                        self.assertEqual(call().update_username(mylist_url, now_username), mc_i[i])
                         i = i + 1
                         self.assertEqual(call().update_username_in_mylist(mylist_url, now_username), mc_j[j])
                         j = j + 1
@@ -533,10 +533,10 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 self.assertEqual(call().upsert_from_list(records), mc_j[j])
                 j = j + 1
 
-                self.assertEqual(call().UpdateCheckedAt(mylist_url, dst), mc_i[i])
+                self.assertEqual(call().update_checked_at(mylist_url, dst), mc_i[i])
                 i = i + 1
                 if add_new_video_flag:
-                    self.assertEqual(call().UpdateUpdatedAt(mylist_url, dst), mc_i[i])
+                    self.assertEqual(call().update_updated_at(mylist_url, dst), mc_i[i])
                     i = i + 1
 
                 mockmdb.reset_mock()
@@ -728,7 +728,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             self.assertEqual(call.Select(), mc[0])
             for i, m in enumerate(m_list[:3]):
                 mylist_url = m.get("url")
-                self.assertEqual(call.UpdateIncludeFlag(mylist_url, True), mc[i + 1])
+                self.assertEqual(call.update_include_flag(mylist_url, True), mc[i + 1])
             mockmw.mylist_db.reset_mock()
 
             mc = mockmw.mylist_info_db.mock_calls

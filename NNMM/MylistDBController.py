@@ -1,23 +1,19 @@
 # coding: utf-8
 import re
-from pathlib import Path
 
-import sqlalchemy
-from sqlalchemy import *
-from sqlalchemy.orm import *
-from sqlalchemy.orm.exc import *
+from sqlalchemy import asc, or_
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 
 from NNMM.DBControllerBase import DBControllerBase
-from NNMM.Model import *
-
-DEBUG = False
+from NNMM.Model import Mylist
 
 
 class MylistDBController(DBControllerBase):
     def __init__(self, db_fullpath: str = "NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def GetListname(self, url: str, username: str, old_showname: str) -> str:
+    def get_showname(self, url: str, username: str, old_showname: str) -> str:
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
         if re.search(pattern, url):
             return f"{username}さんの投稿動画"
@@ -29,7 +25,7 @@ class MylistDBController(DBControllerBase):
             return res_str
         return ""
 
-    def Upsert(self, id: int, username: str, mylistname: str, type: str, showname: str, url: str,
+    def upsert(self, id: int, username: str, mylistname: str, type: str, showname: str, url: str,
                created_at: str, updated_at: str, checked_at: str, check_interval: str, is_include_new: bool) -> int:
         """MylistにUPSERTする
 
@@ -66,7 +62,7 @@ class MylistDBController(DBControllerBase):
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url)).with_for_update()
             p = q.one()
-        except sqlalchemy.orm.exc.NoResultFound:
+        except NoResultFound:
             # INSERT
             session.add(r)
             res = 0
@@ -90,7 +86,7 @@ class MylistDBController(DBControllerBase):
 
         return res
 
-    def UpdateIncludeFlag(self, mylist_url: str, is_include_new: bool = False) -> int:
+    def update_include_flag(self, mylist_url: str, is_include_new: bool = False) -> int:
         """Mylistの特定のレコードについて新着フラグを更新する
 
         Note:
@@ -126,7 +122,7 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
-    def UpdateUpdatedAt(self, mylist_url: str, updated_at: str) -> int:
+    def update_updated_at(self, mylist_url: str, updated_at: str) -> int:
         """Mylistの特定のレコードについて更新日時を更新する
 
         Note:
@@ -157,7 +153,7 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
-    def UpdateCheckedAt(self, mylist_url: str, checked_at: str) -> int:
+    def update_checked_at(self, mylist_url: str, checked_at: str) -> int:
         """Mylistの特定のレコードについて更新確認日時を更新する
 
         Note:
@@ -188,7 +184,7 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
-    def UpdateUsername(self, mylist_url: str, now_username: str) -> int:
+    def update_username(self, mylist_url: str, now_username: str) -> int:
         """Mylistの特定のレコードについてusernameを更新する
 
         Note:
@@ -211,13 +207,13 @@ class MylistDBController(DBControllerBase):
             session.close()
             return -1
         record.username = now_username
-        record.showname = self.GetListname(mylist_url, now_username, record.showname)
+        record.showname = self.get_showname(mylist_url, now_username, record.showname)
 
         session.commit()
         session.close()
         return 0
 
-    def SwapId(self, src_id: int, dst_id: int) -> tuple[dict, dict]:
+    def swap_id(self, src_id: int, dst_id: int) -> tuple[dict, dict]:
         """idを交換する
 
         Note:
@@ -228,7 +224,7 @@ class MylistDBController(DBControllerBase):
             dst_id (int): 交換先レコードのid
 
         Returns:
-            (Mylist, Mylist): 交換後のレコード(交換元レコード, 交換先レコード)、エラー時(None, None)
+            (dict, dict): 交換後のレコード(交換元レコード, 交換先レコード)、エラー時(None, None)
         """
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
@@ -250,13 +246,12 @@ class MylistDBController(DBControllerBase):
             return (None, None)
 
         # 一旦idを重複しないものに変更する（マイナス）
-        src_record.id = -src_id
-        dst_record.id = -dst_id
+        src_record.id = -1
+        dst_record.id = -2
         session.commit()
 
-        # idを交換する
-        src_record.id = dst_id
-        dst_record.id = src_id
+        # # idを交換する
+        src_record.id, dst_record.id = dst_id, src_id
 
         # 返り値作成
         res = (src_record.to_dict(), dst_record.to_dict())
@@ -266,7 +261,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return res
 
-    def DeleteFromURL(self, mylist_url: str) -> int:
+    def delete_from_mylist_url(self, mylist_url: str) -> int:
         """Mylistのレコードを削除する
 
         Note:
@@ -305,7 +300,7 @@ class MylistDBController(DBControllerBase):
             limit (int): 取得レコード数上限
 
         Returns:
-            dict[]: SELECTしたレコードの辞書リスト
+            list[dict]: SELECTしたレコードの辞書リスト
         """
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
@@ -316,7 +311,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromShowname(self, showname: str) -> list[dict]:
+    def select_from_showname(self, showname: str) -> list[dict]:
         """Mylistからshownameを条件としてSELECTする
 
         Note:
@@ -326,7 +321,7 @@ class MylistDBController(DBControllerBase):
             showname (str): 取得対象のマイリスト一意名
 
         Returns:
-            dict[]: SELECTしたレコードの辞書リスト
+            list[dict]: SELECTしたレコードの辞書リスト
         """
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
@@ -337,7 +332,7 @@ class MylistDBController(DBControllerBase):
         session.close()
         return res_dict
 
-    def SelectFromURL(self, url: str) -> list[dict]:
+    def select_from_url(self, url: str) -> list[dict]:
         """Mylistからurlを条件としてSELECTする
 
         Note:
@@ -347,7 +342,7 @@ class MylistDBController(DBControllerBase):
             url (str): 取得対象のマイリストurl
 
         Returns:
-            dict[]: SELECTしたレコードの辞書リスト
+            list[dict]: SELECTしたレコードの辞書リスト
         """
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
@@ -360,9 +355,21 @@ class MylistDBController(DBControllerBase):
 
 
 if __name__ == "__main__":
-    db_fullpath = Path("test.db")
-    mylist_db = MylistDBController(db_fullpath=str(db_fullpath))
+    db_fullpath = ":memory:"
+    mylist_info = MylistDBController(db_fullpath=str(db_fullpath))
 
-    if db_fullpath.is_file():
-        db_fullpath.unlink()
-    pass
+    res = mylist_info.upsert(
+        id=1,
+        username="投稿者1",
+        mylistname="投稿動画",
+        type="uploaded",
+        showname="投稿者1さんの投稿動画",
+        url="https://www.nicovideo.jp/user/11111111/video",
+        created_at="2021-05-29 00:00:11",
+        updated_at="2021-10-16 00:00:11",
+        checked_at="2021-10-17 00:00:11",
+        check_interval="15分",
+        is_include_new=False
+    )
+    print(res)
+    print(mylist_info.select())

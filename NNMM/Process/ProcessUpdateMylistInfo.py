@@ -48,7 +48,7 @@ class ProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInf
         if mylist_url == "":
             return []
 
-        m_list = self.mylist_db.SelectFromURL(mylist_url)
+        m_list = self.mylist_db.select_from_url(mylist_url)
         return m_list
 
 

@@ -54,7 +54,7 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
                 v = self.values["-LIST-"][0]
                 if v[:2] == "*:":
                     v = v[2:]
-                record = self.mylist_db.SelectFromShowname(v)[0]
+                record = self.mylist_db.select_from_showname(v)[0]
                 mylist_url = record.get("url", "")
             elif self.values.get("-INPUT1-", "") != "":
                 # (2)右上のテキストボックス
@@ -64,7 +64,7 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
                 mylist_url = self.values.get("-INPUT2-", "")
 
             # 既存マイリストに存在していない場合何もしない
-            prev_mylist = self.mylist_db.SelectFromURL(mylist_url)[0]
+            prev_mylist = self.mylist_db.select_from_url(mylist_url)[0]
             if not prev_mylist:
                 logger.error("Delete mylist failed, target mylist not found.")
                 return -1
@@ -85,7 +85,7 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
         self.mylist_info_db.delete_in_mylist(mylist_url)
 
         # マイリストからも削除する
-        self.mylist_db.DeleteFromURL(mylist_url)
+        self.mylist_db.delete_from_mylist_url(mylist_url)
 
         # マイリスト画面表示更新
         UpdateMylistShow(self.window, self.mylist_db)

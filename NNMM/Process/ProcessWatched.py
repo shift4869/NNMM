@@ -73,7 +73,7 @@ class ProcessWatched(ProcessBase.ProcessBase):
             m_list = [list(m.values()) for m in m_list]
             if not IsMylistIncludeNewVideo(m_list):
                 # マイリストDB新着フラグ更新
-                self.mylist_db.UpdateIncludeFlag(selected[8], False)
+                self.mylist_db.update_include_flag(selected[8], False)
 
         # テーブル更新を反映させる
         self.window["-TABLE-"].update(values=def_data)

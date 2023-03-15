@@ -99,7 +99,7 @@ class TestProcessNotWatched(unittest.TestCase):
                     v = table_records_s[s_index][1]
                     m = table_records_s[s_index][8]
                     self.assertEqual(call.mylist_info_db.update_status(v, m, "未視聴"), mc[c_index])
-                    self.assertEqual(call.mylist_db.UpdateIncludeFlag(m, True), mc[c_index + 1])
+                    self.assertEqual(call.mylist_db.update_include_flag(m, True), mc[c_index + 1])
                     c_index = c_index + 2
                 mockmw.reset_mock()
 

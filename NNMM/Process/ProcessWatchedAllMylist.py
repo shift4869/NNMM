@@ -56,7 +56,7 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
             # マイリスト情報内の視聴済フラグを更新
             self.mylist_info_db.update_status_in_mylist(mylist_url, "")
             # マイリストの新着フラグを更新
-            self.mylist_db.UpdateIncludeFlag(mylist_url, False)
+            self.mylist_db.update_include_flag(mylist_url, False)
 
             logger.info(f'{mylist_url} -> all include videos status are marked "watched" ... ({i + 1}/{all_num}).')
 

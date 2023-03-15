@@ -243,7 +243,7 @@ class PopupMylistWindow(PopupWindowBase):
             v = v[2:]
 
         # 選択されたマイリストのマイリストレコードオブジェクトを取得する
-        record = self.mylist_db.SelectFromShowname(v)
+        record = self.mylist_db.select_from_showname(v)
         if record and len(record) == 1:
             record = record[0]
         else:

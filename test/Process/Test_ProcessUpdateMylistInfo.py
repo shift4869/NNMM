@@ -88,7 +88,7 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
                 "-INPUT1-": mylist_url
             }
 
-            def ReturnSelectFromURL(url):
+            def Returnselect_from_url(url):
                 return [m for m in m_list if m["url"] == url]
 
             mockmw = MagicMock()
@@ -98,7 +98,7 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
             mockvalues.__contains__.side_effect = expect_values_dict.__contains__
             mockmw.values = mockvalues
             mockmdb = MagicMock()
-            mockmdb.SelectFromURL.side_effect = lambda url: ReturnSelectFromURL(url)
+            mockmdb.select_from_url.side_effect = lambda url: Returnselect_from_url(url)
             mockmw.mylist_db = mockmdb
 
             pumi.values = mockmw.values
@@ -115,7 +115,7 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
 
             mc = mockmw.mylist_db.mock_calls
             self.assertEqual(1, len(mc))
-            self.assertEqual(call.SelectFromURL(mylist_url), mc[0])
+            self.assertEqual(call.select_from_url(mylist_url), mc[0])
             mockmw.mylist_db.reset_mock()
 
             # 異常系

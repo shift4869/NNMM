@@ -33,14 +33,14 @@ class TestProcessDeleteMylist(unittest.TestCase):
             showname_s = "sample_mylist_showname"
             mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
 
-            def ReturnSelectFromShowname(s, showname):
+            def Returnselect_from_showname(s, showname):
                 url_dict = {
                     showname_s: {"url": mylist_url_s},
                 }
                 res = url_dict.get(showname, {})
                 return [res] if res else []
 
-            def ReturnSelectFromURL(s, mylist_url):
+            def Returnselect_from_url(s, mylist_url):
                 showname_dict = {
                     mylist_url_s: {"showname": showname_s},
                 }
@@ -53,8 +53,8 @@ class TestProcessDeleteMylist(unittest.TestCase):
             mockmw = MagicMock()
             type(mockmw).values = expect_values_dict
             mockmylist_db = MagicMock()
-            type(mockmylist_db).SelectFromShowname = ReturnSelectFromShowname
-            type(mockmylist_db).SelectFromURL = ReturnSelectFromURL
+            type(mockmylist_db).select_from_showname = Returnselect_from_showname
+            type(mockmylist_db).select_from_url = Returnselect_from_url
             type(mockmw).mylist_db = mockmylist_db
 
             actual = pdm.Run(mockmw)
@@ -88,7 +88,7 @@ class TestProcessDeleteMylist(unittest.TestCase):
 
                 mc = mockmylist_db.mock_calls
                 self.assertEqual(1, len(mc))
-                self.assertEqual("DeleteFromURL", mc[0][0])
+                self.assertEqual("delete_from_mylist_url", mc[0][0])
                 self.assertEqual((mylist_url_s,), mc[0][1])
                 mockmylist_db.reset_mock()
 

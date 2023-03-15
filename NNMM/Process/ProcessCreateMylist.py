@@ -181,7 +181,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
             return 1
 
         # 既存マイリストと重複していた場合何もしない
-        prev_mylist = self.mylist_db.SelectFromURL(mylist_url)
+        prev_mylist = self.mylist_db.select_from_url(mylist_url)
         if prev_mylist:
             sg.popup("既存マイリスト一覧に含まれています\n新規追加処理を終了します", title="")
             logger.info(f"Create mylist canceled, '{mylist_url}' is already included.")

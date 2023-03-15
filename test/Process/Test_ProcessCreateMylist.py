@@ -439,7 +439,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                 return 0
 
             mockmb = MagicMock()
-            type(mockmb).SelectFromURL = lambda s, url: []
+            type(mockmb).select_from_url = lambda s, url: []
             type(mockmb).Select = lambda s: [{"id": 0}]
             type(mockmb).Upsert = Upsert_mock
             type(mockmw).mylist_db = mockmb
@@ -503,7 +503,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             self.ri = 0
 
             # 既存マイリストと重複
-            type(mockmb).SelectFromURL = lambda s, url: expect_v_record
+            type(mockmb).select_from_url = lambda s, url: expect_v_record
             actual = pcm.Run(mockmw)
             self.assertEqual(1, actual)
 

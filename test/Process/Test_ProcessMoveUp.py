@@ -45,7 +45,7 @@ class TestProcessMoveUp(unittest.TestCase):
                     "-LIST-": [mylist_table_s[index]]
                 }
 
-                def ReturnSelectFromShowname(showname):
+                def Returnselect_from_showname(showname):
                     for i, s in enumerate(mylist_table_s):
                         if showname in s:
                             return [{"id": i}]
@@ -55,7 +55,7 @@ class TestProcessMoveUp(unittest.TestCase):
                 mockmw.window = expect_window_dict
                 mockmw.values = expect_values_dict
                 mockmw.mylist_db.Select = lambda: mylist_table_s
-                mockmw.mylist_db.SelectFromShowname = ReturnSelectFromShowname
+                mockmw.mylist_db.select_from_showname = Returnselect_from_showname
 
                 return mockmw
 
@@ -73,7 +73,7 @@ class TestProcessMoveUp(unittest.TestCase):
 
                 mc = mockmw.mylist_db.mock_calls
                 self.assertEqual(1, len(mc))
-                self.assertEqual(call.SwapId(index, index - 1), mc[0])
+                self.assertEqual(call.swap_id(index, index - 1), mc[0])
                 mockmw.mylist_db.reset_mock()
 
                 mockums.assert_called()
