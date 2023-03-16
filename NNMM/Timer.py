@@ -51,7 +51,7 @@ class ProcessTimer(ProcessBase.ProcessBase):
             return -1
 
         # オートリロード設定を取得する
-        config = ProcessConfigBase.GetConfig()
+        config = ProcessConfigBase.get_config()
         i_str = config["general"].get("auto_reload", "")
         if i_str == "(使用しない)" or i_str == "":
             # 現在タイマー待機中のものがあればキャンセルする

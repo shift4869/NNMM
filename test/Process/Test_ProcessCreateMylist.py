@@ -74,7 +74,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         dst = datetime.now().strftime(dst_df)
         return dst
 
-    def __GetURLType(self, url: str) -> str:
+    def __get_mylist_type(self, url: str) -> str:
         """URLタイプを返す
 
         Args:
@@ -267,7 +267,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         )
 
         # url_type判定
-        type = self.__GetURLType(url)
+        type = self.__get_mylist_type(url)
 
         mylist_url = url
         # マイリストのURLならRSSが取得できるURLに加工
@@ -330,7 +330,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                 self.assertEqual({}, actual)
 
             # 動画が不正なマイリストを指定
-            with patch("NNMM.GuiFunction.GetURLType", lambda x: "mylist"):
+            with patch("NNMM.GuiFunction.get_mylist_type", lambda x: "mylist"):
                 url = "https://www.nicovideo.jp/user/99999999/mylist/99999999"
                 actual = loop.run_until_complete(pcm.AsyncGetMyListInfo(url))
                 self.assertEqual({}, actual)
@@ -356,8 +356,8 @@ class TestProcessCreateMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.error"))
-            mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
-            mockgut = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.GetURLType"))
+            mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
+            mockgut = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.get_mylist_type"))
             mockgndt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.GetNowDatetime"))
             mockpgt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.PopupGetText"))
             mockpu = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sg.popup"))
@@ -380,7 +380,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             mylistname = m_list[1]
 
             mockcpg.side_effect = lambda: {"general": {"auto_reload": "15分毎"}}
-            mockgut.side_effect = self.__GetURLType
+            mockgut.side_effect = self.__get_mylist_type
             mockgndt.side_effect = self.__GetNowDatetime
             mockpgt.side_effect = lambda msg, title: url
 

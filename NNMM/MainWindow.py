@@ -25,7 +25,7 @@ class MainWindow():
         """メインウィンドウクラスのコンストラクタ
         """
         # 設定値初期化
-        self.config = ConfigMain.ProcessConfigBase.SetConfig()
+        self.config = ConfigMain.ProcessConfigBase.set_config()
 
         # DB操作コンポーネント設定
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
@@ -187,7 +187,7 @@ class MainWindow():
                 [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
             ], size=(1370, 1000))
         ]]
-        cf_layout = ConfigMain.ProcessConfigBase.GetConfigLayout()
+        cf_layout = ConfigMain.ProcessConfigBase.make_layout()
         lf_layout = [[
             sg.Frame("ログ", [
                 [sg.Column([[sg.Output(size=(1080, 100), echo_stdout_stderr=True)]])]

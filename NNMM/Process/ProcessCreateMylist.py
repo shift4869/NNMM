@@ -42,7 +42,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
             mylist_info (dict): マイリスト情報をまとめた辞書 キーはNotesを参照, エラー時 空辞書
         """
         # 入力チェック
-        url_type = GetURLType(url)
+        url_type = get_mylist_type(url)
         if url_type not in ["uploaded", "mylist"]:
             logger.error("url_type is invalid , not target url.")
             return {}
@@ -174,7 +174,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         )
 
         # 入力されたurlが対応したタイプでない場合何もしない
-        url_type = GetURLType(mylist_url)
+        url_type = get_mylist_type(mylist_url)
         if url_type == "":
             sg.popup("入力されたURLには対応していません\n新規追加処理を終了します", title="")
             logger.info(f"Create mylist failed, '{mylist_url}' is invalid url.")
@@ -220,7 +220,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
 
         # オートリロード間隔を取得する
         check_interval = ""
-        config = ConfigMain.ProcessConfigBase.GetConfig()
+        config = ConfigMain.ProcessConfigBase.get_config()
         i_str = config["general"].get("auto_reload", "")
         try:
             if i_str == "(使用しない)" or i_str == "":

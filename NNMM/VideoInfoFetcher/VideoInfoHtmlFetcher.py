@@ -107,7 +107,7 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase):
 
 if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
-    ConfigMain.ProcessConfigBase.SetConfig()
+    ConfigMain.ProcessConfigBase.set_config()
 
     urls = [
         # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画

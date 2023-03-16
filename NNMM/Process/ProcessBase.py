@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from NNMM.MainWindow import MainWindow
+
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 

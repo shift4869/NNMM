@@ -269,7 +269,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         return mock
 
     def _make_analysis_html_mock(self, mock, url: str = "", kind: str = ""):
-        url_type = GuiFunction.GetURLType(url)
+        url_type = GuiFunction.get_mylist_type(url)
 
         mylist_info = self._get_mylist_info_set(url)
         video_info_list = self._get_video_info_set(url)
@@ -371,7 +371,7 @@ class TestVideoInfoHtmlFetcher(unittest.TestCase):
         return mock
 
     def _make_expect_result(self, url):
-        url_type = GuiFunction.GetURLType(url)
+        url_type = GuiFunction.get_mylist_type(url)
         mylist_url = url
 
         mylist_info = self._get_mylist_info_set(mylist_url)

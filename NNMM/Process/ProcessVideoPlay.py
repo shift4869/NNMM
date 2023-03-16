@@ -61,7 +61,7 @@ class ProcessVideoPlay(ProcessBase.ProcessBase):
         record = records[0]
         video_url = record.get("video_url")
 
-        config = ConfigMain.ProcessConfigBase.GetConfig()
+        config = ConfigMain.ProcessConfigBase.get_config()
         cmd = config["general"].get("browser_path", "")
         if cmd != "" and Path(cmd).is_file():
             # ブラウザに動画urlを渡す

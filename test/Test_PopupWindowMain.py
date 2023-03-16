@@ -1,7 +1,6 @@
 # coding: utf-8
 """PopupWindowMain のテスト
 """
-
 import copy
 import sys
 import unittest
