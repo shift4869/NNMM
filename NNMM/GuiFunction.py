@@ -1,19 +1,14 @@
 # coding: utf-8
 import re
-from datetime import date, datetime, timedelta
-from logging import INFO, getLogger
-from pathlib import Path
+from datetime import datetime
 
 import PySimpleGUI as sg
 
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
-
-logger = getLogger(__name__)
-logger.setLevel(INFO)
+from NNMM.MylistDBController import MylistDBController
+from NNMM.MylistInfoDBController import MylistInfoDBController
 
 
-def GetURLType(url: str) -> str:
+def get_mylist_type(url: str) -> str:
     """マイリストのタイプを返す
 
     Args:
@@ -27,11 +22,9 @@ def GetURLType(url: str) -> str:
     pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
     if re.search(pattern, url):
         return "uploaded"
-
     pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
     if re.search(pattern, url):
         return "mylist"
-
     return ""
 
 

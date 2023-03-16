@@ -4,41 +4,24 @@
 GuiFunction の各種機能をテストする
 Guiの処理部分はモックで動作確認する(実際にGUIは表示されない)
 """
-
 import random
-import re
 import sys
 import unittest
-from contextlib import ExitStack
-from datetime import date, datetime, timedelta
-from logging import INFO, getLogger
-from pathlib import Path
+from datetime import datetime, timedelta
 
 import freezegun
-from mock import AsyncMock, MagicMock, PropertyMock, patch
-from sqlalchemy import *
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import *
-from sqlalchemy.orm.exc import *
+from mock import MagicMock, PropertyMock
 
 from NNMM import GuiFunction
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
+from NNMM.Model import Mylist, MylistInfo
+from NNMM.MylistDBController import MylistDBController
+from NNMM.MylistInfoDBController import MylistInfoDBController
 
-TEST_DB_PATH = "./test/test.db"
+TEST_DB_PATH = ":memory:"
 
 
 class TestGetMyListInfo(unittest.TestCase):
-
-    def setUp(self):
-        Path(TEST_DB_PATH).unlink(missing_ok=True)
-        pass
-
-    def tearDown(self):
-        Path(TEST_DB_PATH).unlink(missing_ok=True)
-        pass
-
-    def __GetMylistInfoSet(self) -> list[tuple]:
+    def _get_mylist_info_list(self) -> list[tuple]:
         """Mylistオブジェクトの情報セットを返す（mylist_url以外）
         """
         mylist_info = [
@@ -50,7 +33,7 @@ class TestGetMyListInfo(unittest.TestCase):
         ]
         return mylist_info
 
-    def __GetURLInfoSet(self) -> list[str]:
+    def _get_mylist_url_list(self) -> list[str]:
         """mylist_urlの情報セットを返す
         """
         url_info = [
@@ -62,7 +45,7 @@ class TestGetMyListInfo(unittest.TestCase):
         ]
         return url_info
 
-    def __MakeMylistSample(self, id: str) -> Mylist:
+    def _make_mylist_sample(self, id: str) -> Mylist:
         """Mylistオブジェクトを作成する
 
         Note:
@@ -87,32 +70,12 @@ class TestGetMyListInfo(unittest.TestCase):
         Returns:
             Mylist: Mylistオブジェクト
         """
-        ml = self.__GetMylistInfoSet()[id]
-        mylist_url = self.__GetURLInfoSet()[id]
+        ml = self._get_mylist_info_list()[id]
+        mylist_url = self._get_mylist_url_list()[id]
         r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9])
         return r
 
-    def __LoadToMylistTable(self, records) -> list[dict]:
-        """テスト用のMylist初期レコードを格納したテーブルを用意する
-
-        Args:
-            records (list[Mylist]): 格納するレコードの配列
-        """
-        dbname = TEST_DB_PATH
-        engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
-        Base.metadata.create_all(engine)
-
-        Session = sessionmaker(bind=engine, autoflush=False)
-        session = Session()
-
-        for r in records:
-            session.add(r)
-
-        session.commit()
-        session.close()
-        return 0
-
-    def __GetVideoInfoSet(self) -> list[tuple]:
+    def _get_video_info_list(self) -> list[tuple]:
         """動画情報セットを返す（mylist_url以外）
         """
         video_info = [
@@ -124,7 +87,7 @@ class TestGetMyListInfo(unittest.TestCase):
         ]
         return video_info
 
-    def __MakeMylistInfoSample(self, id: int, mylist_id: int) -> MylistInfo:
+    def _make_mylist_info_sample(self, id: int, mylist_id: int) -> MylistInfo:
         """MylistInfoオブジェクトを作成する
 
         Note:
@@ -147,66 +110,44 @@ class TestGetMyListInfo(unittest.TestCase):
         Returns:
             MylistInfo: MylistInfoオブジェクト
         """
-        v = self.__GetVideoInfoSet()[id]
-        mylist_url = self.__GetURLInfoSet()[mylist_id]
+        v = self._get_video_info_list()[id]
+        mylist_url = self._get_mylist_url_list()[mylist_id]
         r = MylistInfo(v[0], v[1], v[2], v[3], v[4], v[5], v[6], mylist_url, v[7])
         return r
 
-    def __LoadToMylistInfoTable(self) -> list[dict]:
-        """テスト用の初期レコードを格納したテーブルを用意する
-        """
-
-        dbname = TEST_DB_PATH
-        engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
-        Base.metadata.create_all(engine)
-
-        Session = sessionmaker(bind=engine, autoflush=False)
-        session = Session()
-
-        MAX_VIDEO_INFO_NUM = 5
-        MAX_URL_INFO_NUM = 5
-        for i in range(0, MAX_URL_INFO_NUM):
-            for j in range(0, MAX_VIDEO_INFO_NUM):
-                r = self.__MakeMylistInfoSample(j, i)
-                session.add(r)
-
-        session.commit()
-        session.close()
-        return 0
-
-    def test_GetURLType(self):
+    def test_get_mylist_type(self):
         """マイリストのタイプを返す機能のテスト
         """
         # 正常系
         # 投稿動画ページのURL
         url = "https://www.nicovideo.jp/user/11111111/video"
-        actual = GuiFunction.GetURLType(url)
+        actual = GuiFunction.get_mylist_type(url)
         expect = "uploaded"
         self.assertEqual(expect, actual)
 
         # マイリストURL
         url = "https://www.nicovideo.jp/user/11111111/mylist/00000011"
-        actual = GuiFunction.GetURLType(url)
+        actual = GuiFunction.get_mylist_type(url)
         expect = "mylist"
         self.assertEqual(expect, actual)
 
         # 異常系
         # マイリストのURLだがリダイレクト元のURL
         url = "https://www.nicovideo.jp/mylist/00000011"
-        actual = GuiFunction.GetURLType(url)
+        actual = GuiFunction.get_mylist_type(url)
         self.assertEqual("", actual)
 
         # 全く関係ないURL
         url = "https://www.google.co.jp/"
-        actual = GuiFunction.GetURLType(url)
+        actual = GuiFunction.get_mylist_type(url)
         self.assertEqual("", actual)
 
         # ニコニコの別サービスのURL
         url = "https://seiga.nicovideo.jp/seiga/im11111111"
-        actual = GuiFunction.GetURLType(url)
+        actual = GuiFunction.get_mylist_type(url)
         self.assertEqual("", actual)
 
-    def test_GetNowDatetime(self):
+    def test_get_now_datetime(self):
         """タイムスタンプを返す機能のテスト
         """
         src_df = "%Y/%m/%d %H:%M"
@@ -224,7 +165,7 @@ class TestGetMyListInfo(unittest.TestCase):
             expect = expect.strftime(dst_df)
             self.assertNotEqual(expect, actual)
 
-    def test_IsMylistIncludeNewVideo(self):
+    def test_is_mylist_include_new_video(self):
         """テーブルリスト内を走査する機能のテスト
         """
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
@@ -238,7 +179,7 @@ class TestGetMyListInfo(unittest.TestCase):
         myshowname = "投稿者1のマイリスト1"
         showname = f"「{myshowname}」-{username}さんのマイリスト"
 
-        def TableListFactory():
+        def table_list_factory():
             # 実際はタプルのリストだが値を修正してテストするためにリストのリストとする
             t = [
                 [i, video_id_t.format(i), video_name_t.format(i), username, "", uploaded_t.format(i),
@@ -248,12 +189,12 @@ class TestGetMyListInfo(unittest.TestCase):
 
         # 正常系
         # 全て視聴済
-        table_list = TableListFactory()
+        table_list = table_list_factory()
         actual = GuiFunction.is_mylist_include_new_video(table_list)
         self.assertEqual(False, actual)
 
         # 未視聴を含む
-        table_list = TableListFactory()
+        table_list = table_list_factory()
         t_id = random.sample(range(0, len(table_list) - 1), 2)
         for i in t_id:
             table_list[i][STATUS_INDEX] = "未視聴"
@@ -267,20 +208,20 @@ class TestGetMyListInfo(unittest.TestCase):
         # 異常系
         # 要素数が少ない
         with self.assertRaises(KeyError):
-            table_list = TableListFactory()
+            table_list = table_list_factory()
             table_list = [t[:STATUS_INDEX] for t in table_list]
             actual = GuiFunction.is_mylist_include_new_video(table_list)
             self.assertEqual(False, actual)
 
         # 状況ステータスの位置が異なる
         with self.assertRaises(KeyError):
-            table_list = TableListFactory()
+            table_list = table_list_factory()
             table_list = [[t[-1]] + t[:-1] for t in table_list]
             actual = GuiFunction.is_mylist_include_new_video(table_list)
             self.assertEqual(False, actual)
         pass
 
-    def test_IntervalTranslation(self):
+    def test_interval_translate(self):
         """インターバルを解釈する関数のテスト
         """
         # 正常系
@@ -326,21 +267,33 @@ class TestGetMyListInfo(unittest.TestCase):
         self.assertEqual(expect, actual)
         pass
 
-    def test_UpdateMylistShow(self):
+    def test_update_mylist_pane(self):
         """マイリストペインの表示を更新する機能のテスト
         """
+        m_cont = MylistDBController(TEST_DB_PATH)
+
         MAX_RECORD_NUM = 5
         records = []
         for i in range(0, MAX_RECORD_NUM):
-            r = self.__MakeMylistSample(i)
+            r = self._make_mylist_sample(i)
             records.append(r)
 
         t_id = random.sample(range(0, len(records) - 1), 2)
         for i in t_id:
             records[i].is_include_new = True
-        self.__LoadToMylistTable(records)
-
-        m_cont = MylistDBController(TEST_DB_PATH)
+            m_cont.upsert(
+                records[i].id,
+                records[i].username,
+                records[i].mylistname,
+                records[i].type,
+                records[i].showname,
+                records[i].url,
+                records[i].created_at,
+                records[i].updated_at,
+                records[i].checked_at,
+                records[i].check_interval,
+                records[i].is_include_new
+            )
 
         # mock作成
         e_index = random.randint(0, len(records) - 1)
@@ -397,20 +350,48 @@ class TestGetMyListInfo(unittest.TestCase):
     def test_update_table_pane(self):
         """テーブルリストペインの表示を更新する機能のテスト
         """
-        MAX_RECORD_NUM = 5
-        records = []
-        for i in range(0, MAX_RECORD_NUM):
-            r = self.__MakeMylistSample(i)
-            records.append(r)
-        self.__LoadToMylistTable(records)
-        self.__LoadToMylistInfoTable()
-
         m_cont = MylistDBController(TEST_DB_PATH)
         mb_cont = MylistInfoDBController(TEST_DB_PATH)
 
+        MAX_RECORD_NUM = 5
+        records = []
+        for i in range(0, MAX_RECORD_NUM):
+            r = self._make_mylist_sample(i)
+            records.append(r)
+            m_cont.upsert(
+                r.id,
+                r.username,
+                r.mylistname,
+                r.type,
+                r.showname,
+                r.url,
+                r.created_at,
+                r.updated_at,
+                r.checked_at,
+                r.check_interval,
+                r.is_include_new
+            )
+
+        MAX_VIDEO_INFO_NUM = 5
+        MAX_URL_INFO_NUM = 5
+        for i in range(0, MAX_URL_INFO_NUM):
+            for j in range(0, MAX_VIDEO_INFO_NUM):
+                r = self._make_mylist_info_sample(j, i)
+                mb_cont.upsert(
+                    r.video_id,
+                    r.title,
+                    r.username,
+                    r.status,
+                    r.uploaded_at,
+                    r.registered_at,
+                    r.video_url,
+                    r.mylist_url,
+                    r.created_at
+                )
+
         # mock作成
         e_index = random.randint(0, len(records) - 1)
-        mylist_url = self.__GetURLInfoSet()[e_index]
+        mylist_url = self._get_mylist_url_list()[e_index]
         r_list = MagicMock()
         r_listWidget = MagicMock()
         r_listsee = MagicMock()
