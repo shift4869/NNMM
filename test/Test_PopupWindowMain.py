@@ -6,42 +6,40 @@ import copy
 import sys
 import unittest
 from contextlib import ExitStack
-from logging import INFO, getLogger
+from logging import WARNING, getLogger
 
 import PySimpleGUI as sg
-from mock import MagicMock, patch
+from mock import MagicMock, call, patch
 
-from NNMM.GuiFunction import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
-from NNMM.PopupWindowMain import *
+from NNMM.PopupWindowMain import PopupMylistWindow, PopupMylistWindowSave, PopupVideoWindow, PopupWindowBase
+
+logger = getLogger("NNMM.PopupWindowMain")
+logger.setLevel(WARNING)
 
 
 # テスト用具体化PopupWindowBase
 class ConcretePopupWindowBase(PopupWindowBase):
-
     def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None) -> None:
         super().__init__(log_sflag, log_eflag, process_name)
 
-    def MakeWindowLayout(self, mw) -> list[list[sg.Frame]] | None:
+    def make_window_layout(self, mw) -> list[list[sg.Frame]] | None:
         return mw
 
-    def Init(self, mw) -> int:
+    def init(self, mw) -> int:
         return mw
 
-    def Run(self, mw) -> int:
-        return super().Run(mw) if self.process_name == "テスト用具体化処理" else None
+    def run(self, mw) -> int:
+        return super().run(mw) if self.process_name == "テスト用具体化処理" else None
 
 
 class TestPopupWindowMain(unittest.TestCase):
-
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    def test_PopupWindowBaseInit(self):
+    def test_PopupWindowBaseinit(self):
         """PopupWindowMainの初期化後の状態をテストする
         """
         e_log_sflag = True
@@ -56,51 +54,49 @@ class TestPopupWindowMain(unittest.TestCase):
         self.assertEqual(None, cpwb.window)
         self.assertEqual("", cpwb.title)
         self.assertEqual((100, 100), cpwb.size)
-        self.assertEqual({}, cpwb.ep_dict)
-        pass
+        self.assertEqual({}, cpwb.process_dict)
 
-    def test_PopupWindowBaseRun(self):
+    def test_PopupWindowBaserun(self):
         """PopupWindowMainの子windowイベントループをテストする
         """
         e_log_sflag = True
         e_log_eflag = False
         e_process_name = "テスト用具体化処理"
         cpwb = ConcretePopupWindowBase(e_log_sflag, e_log_eflag, e_process_name)
-        cpwb.ep_dict = {"-DO-": ConcretePopupWindowBase}
+        cpwb.process_dict = {"-DO-": MagicMock}
 
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.PopupWindowMain.logger.info"))
-            mockwd = stack.enter_context(patch("NNMM.PopupWindowMain.sg.Window"))
-            mockpp = stack.enter_context(patch("NNMM.PopupWindowMain.sg.popup_ok"))
+            mock_logger_info = stack.enter_context(patch.object(logger, "info"))
+            mock_window = stack.enter_context(patch("NNMM.PopupWindowMain.sg.Window"))
+            mock_popup_ok = stack.enter_context(patch("NNMM.PopupWindowMain.sg.popup_ok"))
 
-            def r_mock_func(title, layout, size, finalize, resizable, modal):
-                r_mock = MagicMock()
-                v_mock = MagicMock()
-                v_mock.side_effect = [("-DO-", "value1"), ("-EXIT-", "value2")]
-                type(r_mock).read = v_mock
-                type(r_mock).close = lambda s: 0
-                return r_mock
-
-            mockwd.side_effect = r_mock_func
+            mock_window.return_value.read.side_effect = [("-DO-", "value1"), ("-EXIT-", "value2")]
 
             # 正常系
             e_mw = [["dummy window layout"]]
-            res = cpwb.Run(e_mw)
+            res = cpwb.run(e_mw)
             self.assertEqual(0, res)
+            expect = [
+                call(cpwb.title, cpwb.make_window_layout(e_mw), size=cpwb.size, finalize=True, resizable=True, modal=True),
+                call().read(),
+                call().read(),
+                call().close(),
+            ]
+            self.assertEqual(expect, mock_window.mock_calls)
 
             # 異常系
             # レイアウト作成に失敗
             e_mw = None
-            res = cpwb.Run(e_mw)
+            res = cpwb.run(e_mw)
             self.assertEqual(-1, res)
 
             # 初期化に失敗
             e_mw = -1
-            res = cpwb.Run(e_mw)
+            res = cpwb.run(e_mw)
             self.assertEqual(-1, res)
         pass
 
-    def test_PMWMakeWindowLayout(self):
+    def test_PMWmake_window_layout(self):
         """マイリスト情報windowのレイアウトをテストする
         """
         pmw = PopupMylistWindow()
@@ -123,7 +119,7 @@ class TestPopupWindowMain(unittest.TestCase):
         title = "マイリスト情報"
         pmw.title = title
 
-        def ExpectMakeWindowLayout(mw):
+        def expect_make_window_layout(mw):
             # 画面のレイアウトを作成する
             horizontal_line = "-" * 132
             csize = (20, 1)
@@ -178,8 +174,8 @@ class TestPopupWindowMain(unittest.TestCase):
 
         # 正常系
         mw = None
-        actual = pmw.MakeWindowLayout(mw)
-        expect = ExpectMakeWindowLayout(mw)
+        actual = pmw.make_window_layout(mw)
+        expect = expect_make_window_layout(mw)
 
         # sgオブジェクトは別IDで生成されるため、各要素を比較する
         # self.assertEqual(expect, actual)
@@ -199,31 +195,31 @@ class TestPopupWindowMain(unittest.TestCase):
         # 異常系
         # インターバル文字列が不正な文字列
         pmw.record["check_interval"] = "不正なインターバル文字列"
-        actual = pmw.MakeWindowLayout(mw)
+        actual = pmw.make_window_layout(mw)
         self.assertIsNone(actual)
 
         # インターバル文字列が負の数指定
         pmw.record["check_interval"] = "-15分"
-        actual = pmw.MakeWindowLayout(mw)
+        actual = pmw.make_window_layout(mw)
         self.assertIsNone(actual)
         pmw.record["check_interval"] = "15分"
 
         # recordの設定が不完全
         del pmw.record["id"]
-        actual = pmw.MakeWindowLayout(mw)
+        actual = pmw.make_window_layout(mw)
         self.assertIsNone(actual)
 
         # recordが設定されていない
         del pmw.record
-        actual = pmw.MakeWindowLayout(mw)
+        actual = pmw.make_window_layout(mw)
         self.assertIsNone(actual)
         pass
 
-    def test_PMWInit(self):
+    def test_PMWinit(self):
         """マイリスト情報windowの初期化処理をテストする
         """
         with ExitStack() as stack:
-            mockle = stack.enter_context(patch("NNMM.PopupWindowMain.logger.error"))
+            mock_logger_error = stack.enter_context(patch.object(logger, "error"))
 
             pmw = PopupMylistWindow()
 
@@ -236,37 +232,37 @@ class TestPopupWindowMain(unittest.TestCase):
             type(mw).values = {"-LIST-": [f"{NEW_MARK}mylist showname"]}
 
             # 正常系
-            actual = pmw.Init(mw)
+            actual = pmw.init(mw)
             self.assertEqual(0, actual)
             self.assertEqual("mylist showname", pmw.record)
             self.assertEqual("マイリスト情報", pmw.title)
             self.assertEqual((580, 450), pmw.size)
-            self.assertEqual({"-SAVE-": PopupMylistWindowSave}, pmw.ep_dict)
+            self.assertEqual({"-SAVE-": PopupMylistWindowSave}, pmw.process_dict)
 
             # 異常系
             # マイリストレコードオブジェクト取得失敗
             type(sfs_mock).select_from_showname = lambda s, v: []
-            actual = pmw.Init(mw)
+            actual = pmw.init(mw)
             self.assertEqual(-1, actual)
 
             # 選択されたマイリストのShowname取得失敗
             type(mw).values = {"-LIST-": []}
-            actual = pmw.Init(mw)
+            actual = pmw.init(mw)
             self.assertEqual(-1, actual)
 
             # 親windowが必要な属性を持っていない
             del type(mw).mylist_db
             del mw.mylist_db
-            actual = pmw.Init(mw)
+            actual = pmw.init(mw)
             self.assertEqual(-1, actual)
         pass
 
-    def test_PMWSRun(self):
+    def test_PMWSrun(self):
         """マイリスト情報windowの変更を保存する機能をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.PopupWindowMain.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.PopupWindowMain.logger.error"))
+            mock_logger_info = stack.enter_context(patch.object(logger, "info"))
+            mock_logger_error = stack.enter_context(patch.object(logger, "error"))
             pmw = PopupMylistWindowSave()
 
             def getmock(value):
@@ -311,28 +307,28 @@ class TestPopupWindowMain(unittest.TestCase):
             type(mockwm).mylist_info_db = []
 
             # 正常系
-            actual = pmw.Run(mockwm)
+            actual = pmw.run(mockwm)
             self.assertEqual(0, actual)
 
             # 異常系
             # インターバル文字列が不正な値
             expect_window_dict["-CHECK_INTERVAL_UNIT-"] = getmock("不正な時間単位")
-            actual = pmw.Run(mockwm)
+            actual = pmw.run(mockwm)
             self.assertEqual(-1, actual)
 
             # レイアウトに想定しているキーが存在しない
             del expect_window_dict["-CHECK_INTERVAL_UNIT-"]
-            actual = pmw.Run(mockwm)
+            actual = pmw.run(mockwm)
             self.assertEqual(-1, actual)
 
             # 引数のwindowが必要な属性を持っていない
             del type(mockwm).mylist_db
             del mockwm.mylist_db
-            actual = pmw.Run(mockwm)
+            actual = pmw.run(mockwm)
             self.assertEqual(-1, actual)
         pass
 
-    def test_PVWMakeWindowLayout(self):
+    def test_PVWmake_window_layout(self):
         """動画情報windowのレイアウトをテストする
         """
         pvw = PopupVideoWindow()
@@ -354,7 +350,7 @@ class TestPopupWindowMain(unittest.TestCase):
         title = "動画情報"
         pvw.title = title
 
-        def ExpectMakeWindowLayout(mw):
+        def expect_make_window_layout(mw):
             # 画面のレイアウトを作成する
             horizontal_line = "-" * 132
             csize = (20, 1)
@@ -395,8 +391,8 @@ class TestPopupWindowMain(unittest.TestCase):
 
         # 正常系
         mw = None
-        actual = pvw.MakeWindowLayout(mw)
-        expect = ExpectMakeWindowLayout(mw)
+        actual = pvw.make_window_layout(mw)
+        expect = expect_make_window_layout(mw)
 
         # sgオブジェクトは別IDで生成されるため、各要素を比較する
         # self.assertEqual(expect, actual)
@@ -416,21 +412,20 @@ class TestPopupWindowMain(unittest.TestCase):
         # 異常系
         # recordの設定が不完全
         del pvw.record["id"]
-        actual = pvw.MakeWindowLayout(mw)
+        actual = pvw.make_window_layout(mw)
         self.assertIsNone(actual)
 
         # recordが設定されていない
         del pvw.record
-        actual = pvw.MakeWindowLayout(mw)
+        actual = pvw.make_window_layout(mw)
         self.assertIsNone(actual)
-        pass
 
-    def test_PVWInit(self):
+    def test_PVWinit(self):
         """動画情報windowの初期化処理をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.PopupWindowMain.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.PopupWindowMain.logger.error"))
+            mock_logger_info = stack.enter_context(patch.object(logger, "info"))
+            mock_logger_error = stack.enter_context(patch.object(logger, "error"))
 
             pvw = PopupVideoWindow()
 
@@ -449,17 +444,17 @@ class TestPopupWindowMain(unittest.TestCase):
                 "2021-10-16 00:00:11",
             ]
             mw = MagicMock()
-            v_mock = MagicMock()
-            type(v_mock).Values = [e_tv]
-            type(mw).window = {"-TABLE-": v_mock}
-            type(mw).values = {"-TABLE-": [0]}
-            sfiu_mock = MagicMock()
-            type(sfiu_mock).select_from_id_url = lambda s, v, m: [v + "_" + m]
-            type(mw).mylist_info_db = sfiu_mock
-            type(mw).mylist_db = "mylist_db"
+            mock_table = MagicMock()
+            mock_table.Values = [e_tv]
+            mw.window = {"-TABLE-": mock_table}
+            mw.values = {"-TABLE-": [0]}
+            mock_mylist_info_db = MagicMock()
+            mock_mylist_info_db.select_from_id_url.side_effect = lambda video_id, mylist_url: [video_id + "_" + mylist_url]
+            mw.mylist_info_db = mock_mylist_info_db
+            mw.mylist_db = "mylist_db"
 
             # 正常系
-            actual = pvw.Init(mw)
+            actual = pvw.init(mw)
             self.assertEqual(0, actual)
             self.assertEqual(f"{e_video_id}_{e_mylist_url}", pvw.record)
             self.assertEqual("動画情報", pvw.title)
@@ -467,26 +462,24 @@ class TestPopupWindowMain(unittest.TestCase):
 
             # 異常系
             # 動画情報レコードオブジェクト取得失敗
-            type(sfiu_mock).select_from_id_url = lambda s, v, m: []
-            actual = pvw.Init(mw)
+            mock_mylist_info_db.select_from_id_url.side_effect = lambda video_id, mylist_url: []
+            actual = pvw.init(mw)
             self.assertEqual(-1, actual)
 
             # テーブルの行が選択されていない
-            type(mw).values = {"-TABLE-": None}
-            actual = pvw.Init(mw)
+            mw.values = {"-TABLE-": None}
+            actual = pvw.init(mw)
             self.assertEqual(-1, actual)
 
             # 引数が不正
-            type(mw).values = None
-            actual = pvw.Init(mw)
+            mw.values = None
+            actual = pvw.init(mw)
             self.assertEqual(-1, actual)
 
             # 親windowが必要な属性を持っていない
-            del type(mw).mylist_info_db
             del mw.mylist_info_db
-            actual = pvw.Init(mw)
+            actual = pvw.init(mw)
             self.assertEqual(-1, actual)
-        pass
 
 
 if __name__ == "__main__":
