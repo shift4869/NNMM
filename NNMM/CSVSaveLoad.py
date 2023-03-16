@@ -1,13 +1,12 @@
 # coding: utf-8
-import logging.config
 import re
-from logging import INFO, getLogger
 from pathlib import Path
 
-from NNMM.MylistDBController import *
+from NNMM.Model import Mylist
+from NNMM.MylistDBController import MylistDBController
 
 
-def SaveMylist(mylist_db: MylistDBController, save_file_path: str) -> int:
+def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> int:
     """MylistDBの内容をcsvファイルに書き出す
 
     Args:
@@ -31,7 +30,7 @@ def SaveMylist(mylist_db: MylistDBController, save_file_path: str) -> int:
     return 0
 
 
-def LoadMylist(mylist_db: MylistDBController, load_file_path: str) -> int:
+def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
     """書き出したcsvファイルからMylistDBへレコードを反映させる
 
     Args:
@@ -81,6 +80,6 @@ if __name__ == "__main__":
     file_path = Path("result.csv")
 
     # SaveMylist(mylist_db, file_path)
-    LoadMylist(mylist_db, file_path)
+    load_mylist(mylist_db, file_path)
 
     pass

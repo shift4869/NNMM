@@ -3,34 +3,27 @@
 
 CSVSaveLoadの各種機能をテストする
 """
-
 import copy
 import sys
 import unittest
 from contextlib import ExitStack
-from logging import INFO, getLogger
 from pathlib import Path
 
-from mock import MagicMock, PropertyMock, mock_open, patch
+from mock import mock_open, patch
 
 from NNMM import CSVSaveLoad
-from NNMM.MylistDBController import *
+from NNMM.Model import Mylist
+from NNMM.MylistDBController import MylistDBController
 
-TEST_DB_PATH = "./test/test.db"
+TEST_DB_PATH = ":memory:"
 CSV_PATH = "./test/result.csv"
 
 
 class TestCSVSaveLoad(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
     def tearDown(self):
-        Path(TEST_DB_PATH).unlink(missing_ok=True)
         Path(CSV_PATH).unlink(missing_ok=True)
-        pass
 
-    def __GetMylistInfoSet(self) -> list[tuple]:
+    def _get_mylist_info_list(self) -> list[tuple]:
         """Mylistオブジェクトの情報セットを返す（mylist_url以外）
         """
         mylist_info = [
@@ -42,7 +35,7 @@ class TestCSVSaveLoad(unittest.TestCase):
         ]
         return mylist_info
 
-    def __GetURLInfoSet(self) -> list[str]:
+    def _get_mylist_url_list(self) -> list[str]:
         """mylist_urlの情報セットを返す
         """
         url_info = [
@@ -54,7 +47,7 @@ class TestCSVSaveLoad(unittest.TestCase):
         ]
         return url_info
 
-    def __MakeMylistSample(self, id: str) -> Mylist:
+    def _make_mylist_sample(self, id: str) -> Mylist:
         """Mylistオブジェクトを作成する
 
         Note:
@@ -79,51 +72,43 @@ class TestCSVSaveLoad(unittest.TestCase):
         Returns:
             Mylist: Mylistオブジェクト
         """
-        ml = self.__GetMylistInfoSet()[id]
-        mylist_url = self.__GetURLInfoSet()[id]
+        ml = self._get_mylist_info_list()[id]
+        mylist_url = self._get_mylist_url_list()[id]
         r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9])
         return r
 
-    def __LoadToTable(self) -> list[dict]:
-        """テスト用の初期レコードを格納したテーブルを用意する
-
-        Returns:
-            expect (dict[]): 全SELECTした場合の予測値
-        """
-        Path(TEST_DB_PATH).unlink(missing_ok=True)
-
-        dbname = TEST_DB_PATH
-        engine = create_engine(f"sqlite:///{dbname}", echo=False, pool_recycle=5, connect_args={"timeout": 30})
-        Base.metadata.create_all(engine)
-
-        Session = sessionmaker(bind=engine, autoflush=False)
-        session = Session()
-
-        MAX_RECORD_NUM = 5
-        expect = []
-        id_num = 1
-        for i in range(0, MAX_RECORD_NUM):
-            r = self.__MakeMylistSample(i)
-            session.add(r)
-
-            d = r.to_dict()
-            d["id"] = id_num
-            id_num = id_num + 1
-            expect.append(d)
-
-        session.commit()
-        session.close()
-        return expect
-
-    def test_SaveMylist(self):
-        """SaveMylistのテスト
+    def test_save_mylist(self):
+        """save_mylistのテスト
         """
         with ExitStack() as stack:
             mockio = stack.enter_context(patch("pathlib.Path.open", mock_open()))
             m_cont = MylistDBController(TEST_DB_PATH)
-            records = self.__LoadToTable()
 
-            res = CSVSaveLoad.SaveMylist(m_cont, CSV_PATH)
+            MAX_RECORD_NUM = 5
+            records = []
+            expect = []
+            id_num = 1
+            for i in range(0, MAX_RECORD_NUM):
+                r = self._make_mylist_sample(i)
+                m_cont.upsert(
+                    r.id,
+                    r.username,
+                    r.mylistname,
+                    r.type,
+                    r.showname,
+                    r.url,
+                    r.created_at,
+                    r.updated_at,
+                    r.checked_at,
+                    r.check_interval,
+                    r.is_include_new,
+                )
+                d = r.to_dict()
+                d["id"] = id_num
+                id_num = id_num + 1
+                records.append(d)
+
+            res = CSVSaveLoad.save_mylist(m_cont, CSV_PATH)
             self.assertEqual(res, 0)
 
             # open呼び出し予測値
@@ -148,14 +133,35 @@ class TestCSVSaveLoad(unittest.TestCase):
             wcal = mockio().write.call_args_list
             actual = [ca[0][0] for ca in wcal]
             self.assertEqual(expect, actual)
-        pass
 
-    def test_LoadMylist(self):
-        """LoadMylistのテスト
+    def test_load_mylist(self):
+        """load_mylistのテスト
         """
         with ExitStack() as stack:
             m_cont = MylistDBController(TEST_DB_PATH)
-            records = self.__LoadToTable()
+            MAX_RECORD_NUM = 5
+            records = []
+            expect = []
+            id_num = 1
+            for i in range(0, MAX_RECORD_NUM):
+                r = self._make_mylist_sample(i)
+                m_cont.upsert(
+                    r.id,
+                    r.username,
+                    r.mylistname,
+                    r.type,
+                    r.showname,
+                    r.url,
+                    r.created_at,
+                    r.updated_at,
+                    r.checked_at,
+                    r.check_interval,
+                    r.is_include_new,
+                )
+                d = r.to_dict()
+                d["id"] = id_num
+                id_num = id_num + 1
+                records.append(d)
 
             # Path.open().readline で返されるモックデータの用意
             readdata = []
@@ -174,7 +180,7 @@ class TestCSVSaveLoad(unittest.TestCase):
             self.assertEqual(m_cont.select(), [])
 
             # ロード呼び出し
-            res = CSVSaveLoad.LoadMylist(m_cont, CSV_PATH)
+            res = CSVSaveLoad.load_mylist(m_cont, CSV_PATH)
             self.assertEqual(res, 0)
 
             # open呼び出し予測値
@@ -191,7 +197,6 @@ class TestCSVSaveLoad(unittest.TestCase):
             expect = copy.deepcopy(records)
             actual = m_cont.select()
             self.assertEqual(expect, actual)
-        pass
 
 
 if __name__ == "__main__":
