@@ -4,10 +4,14 @@
 import sys
 import unittest
 from contextlib import ExitStack
+from logging import WARNING, getLogger
 
 from mock import MagicMock, call, patch
 
 from NNMM.Process import ProcessWatchedAllMylist
+
+logger = getLogger("NNMM.Process.ProcessWatchedAllMylist")
+logger.setLevel(WARNING)
 
 
 class TestProcessWatchedAllMylist(unittest.TestCase):
@@ -74,9 +78,9 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
         """ProcessWatchedAllMylist のrunをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.logger.error"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.UpdateMylistShow"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
+            mockle = stack.enter_context(patch.object(logger, "error"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.update_mylist_pane"))
             mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.update_table_pane"))
 
             pwam = ProcessWatchedAllMylist.ProcessWatchedAllMylist()

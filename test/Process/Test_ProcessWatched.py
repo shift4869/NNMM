@@ -5,10 +5,14 @@ import random
 import sys
 import unittest
 from contextlib import ExitStack
+from logging import WARNING, getLogger
 
 from mock import MagicMock, call, patch
 
 from NNMM.Process import ProcessWatched
+
+logger = getLogger("NNMM.Process.ProcessWatched")
+logger.setLevel(WARNING)
 
 
 class TestProcessWatched(unittest.TestCase):
@@ -23,11 +27,11 @@ class TestProcessWatched(unittest.TestCase):
         """ProcessWatchedのrunをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessWatched.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessWatched.logger.error"))
-            mockiminv = stack.enter_context(patch("NNMM.Process.ProcessWatched.IsMylistIncludeNewVideo"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
+            mockle = stack.enter_context(patch.object(logger, "error"))
+            mockiminv = stack.enter_context(patch("NNMM.Process.ProcessWatched.is_mylist_include_new_video"))
             mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatched.update_table_pane"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessWatched.UpdateMylistShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessWatched.update_mylist_pane"))
 
             pw = ProcessWatched.ProcessWatched()
 

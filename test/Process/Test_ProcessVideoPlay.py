@@ -4,21 +4,18 @@
 import sys
 import unittest
 from contextlib import ExitStack
+from logging import WARNING, getLogger
 from pathlib import Path
 
 from mock import MagicMock, call, patch
 
 from NNMM.Process import ProcessVideoPlay
 
+logger = getLogger("NNMM.Process.ProcessVideoPlay")
+logger.setLevel(WARNING)
+
 
 class TestProcessVideoPlay(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def MakeMylistDB(self, num: int = 5) -> list[dict]:
         """mylist_db.Select()で取得されるマイリストデータセット
         """
@@ -102,8 +99,8 @@ class TestProcessVideoPlay(unittest.TestCase):
         """ProcessVideoPlay のrunをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.logger.error"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
+            mockle = stack.enter_context(patch.object(logger, "error"))
             mockcmd = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
             mockecs = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.sg.execute_command_subprocess"))
             mockpok = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.sg.popup_ok"))

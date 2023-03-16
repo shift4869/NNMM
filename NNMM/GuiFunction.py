@@ -104,9 +104,9 @@ def interval_translate(interval_str: str) -> int:
     return -1
 
 
-def PopupGetText(message, title=None, default_text='', password_char='', size=(None, None), button_color=None,
-                 background_color=None, text_color=None, icon=None, font=None, no_titlebar=False,
-                 grab_anywhere=False, keep_on_top=None, location=(None, None), relative_location=(None, None), image=None, modal=True):
+def popup_get_text(message, title=None, default_text='', password_char='', size=(None, None), button_color=None,
+                   background_color=None, text_color=None, icon=None, font=None, no_titlebar=False,
+                   grab_anywhere=False, keep_on_top=None, location=(None, None), relative_location=(None, None), image=None, modal=True):
     """sg.popup_get_text のラッパー
 
     Notes:

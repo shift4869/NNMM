@@ -44,7 +44,7 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
             logger.error("MylistSearch failed, argument error.")
             return -1
 
-        pattern = PopupGetText("マイリスト名検索（正規表現可）")
+        pattern = popup_get_text("マイリスト名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("MylistSearch is canceled or target word is null.")
             return 1
@@ -133,7 +133,7 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
             logger.error("MylistSearchFromVideo failed, argument error.")
             return -1
 
-        pattern = PopupGetText("動画名検索（正規表現可）")
+        pattern = popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("MylistSearchFromVideo is canceled or target word is null.")
             return 1
@@ -227,7 +227,7 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
             return -1
 
         # 検索対象ワードをユーザーに問い合わせる
-        pattern = PopupGetText("動画名検索（正規表現可）")
+        pattern = popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("VideoSearch is canceled or target word is null.")
             return 1

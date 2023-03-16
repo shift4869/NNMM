@@ -1,21 +1,18 @@
 # coding: utf-8
 from logging import INFO, getLogger
+from pathlib import Path
 
 import PySimpleGUI as sg
 
 from NNMM import ConfigMain
-from NNMM.GuiFunction import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
-from NNMM.Process.ProcessWatched import *
+from NNMM.Process.ProcessWatched import ProcessWatched
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessVideoPlay(ProcessBase.ProcessBase):
-
     def __init__(self):
         super().__init__(True, True, "ブラウザで開く")
 

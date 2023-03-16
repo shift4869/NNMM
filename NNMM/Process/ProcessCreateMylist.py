@@ -1,5 +1,7 @@
 # coding: utf-8
 import asyncio
+import re
+import traceback
 import urllib.parse
 from logging import INFO, getLogger
 from time import sleep
@@ -9,9 +11,7 @@ import PySimpleGUI as sg
 from requests_html import AsyncHTMLSession
 
 from NNMM import ConfigMain
-from NNMM.GuiFunction import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
+from NNMM.GuiFunction import get_mylist_type, get_now_datetime, popup_get_text, update_mylist_pane, update_table_pane
 from NNMM.Process import ProcessBase
 from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
 
@@ -20,7 +20,6 @@ logger.setLevel(INFO)
 
 
 class ProcessCreateMylist(ProcessBase.ProcessBase):
-
     def __init__(self):
         super().__init__(True, False, "マイリスト追加")
 
@@ -161,7 +160,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         sample_url1 = "https://www.nicovideo.jp/user/*******/video"
         sample_url2 = "https://www.nicovideo.jp/user/*******/mylist/********"
         # mylist_url = sg.popup_get_text("追加する マイリスト/ 投稿動画一覧 のURLを入力", title="追加URL")
-        mylist_url = PopupGetText(f"追加する マイリスト/ 投稿動画一覧 のURLを入力\n{sample_url1}\n{sample_url2}", title="追加URL")
+        mylist_url = popup_get_text(f"追加する マイリスト/ 投稿動画一覧 のURLを入力\n{sample_url1}\n{sample_url2}", title="追加URL")
 
         # キャンセルされた場合
         if mylist_url is None or mylist_url == "":
@@ -207,7 +206,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         loop.close()
 
         # マイリスト情報が取得できたか確認
-        if not s_record or not(s_record.keys() >= {"username", "mylistname", "showname"}):
+        if not s_record or not (s_record.keys() >= {"username", "mylistname", "showname"}):
             sg.popup("ページ取得に失敗しました\n時間を置いてもう一度試してください\n新規追加処理を終了します", title="")
             logger.error(f"Create mylist failed, '{mylist_url}' getting is failed.")
             return -1

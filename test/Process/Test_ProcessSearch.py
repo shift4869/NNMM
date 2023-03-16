@@ -96,7 +96,7 @@ class TestProcessSearch(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.error"))
-            mocksgpgt = stack.enter_context(patch("NNMM.Process.ProcessSearch.PopupGetText"))
+            mocksgpgt = stack.enter_context(patch("NNMM.Process.ProcessSearch.popup_get_text"))
 
             pms = ProcessSearch.ProcessMylistSearch()
 
@@ -210,7 +210,7 @@ class TestProcessSearch(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.error"))
-            mocksgpgt = stack.enter_context(patch("NNMM.Process.ProcessSearch.PopupGetText"))
+            mocksgpgt = stack.enter_context(patch("NNMM.Process.ProcessSearch.popup_get_text"))
 
             pmsfv = ProcessSearch.ProcessMylistSearchFromVideo()
 
@@ -328,7 +328,7 @@ class TestProcessSearch(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.error"))
-            mocksgpgt = stack.enter_context(patch("NNMM.Process.ProcessSearch.PopupGetText"))
+            mocksgpgt = stack.enter_context(patch("NNMM.Process.ProcessSearch.popup_get_text"))
 
             pvs = ProcessSearch.ProcessVideoSearch()
 

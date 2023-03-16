@@ -11,22 +11,21 @@ import warnings
 from asyncio import new_event_loop
 from contextlib import ExitStack
 from datetime import datetime
+from logging import WARNING, getLogger
 
 from mock import AsyncMock, MagicMock, patch
 
 from NNMM.Process import ProcessCreateMylist
 
+logger = getLogger("NNMM.Process.ProcessCreateMylist")
+logger.setLevel(WARNING)
+
 
 class TestProcessCreateMylist(unittest.TestCase):
-
     def setUp(self):
         warnings.simplefilter("ignore", ResourceWarning)
-        pass
 
-    def tearDown(self):
-        pass
-
-    def __GetURLSet(self) -> list[str]:
+    def _get_url_list(self) -> list[str]:
         """urlセットを返す
         """
         url_info = [
@@ -38,7 +37,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         ]
         return url_info
 
-    def __GetMylistURLSet(self) -> list[str]:
+    def _get_mylist_url_list(self) -> list[str]:
         """mylist_urlセットを返す
         """
         mylist_url_info = [
@@ -50,10 +49,10 @@ class TestProcessCreateMylist(unittest.TestCase):
         ]
         return mylist_url_info
 
-    def __GetMylistInfoSet(self, mylist_url: str) -> tuple[str, str, str]:
+    def _get_mylist_info_list(self, mylist_url: str) -> tuple[str, str, str]:
         """マイリスト情報セットを返す
         """
-        mylist_url_info = self.__GetMylistURLSet()
+        mylist_url_info = self._get_mylist_url_list()
         mylist_info = {
             mylist_url_info[0]: ("投稿者1さんの投稿動画-ニコニコ動画", "投稿動画", "投稿者1"),
             mylist_url_info[1]: ("投稿者2さんの投稿動画-ニコニコ動画", "投稿動画", "投稿者2"),
@@ -64,7 +63,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         res = mylist_info.get(mylist_url, ("", "", ""))
         return res
 
-    def __GetNowDatetime(self) -> str:
+    def _get_now_datetime(self) -> str:
         """タイムスタンプを返す
 
         Returns:
@@ -74,7 +73,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         dst = datetime.now().strftime(dst_df)
         return dst
 
-    def __get_mylist_type(self, url: str) -> str:
+    def _get_mylist_type(self, url: str) -> str:
         """URLタイプを返す
 
         Args:
@@ -96,7 +95,7 @@ class TestProcessCreateMylist(unittest.TestCase):
 
         return ""
 
-    def __MakeUsername(self, mylist_url: str) -> list[str]:
+    def _make_username(self, mylist_url: str) -> list[str]:
         """session.get 後の html.lxml.find_class の返り値を生成する
 
         Notes:
@@ -112,12 +111,12 @@ class TestProcessCreateMylist(unittest.TestCase):
         res = []
 
         # マイリスト情報取得
-        mylist_info = self.__GetMylistInfoSet(mylist_url)
+        mylist_info = self._get_mylist_info_list(mylist_url)
 
         res = [mylist_info[2]]
         return res
 
-    def __MakeMyshowname(self, mylist_url: str) -> list[str]:
+    def _make_showname(self, mylist_url: str) -> list[str]:
         """session.get 後の html.lxml.find_class の返り値を生成する
 
         Notes:
@@ -133,12 +132,12 @@ class TestProcessCreateMylist(unittest.TestCase):
         res = []
 
         # マイリスト情報取得
-        mylist_info = self.__GetMylistInfoSet(mylist_url)
+        mylist_info = self._get_mylist_info_list(mylist_url)
 
         res = [mylist_info[1]]
         return res
 
-    def __MakeReturnHtml(self, url: str, error_target: str) -> AsyncMock:
+    def _make_return_html(self, url: str, error_target: str) -> AsyncMock:
         """html以下のプロパティ,メソッドを模倣するモックを返す
 
         Notes:
@@ -188,10 +187,10 @@ class TestProcessCreateMylist(unittest.TestCase):
                 # 呼び出し時のパラメータで分岐
                 if id == "UserDetailsHeader-nickname":
                     # username
-                    value_list = self.__MakeUsername(mylist_url)
+                    value_list = self._make_username(mylist_url)
                 elif id == "MylistHeader-name":
                     # myshowname
-                    value_list = self.__MakeMyshowname(mylist_url)
+                    value_list = self._make_showname(mylist_url)
 
                 # textプロパティで取り出せるようにパッキング
                 for v in value_list:
@@ -206,7 +205,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         type(r_html).lxml = ReturnLxml()
         return r_html
 
-    def __MakeSessionMock(self, return_status: int = 200, error_target: str = "") -> AsyncMock:
+    def _make_session_mock(self, return_status: int = 200, error_target: str = "") -> AsyncMock:
         """session を模倣するモック
 
         Notes:
@@ -231,7 +230,7 @@ class TestProcessCreateMylist(unittest.TestCase):
 
         async def ReturnGet(s, url):
             r_get = MagicMock()
-            type(r_get).html = self.__MakeReturnHtml(url, error_target)
+            type(r_get).html = self._make_return_html(url, error_target)
             return r_get
         type(r_response).get = ReturnGet if return_status == 200 else None
 
@@ -241,12 +240,12 @@ class TestProcessCreateMylist(unittest.TestCase):
 
         return r_response
 
-    async def __MakePyppeteerMock(self, argv: dict) -> None:
+    async def _make_pyppeteer_mock(self, argv: dict) -> None:
         """pyppeteer.launch にパッチして、無効化するためのモック
         """
         return None
 
-    def __MakeExpectResult(self, url: str) -> dict:
+    def _make_expect_result(self, url: str) -> dict:
         """RSSまたはHTMLページスクレイピングで取得される動画情報の予測値を生成する
 
         Notes:
@@ -267,7 +266,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         )
 
         # url_type判定
-        type = self.__get_mylist_type(url)
+        type = self._get_mylist_type(url)
 
         mylist_url = url
         # マイリストのURLならRSSが取得できるURLに加工
@@ -276,7 +275,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
 
         # マイリスト情報と動画情報を取得
-        mylist_info = self.__GetMylistInfoSet(mylist_url)
+        mylist_info = self._get_mylist_info_list(mylist_url)
 
         username = mylist_info[2]
 
@@ -303,18 +302,18 @@ class TestProcessCreateMylist(unittest.TestCase):
             mockslp = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sleep"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.error"))
             mocklw = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.warning"))
-            mockses = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self.__MakeSessionMock(200)))
-            mockpyp = stack.enter_context(patch("pyppeteer.launch", self.__MakePyppeteerMock))
+            mockses = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self._make_session_mock(200)))
+            mockpyp = stack.enter_context(patch("pyppeteer.launch", self._make_pyppeteer_mock))
 
             pcm = ProcessCreateMylist.ProcessCreateMylist()
 
             # 正常系
-            urls = self.__GetURLSet()
+            urls = self._get_url_list()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             for url in urls:
                 actual = loop.run_until_complete(pcm.AsyncGetMyListInfo(url))
-                expect = self.__MakeExpectResult(url)
+                expect = self._make_expect_result(url)
                 self.assertEqual(expect, actual)
 
             # 異常系
@@ -324,7 +323,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             self.assertEqual({}, actual)
 
             # session.getが常に失敗
-            with patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self.__MakeSessionMock(503)):
+            with patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self._make_session_mock(503)):
                 url = urls[0]
                 actual = loop.run_until_complete(pcm.AsyncGetMyListInfo(url))
                 self.assertEqual({}, actual)
@@ -338,14 +337,14 @@ class TestProcessCreateMylist(unittest.TestCase):
             # 投稿者収集に失敗(AttributeError)
             url = urls[0]
             error_target = "UserDetailsHeader-nickname"
-            with patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
+            with patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self._make_session_mock(200, error_target)):
                 actual = loop.run_until_complete(pcm.AsyncGetMyListInfo(url))
                 self.assertEqual({}, actual)
 
             # マイリスト名収集に失敗(AttributeError)
             url = urls[2]
             error_target = "MylistHeader-name"
-            with patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self.__MakeSessionMock(200, error_target)):
+            with patch("NNMM.Process.ProcessCreateMylist.AsyncHTMLSession", lambda: self._make_session_mock(200, error_target)):
                 actual = loop.run_until_complete(pcm.AsyncGetMyListInfo(url))
                 self.assertEqual({}, actual)
         pass
@@ -354,12 +353,12 @@ class TestProcessCreateMylist(unittest.TestCase):
         """ProcessCreateMylistのrunをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.error"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
+            mockle = stack.enter_context(patch.object(logger, "error"))
             mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
             mockgut = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.get_mylist_type"))
-            mockgndt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.GetNowDatetime"))
-            mockpgt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.PopupGetText"))
+            mockgndt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.get_now_datetime"))
+            mockpgt = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.popup_get_text"))
             mockpu = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.sg.popup"))
             mocknel = stack.enter_context(patch("asyncio.new_event_loop"))
             mockagmi = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.VideoInfoHtmlFetcher.fetch_videoinfo"))
@@ -368,20 +367,20 @@ class TestProcessCreateMylist(unittest.TestCase):
             pcm = ProcessCreateMylist.ProcessCreateMylist()
 
             # サンプル値選定
-            url = random.choice(self.__GetURLSet())
+            url = random.choice(self._get_url_list())
             mylist_url = url
             # マイリストのURLならRSSが取得できるURLに加工
             pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
             if re.search(pattern, mylist_url):
                 mylist_url = re.sub("/user/[0-9]+", "", mylist_url)  # /user/{userid} 部分を削除
-            m_list = self.__GetMylistInfoSet(mylist_url)
+            m_list = self._get_mylist_info_list(mylist_url)
             username = m_list[2]
             showname = m_list[0]
             mylistname = m_list[1]
 
             mockcpg.side_effect = lambda: {"general": {"auto_reload": "15分毎"}}
-            mockgut.side_effect = self.__get_mylist_type
-            mockgndt.side_effect = self.__GetNowDatetime
+            mockgut.side_effect = self._get_mylist_type
+            mockgndt.side_effect = self._get_now_datetime
             mockpgt.side_effect = lambda msg, title: url
 
             mockrucs = MagicMock()
@@ -528,8 +527,8 @@ class TestProcessCreateMylist(unittest.TestCase):
         """ProcessCreateMylistThreadDoneのrunをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.error"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
+            mockle = stack.enter_context(patch.object(logger, "error"))
             mockums = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.update_mylist_pane"))
             mockuts = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.update_table_pane"))
 
