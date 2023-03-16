@@ -1,7 +1,6 @@
 # coding: utf-8
 """MainWindow のテスト
 """
-
 import sys
 import unittest
 from contextlib import ExitStack
@@ -44,7 +43,7 @@ class TestWindowMain(unittest.TestCase):
         """WindowMainの初期化後の状態をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.MainWindow.logger.info"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
             mockwd = stack.enter_context(patch("NNMM.MainWindow.sg.Window"))
             mockcps = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
             mockmdbc = stack.enter_context(patch("NNMM.MainWindow.MylistDBController"))
@@ -168,7 +167,7 @@ class TestWindowMain(unittest.TestCase):
         """WindowMainのレイアウトをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.MainWindow.logger.info"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
             # mockwd = stack.enter_context(patch("NNMM.MainWindow.sg.Window"))
             mockcps = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
             mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
@@ -332,8 +331,8 @@ class TestWindowMain(unittest.TestCase):
         """WindowMainのメインベントループをテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.MainWindow.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.MainWindow.logger.error"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
+            mockle = stack.enter_context(patch.object(logger, "error"))
             mockwd = stack.enter_context(patch("NNMM.MainWindow.sg.Window"))
             mockcps = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
             mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))

@@ -31,7 +31,7 @@ class TestTimer(unittest.TestCase):
             f_now = "2021-11-23 01:00:00"
             mockfg = stack.enter_context(freezegun.freeze_time(f_now))
             mockli = stack.enter_context(patch.object(logger, "info"))
-            mockli = stack.enter_context(patch.object(logger, "error"))
+            mockle = stack.enter_context(patch.object(logger, "error"))
             mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
             mocktr = stack.enter_context(patch("threading.Timer"))
 
