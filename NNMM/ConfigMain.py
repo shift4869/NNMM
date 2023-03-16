@@ -1,19 +1,15 @@
 # coding: utf-8
 import configparser
 import shutil
-from logging import INFO, getLogger
 from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM.CSVSaveLoad import *
-from NNMM.GuiFunction import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
+from NNMM.CSVSaveLoad import load_mylist, save_mylist
+from NNMM.GuiFunction import update_mylist_pane
+from NNMM.MylistDBController import MylistDBController
+from NNMM.MylistInfoDBController import MylistInfoDBController
 from NNMM.Process import ProcessBase
-
-logger = getLogger(__name__)
-logger.setLevel(INFO)
 
 
 class ProcessConfigBase(ProcessBase.ProcessBase):
@@ -29,7 +25,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def GetConfigLayout(cls) -> list[list[sg.Frame]]:
+    def make_layout(cls) -> list[list[sg.Frame]]:
         """設定画面のレイアウトを作成する
 
         Returns:
@@ -72,7 +68,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
         return layout
 
     @classmethod
-    def GetConfig(cls) -> configparser.ConfigParser:
+    def get_config(cls) -> configparser.ConfigParser:
         """クラス変数configを返す
 
         Notes:
@@ -82,11 +78,11 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
             ConfigParser: クラス変数config
         """
         if not cls.config:
-            ProcessConfigBase.SetConfig()
+            ProcessConfigBase.set_config()
         return cls.config
 
     @classmethod
-    def SetConfig(cls) -> configparser.ConfigParser:
+    def set_config(cls) -> configparser.ConfigParser:
         """クラス変数configを設定する
 
         Notes:
@@ -133,7 +129,7 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
 
         # マイリスト読込
         sd_path = Path(sd_path_str)
-        res = LoadMylist(mw.mylist_db, str(sd_path))
+        res = load_mylist(mw.mylist_db, str(sd_path))
 
         update_mylist_pane(mw.window, mw.mylist_db)
 
@@ -179,7 +175,7 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
 
         # マイリスト保存
         sd_path = Path(sd_path_str)
-        res = SaveMylist(mw.mylist_db, str(sd_path))
+        res = save_mylist(mw.mylist_db, str(sd_path))
 
         # 結果通知
         if res == 0:
@@ -191,7 +187,6 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
 
 
 class ProcessConfigLoad(ProcessConfigBase):
-
     def __init__(self):
         super().__init__(False, False, "設定読込")
 
@@ -208,8 +203,8 @@ class ProcessConfigLoad(ProcessConfigBase):
         Returns:
             int: 成功時0
         """
-        ProcessConfigBase.SetConfig()
-        c = ProcessConfigBase.GetConfig()
+        ProcessConfigBase.set_config()
+        c = ProcessConfigBase.get_config()
         window = mw.window
 
         # General
@@ -230,7 +225,6 @@ class ProcessConfigLoad(ProcessConfigBase):
 
 
 class ProcessConfigSave(ProcessConfigBase):
-
     def __init__(self):
         super().__init__(True, True, "設定保存")
 
@@ -290,7 +284,7 @@ class ProcessConfigSave(ProcessConfigBase):
         # ファイルを保存する
         with Path(ProcessConfigBase.CONFIG_FILE_PATH).open("w", encoding="utf-8") as fout:
             c.write(fout)
-        ProcessConfigBase.SetConfig()
+        ProcessConfigBase.set_config()
         return 0
 
 

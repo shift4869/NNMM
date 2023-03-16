@@ -1,46 +1,36 @@
 # coding: utf-8
 """ConfigMain のテスト
 """
-
-import configparser
 import copy
-import shutil
 import sys
 import unittest
 from contextlib import ExitStack
-from logging import INFO, getLogger
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import PySimpleGUI as sg
 from mock import MagicMock, mock_open, patch
 
-from NNMM.ConfigMain import *
-from NNMM.CSVSaveLoad import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
-from NNMM.Process import ProcessBase
+from NNMM.ConfigMain import ProcessConfigBase, ProcessConfigLoad, ProcessConfigSave, ProcessMylistLoadCSV, ProcessMylistSaveCSV
+
+if TYPE_CHECKING:
+    from NNMM.MainWindow import MainWindow
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
 
 # テスト用具体化ProcessConfigBase
 class ConcreteProcessConfigBase(ProcessConfigBase):
-    
     def __init__(self, log_sflag: bool, log_eflag: bool, process_name: str) -> None:
         super().__init__(log_sflag, log_eflag, process_name)
 
-    def run(self, mw) -> int:
+    def run(self, mw: "MainWindow") -> int:
         return 0
 
 
 class TestConfigMain(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
     def tearDown(self):
         ProcessConfigBase.config = None
-        pass
 
     def test_ProcessConfigBaseInit(self):
         """ProcessConfigBaseの初期化後の状態をテストする
@@ -58,7 +48,7 @@ class TestConfigMain(unittest.TestCase):
         self.assertEqual(CONFIG_FILE_PATH, cpcb.CONFIG_FILE_PATH)
         self.assertEqual(None, cpcb.config)
 
-    def test_GetConfigLayout(self):
+    def test_make_layout(self):
         """設定画面のレイアウトをテストする
         """
         def ExpectConfigLayout() -> sg.Frame:
@@ -99,7 +89,7 @@ class TestConfigMain(unittest.TestCase):
             return layout
 
         expect = ExpectConfigLayout()
-        actual = ProcessConfigBase.GetConfigLayout()
+        actual = ProcessConfigBase.make_layout()
 
         # self.assertEqual(expext, actual)
         self.assertEqual(type(expect), type(actual))
@@ -114,9 +104,8 @@ class TestConfigMain(unittest.TestCase):
                             self.assertEqual(e4.DisplayText, a4.DisplayText)
                         if hasattr(a4, "Key") and a4.Key:
                             self.assertEqual(e4.Key, a4.Key)
-        pass
 
-    def test_SetConfig(self):
+    def test_set_config(self):
         """設定iniのロードをテストする
         """
         with ExitStack() as stack:
@@ -125,7 +114,7 @@ class TestConfigMain(unittest.TestCase):
             type(r_mock).read = r_readmock
             mock = stack.enter_context(patch("configparser.ConfigParser", lambda: r_mock))
 
-            actual = ProcessConfigBase.SetConfig()
+            actual = ProcessConfigBase.set_config()
 
             # rcal[{n回目の呼び出し}][args=0]
             # rcal[{n回目の呼び出し}][kwargs=1]
@@ -136,7 +125,7 @@ class TestConfigMain(unittest.TestCase):
             r_readmock.reset_mock()
 
         # 実際に取得してiniファイルの構造を調べる
-        actual = ProcessConfigBase.SetConfig()
+        actual = ProcessConfigBase.set_config()
         self.assertTrue("general" in actual)
         self.assertTrue("browser_path" in actual["general"])
         self.assertTrue("auto_reload" in actual["general"])
@@ -148,35 +137,33 @@ class TestConfigMain(unittest.TestCase):
         # self.assertTrue("niconico" in actual)
         # self.assertTrue("email" in actual["niconico"])
         # self.assertTrue("password" in actual["niconico"])
-        pass
 
-    def test_GetConfig(self):
+    def test_get_config(self):
         """設定iniの取得をテストする
         """
         with ExitStack() as stack:
-            mock = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.SetConfig"))
+            mock = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
 
             # 初回取得
             ProcessConfigBase.config = None
-            actual = ProcessConfigBase.GetConfig()
+            actual = ProcessConfigBase.get_config()
             self.assertEqual(None, actual)
             mock.assert_called_once()
             mock.reset_mock()
 
             # 2回目
             ProcessConfigBase.config = "loaded config"
-            actual = ProcessConfigBase.GetConfig()
+            actual = ProcessConfigBase.get_config()
             self.assertEqual("loaded config", actual)
             mock.assert_not_called()
             mock.reset_mock()
-        pass
 
     def test_PMLLoadMylist(self):
         """マイリスト一覧読込ボタンのテスト
         """
         with ExitStack() as stack:
             mockpgf = stack.enter_context(patch("PySimpleGUI.popup_get_file"))
-            mocklml = stack.enter_context(patch("NNMM.ConfigMain.LoadMylist"))
+            mocklml = stack.enter_context(patch("NNMM.ConfigMain.load_mylist"))
             mockpu = stack.enter_context(patch("PySimpleGUI.popup"))
             mockums = stack.enter_context(patch("NNMM.ConfigMain.update_mylist_pane"))
 
@@ -270,7 +257,7 @@ class TestConfigMain(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockpgf = stack.enter_context(patch("PySimpleGUI.popup_get_file"))
-            mocksml = stack.enter_context(patch("NNMM.ConfigMain.SaveMylist"))
+            mocksml = stack.enter_context(patch("NNMM.ConfigMain.save_mylist"))
             mockpu = stack.enter_context(patch("PySimpleGUI.popup"))
 
             TEST_RESULT_PATH = "./test/result.csv"
@@ -356,8 +343,8 @@ class TestConfigMain(unittest.TestCase):
         """設定タブを開いたときの処理のテスト
         """
         with ExitStack() as stack:
-            mocksc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.SetConfig"))
-            mockgc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
+            mocksc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
+            mockgc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
 
             expect_dict = {
                 "general": {
@@ -415,7 +402,9 @@ class TestConfigMain(unittest.TestCase):
         with ExitStack() as stack:
             mockcp = stack.enter_context(patch("configparser.ConfigParser"))
             mockfp = stack.enter_context(patch("pathlib.Path.open", mock_open()))
-            mocksc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.SetConfig"))
+            mocksc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
+            mockmc = stack.enter_context(patch("NNMM.ConfigMain.MylistDBController"))
+            mockmbc = stack.enter_context(patch("NNMM.ConfigMain.MylistInfoDBController"))
 
             mockread = MagicMock()
             TEST_PREV_SAVE_PATH = "./test/p_test.db"
