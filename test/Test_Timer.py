@@ -1,30 +1,21 @@
 # coding: utf-8
 """Timer のテスト
 """
-
 import sys
 import unittest
 from contextlib import ExitStack
-from logging import INFO, getLogger
+from logging import WARNING, getLogger
 
 import freezegun
-import PySimpleGUI as sg
-from mock import MagicMock, mock_open, patch
+from mock import MagicMock, patch
 
-from NNMM.GuiFunction import *
 from NNMM.Timer import ProcessTimer
 
-TEST_DB_PATH = "./test/test.db"
+logger = getLogger("NNMM.Timer")
+logger.setLevel(WARNING)
 
 
 class TestTimer(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_TimerInit(self):
         """タイマーの初期化後の状態をテストする
         """
@@ -32,7 +23,6 @@ class TestTimer(unittest.TestCase):
         self.assertIsNone(pt.timer_thread)
         self.assertIsNone(pt.window)
         self.assertIsNone(pt.values)
-        pass
 
     def test_Timerrun(self):
         """タイマーの実行時の処理をテストする
@@ -40,8 +30,8 @@ class TestTimer(unittest.TestCase):
         with ExitStack() as stack:
             f_now = "2021-11-23 01:00:00"
             mockfg = stack.enter_context(freezegun.freeze_time(f_now))
-            mockli = stack.enter_context(patch("NNMM.MainWindow.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.MainWindow.logger.error"))
+            mockli = stack.enter_context(patch.object(logger, "info"))
+            mockli = stack.enter_context(patch.object(logger, "error"))
             mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
             mocktr = stack.enter_context(patch("threading.Timer"))
 
@@ -110,7 +100,6 @@ class TestTimer(unittest.TestCase):
             del type(mockwm).window
             actual = pt.run(mockwm)
             self.assertEqual(-1, actual)
-        pass
 
 
 if __name__ == "__main__":

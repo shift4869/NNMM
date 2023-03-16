@@ -1,28 +1,30 @@
 # coding: utf-8
 import re
 import threading
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from logging import INFO, getLogger
+from typing import TYPE_CHECKING
 
 import PySimpleGUI as sg
 
 from NNMM.ConfigMain import ProcessConfigBase
-from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
+
+if TYPE_CHECKING:
+    from NNMM.MainWindow import MainWindow
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessTimer(ProcessBase.ProcessBase):
-
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(False, False, "タイマーセット")
         self.timer_thread = None
         self.window = None
         self.values = None
 
-    def run(self, mw) -> int:
+    def run(self, mw: "MainWindow") -> int:
         """タイマー実行時の処理
 
         Notes:
@@ -42,8 +44,8 @@ class ProcessTimer(ProcessBase.ProcessBase):
 
         # 引数チェック
         try:
-            self.window = mw.window
-            self.values = mw.values
+            self.window: sg.Window = mw.window
+            self.values: dict = mw.values
         except AttributeError:
             logger.error("Timer Init failed, argument error.")
             return -1
@@ -59,10 +61,14 @@ class ProcessTimer(ProcessBase.ProcessBase):
             return 2
 
         # オートリロード間隔を取得する
+        interval = -1
         try:
             pattern = "^([0-9]+)分毎$"
             interval = int(re.findall(pattern, i_str)[0])
         except IndexError:
+            logger.error("Timer Init failed, interval config error.")
+            return -1
+        if interval < 0:
             logger.error("Timer Init failed, interval config error.")
             return -1
 
