@@ -7,13 +7,11 @@ from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 from typing import Callable
 
-import PySimpleGUI as sg
-
-from NNMM.GuiFunction import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
+from NNMM.GuiFunction import get_now_datetime, is_mylist_include_new_video, update_mylist_pane, update_table_pane
+from NNMM.Model import Mylist, MylistInfo
+from NNMM.MylistDBController import MylistDBController
+from NNMM.MylistInfoDBController import MylistInfoDBController
 from NNMM.Process import ProcessBase
-from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
 from NNMM.VideoInfoFetcher.VideoInfoRssFetcher import VideoInfoRssFetcher
 
 logger = getLogger(__name__)
@@ -21,7 +19,6 @@ logger.setLevel(INFO)
 
 
 class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
-
     def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
         """マイリストのマイリスト情報を更新するクラスのベース
 
@@ -44,7 +41,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         self.E_DONE = ""
 
     @abstractmethod
-    def GetTargetMylist(self) -> list[Mylist]:
+    def get_target_mylist(self) -> list[Mylist]:
         """更新対象のマイリストを返す
 
         Returns:
@@ -52,13 +49,13 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         """
         return []
 
-    def GetFunctionList(self, m_list: list[Mylist]) -> list[Callable[[str], list[dict]]]:
+    def get_function_list(self, m_list: list[Mylist]) -> list[Callable[[str], list[dict]]]:
         """それぞれのマイリストごとに初回ロードか確認し、
            簡易版かレンダリング版かどちらで更新するかをリストで返す
 
         Args:
             m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
-                                   mylist_db.Select系の返り値
+                                   mylist_db.select系の返り値
 
         Returns:
             list[Callable[[str], list[dict]]]: それぞれのマイリストを更新するためのメソッドリスト、エラー時空リスト
@@ -81,12 +78,12 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
             func_list.append(VideoInfoRssFetcher.fetch_videoinfo)
         return func_list
 
-    def GetPrevVideoLists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
+    def get_prev_video_lists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
         """それぞれのマイリストごとに既存のレコードを取得する
 
         Args:
             m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
-                                   mylist_db.Select系の返り値
+                                   mylist_db.select系の返り値
 
         Returns:
             list[list[MylistInfo]]: それぞれのマイリストに含まれる動画情報のリストのリスト
@@ -129,13 +126,13 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
 
         # 登録されたすべてのマイリストから現在のマイリスト情報を取得する
         # 処理中もGUIイベントを処理するため別スレッドで起動
-        threading.Thread(target=self.UpdateMylistInfoThread,
+        threading.Thread(target=self.update_mylist_info_thread,
                          args=(mw, ), daemon=True).start()
 
         logger.info(f"{self.L_KIND} update thread start success.")
         return 0
 
-    def UpdateMylistInfoThread(self, mw):
+    def update_mylist_info_thread(self, mw):
         """マイリスト情報を更新する（マルチスレッド前提）
 
         Notes:
@@ -153,45 +150,44 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
             return -1
 
         # 更新対象取得
-        m_list = self.GetTargetMylist()
+        m_list = self.get_target_mylist()
         if not m_list:
             logger.info("Target Mylist is nothing.")
             self.window.write_event_value(self.E_DONE, "")
             return 1
 
-        func_list = self.GetFunctionList(m_list)
-        prev_video_lists = self.GetPrevVideoLists(m_list)
+        func_list = self.get_function_list(m_list)
+        prev_video_lists = self.get_prev_video_lists(m_list)
 
         # マルチスレッドですべてのマイリストの情報を取得する
         # now_video_listsにすべてのthreadの結果を格納して以降で利用する
         start = time.time()
         self.done_count = 0
-        now_video_lists = self.GetMylistInfoExecute(func_list, m_list)
+        now_video_lists = self.get_mylist_info_execute(func_list, m_list)
         elapsed_time = time.time() - start
         logger.info(f"{self.L_KIND} getting done elapsed time : {elapsed_time:.2f} [sec]")
 
         # マルチスレッドですべてのマイリストの情報を更新する
         start = time.time()
         self.done_count = 0
-        result = self.UpdateMylistInfoExecute(m_list, prev_video_lists, now_video_lists)
+        result = self.update_mylist_info_execute(m_list, prev_video_lists, now_video_lists)
         elapsed_time = time.time() - start
         logger.info(f"{self.L_KIND} update done elapsed time : {elapsed_time:.2f} [sec]")
 
         # 後続処理へ
-        threading.Thread(target=self.ThreadDone,
+        threading.Thread(target=self.thread_done,
                          args=(mw, ), daemon=False).start()
 
-        # self.window.write_event_value(self.E_DONE, "")
         logger.info(f"{self.L_KIND} update thread done.")
         return 0
 
-    def GetMylistInfoExecute(self, func_list: list[Callable[[str], list[dict]]], m_list: list[Mylist]) -> list[list[MylistInfo]]:
+    def get_mylist_info_execute(self, func_list: list[Callable[[str], list[dict]]], m_list: list[Mylist]) -> list[list[MylistInfo]]:
         """それぞれのマイリストを引数に動画情報を取得する
 
         Args:
             func_list (list[Callable[[str], list[dict]]]): それぞれのマイリストを更新するためのメソッドリスト
             m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
-                                   mylist_db.Select系の返り値
+                                   mylist_db.select系の返り値
 
         Returns:
             list[list[MylistInfo]]: それぞれのマイリストについて取得した動画情報のリストのリスト
@@ -217,7 +213,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
                     return []
 
                 # ワーカー起動
-                future = executor.submit(self.GetMylistInfoWorker, func, mylist_url, all_index_num)
+                future = executor.submit(self.get_mylist_info_worker, func, mylist_url, all_index_num)
                 futures.append((mylist_url, future))
 
             # 結果を取得する（futureパターン）
@@ -225,7 +221,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         # 結果を返す
         return result_buf
 
-    def GetMylistInfoWorker(self, func: Callable[[str], list[dict]], url: str, all_index_num: int) -> list[MylistInfo]:
+    def get_mylist_info_worker(self, func: Callable[[str], list[dict]], url: str, all_index_num: int) -> list[MylistInfo]:
         """動画情報を取得するワーカー
 
         Args:
@@ -265,12 +261,12 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         logger.info(url + f" : getting done ... ({self.done_count}/{all_index_num}).")
         return res
 
-    def UpdateMylistInfoExecute(self, m_list: list[Mylist], prev_video_lists: list[list[MylistInfo]], now_video_lists: list[list[MylistInfo]]) -> list[int]:
+    def update_mylist_info_execute(self, m_list: list[Mylist], prev_video_lists: list[list[MylistInfo]], now_video_lists: list[list[MylistInfo]]) -> list[int]:
         """それぞれのマイリスト情報を更新する
 
         Args:
             m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
-                                   mylist_db.Select系の返り値
+                                   mylist_db.select系の返り値
             prev_video_lists (list[list[MylistInfo]]): それぞれのマイリストに含まれる動画情報のリストのリスト
             now_video_lists (list[list[MylistInfo]]): それぞれのマイリストについて取得した動画情報のリストのリスト
 
@@ -292,7 +288,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
             # 引数のマイリストレコードとprev_video_listをワーカーに渡す
             for m, prev_video_list in zip(m_list, prev_video_lists):
                 # ワーカー起動
-                future = executor.submit(self.UpdateMylistInfoWorker, m, prev_video_list, now_video_lists)
+                future = executor.submit(self.update_mylist_info_worker, m, prev_video_list, now_video_lists)
                 futures.append((m.get("url"), future))
 
             # 結果を取得する（futureパターン）
@@ -300,7 +296,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         # 結果を返す
         return result_buf
 
-    def UpdateMylistInfoWorker(self, m_record: Mylist, prev_video_list: list[MylistInfo], now_video_lists: list[list[MylistInfo]]) -> int:
+    def update_mylist_info_worker(self, m_record: Mylist, prev_video_list: list[MylistInfo], now_video_lists: list[list[MylistInfo]]) -> int:
         """動画情報を更新するワーカー
 
         Note:
@@ -325,19 +321,19 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         mylist_info_cols = MylistInfo.__table__.c.keys()
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
         try:
-            if not(hasattr(m_record, "get") and m_record.get("url")):
+            if not (hasattr(m_record, "get") and m_record.get("url")):
                 raise ValueError
-            if not(isinstance(prev_video_list, list)):
+            if not (isinstance(prev_video_list, list)):
                 raise ValueError
             for m in prev_video_list:
                 if not (set(m.keys()) <= set(mylist_info_cols)):
                     raise ValueError
-            if not(isinstance(now_video_lists, list) and now_video_lists):
+            if not (isinstance(now_video_lists, list) and now_video_lists):
                 raise ValueError
             for mylist_url, now_video_list in now_video_lists:
-                if not(isinstance(mylist_url, str) and mylist_url):
+                if not (isinstance(mylist_url, str) and mylist_url):
                     raise ValueError
-                if not(isinstance(now_video_list, list)):
+                if not (isinstance(now_video_list, list)):
                     raise ValueError
                 for m in now_video_list:
                     if not (set(m.keys()) <= set(table_cols)):
@@ -408,7 +404,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         records = []
         try:
             for m in now_video_list:
-                dst = GetNowDatetime()
+                dst = get_now_datetime()
                 r = {
                     "video_id": m["video_id"],
                     "title": m["title"],
@@ -430,13 +426,13 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
 
         # マイリストの更新確認日時更新
         # 新しい動画情報が追加されたかに関わらずchecked_atを更新する
-        dst = GetNowDatetime()
+        dst = get_now_datetime()
         mylist_db.update_checked_at(mylist_url, dst)
 
         # マイリストの更新日時更新
         # 新しい動画情報が追加されたときにupdated_atを更新する
         if add_new_video_flag:
-            dst = GetNowDatetime()
+            dst = get_now_datetime()
             mylist_db.update_updated_at(mylist_url, dst)
 
         # プログレス表示
@@ -446,7 +442,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
         return 0
 
-    def ThreadDone(self, mw):
+    def thread_done(self, mw):
         logger.info(f"{self.L_KIND} update post process start.")
 
         pb = self.POST_PROCESS()
@@ -456,7 +452,6 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
 
 
 class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
-
     def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
         """マイリストのマイリスト情報を更新するクラスのベース
 
@@ -496,10 +491,10 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]
         if mylist_url != "":
-            UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+            update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         # マイリストの新着表示を表示するかどうか判定する
-        m_list = self.mylist_db.Select()
+        m_list = self.mylist_db.select()
         for m in m_list:
             mylist_url = m.get("url")
             video_list = self.mylist_info_db.select_from_mylist_url(mylist_url)
@@ -511,7 +506,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
 
             # 左のマイリストlistboxの表示を更新する
             # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
-            if IsMylistIncludeNewVideo(def_data):
+            if is_mylist_include_new_video(def_data):
                 # マイリストDB更新
                 self.mylist_db.update_include_flag(mylist_url, True)
 
