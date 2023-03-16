@@ -295,7 +295,7 @@ class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
             return -1
 
         # マイリスト画面表示更新
-        UpdateMylistShow(self.window, self.mylist_db)
+        update_mylist_pane(self.window, self.mylist_db)
 
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]

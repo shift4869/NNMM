@@ -139,7 +139,7 @@ def PopupGetText(message, title=None, default_text='', password_char='', size=(N
         return path
 
 
-def UpdateMylistShow(window: sg.Window, mylist_db: MylistDBController) -> int:
+def update_mylist_pane(window: sg.Window, mylist_db: MylistDBController) -> int:
     """マイリストペインの表示を更新する
 
     Args:

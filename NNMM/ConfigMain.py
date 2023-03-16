@@ -25,7 +25,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
     CONFIG_FILE_PATH = "./config/config.ini"
     config = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     @classmethod
@@ -72,7 +72,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
         return layout
 
     @classmethod
-    def GetConfig(cls):
+    def GetConfig(cls) -> configparser.ConfigParser:
         """クラス変数configを返す
 
         Notes:
@@ -86,7 +86,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
         return cls.config
 
     @classmethod
-    def SetConfig(cls):
+    def SetConfig(cls) -> configparser.ConfigParser:
         """クラス変数configを設定する
 
         Notes:
@@ -135,7 +135,7 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
         sd_path = Path(sd_path_str)
         res = LoadMylist(mw.mylist_db, str(sd_path))
 
-        UpdateMylistShow(mw.window, mw.mylist_db)
+        update_mylist_pane(mw.window, mw.mylist_db)
 
         # 結果通知
         if res == 0:

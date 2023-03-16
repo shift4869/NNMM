@@ -84,7 +84,7 @@ class ProcessWatched(ProcessBase.ProcessBase):
         self.window["-TABLE-"].update(select_rows=[row])
 
         # マイリスト画面表示更新
-        UpdateMylistShow(self.window, self.mylist_db)
+        update_mylist_pane(self.window, self.mylist_db)
 
         logger.info("Watched success.")
         return 0

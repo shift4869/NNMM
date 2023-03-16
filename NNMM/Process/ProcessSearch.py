@@ -303,7 +303,7 @@ class ProcessMylistSearchClear(ProcessBase.ProcessBase):
             logger.error("MylistSearchClear failed, argument error.")
             return -1
 
-        UpdateMylistShow(self.window, self.mylist_db)
+        update_mylist_pane(self.window, self.mylist_db)
 
         logger.info("MylistSearchClear success.")
         return 0

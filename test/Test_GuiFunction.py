@@ -361,7 +361,7 @@ class TestGetMyListInfo(unittest.TestCase):
         mockwin = {"-LIST-": r_response}
 
         # 実行
-        actual = GuiFunction.UpdateMylistShow(mockwin, m_cont)
+        actual = GuiFunction.update_mylist_pane(mockwin, m_cont)
         self.assertEqual(0, actual)
 
         # mock呼び出し確認

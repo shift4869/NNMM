@@ -68,7 +68,7 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
         logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
 
         # マイリスト画面表示更新
-        UpdateMylistShow(self.window, self.mylist_db)
+        update_mylist_pane(self.window, self.mylist_db)
         # テーブル画面表示更新
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db)
 

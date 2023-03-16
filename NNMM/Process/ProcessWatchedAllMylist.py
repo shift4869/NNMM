@@ -73,7 +73,7 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
             self.window["-TABLE-"].update(values=def_data)
 
         # マイリスト画面表示更新
-        UpdateMylistShow(self.window, self.mylist_db)
+        update_mylist_pane(self.window, self.mylist_db)
         # テーブル画面表示更新
         UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 

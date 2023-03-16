@@ -516,7 +516,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
                 self.mylist_db.update_include_flag(mylist_url, True)
 
         # マイリスト画面表示更新
-        UpdateMylistShow(self.window, self.mylist_db)
+        update_mylist_pane(self.window, self.mylist_db)
 
         logger.info(f"{self.L_KIND} update success.")
         return 0

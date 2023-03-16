@@ -88,7 +88,7 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
         self.mylist_db.delete_from_mylist_url(mylist_url)
 
         # マイリスト画面表示更新
-        UpdateMylistShow(self.window, self.mylist_db)
+        update_mylist_pane(self.window, self.mylist_db)
 
         # マイリスト情報テーブルの表示を初期化する
         self.window["-TABLE-"].update(values=[[]])
