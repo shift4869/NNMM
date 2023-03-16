@@ -24,7 +24,7 @@ class TestProcessDeleteMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessDeleteMylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessDeleteMylist.logger.error"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessDeleteMylist.UpdateMylistShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessDeleteMylist.update_mylist_pane"))
             mockpgt = stack.enter_context(patch("NNMM.Process.ProcessDeleteMylist.sg.popup_ok_cancel"))
 
             pdm = ProcessDeleteMylist.ProcessDeleteMylist()

@@ -27,7 +27,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylist
         self.L_KIND = "All mylist"
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
 
-    def GetTargetMylist(self) -> list[Mylist]:
+    def get_target_mylist(self) -> list[Mylist]:
         """更新対象のマイリストを返す
 
         Note:

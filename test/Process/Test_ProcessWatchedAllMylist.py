@@ -77,7 +77,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.logger.error"))
             mockums = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.UpdateMylistShow"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.UpdateTableShow"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.update_table_pane"))
 
             pwam = ProcessWatchedAllMylist.ProcessWatchedAllMylist()
 

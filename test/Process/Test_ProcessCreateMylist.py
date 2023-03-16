@@ -530,8 +530,8 @@ class TestProcessCreateMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.error"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.UpdateMylistShow"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.UpdateTableShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.update_mylist_pane"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.update_table_pane"))
 
             pcm_td = ProcessCreateMylist.ProcessCreateMylistThreadDone()
 

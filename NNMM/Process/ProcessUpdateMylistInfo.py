@@ -30,7 +30,7 @@ class ProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInf
         # イベントキー
         self.E_DONE = "-UPDATE_THREAD_DONE-"
 
-    def GetTargetMylist(self) -> list[Mylist]:
+    def get_target_mylist(self) -> list[Mylist]:
         """更新対象のマイリストを返す
 
         Notes:

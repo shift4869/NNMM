@@ -178,7 +178,7 @@ class TestConfigMain(unittest.TestCase):
             mockpgf = stack.enter_context(patch("PySimpleGUI.popup_get_file"))
             mocklml = stack.enter_context(patch("NNMM.ConfigMain.LoadMylist"))
             mockpu = stack.enter_context(patch("PySimpleGUI.popup"))
-            mockums = stack.enter_context(patch("NNMM.ConfigMain.UpdateMylistShow"))
+            mockums = stack.enter_context(patch("NNMM.ConfigMain.update_mylist_pane"))
 
             TEST_INPUT_PATH = "./test/input.csv"
             mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH]

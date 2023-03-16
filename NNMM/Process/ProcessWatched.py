@@ -71,7 +71,7 @@ class ProcessWatched(ProcessBase.ProcessBase):
             # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
             m_list = self.mylist_info_db.select_from_mylist_url(selected[8])
             m_list = [list(m.values()) for m in m_list]
-            if not IsMylistIncludeNewVideo(m_list):
+            if not is_mylist_include_new_video(m_list):
                 # マイリストDB新着フラグ更新
                 self.mylist_db.update_include_flag(selected[8], False)
 
@@ -80,7 +80,7 @@ class ProcessWatched(ProcessBase.ProcessBase):
 
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]
-        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
         self.window["-TABLE-"].update(select_rows=[row])
 
         # マイリスト画面表示更新

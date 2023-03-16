@@ -25,7 +25,7 @@ class TestProcessMoveDown(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessMoveDown.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessMoveDown.logger.error"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessMoveDown.UpdateMylistShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessMoveDown.update_mylist_pane"))
 
             pmd = ProcessMoveDown.ProcessMoveDown()
 

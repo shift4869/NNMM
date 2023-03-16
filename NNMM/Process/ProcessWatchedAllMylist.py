@@ -75,7 +75,7 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
         # マイリスト画面表示更新
         update_mylist_pane(self.window, self.mylist_db)
         # テーブル画面表示更新
-        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info(f"WatchedAllMylist success.")
         return 0

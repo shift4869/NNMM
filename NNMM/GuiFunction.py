@@ -35,7 +35,7 @@ def GetURLType(url: str) -> str:
     return ""
 
 
-def GetNowDatetime() -> str:
+def get_now_datetime() -> str:
     """タイムスタンプを返す
 
     Returns:
@@ -47,7 +47,7 @@ def GetNowDatetime() -> str:
     return dst
 
 
-def IsMylistIncludeNewVideo(table_list: list[list]) -> bool | KeyError:
+def is_mylist_include_new_video(table_list: list[list]) -> bool | KeyError:
     """現在のテーブルリスト内に状況が未視聴のものが一つでも含まれているかを返す
 
     Args:
@@ -180,7 +180,7 @@ def update_mylist_pane(window: sg.Window, mylist_db: MylistDBController) -> int:
     return 0
 
 
-def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController, mylist_url: str = "") -> int:
+def update_table_pane(window: sg.Window, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController, mylist_url: str = "") -> int:
     """テーブルリストペインの表示を更新する
 
     Args:

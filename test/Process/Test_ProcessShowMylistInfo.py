@@ -73,7 +73,7 @@ class TestProcessShowMylistInfo(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessShowMylistInfo.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessShowMylistInfo.logger.error"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessShowMylistInfo.UpdateTableShow"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessShowMylistInfo.update_table_pane"))
 
             psmi = ProcessShowMylistInfo.ProcessShowMylistInfo()
 

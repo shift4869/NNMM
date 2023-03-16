@@ -26,7 +26,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMy
         self.L_KIND = "Partial mylist"
         self.E_DONE = "-PARTIAL_UPDATE_THREAD_DONE-"
 
-    def GetTargetMylist(self) -> list[Mylist]:
+    def get_target_mylist(self) -> list[Mylist]:
         """更新対象のマイリストを返す
 
         Notes:

@@ -25,8 +25,8 @@ class TestProcessNotWatched(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.logger.error"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.UpdateTableShow"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.UpdateMylistShow"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.update_table_pane"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.update_mylist_pane"))
 
             pnw = ProcessNotWatched.ProcessNotWatched()
 

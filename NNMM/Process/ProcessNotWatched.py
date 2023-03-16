@@ -78,7 +78,7 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
 
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]
-        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
         self.window["-TABLE-"].update(select_rows=[row])
 
         # マイリスト画面表示更新

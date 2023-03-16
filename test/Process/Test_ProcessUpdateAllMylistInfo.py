@@ -73,13 +73,13 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             r = MagicMock()
             r.Select = lambda: expect
             puami.mylist_db = r
-            actual = puami.GetTargetMylist()
+            actual = puami.get_target_mylist()
             self.assertEqual(expect, actual)
 
             # 異常系
             # 属性エラー
             del puami.mylist_db
-            actual = puami.GetTargetMylist()
+            actual = puami.get_target_mylist()
             self.assertEqual([], actual)
 
     def test_PUAMITDInit(self):

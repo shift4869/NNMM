@@ -96,7 +96,7 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
             mockmw.mylist_db = mockmdb
 
             pupmi.mylist_db = mockmw.mylist_db
-            actual = pupmi.GetTargetMylist()
+            actual = pupmi.get_target_mylist()
 
             def ReturnExpect():
                 result = []
@@ -129,19 +129,19 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
 
             # インターバル文字列不正のレコードが含まれている
             m_list[1]["check_interval"] = "不正なインターバル文字列"
-            actual = pupmi.GetTargetMylist()
+            actual = pupmi.get_target_mylist()
             expect = ReturnExpect()
             self.assertEqual(expect, actual)
 
             # 異常系
             # 日時取得エラー
             m_list[0]["checked_at"] = "不正な日時"
-            actual = pupmi.GetTargetMylist()
+            actual = pupmi.get_target_mylist()
             self.assertEqual([], actual)
 
             # 引数エラー
             del pupmi.mylist_db
-            actual = pupmi.GetTargetMylist()
+            actual = pupmi.get_target_mylist()
             self.assertEqual([], actual)
 
     def test_PUPMITDInit(self):

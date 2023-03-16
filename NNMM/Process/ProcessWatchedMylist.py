@@ -70,7 +70,7 @@ class ProcessWatchedMylist(ProcessBase.ProcessBase):
         # マイリスト画面表示更新
         update_mylist_pane(self.window, self.mylist_db)
         # テーブル画面表示更新
-        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db)
+        update_table_pane(self.window, self.mylist_db, self.mylist_info_db)
 
         logger.info(f"WatchedMylist success.")
         return 0

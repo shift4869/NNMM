@@ -56,7 +56,7 @@ class ProcessShowMylistInfo(ProcessBase.ProcessBase):
         self.window["-INPUT1-"].update(value=mylist_url)  # 対象マイリストのアドレスをテキストボックスに表示
 
         # テーブル更新
-        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info(f"{mylist_url} -> mylist info shown.")
         logger.info("ShowMylistInfo success.")

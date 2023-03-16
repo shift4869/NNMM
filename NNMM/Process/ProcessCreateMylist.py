@@ -233,7 +233,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
             return -1
 
         # 現在時刻取得
-        dst = GetNowDatetime()
+        dst = get_now_datetime()
 
         # マイリスト情報をDBに格納
         id_index = max([int(r["id"]) for r in self.mylist_db.Select()]) + 1
@@ -242,7 +242,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         # 動画情報をDBに格納
         records = []
         for m in now_video_list:
-            dst = GetNowDatetime()
+            dst = get_now_datetime()
             r = {
                 "video_id": m["video_id"],
                 "title": m["title"],
@@ -299,7 +299,7 @@ class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
 
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]
-        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info("Create mylist success.")
         return 0

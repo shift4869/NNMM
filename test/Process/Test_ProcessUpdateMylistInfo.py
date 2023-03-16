@@ -104,7 +104,7 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
             pumi.values = mockmw.values
             pumi.mylist_db = mockmw.mylist_db
             expect = [m_list[0]]
-            actual = pumi.GetTargetMylist()
+            actual = pumi.get_target_mylist()
             self.assertEqual(expect, actual)
 
             # 実行後呼び出し確認
@@ -121,17 +121,17 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
             # 異常系
             # 指定マイリストURLが不正
             expect_values_dict["-INPUT1-"] = "不正なマイリストURL"
-            actual = pumi.GetTargetMylist()
+            actual = pumi.get_target_mylist()
             self.assertEqual([], actual)
 
             # 指定マイリストURLが空
             expect_values_dict["-INPUT1-"] = ""
-            actual = pumi.GetTargetMylist()
+            actual = pumi.get_target_mylist()
             self.assertEqual([], actual)
 
             # 属性エラー
             del pumi.values
-            actual = pumi.GetTargetMylist()
+            actual = pumi.get_target_mylist()
             self.assertEqual([], actual)
 
     def test_PUPMITDInit(self):

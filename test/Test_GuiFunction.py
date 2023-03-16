@@ -214,12 +214,12 @@ class TestGetMyListInfo(unittest.TestCase):
         f_now = "2021-10-22 01:00:00"
         with freezegun.freeze_time(f_now):
             # 正常系
-            actual = GuiFunction.GetNowDatetime()
+            actual = GuiFunction.get_now_datetime()
             expect = f_now
             self.assertEqual(expect, actual)
 
             # 異常系
-            actual = GuiFunction.GetNowDatetime()
+            actual = GuiFunction.get_now_datetime()
             expect = datetime.strptime(f_now, dst_df) + timedelta(minutes=1)
             expect = expect.strftime(dst_df)
             self.assertNotEqual(expect, actual)
@@ -249,7 +249,7 @@ class TestGetMyListInfo(unittest.TestCase):
         # 正常系
         # 全て視聴済
         table_list = TableListFactory()
-        actual = GuiFunction.IsMylistIncludeNewVideo(table_list)
+        actual = GuiFunction.is_mylist_include_new_video(table_list)
         self.assertEqual(False, actual)
 
         # 未視聴を含む
@@ -257,11 +257,11 @@ class TestGetMyListInfo(unittest.TestCase):
         t_id = random.sample(range(0, len(table_list) - 1), 2)
         for i in t_id:
             table_list[i][STATUS_INDEX] = "未視聴"
-        actual = GuiFunction.IsMylistIncludeNewVideo(table_list)
+        actual = GuiFunction.is_mylist_include_new_video(table_list)
         self.assertEqual(True, actual)
 
         # 空リストはFalse
-        actual = GuiFunction.IsMylistIncludeNewVideo([])
+        actual = GuiFunction.is_mylist_include_new_video([])
         self.assertEqual(False, actual)
 
         # 異常系
@@ -269,14 +269,14 @@ class TestGetMyListInfo(unittest.TestCase):
         with self.assertRaises(KeyError):
             table_list = TableListFactory()
             table_list = [t[:STATUS_INDEX] for t in table_list]
-            actual = GuiFunction.IsMylistIncludeNewVideo(table_list)
+            actual = GuiFunction.is_mylist_include_new_video(table_list)
             self.assertEqual(False, actual)
 
         # 状況ステータスの位置が異なる
         with self.assertRaises(KeyError):
             table_list = TableListFactory()
             table_list = [[t[-1]] + t[:-1] for t in table_list]
-            actual = GuiFunction.IsMylistIncludeNewVideo(table_list)
+            actual = GuiFunction.is_mylist_include_new_video(table_list)
             self.assertEqual(False, actual)
         pass
 
@@ -394,7 +394,7 @@ class TestGetMyListInfo(unittest.TestCase):
         self.assertEqual(len(scal), 1)
         self.assertEqual((e_index, ), scal[0][0])
 
-    def test_UpdateTableShow(self):
+    def test_update_table_pane(self):
         """テーブルリストペインの表示を更新する機能のテスト
         """
         MAX_RECORD_NUM = 5
@@ -437,7 +437,7 @@ class TestGetMyListInfo(unittest.TestCase):
         }
 
         # 1回目の実行
-        actual = GuiFunction.UpdateTableShow(mockwin, m_cont, mb_cont)
+        actual = GuiFunction.update_table_pane(mockwin, m_cont, mb_cont)
         self.assertEqual(0, actual)
 
         # mock呼び出し確認
@@ -466,7 +466,7 @@ class TestGetMyListInfo(unittest.TestCase):
         r_tableupdate.reset_mock()
 
         # 2回目の実行
-        actual = GuiFunction.UpdateTableShow(mockwin, m_cont, mb_cont)
+        actual = GuiFunction.update_table_pane(mockwin, m_cont, mb_cont)
         self.assertEqual(0, actual)
 
         # window["-INPUT1-"].get()が呼び出されていることを確認

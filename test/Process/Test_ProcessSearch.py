@@ -444,7 +444,7 @@ class TestProcessSearch(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.error"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessSearch.UpdateMylistShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessSearch.update_mylist_pane"))
 
             pmsc = ProcessSearch.ProcessMylistSearchClear()
 
@@ -468,7 +468,7 @@ class TestProcessSearch(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.error"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessSearch.UpdateTableShow"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessSearch.update_table_pane"))
 
             pvsc = ProcessSearch.ProcessVideoSearchClear()
 

@@ -26,7 +26,7 @@ class TestProcessWatched(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.Process.ProcessWatched.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessWatched.logger.error"))
             mockiminv = stack.enter_context(patch("NNMM.Process.ProcessWatched.IsMylistIncludeNewVideo"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatched.UpdateTableShow"))
+            mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatched.update_table_pane"))
             mockums = stack.enter_context(patch("NNMM.Process.ProcessWatched.UpdateMylistShow"))
 
             pw = ProcessWatched.ProcessWatched()

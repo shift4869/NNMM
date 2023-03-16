@@ -70,7 +70,7 @@ class ProcessShowMylistInfoAll(ProcessBase.ProcessBase):
         self.window["-INPUT1-"].update(value="")
 
         # テーブル更新
-        # UpdateTableShowはリフレッシュには使えるが初回は別に設定が必要なため使用できない
+        # update_table_paneはリフレッシュには使えるが初回は別に設定が必要なため使用できない
         self.window["-LIST-"].update(set_to_index=index)
         self.window["-TABLE-"].update(values=def_data)
         if len(def_data) > 0:

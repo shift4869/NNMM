@@ -25,7 +25,7 @@ class TestProcessMoveUp(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessMoveUp.logger.info"))
             mockle = stack.enter_context(patch("NNMM.Process.ProcessMoveUp.logger.error"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessMoveUp.UpdateMylistShow"))
+            mockums = stack.enter_context(patch("NNMM.Process.ProcessMoveUp.update_mylist_pane"))
 
             pmu = ProcessMoveUp.ProcessMoveUp()
 

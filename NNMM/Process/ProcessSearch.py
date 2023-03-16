@@ -343,9 +343,9 @@ class ProcessVideoSearchClear(ProcessBase.ProcessBase):
         # マイリストURL取得
         # 右上のテキストボックスから取得する
         # 「動画をすべて表示」している場合は空文字列になる可能性がある
-        # UpdateTableShowはmylist_urlが空文字列でも処理が可能
+        # update_table_paneはmylist_urlが空文字列でも処理が可能
         mylist_url = self.window["-INPUT1-"].get()
-        UpdateTableShow(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info("VideoSearchClear success.")
         return 0
