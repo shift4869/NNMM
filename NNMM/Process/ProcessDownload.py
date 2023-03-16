@@ -2,30 +2,28 @@
 import asyncio
 import threading
 from logging import INFO, getLogger
+from typing import TYPE_CHECKING
 
-from NNMM.GuiFunction import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
 # import niconico_dl
 
-
+if TYPE_CHECKING:
+    from NNMM.MainWindow import MainWindow
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessDownload(ProcessBase.ProcessBase):
-
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
+    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None) -> None:
         # 派生クラスの生成時は引数ありで呼び出される
         if process_name:
             super().__init__(log_sflag, log_eflag, process_name)
         else:
             super().__init__(True, False, "動画ダウンロード")
 
-    def run(self, mw):
+    def run(self, mw: "MainWindow") -> int:
         """動画ダウンロード処理
 
         Notes:
@@ -67,7 +65,7 @@ class ProcessDownload(ProcessBase.ProcessBase):
             video_id = selected[1]
             video_url = selected[6]
             mylist_url = selected[7]
-            records = self.mylist_info_db.selectFromIDURL(video_id, mylist_url)
+            records = self.mylist_info_db.select_from_id_url(video_id, mylist_url)
 
             if records == []:
                 logger.error("Selected row is invalid.")
@@ -85,10 +83,14 @@ class ProcessDownload(ProcessBase.ProcessBase):
         logger.info(video_url + " : download start ...")
 
         # マルチスレッド処理
-        threading.Thread(target=self.DownloadThread, args=(self.record, ), daemon=True).start()
+        threading.Thread(
+            target=self.download_thread,
+            args=(self.record, ),
+            daemon=True
+        ).start()
         return 0
 
-    def DownloadThread(self, record):
+    def download_thread(self, record) -> int:
         """動画ダウンロードワーカーを実行する処理
 
         Notes:
@@ -107,14 +109,14 @@ class ProcessDownload(ProcessBase.ProcessBase):
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        res = loop.run_until_complete(self.DownloadThreadWorker(record))
+        res = loop.run_until_complete(self.download_thread_worker(record))
 
         video_url = record["video_url"]
         logger.info(video_url + " : download done.")
         self.window.write_event_value("-DOWNLOAD_THREAD_DONE-", "")
         return res
 
-    async def DownloadThreadWorker(self, record):
+    async def download_thread_worker(self, record) -> int:
         """動画ダウンロードワーカー
 
         Notes:
@@ -140,11 +142,10 @@ class ProcessDownload(ProcessBase.ProcessBase):
 
 
 class ProcessDownloadThreadDone(ProcessBase.ProcessBase):
-
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(False, True, "動画ダウンロード")
 
-    def run(self, mw):
+    def run(self, mw: "MainWindow") -> int:
         """動画ダウンロードのマルチスレッド処理が終わった後の処理
 
         Notes:
