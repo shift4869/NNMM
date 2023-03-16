@@ -19,8 +19,8 @@ class TestProcessMoveDown(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_PMDRun(self):
-        """ProcessMoveDownのRunをテストする
+    def test_PMDrun(self):
+        """ProcessMoveDownのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessMoveDown.logger.info"))
@@ -61,7 +61,7 @@ class TestProcessMoveDown(unittest.TestCase):
 
             index = random.randint(0, NUM - 2)
             mockmw = ReturnMW(index)
-            actual = pmd.Run(mockmw)
+            actual = pmd.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -85,14 +85,14 @@ class TestProcessMoveDown(unittest.TestCase):
             mylist_table_s = [f"*:mylist_{i}" for i in range(NUM)]
             index = random.randint(0, NUM - 2)
             mockmw = ReturnMW(index)
-            actual = pmd.Run(mockmw)
+            actual = pmd.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall(index)
 
             # 一番下のマイリストを選択した場合
             index = NUM - 1
             mockmw = ReturnMW(index)
-            actual = pmd.Run(mockmw)
+            actual = pmd.run(mockmw)
             self.assertEqual(1, actual)
 
             # 異常系
@@ -100,12 +100,12 @@ class TestProcessMoveDown(unittest.TestCase):
             index = random.randint(1, NUM - 1)
             mockmw = ReturnMW(index)
             mockmw.values["-LIST-"] = []
-            actual = pmd.Run(mockmw)
+            actual = pmd.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             del mockmw.window
-            actual = pmd.Run(mockmw)
+            actual = pmd.run(mockmw)
             self.assertEqual(-1, actual)
 
 

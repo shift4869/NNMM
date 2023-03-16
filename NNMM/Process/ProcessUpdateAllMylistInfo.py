@@ -8,7 +8,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessUpdateMylistInfoBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -55,4 +55,4 @@ class ProcessUpdateAllMylistInfoThreadDone(ProcessUpdateMylistInfoBase.ProcessUp
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

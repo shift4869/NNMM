@@ -93,8 +93,8 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 res.append(d)
         return res
 
-    def test_PUAMIRun(self):
-        """ProcessUpdateMylistInfoBaseのRunをテストする
+    def test_PUAMIrun(self):
+        """ProcessUpdateMylistInfoBaseのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
@@ -105,7 +105,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
 
             # 正常系
             mockmw = MagicMock()
-            actual = puami.Run(mockmw)
+            actual = puami.run(mockmw)
             self.assertEqual(0, actual)
             self.assertEqual(0, puami.done_count)
 
@@ -127,7 +127,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             # 引数エラー
             mockmw = MagicMock()
             del mockmw.window
-            actual = puami.Run(mockmw)
+            actual = puami.run(mockmw)
             self.assertEqual(-1, actual)
 
     def test_UpdateMylistInfoThread(self):
@@ -668,8 +668,8 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             actual = puami.UpdateMylistInfoWorker("不正な引数", p, n_list)
             self.assertEqual(-1, actual)
 
-    def test_UAMITPRun(self):
-        """UpdateAllMylistInfoThreadProgress のRunをテストする
+    def test_UAMITPrun(self):
+        """UpdateAllMylistInfoThreadProgress のrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfoBase.logger.info"))
@@ -708,7 +708,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             mockmidb = MagicMock()
             mockmidb.select_from_mylist_url.side_effect = Returnselect_from_mylist_url
             mockmw.mylist_info_db = mockmidb
-            actual = puamitd.Run(mockmw)
+            actual = puamitd.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -745,7 +745,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             # 異常系
             # 引数エラー
             del mockmw.window
-            actual = puamitd.Run(mockmw)
+            actual = puamitd.run(mockmw)
             self.assertEqual(-1, actual)
 
 

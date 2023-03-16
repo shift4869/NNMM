@@ -287,41 +287,41 @@ class TestGetMyListInfo(unittest.TestCase):
         # 分
         e_val = random.randint(1, 59)
         interval_str = f"{e_val}分"
-        actual = GuiFunction.IntervalTranslation(interval_str)
+        actual = GuiFunction.interval_translate(interval_str)
         expect = e_val
         self.assertEqual(expect, actual)
 
         # 時間
         e_val = random.randint(1, 23)
         interval_str = f"{e_val}時間"
-        actual = GuiFunction.IntervalTranslation(interval_str)
+        actual = GuiFunction.interval_translate(interval_str)
         expect = e_val * 60
         self.assertEqual(expect, actual)
 
         # 日
         e_val = random.randint(1, 31)
         interval_str = f"{e_val}日"
-        actual = GuiFunction.IntervalTranslation(interval_str)
+        actual = GuiFunction.interval_translate(interval_str)
         expect = e_val * 60 * 24
         self.assertEqual(expect, actual)
 
         # 週間
         e_val = random.randint(1, 5)
         interval_str = f"{e_val}週間"
-        actual = GuiFunction.IntervalTranslation(interval_str)
+        actual = GuiFunction.interval_translate(interval_str)
         expect = e_val * 60 * 24 * 7
         self.assertEqual(expect, actual)
 
         # 月
         e_val = random.randint(1, 12)
         interval_str = f"{e_val}ヶ月"
-        actual = GuiFunction.IntervalTranslation(interval_str)
+        actual = GuiFunction.interval_translate(interval_str)
         expect = e_val * 60 * 24 * 31
         self.assertEqual(expect, actual)
 
         # 異常系
         interval_str = "不正なinterval_str"
-        actual = GuiFunction.IntervalTranslation(interval_str)
+        actual = GuiFunction.interval_translate(interval_str)
         expect = -1
         self.assertEqual(expect, actual)
         pass

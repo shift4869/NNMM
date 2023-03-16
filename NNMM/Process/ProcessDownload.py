@@ -12,7 +12,7 @@ from NNMM.Process import ProcessBase
 
 
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -25,7 +25,7 @@ class ProcessDownload(ProcessBase.ProcessBase):
         else:
             super().__init__(True, False, "動画ダウンロード")
 
-    def Run(self, mw):
+    def run(self, mw):
         """動画ダウンロード処理
 
         Notes:
@@ -144,7 +144,7 @@ class ProcessDownloadThreadDone(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(False, True, "動画ダウンロード")
 
-    def Run(self, mw):
+    def run(self, mw):
         """動画ダウンロードのマルチスレッド処理が終わった後の処理
 
         Notes:
@@ -186,5 +186,5 @@ if __name__ == "__main__":
     
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()
     pass

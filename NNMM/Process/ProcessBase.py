@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from logging import INFO, getLogger
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -15,7 +15,7 @@ class ProcessBase(ABC):
         self.main_window = None
 
     @abstractmethod
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         # mwはMainWindowクラスを想定
         # アノテーションで記述すると循環参照になるため記述無し
         return 0

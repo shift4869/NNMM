@@ -18,8 +18,8 @@ class TestProcessDeleteMylist(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_PCMRun(self):
-        """ProcessDeleteMylistのRunをテストする
+    def test_PCMrun(self):
+        """ProcessDeleteMylistのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessDeleteMylist.logger.info"))
@@ -57,7 +57,7 @@ class TestProcessDeleteMylist(unittest.TestCase):
             type(mockmylist_db).select_from_url = Returnselect_from_url
             type(mockmw).mylist_db = mockmylist_db
 
-            actual = pdm.Run(mockmw)
+            actual = pdm.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -99,21 +99,21 @@ class TestProcessDeleteMylist(unittest.TestCase):
 
             # 新規マークつき
             expect_values_dict["-LIST-"] = ["*:" + showname_s]
-            actual = pdm.Run(mockmw)
+            actual = pdm.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # マイリスト取得元について別分岐1
             del expect_values_dict["-LIST-"]
             expect_values_dict["-INPUT1-"] = mylist_url_s
-            actual = pdm.Run(mockmw)
+            actual = pdm.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # マイリスト取得元について別分岐2
             del expect_values_dict["-INPUT1-"]
             expect_values_dict["-INPUT2-"] = mylist_url_s
-            actual = pdm.Run(mockmw)
+            actual = pdm.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
@@ -122,7 +122,7 @@ class TestProcessDeleteMylist(unittest.TestCase):
             expect_values_dict["-LIST-"] = [showname_s]
             mockpgt.return_value = "Cancel"
 
-            actual = pdm.Run(mockmw)
+            actual = pdm.run(mockmw)
             self.assertEqual(1, actual)
 
             mc = mockpgt.mock_calls
@@ -142,19 +142,19 @@ class TestProcessDeleteMylist(unittest.TestCase):
             # 異常系
             # IndexError
             expect_values_dict["-LIST-"] = "invalid showname"
-            actual = pdm.Run(mockmw)
+            actual = pdm.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 既存マイリストに存在しない場合
             del expect_values_dict["-LIST-"]
             expect_values_dict["-INPUT1-"] = "invalid showname"
-            actual = pdm.Run(mockmw)
+            actual = pdm.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             del mockmw.values
             del type(mockmw).values
-            actual = pdm.Run(mockmw)
+            actual = pdm.run(mockmw)
             self.assertEqual(-1, actual)
             pass
         pass

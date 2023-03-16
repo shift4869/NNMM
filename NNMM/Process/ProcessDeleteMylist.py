@@ -8,7 +8,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -17,7 +17,7 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "マイリスト削除")
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         """マイリスト削除ボタン押下時の処理
 
         Notes:
@@ -102,4 +102,4 @@ class ProcessDeleteMylist(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

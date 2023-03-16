@@ -19,8 +19,8 @@ class TestProcessNotWatched(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_PNWRun(self):
-        """ProcessNotWatchedのRunをテストする
+    def test_PNWrun(self):
+        """ProcessNotWatchedのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessNotWatched.logger.info"))
@@ -72,7 +72,7 @@ class TestProcessNotWatched(unittest.TestCase):
                 return r
 
             mockmw = ReturnMW()
-            actual = pnw.Run(mockmw)
+            actual = pnw.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -113,7 +113,7 @@ class TestProcessNotWatched(unittest.TestCase):
             # 複数選択
             selected_num_s = random.sample(range(NUM), 3)
             mockmw = ReturnMW()
-            actual = pnw.Run(mockmw)
+            actual = pnw.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
@@ -121,14 +121,14 @@ class TestProcessNotWatched(unittest.TestCase):
             # 行が選択されていない
             selected_num_s = []
             mockmw = ReturnMW()
-            actual = pnw.Run(mockmw)
+            actual = pnw.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             mockmw = ReturnMW()
             del mockmw.window
             del type(mockmw).window
-            actual = pnw.Run(mockmw)
+            actual = pnw.run(mockmw)
             self.assertEqual(-1, actual)
 
 

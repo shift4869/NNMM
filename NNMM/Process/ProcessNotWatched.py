@@ -8,7 +8,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -17,7 +17,7 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "未視聴にする")
 
-    def Run(self, mw):
+    def run(self, mw):
         """動画の状況ステータスを"未視聴"に設定する
 
         Notes:
@@ -91,4 +91,4 @@ class ProcessNotWatched(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

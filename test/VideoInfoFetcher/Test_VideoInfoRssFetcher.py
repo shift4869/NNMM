@@ -253,7 +253,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         global count
         count = retry_count
 
-        async def ReturnRunInExecutor(s, executor, func, args):
+        async def ReturnrunInExecutor(s, executor, func, args):
             r = MagicMock()
             global count
             if count <= 0:
@@ -273,7 +273,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 count = count - 1
                 raise ValueError
             return r
-        type(r_response).run_in_executor = ReturnRunInExecutor
+        type(r_response).run_in_executor = ReturnrunInExecutor
         return r_response
 
     def _make_config_mock(self) -> dict:

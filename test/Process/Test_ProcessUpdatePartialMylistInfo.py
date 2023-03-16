@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import freezegun
 from mock import MagicMock, call, patch
 
-from NNMM.GuiFunction import IntervalTranslation
+from NNMM.GuiFunction import interval_translate
 from NNMM.Process import ProcessUpdatePartialMylistInfo
 
 
@@ -41,7 +41,7 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
         return res
 
     def MakeMylistInfoDB(self, mylist_url, num: int = 5) -> list[dict]:
-        """mylist_info_db.selectFromMylistURL()で取得される動画情報データセット
+        """mylist_info_db.select_from_mylist_url()で取得される動画情報データセット
         """
         res = []
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
@@ -108,7 +108,7 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
                     for m in m_list:
                         checked_dst = datetime.strptime(m["checked_at"], dst_df)
                         interval_str = str(m["check_interval"])
-                        dt = IntervalTranslation(interval_str) - 1
+                        dt = interval_translate(interval_str) - 1
                         if dt < -1:
                             continue
                         predict_dst = checked_dst + timedelta(minutes=dt)

@@ -34,7 +34,7 @@ class TestTimer(unittest.TestCase):
         self.assertIsNone(pt.values)
         pass
 
-    def test_TimerRun(self):
+    def test_Timerrun(self):
         """タイマーの実行時の処理をテストする
         """
         with ExitStack() as stack:
@@ -82,33 +82,33 @@ class TestTimer(unittest.TestCase):
             type(mockwm).values = expect_values_dict
 
             # イベント起動想定
-            actual = pt.Run(mockwm)
+            actual = pt.run(mockwm)
             self.assertEqual(0, actual)
 
             # 既に更新中のためスキップ想定
             expect_window_dict["-INPUT2-"] = getmock("更新中")
-            actual = pt.Run(mockwm)
+            actual = pt.run(mockwm)
             self.assertEqual(1, actual)
 
             # 初回起動のためスキップ想定
             expect_values_dict["-TIMER_SET-"] = "-FIRST_SET-"
-            actual = pt.Run(mockwm)
+            actual = pt.run(mockwm)
             self.assertEqual(1, actual)
 
             # オートリロードしない設定
             mockcpg.side_effect = lambda: {"general": {"auto_reload": "(使用しない)"}}
-            actual = pt.Run(mockwm)
+            actual = pt.run(mockwm)
             self.assertEqual(2, actual)
 
             # オートリロード間隔の指定が不正
             mockcpg.side_effect = lambda: {"general": {"auto_reload": "不正な時間指定"}}
-            actual = pt.Run(mockwm)
+            actual = pt.run(mockwm)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             del mockwm.window
             del type(mockwm).window
-            actual = pt.Run(mockwm)
+            actual = pt.run(mockwm)
             self.assertEqual(-1, actual)
         pass
 

@@ -67,8 +67,8 @@ class TestProcessShowMylistInfo(unittest.TestCase):
         r.mylist_db.select_from_showname = Returnselect_from_showname
         return r
 
-    def test_PSMIRun(self):
-        """ProcessShowMylistInfoのRunをテストする
+    def test_PSMIrun(self):
+        """ProcessShowMylistInfoのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessShowMylistInfo.logger.info"))
@@ -82,7 +82,7 @@ class TestProcessShowMylistInfo(unittest.TestCase):
             mylist_url_s = m_list[0]["url"]
             showname_s = m_list[0]["showname"]
             mockmw = self.ReturnMW(showname_s)
-            actual = psmi.Run(mockmw)
+            actual = psmi.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -106,7 +106,7 @@ class TestProcessShowMylistInfo(unittest.TestCase):
             NEW_MARK = "*:"
             showname_s = NEW_MARK + showname_s
             mockmw = self.ReturnMW(showname_s)
-            actual = psmi.Run(mockmw)
+            actual = psmi.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
@@ -115,7 +115,7 @@ class TestProcessShowMylistInfo(unittest.TestCase):
             mockmw = self.ReturnMW(showname_s)
             del mockmw.window
             del type(mockmw).window
-            actual = psmi.Run(mockmw)
+            actual = psmi.run(mockmw)
             self.assertEqual(-1, actual)
 
 

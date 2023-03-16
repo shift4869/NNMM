@@ -8,7 +8,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -17,7 +17,7 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "視聴済にする（全て）")
 
-    def Run(self, mw):
+    def run(self, mw):
         """すべてのマイリストに含まれる動画情報についてすべて"視聴済"にする
 
         Notes:
@@ -84,4 +84,4 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

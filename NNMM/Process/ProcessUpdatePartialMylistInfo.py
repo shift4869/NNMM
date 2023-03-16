@@ -7,7 +7,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessUpdateMylistInfoBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -54,7 +54,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMy
                 # インターバル文字列取得
                 interval_str = str(m["check_interval"])
 
-                dt = IntervalTranslation(interval_str) - 1
+                dt = interval_translate(interval_str) - 1
                 if dt < -1:
                     # インターバル文字列解釈エラー
                     mylist_url = m["url"]
@@ -86,4 +86,4 @@ class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateMylistInfoBase.Proce
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

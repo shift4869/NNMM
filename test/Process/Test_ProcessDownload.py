@@ -37,8 +37,8 @@ class TestProcessDownload(unittest.TestCase):
             res[c] = v
         return [res]
 
-    def test_PDLRun(self):
-        """ProcessDownloadのRunをテストする
+    def test_PDLrun(self):
+        """ProcessDownloadのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessDownload.logger.info"))
@@ -81,7 +81,7 @@ class TestProcessDownload(unittest.TestCase):
             type(mockmylist_info_db).select_from_id_url = self.__Returnselect_from_id_url
             type(mockmw).mylist_info_db = mockmylist_info_db
 
-            actual = pdl.Run(mockmw)
+            actual = pdl.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -109,23 +109,23 @@ class TestProcessDownload(unittest.TestCase):
             # 異常系
             # 動画情報取得に失敗
             type(mockmylist_info_db).select_from_id_url = lambda s, video_id, mylist_url: []
-            actual = pdl.Run(mockmw)
+            actual = pdl.run(mockmw)
             self.assertEqual(-1, actual)
 
             # テーブル行取得に失敗
             expect_window_dict["-TABLE-"] = ReturnMockValue([["invalid table row"]])
-            actual = pdl.Run(mockmw)
+            actual = pdl.run(mockmw)
             self.assertEqual(-1, actual)
 
             # テーブル行が選択されていない
             expect_values_dict["-TABLE-"] = []
-            actual = pdl.Run(mockmw)
+            actual = pdl.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             del mockmw.window
             del type(mockmw).window
-            actual = pdl.Run(mockmw)
+            actual = pdl.run(mockmw)
             self.assertEqual(-1, actual)
 
     def test_PDLDownloadThread(self):
@@ -201,8 +201,8 @@ class TestProcessDownload(unittest.TestCase):
             actual = loop.run_until_complete(pdl.DownloadThreadWorker(record))
             self.assertEqual(-1, actual)
 
-    def test_PDLTDRun(self):
-        """ProcessDownloadThreadDoneのRunをテストする
+    def test_PDLTDrun(self):
+        """ProcessDownloadThreadDoneのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessDownload.logger.info"))
@@ -212,7 +212,7 @@ class TestProcessDownload(unittest.TestCase):
 
             # 正常系
             mockmw = MagicMock()
-            actual = pdltd.Run(mockmw)
+            actual = pdltd.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -223,7 +223,7 @@ class TestProcessDownload(unittest.TestCase):
 
             # 引数エラー
             del mockmw.window
-            actual = pdltd.Run(mockmw)
+            actual = pdltd.run(mockmw)
             self.assertEqual(-1, actual)
 
 

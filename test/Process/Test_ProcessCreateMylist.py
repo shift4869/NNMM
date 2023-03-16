@@ -350,8 +350,8 @@ class TestProcessCreateMylist(unittest.TestCase):
                 self.assertEqual({}, actual)
         pass
 
-    def test_PCMRun(self):
-        """ProcessCreateMylistのRunをテストする
+    def test_PCMrun(self):
+        """ProcessCreateMylistのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.info"))
@@ -470,7 +470,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             rrt = [
                 [expect_v_record],  # 動画情報の取得に成功するパターン
             ]
-            actual = pcm.Run(mockmw)
+            actual = pcm.run(mockmw)
             self.assertEqual(0, actual)
             self.ri = 0
 
@@ -479,7 +479,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                 [],  # 動画情報の取得に失敗
                 expect_m_record,  # からの個別にマイリスト情報収集するパターン
             ]
-            actual = pcm.Run(mockmw)
+            actual = pcm.run(mockmw)
             self.assertEqual(0, actual)
             self.ri = 0
 
@@ -489,7 +489,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                 [expect_v_record],  # 動画情報の取得に成功するパターン
             ]
             mockcpg.side_effect = lambda: {"general": {"auto_reload": "不正な時間指定"}}
-            actual = pcm.Run(mockmw)
+            actual = pcm.run(mockmw)
             self.assertEqual(-1, actual)
             self.ri = 0
 
@@ -498,34 +498,34 @@ class TestProcessCreateMylist(unittest.TestCase):
                 [],  # 動画情報の取得に失敗
                 [],  # 個別のマイリスト情報収集にも失敗
             ]
-            actual = pcm.Run(mockmw)
+            actual = pcm.run(mockmw)
             self.assertEqual(-1, actual)
             self.ri = 0
 
             # 既存マイリストと重複
             type(mockmb).select_from_url = lambda s, url: expect_v_record
-            actual = pcm.Run(mockmw)
+            actual = pcm.run(mockmw)
             self.assertEqual(1, actual)
 
             # 入力されたurlが不正
             url = "https://www.google.co.jp/"
-            actual = pcm.Run(mockmw)
+            actual = pcm.run(mockmw)
             self.assertEqual(1, actual)
 
             # マイリストURL問い合わせをキャンセルされた
             mockpgt.side_effect = lambda msg, title: None
-            actual = pcm.Run(mockmw)
+            actual = pcm.run(mockmw)
             self.assertEqual(1, actual)
 
             # 引数エラー
             del mockmw.window
             del type(mockmw).window
-            actual = pcm.Run(mockmw)
+            actual = pcm.run(mockmw)
             self.assertEqual(-1, actual)
         pass
 
-    def test_PCMTDRun(self):
-        """ProcessCreateMylistThreadDoneのRunをテストする
+    def test_PCMTDrun(self):
+        """ProcessCreateMylistThreadDoneのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessCreateMylist.logger.info"))
@@ -542,7 +542,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             type(mockmw).mylist_info_db = "mylist_info_db"
 
             # 正常系
-            actual = pcm_td.Run(mockmw)
+            actual = pcm_td.run(mockmw)
             self.assertEqual(0, actual)
 
             # mcal[{n回目の呼び出し}][args=0]
@@ -561,7 +561,7 @@ class TestProcessCreateMylist(unittest.TestCase):
             # 引数エラー
             del mockmw.window
             del type(mockmw).window
-            actual = pcm_td.Run(mockmw)
+            actual = pcm_td.run(mockmw)
             self.assertEqual(-1, actual)
             mockums.assert_not_called()
             mockuts.assert_not_called()

@@ -8,13 +8,13 @@ from pathlib import Path
 import PySimpleGUI as sg
 
 from NNMM import ConfigMain, PopupWindowMain, Timer
-from NNMM.GuiFunction import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
+from NNMM.GuiFunction import UpdateMylistShow
+from NNMM.MylistDBController import MylistDBController
+from NNMM.MylistInfoDBController import MylistInfoDBController
 from NNMM.Process import ProcessCreateMylist, ProcessDeleteMylist, ProcessDownload, ProcessMoveDown, ProcessMoveUp, ProcessNotWatched, ProcessSearch, ProcessShowMylistInfo, ProcessShowMylistInfoAll, ProcessUpdateAllMylistInfo, ProcessUpdateMylistInfo
 from NNMM.Process import ProcessUpdatePartialMylistInfo, ProcessVideoPlay, ProcessWatched, ProcessWatchedAllMylist, ProcessWatchedMylist
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -53,7 +53,7 @@ class MainWindow():
         for name in logging.root.manager.loggerDict:
             getLogger(name).disabled = True
 
-        # Windows特有のRuntimeError抑止
+        # Windows特有のruntimeError抑止
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
         # マイリスト一覧初期化
@@ -68,7 +68,7 @@ class MainWindow():
         self.window.write_event_value("-TIMER_SET-", "-FIRST_SET-")
 
         # イベントと処理の辞書
-        self.ep_dict = {
+        self.process_dict = {
             "ブラウザで開く::-TR-": ProcessVideoPlay.ProcessVideoPlay,
             "視聴済にする::-TR-": ProcessWatched.ProcessWatched,
             "未視聴にする::-TR-": ProcessNotWatched.ProcessNotWatched,
@@ -203,7 +203,7 @@ class MainWindow():
 
         return layout
 
-    def Run(self) -> int:
+    def run(self) -> int:
         """メインイベントループ
 
         Returns:
@@ -220,16 +220,16 @@ class MainWindow():
                 break
 
             # イベント処理
-            if self.ep_dict.get(event):
+            if self.process_dict.get(event):
                 self.values = values
 
                 try:
-                    pb = self.ep_dict.get(event)()
+                    pb = self.process_dict.get(event)()
 
-                    if pb is None or not hasattr(pb, "Run"):
+                    if pb is None or not hasattr(pb, "run"):
                         continue
 
-                    pb.Run(self)
+                    pb.run(self)
                 except Exception:
                     logger.error(traceback.format_exc())
                     logger.error("main event loop error.")
@@ -240,7 +240,7 @@ class MainWindow():
                 if select_tab == "設定":
                     # 設定タブを開いたときの処理
                     pb = ConfigMain.ProcessConfigLoad()
-                    pb.Run(self)
+                    pb.run(self)
 
         # ウィンドウ終了処理
         self.window.close()
@@ -249,4 +249,4 @@ class MainWindow():
 
 if __name__ == "__main__":
     mw = MainWindow()
-    mw.Run()
+    mw.run()

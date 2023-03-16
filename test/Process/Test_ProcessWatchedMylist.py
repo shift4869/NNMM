@@ -59,8 +59,8 @@ class TestProcessWatchedMylist(unittest.TestCase):
         r.mylist_db.select_from_showname.side_effect = Returnselect_from_showname
         return r
 
-    def test_PVPRun(self):
-        """ProcessWatchedMylist のRunをテストする
+    def test_PVPrun(self):
+        """ProcessWatchedMylist のrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessWatchedMylist.logger.info"))
@@ -72,7 +72,7 @@ class TestProcessWatchedMylist(unittest.TestCase):
 
             # 正常系
             mockmw = self.ReturnMW()
-            actual = pwm.Run(mockmw)
+            actual = pwm.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -102,7 +102,7 @@ class TestProcessWatchedMylist(unittest.TestCase):
             mockmw = self.ReturnMW()
             mockmw.values["-LIST-"][0] = NEW_MARK + mockmw.values["-LIST-"][0]
             mockmw.reset_mock()
-            actual = pwm.Run(mockmw)
+            actual = pwm.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
@@ -117,12 +117,12 @@ class TestProcessWatchedMylist(unittest.TestCase):
             mockvalues.__iter__.side_effect = expect_values_dict.__iter__
             mockvalues.__contains__.side_effect = expect_values_dict.__contains__
             mockmw.values = mockvalues
-            actual = pwm.Run(mockmw)
+            actual = pwm.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             del mockmw.values
-            actual = pwm.Run(mockmw)
+            actual = pwm.run(mockmw)
             self.assertEqual(-1, actual)
 
 

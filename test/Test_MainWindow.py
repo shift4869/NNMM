@@ -26,7 +26,7 @@ class ConcreteProcessBase(ProcessBase.ProcessBase):
     def __init__(self) -> None:
         super().__init__(True, False, "テスト用具体化処理")
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         return 0
 
 
@@ -36,7 +36,7 @@ class ConcreteErrorProcessBase(ProcessBase.ProcessBase):
     def __init__(self) -> None:
         super().__init__(True, False, "テスト用具体化処理")
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         raise Exception
 
 
@@ -136,7 +136,7 @@ class TestWindowMain(unittest.TestCase):
 
             # イベントと処理の辞書
             # 新機能を追加したらここにも追加する
-            expect_ep_dict = {
+            expect_process_dict = {
                 "ブラウザで開く::-TR-": ProcessVideoPlay.ProcessVideoPlay,
                 "視聴済にする::-TR-": ProcessWatched.ProcessWatched,
                 "未視聴にする::-TR-": ProcessNotWatched.ProcessNotWatched,
@@ -172,7 +172,7 @@ class TestWindowMain(unittest.TestCase):
                 "-C_MYLIST_LOAD-": ConfigMain.ProcessMylistLoadCSV,
                 "-TIMER_SET-": Timer.ProcessTimer,
             }
-            self.assertEqual(expect_ep_dict, mw.ep_dict)
+            self.assertEqual(expect_process_dict, mw.process_dict)
         pass
 
     def test_MakeMainWindowLayout(self):
@@ -339,7 +339,7 @@ class TestWindowMain(unittest.TestCase):
             self.assertEqual(0, actual)
         pass
 
-    def test_Run(self):
+    def test_run(self):
         """WindowMainのメインベントループをテストする
         """
         with ExitStack() as stack:
@@ -375,10 +375,10 @@ class TestWindowMain(unittest.TestCase):
 
             # 実行
             mw = MainWindow()
-            mw.ep_dict["-DO_TEST-"] = ConcreteProcessBase
-            mw.ep_dict["-NONE_TEST-"] = lambda: None
-            mw.ep_dict["-ERROR_TEST-"] = ConcreteErrorProcessBase
-            actual = mw.Run()
+            mw.process_dict["-DO_TEST-"] = ConcreteProcessBase
+            mw.process_dict["-NONE_TEST-"] = lambda: None
+            mw.process_dict["-ERROR_TEST-"] = ConcreteErrorProcessBase
+            actual = mw.run()
             self.assertEqual(0, actual)
         pass
 

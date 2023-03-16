@@ -70,8 +70,8 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
         r.mylist_db.Select.side_effect = lambda: self.MakeMylistDB()
         return r
 
-    def test_PWAMRun(self):
-        """ProcessWatchedAllMylist のRunをテストする
+    def test_PWAMrun(self):
+        """ProcessWatchedAllMylist のrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.logger.info"))
@@ -85,7 +85,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
             mylist_url_s = "https://www.nicovideo.jp/user/10000001/video"
             mockmw = self.ReturnMW()
             mockmw.reset_mock()
-            actual = pwam.Run(mockmw)
+            actual = pwam.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -132,14 +132,14 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
             mockmw = self.ReturnMW()
             mockmw.window["-INPUT1-"].get.side_effect = lambda: mylist_url_s
             mockmw.reset_mock()
-            actual = pwam.Run(mockmw)
+            actual = pwam.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # 異常系
             # 引数エラー
             del mockmw.window
-            actual = pwam.Run(mockmw)
+            actual = pwam.run(mockmw)
             self.assertEqual(-1, actual)
 
 

@@ -66,8 +66,8 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
         r.mylist_info_db.select = self.MakeMylistInfoDB
         return r
 
-    def test_PSMIARun(self):
-        """ProcessShowMylistInfoAllのRunをテストする
+    def test_PSMIArun(self):
+        """ProcessShowMylistInfoAllのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessShowMylistInfoAll.logger.info"))
@@ -77,7 +77,7 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
 
             # 正常系
             mockmw = self.ReturnMW()
-            actual = psmia.Run(mockmw)
+            actual = psmia.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -111,7 +111,7 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
             mockmw = self.ReturnMW()
             del mockmw.window
             del type(mockmw).window
-            actual = psmia.Run(mockmw)
+            actual = psmia.run(mockmw)
             self.assertEqual(-1, actual)
 
 

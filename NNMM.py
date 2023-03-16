@@ -5,4 +5,4 @@ import NNMM.MainWindow
 
 if __name__ == "__main__":
     mw = NNMM.MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

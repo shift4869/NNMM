@@ -46,7 +46,7 @@ class TestProcessSearch(unittest.TestCase):
         return res
 
     def MakeMylistInfoDB(self, mylist_url):
-        """mylist_info_db.selectFromMylistURL(mylist_url)で取得されるマイリストデータセット
+        """mylist_info_db.select_from_mylist_url(mylist_url)で取得されるマイリストデータセット
         """
         NUM = 5
         res = []
@@ -90,8 +90,8 @@ class TestProcessSearch(unittest.TestCase):
                     f"https://www.nicovideo.jp/watch/sm{m}000000{i+1}", mylist_url] for i in range(NUM)]
         return records
 
-    def test_PMSRun(self):
-        """ProcessMylistSearchのRunをテストする
+    def test_PMSrun(self):
+        """ProcessMylistSearchのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
@@ -125,7 +125,7 @@ class TestProcessSearch(unittest.TestCase):
 
             mockmw = ReturnMW()
             mocksgpgt.return_value = "投稿者1"
-            actual = pms.Run(mockmw)
+            actual = pms.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -179,21 +179,21 @@ class TestProcessSearch(unittest.TestCase):
             # 複数ヒット
             mockmw = ReturnMW()
             mocksgpgt.return_value = "投稿者"
-            actual = pms.Run(mockmw)
+            actual = pms.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # 1件もヒットしなかった
             mockmw = ReturnMW()
             mocksgpgt.return_value = "ヒットしない検索条件"
-            actual = pms.Run(mockmw)
+            actual = pms.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # 検索条件が空白
             mockmw = ReturnMW()
             mocksgpgt.return_value = ""
-            actual = pms.Run(mockmw)
+            actual = pms.run(mockmw)
             self.assertEqual(1, actual)
 
             # 異常系
@@ -201,11 +201,11 @@ class TestProcessSearch(unittest.TestCase):
             mockmw = ReturnMW()
             del mockmw.window
             del type(mockmw).window
-            actual = pms.Run(mockmw)
+            actual = pms.run(mockmw)
             self.assertEqual(-1, actual)
 
-    def test_PMSFVRun(self):
-        """ProcessMylistSearchFromVideoのRunをテストする
+    def test_PMSFVrun(self):
+        """ProcessMylistSearchFromVideoのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
@@ -235,12 +235,12 @@ class TestProcessSearch(unittest.TestCase):
                 type(r).window = mockwindow
 
                 r.mylist_db.Select.return_value = self.MakeMylistDB()
-                r.mylist_info_db.selectFromMylistURL = self.MakeMylistInfoDB
+                r.mylist_info_db.select_from_mylist_url = self.MakeMylistInfoDB
                 return r
 
             mockmw = ReturnMW()
             mocksgpgt.return_value = "動画タイトル1_1"
-            actual = pmsfv.Run(mockmw)
+            actual = pmsfv.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -297,21 +297,21 @@ class TestProcessSearch(unittest.TestCase):
             # 複数ヒット
             mockmw = ReturnMW()
             mocksgpgt.return_value = "動画タイトル1_"
-            actual = pmsfv.Run(mockmw)
+            actual = pmsfv.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # 1件もヒットしなかった
             mockmw = ReturnMW()
             mocksgpgt.return_value = "ヒットしない検索条件"
-            actual = pmsfv.Run(mockmw)
+            actual = pmsfv.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # 検索条件が空白
             mockmw = ReturnMW()
             mocksgpgt.return_value = ""
-            actual = pmsfv.Run(mockmw)
+            actual = pmsfv.run(mockmw)
             self.assertEqual(1, actual)
 
             # 異常系
@@ -319,11 +319,11 @@ class TestProcessSearch(unittest.TestCase):
             mockmw = ReturnMW()
             del mockmw.window
             del type(mockmw).window
-            actual = pmsfv.Run(mockmw)
+            actual = pmsfv.run(mockmw)
             self.assertEqual(-1, actual)
 
-    def test_PVSRun(self):
-        """ProcessVideoSearchのRunをテストする
+    def test_PVSrun(self):
+        """ProcessVideoSearchのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
@@ -364,7 +364,7 @@ class TestProcessSearch(unittest.TestCase):
 
             mockmw = ReturnMW()
             mocksgpgt.return_value = "動画タイトル1_1"
-            actual = pvs.Run(mockmw)
+            actual = pvs.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -413,21 +413,21 @@ class TestProcessSearch(unittest.TestCase):
             # 複数ヒット
             mockmw = ReturnMW()
             mocksgpgt.return_value = "動画タイトル1_"
-            actual = pvs.Run(mockmw)
+            actual = pvs.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # 1件もヒットしなかった
             mockmw = ReturnMW()
             mocksgpgt.return_value = "ヒットしない検索条件"
-            actual = pvs.Run(mockmw)
+            actual = pvs.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
             # 検索条件が空白
             mockmw = ReturnMW()
             mocksgpgt.return_value = ""
-            actual = pvs.Run(mockmw)
+            actual = pvs.run(mockmw)
             self.assertEqual(1, actual)
 
             # 異常系
@@ -435,11 +435,11 @@ class TestProcessSearch(unittest.TestCase):
             mockmw = ReturnMW()
             del mockmw.window
             del type(mockmw).window
-            actual = pvs.Run(mockmw)
+            actual = pvs.run(mockmw)
             self.assertEqual(-1, actual)
 
-    def test_PMSCRun(self):
-        """ProcessMylistSearchClearのRunをテストする
+    def test_PMSCrun(self):
+        """ProcessMylistSearchClearのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
@@ -450,7 +450,7 @@ class TestProcessSearch(unittest.TestCase):
 
             # 正常系
             mockmw = MagicMock()
-            actual = pmsc.Run(mockmw)
+            actual = pmsc.run(mockmw)
             self.assertEqual(0, actual)
             mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)
             mockums.reset_mock()
@@ -459,11 +459,11 @@ class TestProcessSearch(unittest.TestCase):
             # 引数エラー
             mockmw = MagicMock()
             del mockmw.window
-            actual = pmsc.Run(mockmw)
+            actual = pmsc.run(mockmw)
             self.assertEqual(-1, actual)
 
-    def test_PVSCRun(self):
-        """ProcessVideoSearchClearのRunをテストする
+    def test_PVSCrun(self):
+        """ProcessVideoSearchClearのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessSearch.logger.info"))
@@ -492,7 +492,7 @@ class TestProcessSearch(unittest.TestCase):
                 return r
 
             mockmw = ReturnMW()
-            actual = pvsc.Run(mockmw)
+            actual = pvsc.run(mockmw)
             self.assertEqual(0, actual)
             mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mylist_url_s)
             mockuts.reset_mock()
@@ -500,7 +500,7 @@ class TestProcessSearch(unittest.TestCase):
             # 右上のテキストボックス空のとき
             mylist_url_s = ""
             mockmw = ReturnMW()
-            actual = pvsc.Run(mockmw)
+            actual = pvsc.run(mockmw)
             self.assertEqual(0, actual)
             mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mylist_url_s)
             mockuts.reset_mock()
@@ -509,7 +509,7 @@ class TestProcessSearch(unittest.TestCase):
             # 引数エラー
             mockmw = MagicMock()
             del mockmw.window
-            actual = pvsc.Run(mockmw)
+            actual = pvsc.run(mockmw)
             self.assertEqual(-1, actual)
 
 

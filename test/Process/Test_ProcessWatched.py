@@ -19,8 +19,8 @@ class TestProcessWatched(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_PWRun(self):
-        """ProcessWatchedのRunをテストする
+    def test_PWrun(self):
+        """ProcessWatchedのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessWatched.logger.info"))
@@ -74,7 +74,7 @@ class TestProcessWatched(unittest.TestCase):
                 return r
 
             mockmw = ReturnMW()
-            actual = pw.Run(mockmw)
+            actual = pw.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -101,7 +101,7 @@ class TestProcessWatched(unittest.TestCase):
                     v = table_records_s[s_index][1]
                     m = table_records_s[s_index][8]
                     self.assertEqual(call.mylist_info_db.update_status(v, m, ""), mc[c_index])
-                    self.assertEqual(call.mylist_info_db.selectFromMylistURL(m), mc[c_index + 1])
+                    self.assertEqual(call.mylist_info_db.select_from_mylist_url(m), mc[c_index + 1])
                     self.assertEqual(call.mylist_db.update_include_flag(m, False), mc[c_index + 2])
                     c_index = c_index + 3
                 mockmw.reset_mock()
@@ -116,7 +116,7 @@ class TestProcessWatched(unittest.TestCase):
             # 複数選択
             selected_num_s = random.sample(range(NUM), 3)
             mockmw = ReturnMW()
-            actual = pw.Run(mockmw)
+            actual = pw.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall()
 
@@ -124,14 +124,14 @@ class TestProcessWatched(unittest.TestCase):
             # 行が選択されていない
             selected_num_s = []
             mockmw = ReturnMW()
-            actual = pw.Run(mockmw)
+            actual = pw.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             mockmw = ReturnMW()
             del mockmw.window
             del type(mockmw).window
-            actual = pw.Run(mockmw)
+            actual = pw.run(mockmw)
             self.assertEqual(-1, actual)
 
 

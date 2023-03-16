@@ -15,7 +15,7 @@ from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -126,7 +126,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
 
         return res
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         """マイリスト追加ボタン押下時の処理
 
         Notes:
@@ -269,7 +269,7 @@ class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(False, True, "マイリスト追加")
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         """マイリスト追加の後処理
 
         Notes:
@@ -308,4 +308,4 @@ class ProcessCreateMylistThreadDone(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

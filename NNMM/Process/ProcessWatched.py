@@ -8,7 +8,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -17,7 +17,7 @@ class ProcessWatched(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "視聴済にする")
 
-    def Run(self, mw):
+    def run(self, mw):
         """動画の状況ステータスを""(視聴済)に設定する
 
         Notes:
@@ -69,7 +69,7 @@ class ProcessWatched(ProcessBase.ProcessBase):
             def_data[row][4] = ""
 
             # 視聴済になったことでマイリストの新着表示を消すかどうか判定する
-            m_list = self.mylist_info_db.selectFromMylistURL(selected[8])
+            m_list = self.mylist_info_db.select_from_mylist_url(selected[8])
             m_list = [list(m.values()) for m in m_list]
             if not IsMylistIncludeNewVideo(m_list):
                 # マイリストDB新着フラグ更新
@@ -93,4 +93,4 @@ class ProcessWatched(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

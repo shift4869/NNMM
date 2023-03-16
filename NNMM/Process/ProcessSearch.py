@@ -9,7 +9,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -18,7 +18,7 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "マイリスト検索（マイリスト名）")
 
-    def Run(self, mw):
+    def run(self, mw):
         """マイリスト名でマイリストを検索
 
         Notes:
@@ -104,7 +104,7 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "マイリスト検索（動画名）")
 
-    def Run(self, mw):
+    def run(self, mw):
         """マイリストの中に含んでいる動画名でマイリストを検索
 
         Notes:
@@ -159,7 +159,7 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
 
             # マイリスト内の動画情報を探索
             mylist_url = m["url"]
-            records = self.mylist_info_db.selectFromMylistURL(mylist_url)
+            records = self.mylist_info_db.select_from_mylist_url(mylist_url)
             for r in records:
                 if re.search(pattern, r["title"]):
                     match_index_list.append(i)
@@ -200,7 +200,7 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "動画検索")
 
-    def Run(self, mw):
+    def run(self, mw):
         """マイリストの中に含んでいる動画名でマイリストを検索
 
         Notes:
@@ -240,7 +240,7 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
             index = min([int(v) for v in self.values["-TABLE-"]])
 
         # マイリスト内の動画情報を探索
-        # records = self.mylist_info_db.selectFromMylistURL(mylist_url)
+        # records = self.mylist_info_db.select_from_mylist_url(mylist_url)
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
         records = self.window["-TABLE-"].Values  # 現在のtableの全リスト
@@ -279,7 +279,7 @@ class ProcessMylistSearchClear(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "強調表示を解除")
 
-    def Run(self, mw):
+    def run(self, mw):
         """マイリスト表示のハイライトを解除する
 
         Notes:
@@ -314,7 +314,7 @@ class ProcessVideoSearchClear(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "強調表示を解除")
 
-    def Run(self, mw):
+    def run(self, mw):
         """マイリスト表示のハイライトを解除する
 
         Notes:
@@ -354,4 +354,4 @@ class ProcessVideoSearchClear(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

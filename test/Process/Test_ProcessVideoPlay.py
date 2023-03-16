@@ -38,7 +38,7 @@ class TestProcessVideoPlay(unittest.TestCase):
         return res
 
     def MakeMylistInfoDB(self, mylist_url, num: int = 5) -> list[dict]:
-        """mylist_info_db.selectFromMylistURL()で取得される動画情報データセット
+        """mylist_info_db.select_from_mylist_url()で取得される動画情報データセット
         """
         res = []
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
@@ -98,8 +98,8 @@ class TestProcessVideoPlay(unittest.TestCase):
         r.mylist_info_db.selectFromVideoID.side_effect = ReturnSelectFromVideoID
         return r
 
-    def test_PVPRun(self):
-        """ProcessVideoPlay のRunをテストする
+    def test_PVPrun(self):
+        """ProcessVideoPlay のrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.logger.info"))
@@ -119,7 +119,7 @@ class TestProcessVideoPlay(unittest.TestCase):
             expect_config_dict = {"general": {"browser_path": DUMMY_EXE}}
             mockcmd.return_value = expect_config_dict
             mockmw = self.ReturnMW()
-            actual = pvp.Run(mockmw)
+            actual = pvp.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -164,19 +164,19 @@ class TestProcessVideoPlay(unittest.TestCase):
             # ブラウザパスが不正
             expect_config_dict["general"]["browser_path"] = "不正なブラウザパス"
             mockmw = self.ReturnMW()
-            actual = pvp.Run(mockmw)
+            actual = pvp.run(mockmw)
             self.assertEqual(-1, actual)
             assertMockCall()
 
             # テーブルの行が選択されていない
             mockmw = self.ReturnMW()
             mockmw.values = {"-TABLE-": []}
-            actual = pvp.Run(mockmw)
+            actual = pvp.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             del mockmw.window
-            actual = pvp.Run(mockmw)
+            actual = pvp.run(mockmw)
             self.assertEqual(-1, actual)
 
             dummy_path.unlink(missing_ok=True)

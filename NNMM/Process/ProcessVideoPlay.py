@@ -10,7 +10,7 @@ from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 from NNMM.Process.ProcessWatched import *
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -19,7 +19,7 @@ class ProcessVideoPlay(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "ブラウザで開く")
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         """選択された動画をブラウザで開く
 
         Notes:
@@ -83,7 +83,7 @@ class ProcessVideoPlay(ProcessBase.ProcessBase):
         if def_data[row][STATUS_INDEX] != "":
             # 視聴済にする
             pb = ProcessWatched()
-            pb.Run(mw)
+            pb.run(mw)
 
         logger.info(f"VideoPlay success.")
         return 0
@@ -92,4 +92,4 @@ class ProcessVideoPlay(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

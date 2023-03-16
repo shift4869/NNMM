@@ -19,8 +19,8 @@ class TestProcessMoveUp(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_PMURun(self):
-        """ProcessMoveUpのRunをテストする
+    def test_PMUrun(self):
+        """ProcessMoveUpのrunをテストする
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.Process.ProcessMoveUp.logger.info"))
@@ -61,7 +61,7 @@ class TestProcessMoveUp(unittest.TestCase):
 
             index = random.randint(1, NUM - 1)
             mockmw = ReturnMW(index)
-            actual = pmu.Run(mockmw)
+            actual = pmu.run(mockmw)
             self.assertEqual(0, actual)
 
             # 実行後呼び出し確認
@@ -85,14 +85,14 @@ class TestProcessMoveUp(unittest.TestCase):
             mylist_table_s = [f"*:mylist_{i}" for i in range(NUM)]
             index = random.randint(1, NUM - 1)
             mockmw = ReturnMW(index)
-            actual = pmu.Run(mockmw)
+            actual = pmu.run(mockmw)
             self.assertEqual(0, actual)
             assertMockCall(index)
 
             # 一番上のマイリストを選択した場合
             index = 0
             mockmw = ReturnMW(index)
-            actual = pmu.Run(mockmw)
+            actual = pmu.run(mockmw)
             self.assertEqual(1, actual)
 
             # 異常系
@@ -100,12 +100,12 @@ class TestProcessMoveUp(unittest.TestCase):
             index = random.randint(1, NUM - 1)
             mockmw = ReturnMW(index)
             mockmw.values["-LIST-"] = []
-            actual = pmu.Run(mockmw)
+            actual = pmu.run(mockmw)
             self.assertEqual(-1, actual)
 
             # 引数エラー
             del mockmw.window
-            actual = pmu.Run(mockmw)
+            actual = pmu.run(mockmw)
             self.assertEqual(-1, actual)
 
 

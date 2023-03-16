@@ -10,7 +10,7 @@ from NNMM.ConfigMain import ProcessConfigBase
 from NNMM.GuiFunction import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -22,7 +22,7 @@ class ProcessTimer(ProcessBase.ProcessBase):
         self.window = None
         self.values = None
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         """タイマー実行時の処理
 
         Notes:
@@ -94,7 +94,7 @@ class ProcessTimer(ProcessBase.ProcessBase):
         # タイマーをセットして起動
         s_interval = interval * 60  # [min] -> [sec]
         # s_interval = 5  # デバッグ用
-        self.timer_thread = threading.Timer(s_interval, self.Run, (mw, ))
+        self.timer_thread = threading.Timer(s_interval, self.run, (mw, ))
         # デーモンスレッドはデーモンスレッド以外のスレッドが動いていない場合に自動的に終了される
         self.timer_thread.setDaemon(True)
         self.timer_thread.start()
@@ -109,4 +109,4 @@ class ProcessTimer(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

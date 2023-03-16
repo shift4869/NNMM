@@ -8,7 +8,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -17,7 +17,7 @@ class ProcessMoveUp(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "上に移動")
 
-    def Run(self, mw):
+    def run(self, mw):
         """マイリストの並び順を一つ上に移動させる
 
         Notes:
@@ -79,4 +79,4 @@ class ProcessMoveUp(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

@@ -9,7 +9,7 @@ import PySimpleGUI as sg
 from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -76,7 +76,7 @@ def IsMylistIncludeNewVideo(table_list: list[list]) -> bool | KeyError:
     return any([v[STATUS_INDEX] == "未視聴" for v in table_list])
 
 
-def IntervalTranslation(interval_str: str) -> int:
+def interval_translate(interval_str: str) -> int:
     """インターバルを解釈する関数
 
     Note:
@@ -219,7 +219,7 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
                 break
 
         # 現在のマイリストURLからテーブル情報を求める
-        records = mylist_info_db.selectFromMylistURL(mylist_url)
+        records = mylist_info_db.select_from_mylist_url(mylist_url)
         for i, m in enumerate(records):
             a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"], m["registered_at"], m["video_url"], m["mylist_url"]]
             def_data.append(a)
@@ -238,4 +238,4 @@ def UpdateTableShow(window: sg.Window, mylist_db: MylistDBController, mylist_inf
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

@@ -12,7 +12,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -20,7 +20,7 @@ class ProcessConfigBase(ProcessBase.ProcessBase):
     """コンフィグ機能のベースクラス
 
     派生クラスと外部から使用されるクラス変数とクラスメソッドを定義する
-    このベースクラス自体は抽象メソッドであるRunを実装していないためインスタンスは作成できない
+    このベースクラス自体は抽象メソッドであるrunを実装していないためインスタンスは作成できない
     """
     CONFIG_FILE_PATH = "./config/config.ini"
     config = None
@@ -105,7 +105,7 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
     def __init__(self):
         super().__init__(True, True, "マイリスト一覧入力")
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         """マイリスト一覧読込ボタンが押されたときの処理
 
         Notes:
@@ -151,7 +151,7 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
     def __init__(self):
         super().__init__(True, True, "マイリスト一覧出力")
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         """マイリスト一覧保存ボタンが押されたときの処理
 
         Notes:
@@ -195,7 +195,7 @@ class ProcessConfigLoad(ProcessConfigBase):
     def __init__(self):
         super().__init__(False, False, "設定読込")
 
-    def Run(self, mw):
+    def run(self, mw):
         """設定タブを開いたときの処理
 
         Notes:
@@ -234,7 +234,7 @@ class ProcessConfigSave(ProcessConfigBase):
     def __init__(self):
         super().__init__(True, True, "設定保存")
 
-    def Run(self, mw):
+    def run(self, mw):
         """設定保存ボタンが押されたときの処理
 
         Notes:
@@ -298,4 +298,4 @@ if __name__ == "__main__":
     ps = ProcessConfigSave()
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

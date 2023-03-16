@@ -8,7 +8,7 @@ from NNMM.MylistDBController import *
 from NNMM.MylistInfoDBController import *
 from NNMM.Process import ProcessBase
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -17,7 +17,7 @@ class ProcessShowMylistInfo(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, True, "マイリスト内容表示")
 
-    def Run(self, mw):
+    def run(self, mw):
         """選択されたマイリストに含まれる動画情報レコードを表示する
 
         Notes:
@@ -66,4 +66,4 @@ class ProcessShowMylistInfo(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()

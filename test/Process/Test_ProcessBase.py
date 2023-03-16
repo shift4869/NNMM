@@ -13,7 +13,7 @@ class ConcreteProcessBase(ProcessBase.ProcessBase):
     def __init__(self, log_sflag: bool, log_eflag: bool, process_name: str) -> None:
         super().__init__(log_sflag, log_eflag, process_name)
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         return 0
 
 
@@ -38,8 +38,8 @@ class TestProcessBase(unittest.TestCase):
         self.assertEqual(e_process_name, cpb.process_name)
         self.assertEqual(None, cpb.main_window)
 
-    def test_ProcessBaseRun(self):
-        """ProcessBaseのRunをテストする
+    def test_ProcessBaserun(self):
+        """ProcessBaseのrunをテストする
         """
         e_log_sflag = True
         e_log_eflag = False
@@ -47,7 +47,7 @@ class TestProcessBase(unittest.TestCase):
         cpb = ConcreteProcessBase(e_log_sflag, e_log_eflag, e_process_name)
 
         e_mw = "dummy window"
-        actual = cpb.Run(e_mw)
+        actual = cpb.run(e_mw)
         self.assertEqual(0, actual)
 
 

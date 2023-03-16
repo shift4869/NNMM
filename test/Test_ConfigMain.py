@@ -29,7 +29,7 @@ class ConcreteProcessConfigBase(ProcessConfigBase):
     def __init__(self, log_sflag: bool, log_eflag: bool, process_name: str) -> None:
         super().__init__(log_sflag, log_eflag, process_name)
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         return 0
 
 
@@ -191,7 +191,7 @@ class TestConfigMain(unittest.TestCase):
 
             # 正常系
             # 実行
-            actual = pml.Run(mw)
+            actual = pml.run(mw)
             self.assertEqual(0, actual)
 
             # 呼び出し確認
@@ -230,7 +230,7 @@ class TestConfigMain(unittest.TestCase):
 
             # 異常系
             # ファイル選択をキャンセルされた
-            actual = pml.Run(mw)
+            actual = pml.run(mw)
             self.assertEqual(1, actual)
 
             # 呼び出し確認
@@ -244,7 +244,7 @@ class TestConfigMain(unittest.TestCase):
             mockpu.assert_not_called()
 
             # マイリスト読込に失敗
-            actual = pml.Run(mw)
+            actual = pml.run(mw)
             self.assertEqual(-1, actual)
 
             # 呼び出し確認
@@ -284,7 +284,7 @@ class TestConfigMain(unittest.TestCase):
 
             # 正常系
             # 実行
-            actual = pms.Run(mw)
+            actual = pms.run(mw)
             self.assertEqual(0, actual)
 
             # 呼び出し確認
@@ -317,7 +317,7 @@ class TestConfigMain(unittest.TestCase):
 
             # 異常系
             # ファイル選択をキャンセルされた
-            actual = pms.Run(mw)
+            actual = pms.run(mw)
             self.assertEqual(1, actual)
 
             # 呼び出し確認
@@ -331,7 +331,7 @@ class TestConfigMain(unittest.TestCase):
             mockpu.assert_not_called()
 
             # マイリスト保存に失敗
-            actual = pms.Run(mw)
+            actual = pms.run(mw)
             self.assertEqual(-1, actual)
 
             # 呼び出し確認
@@ -392,7 +392,7 @@ class TestConfigMain(unittest.TestCase):
             type(mw).window = mock_dict
 
             pcl = ProcessConfigLoad()
-            actual = pcl.Run(mw)
+            actual = pcl.run(mw)
             self.assertEqual(0, actual)
 
             # ucal[{n回目の呼び出し}][args=0]
@@ -487,7 +487,7 @@ class TestConfigMain(unittest.TestCase):
 
             # 実行
             pcs = ProcessConfigSave()
-            actual = pcs.Run(mw)
+            actual = pcs.run(mw)
             self.assertEqual(0, actual)
 
             # 呼び出し確認

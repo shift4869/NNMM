@@ -16,7 +16,7 @@ from NNMM.Process import ProcessBase
 from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
 from NNMM.VideoInfoFetcher.VideoInfoRssFetcher import VideoInfoRssFetcher
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
@@ -71,7 +71,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         func_list = []
         for record in m_list:
             # mylist_url = record.get("url")
-            # prev_video_list = self.mylist_info_db.selectFromMylistURL(mylist_url)
+            # prev_video_list = self.mylist_info_db.select_from_mylist_url(mylist_url)
             # if not prev_video_list:
             #     # 初めての動画情報取得ならページをレンダリングして取得
             #     func_list.append(VideoInfoHtmlFetcher.fetch_videoinfo)
@@ -99,11 +99,11 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         prev_video_lists = []
         for record in m_list:
             mylist_url = record.get("url")
-            prev_video_list = self.mylist_info_db.selectFromMylistURL(mylist_url)
+            prev_video_list = self.mylist_info_db.select_from_mylist_url(mylist_url)
             prev_video_lists.append(prev_video_list)
         return prev_video_lists
 
-    def Run(self, mw):
+    def run(self, mw):
         """すべてのマイリストのマイリスト情報を更新する
 
         Args:
@@ -450,7 +450,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         logger.info(f"{self.L_KIND} update post process start.")
 
         pb = self.POST_PROCESS()
-        pb.Run(mw)
+        pb.run(mw)
 
         logger.info(f"{self.L_KIND} update post process done.")
 
@@ -462,7 +462,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
 
         Notes:
             このクラスのインスタンスは直接作成・呼び出しは行わない
-            必要ならRunをオーバーライドしてそれぞれの後処理を実装する
+            必要ならrunをオーバーライドしてそれぞれの後処理を実装する
 
         Attributes:
             L_KIND (str): ログ出力用のメッセージベース
@@ -471,7 +471,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
 
         self.L_KIND = "UpdateMylist Base"
 
-    def Run(self, mw) -> int:
+    def run(self, mw) -> int:
         """すべてのマイリストのマイリスト情報を更新後の後処理
 
         Args:
@@ -502,7 +502,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
         m_list = self.mylist_db.Select()
         for m in m_list:
             mylist_url = m.get("url")
-            video_list = self.mylist_info_db.selectFromMylistURL(mylist_url)
+            video_list = self.mylist_info_db.select_from_mylist_url(mylist_url)
             table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
             def_data = []
             for i, t in enumerate(video_list):
@@ -525,4 +525,4 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase.ProcessBase):
 if __name__ == "__main__":
     from NNMM import MainWindow
     mw = MainWindow.MainWindow()
-    mw.Run()
+    mw.run()
