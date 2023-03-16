@@ -8,7 +8,7 @@ from pathlib import Path
 import PySimpleGUI as sg
 
 from NNMM import ConfigMain, PopupWindowMain, Timer
-from NNMM.GuiFunction import UpdateMylistShow
+from NNMM.GuiFunction import update_mylist_pane
 from NNMM.MylistDBController import MylistDBController
 from NNMM.MylistInfoDBController import MylistInfoDBController
 from NNMM.Process import ProcessCreateMylist, ProcessDeleteMylist, ProcessDownload, ProcessMoveDown, ProcessMoveUp, ProcessNotWatched, ProcessSearch, ProcessShowMylistInfo, ProcessShowMylistInfoAll, ProcessUpdateAllMylistInfo, ProcessUpdateMylistInfo
@@ -25,8 +25,7 @@ class MainWindow():
         """メインウィンドウクラスのコンストラクタ
         """
         # 設定値初期化
-        ConfigMain.ProcessConfigBase.SetConfig()
-        self.config = ConfigMain.ProcessConfigBase.GetConfig()
+        self.config = ConfigMain.ProcessConfigBase.SetConfig()
 
         # DB操作コンポーネント設定
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
@@ -34,7 +33,7 @@ class MainWindow():
         self.mylist_info_db = MylistInfoDBController(db_fullpath=str(self.db_fullpath))
 
         # ウィンドウレイアウト作成
-        layout = self.MakeMainWindowLayout()
+        layout = self.make_layout()
 
         # アイコン画像取得
         ICON_PATH = "./image/icon.png"
@@ -51,14 +50,15 @@ class MainWindow():
         # この設定の後からloggerが使用可能になる
         logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
         for name in logging.root.manager.loggerDict:
-            getLogger(name).disabled = True
+            if "NNMM" not in name:
+                getLogger(name).disabled = True
 
         # Windows特有のruntimeError抑止
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
         # マイリスト一覧初期化
         # DBからマイリスト一覧を取得する
-        UpdateMylistShow(self.window, self.mylist_db)
+        update_mylist_pane(self.window, self.mylist_db)
 
         # テーブル初期化
         def_data = [[]]
@@ -107,7 +107,7 @@ class MainWindow():
 
         logger.info("window setup done.")
 
-    def MakeMainWindowLayout(self) -> list[list[sg.Frame]] | None:
+    def make_layout(self) -> list[list[sg.Frame]] | None:
         """画面のレイアウトを作成する
 
         Returns:
@@ -212,7 +212,6 @@ class MainWindow():
         while True:
             # イベントの読み込み
             event, values = self.window.read()
-            # print(event, values)
 
             if event in [sg.WIN_CLOSED, "-EXIT-"]:
                 # 終了ボタンかウィンドウの×ボタンが押されれば終了

@@ -5,49 +5,41 @@
 import sys
 import unittest
 from contextlib import ExitStack
-from logging import INFO, getLogger
+from logging import WARNING, getLogger
 from pathlib import Path
 
 import PySimpleGUI as sg
-from mock import MagicMock, mock_open, patch
+from mock import MagicMock, call, patch
 
-from NNMM.GuiFunction import *
-from NNMM.MainWindow import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
-from NNMM.Process import *
+from NNMM import ConfigMain, PopupWindowMain, Timer
+from NNMM.MainWindow import MainWindow
+from NNMM.Process import ProcessBase, ProcessCreateMylist, ProcessDeleteMylist, ProcessDownload, ProcessMoveDown, ProcessMoveUp, ProcessNotWatched, ProcessSearch, ProcessShowMylistInfo, ProcessShowMylistInfoAll, ProcessUpdateAllMylistInfo
+from NNMM.Process import ProcessUpdateMylistInfo, ProcessUpdatePartialMylistInfo, ProcessVideoPlay, ProcessWatched, ProcessWatchedAllMylist, ProcessWatchedMylist
 
-TEST_DB_PATH = "./test/test.db"
+logger = getLogger("NNMM.MainWindow")
+logger.setLevel(WARNING)
+TEST_DB_PATH = ":memory:"
 
 
 # テスト用具体化ProcessBase
 class ConcreteProcessBase(ProcessBase.ProcessBase):
-    
     def __init__(self) -> None:
         super().__init__(True, False, "テスト用具体化処理")
 
-    def run(self, mw) -> int:
+    def run(self, mw: "MainWindow") -> int:
         return 0
 
 
 # テスト用具体化ProcessBase(エラー想定)
 class ConcreteErrorProcessBase(ProcessBase.ProcessBase):
-    
     def __init__(self) -> None:
         super().__init__(True, False, "テスト用具体化処理")
 
-    def run(self, mw) -> int:
+    def run(self, mw: "MainWindow") -> int:
         raise Exception
 
 
 class TestWindowMain(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_MainWindowInit(self):
         """WindowMainの初期化後の状態をテストする
         """
@@ -55,17 +47,16 @@ class TestWindowMain(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.MainWindow.logger.info"))
             mockwd = stack.enter_context(patch("NNMM.MainWindow.sg.Window"))
             mockcps = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.SetConfig"))
-            mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
             mockmdbc = stack.enter_context(patch("NNMM.MainWindow.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.MainWindow.MylistInfoDBController"))
-            mockmmwl = stack.enter_context(patch("NNMM.MainWindow.MainWindow.MakeMainWindowLayout"))
+            mockmmwl = stack.enter_context(patch("NNMM.MainWindow.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockums = stack.enter_context(patch("NNMM.MainWindow.UpdateMylistShow"))
+            mockump = stack.enter_context(patch("NNMM.MainWindow.update_mylist_pane"))
 
             mockmmwl.return_value = [["dummy layout"]]
 
             expect_config = {"db": {"save_path": TEST_DB_PATH}}
-            mockcpg.side_effect = lambda: expect_config
+            mockcps.side_effect = lambda: expect_config
 
             r_mock = MagicMock()
             b_mock = MagicMock()
@@ -81,7 +72,7 @@ class TestWindowMain(unittest.TestCase):
             r_mock.__contains__.side_effect = expect_window_dict.__contains__
             type(r_mock).write_event_value = lambda s, k, v: f"{k}_{v}"
 
-            def r_mock_window(title, layout, size, finalize, resizable):
+            def r_mock_window(title, layout, icon, size, finalize, resizable):
                 return r_mock
             mockwd.side_effect = r_mock_window
 
@@ -90,36 +81,34 @@ class TestWindowMain(unittest.TestCase):
 
             # インスタンス生成後状態確認
             # config
-            test_db_path = str(Path(TEST_DB_PATH))
             mockcps.assert_called_once()
-            mockcpg.assert_called_once()
             self.assertEqual(expect_config, mw.config)
-            self.assertEqual(test_db_path, str(Path(mw.db_fullpath)))
+            self.assertEqual(TEST_DB_PATH, str(Path(mw.db_fullpath)))
 
             # cal[{n回目の呼び出し}][args=0]
             # cal[{n回目の呼び出し}][kwargs=1]
             mdbccal = mockmdbc.call_args_list
             self.assertEqual(len(mdbccal), 1)
-            self.assertEqual({"db_fullpath": test_db_path}, mdbccal[0][1])
+            self.assertEqual({"db_fullpath": TEST_DB_PATH}, mdbccal[0][1])
             self.assertEqual(mockmdbc(), mw.mylist_db)
             mockmdbc.reset_mock()
 
             midbccal = mockmidbc.call_args_list
             self.assertEqual(len(midbccal), 1)
-            self.assertEqual({"db_fullpath": test_db_path}, midbccal[0][1])
+            self.assertEqual({"db_fullpath": TEST_DB_PATH}, midbccal[0][1])
             self.assertEqual(mockmidbc(), mw.mylist_info_db)
             mockmidbc.reset_mock()
 
             mockmmwl.assert_called_once()
 
-            wdcal = mockwd.call_args_list
-            self.assertEqual(len(wdcal), 1)
-            self.assertEqual(("NNMM", mockmmwl.return_value), wdcal[0][0])
-            self.assertEqual({
-                "size": (1330, 900),
-                "finalize": True,
-                "resizable": True,
-            }, wdcal[0][1])
+            ICON_PATH = "./image/icon.png"
+            icon_binary = None
+            with Path(ICON_PATH).open("rb") as fin:
+                icon_binary = fin.read()
+            expect = [
+                call("NNMM", mockmmwl.return_value, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
+            ]
+            self.assertEqual(expect, mockwd.mock_calls)
             self.assertEqual(r_mock, mw.window)
             mockwd.reset_mock()
 
@@ -129,10 +118,10 @@ class TestWindowMain(unittest.TestCase):
             self.assertEqual({"disable_existing_loggers": False}, lcfccal[0][1])
             mocklcfc.reset_mock()
 
-            umscal = mockums.call_args_list
+            umscal = mockump.call_args_list
             self.assertEqual(len(umscal), 1)
             self.assertEqual((r_mock, mockmdbc()), umscal[0][0])
-            mockums.reset_mock()
+            mockump.reset_mock()
 
             # イベントと処理の辞書
             # 新機能を追加したらここにも追加する
@@ -175,7 +164,7 @@ class TestWindowMain(unittest.TestCase):
             self.assertEqual(expect_process_dict, mw.process_dict)
         pass
 
-    def test_MakeMainWindowLayout(self):
+    def test_make_layout(self):
         """WindowMainのレイアウトをテストする
         """
         with ExitStack() as stack:
@@ -185,9 +174,9 @@ class TestWindowMain(unittest.TestCase):
             mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
             mockmdbc = stack.enter_context(patch("NNMM.MainWindow.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.MainWindow.MylistInfoDBController"))
-            # mockmmwl = stack.enter_context(patch("NNMM.MainWindow.MainWindow.MakeMainWindowLayout"))
+            # mockmmwl = stack.enter_context(patch("NNMM.MainWindow.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockums = stack.enter_context(patch("NNMM.MainWindow.UpdateMylistShow"))
+            mockump = stack.enter_context(patch("NNMM.MainWindow.update_mylist_pane"))
             mockcmgcl = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfigLayout"))
 
             # sg.Outputだけは標準エラー等に干渉するためdummyに置き換える
@@ -208,11 +197,11 @@ class TestWindowMain(unittest.TestCase):
             mw = None
             with ExitStack() as stack2:
                 mockwd = stack2.enter_context(patch("NNMM.MainWindow.sg.Window"))
-                mockmmwl = stack2.enter_context(patch("NNMM.MainWindow.MainWindow.MakeMainWindowLayout"))
+                mockmmwl = stack2.enter_context(patch("NNMM.MainWindow.MainWindow.make_layout"))
                 mw = MainWindow()
 
             # レイアウト予測値生成
-            def ExpectMakeMainWindowLayout():
+            def make_layout():
                 # 左ペイン
                 listbox_right_click_menu = [
                     "-LISTBOX_RIGHT_CLICK_MENU-", [
@@ -260,7 +249,7 @@ class TestWindowMain(unittest.TestCase):
                         "---",
                         "情報表示::-TR-",
                         "---",
-                        "動画ダウンロード::-TR-",
+                        "!動画ダウンロード::-TR-",
                     ]
                 ]
                 table_style = {
@@ -303,10 +292,10 @@ class TestWindowMain(unittest.TestCase):
                 return layout
 
             # 実行
-            actual = mw.MakeMainWindowLayout()
-            expect = ExpectMakeMainWindowLayout()
+            actual = mw.make_layout()
+            expect = make_layout()
 
-            def CheckLayout(e, a):
+            def check_layout(e, a):
                 """sgオブジェクトは別IDで生成されるため、各要素を比較する
                     self.assertEqual(expect, actual)
                 """
@@ -316,11 +305,11 @@ class TestWindowMain(unittest.TestCase):
                 if hasattr(e, "__iter__") and hasattr(a, "__iter__"):
                     self.assertEqual(len(e), len(a))
                     for e1, a1 in zip(e, a):
-                        CheckLayout(e1, a1)
+                        check_layout(e1, a1)
                 # Rows属性を持つなら再起
                 if hasattr(e, "Rows") and hasattr(a, "Rows"):
                     for e2, a2 in zip(e.Rows, a.Rows):
-                        CheckLayout(e2, a2)
+                        check_layout(e2, a2)
                 # 要素チェック
                 if hasattr(a, "RightClickMenu") and a.RightClickMenu:
                     self.assertEqual(e.RightClickMenu, a.RightClickMenu)
@@ -335,7 +324,7 @@ class TestWindowMain(unittest.TestCase):
                 return 0
 
             # 作成したレイアウトを比較
-            actual = CheckLayout(expect, actual)
+            actual = check_layout(expect, actual)
             self.assertEqual(0, actual)
         pass
 
@@ -350,13 +339,13 @@ class TestWindowMain(unittest.TestCase):
             mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfig"))
             mockmdbc = stack.enter_context(patch("NNMM.MainWindow.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.MainWindow.MylistInfoDBController"))
-            mockmmwl = stack.enter_context(patch("NNMM.MainWindow.MainWindow.MakeMainWindowLayout"))
+            mockmmwl = stack.enter_context(patch("NNMM.MainWindow.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockums = stack.enter_context(patch("NNMM.MainWindow.UpdateMylistShow"))
+            mockump = stack.enter_context(patch("NNMM.MainWindow.update_mylist_pane"))
             mockcmgcl = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.GetConfigLayout"))
             mockcmpcl = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigLoad"))
 
-            def r_mock_window(title, layout, size, finalize, resizable):
+            def r_mock_window(title, layout, icon, size, finalize, resizable):
                 r_mock = MagicMock()
                 v_mock = MagicMock()
                 v_mock.side_effect = [
@@ -370,7 +359,6 @@ class TestWindowMain(unittest.TestCase):
                 type(r_mock).read = v_mock
                 type(r_mock).close = lambda s: 0
                 return r_mock
-
             mockwd.side_effect = r_mock_window
 
             # 実行
@@ -380,7 +368,12 @@ class TestWindowMain(unittest.TestCase):
             mw.process_dict["-ERROR_TEST-"] = ConcreteErrorProcessBase
             actual = mw.run()
             self.assertEqual(0, actual)
-        pass
+
+            ICON_PATH = "./image/icon.png"
+            icon_binary = None
+            with Path(ICON_PATH).open("rb") as fin:
+                icon_binary = fin.read()
+            mockwd.assert_called_once_with("NNMM", mockmmwl.return_value, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
 
 
 if __name__ == "__main__":
