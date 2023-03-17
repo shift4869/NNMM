@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from logging import INFO, getLogger
+import warnings
+from bs4 import XMLParsedAsHTMLWarning
 
 import pyppeteer
 from lxml.html.soupparser import fromstring as soup_parse
@@ -104,8 +106,13 @@ class VideoInfoFetcherBase(ABC):
                 # if parse_features != "html.parser":
                 #     response.html._lxml = soup_parse(response.html.html, features=parse_features)
 
-                if (response is not None) and (response.html.lxml is not None):
-                    break
+                # response.html.lxml は内容は xml 形式の Element だが
+                # 改行や閉じタグが含まれるため html として解釈する
+                # その場合 bs4 から警告が出るので、それを抑制する
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
+                    if (response is not None) and (response.html.lxml is not None):
+                        break
 
                 await asyncio.sleep(1)
             except Exception:
@@ -229,7 +236,10 @@ if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     for url in urls:
-        video_list = loop.run_until_complete(ConcreteVideoInfoFetcher.fetch_videoinfo(url))
-        pprint.pprint(video_list)
+        try:
+            video_list = loop.run_until_complete(ConcreteVideoInfoFetcher.fetch_videoinfo(url))
+            pprint.pprint(video_list)
+        except Exception as e:
+            pprint.pprint(e)
 
     pass

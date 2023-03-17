@@ -13,6 +13,8 @@ from contextlib import ExitStack
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.error import HTTPError
+import warnings
+from bs4 import XMLParsedAsHTMLWarning
 
 from mock import AsyncMock, MagicMock, call, patch
 from requests_html import HTML, AsyncHTMLSession
@@ -38,7 +40,6 @@ RSS_PATH = "./test/rss/"
 
 # テスト用具体化ProcessBase
 class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
-    
     def __init__(self, url: str, source_type: SourceType = SourceType.HTML) -> None:
         super().__init__(url, source_type)
 
@@ -47,14 +48,14 @@ class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
 
 
 class TestVideoInfoFetcherBase(unittest.TestCase):
-
     def setUp(self):
-        pass
+        # xml 形式に近い html を解釈する際に
+        # bs4 から警告が出るので、それを抑制する
+        warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
 
     def tearDown(self):
         if Path(RSS_PATH).exists():
             shutil.rmtree(RSS_PATH)
-        pass
 
     def _get_url_set(self) -> list[str]:
         """urlセットを返す
