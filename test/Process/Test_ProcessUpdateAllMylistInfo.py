@@ -19,7 +19,7 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
         pass
 
     def MakeMylistDB(self, num: int = 5) -> list[dict]:
-        """mylist_db.Select()で取得されるマイリストデータセット
+        """mylist_db.select()で取得されるマイリストデータセット
         """
         res = []
         col = ["id", "username", "mylistname", "type", "showname", "url",
@@ -71,7 +71,7 @@ class TestProcessUpdateAllMylistInfo(unittest.TestCase):
             # 正常系
             expect = ["TargetMylist list"]
             r = MagicMock()
-            r.Select = lambda: expect
+            r.select = lambda: expect
             puami.mylist_db = r
             actual = puami.get_target_mylist()
             self.assertEqual(expect, actual)

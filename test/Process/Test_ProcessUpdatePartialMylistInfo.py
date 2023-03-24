@@ -22,7 +22,7 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
         pass
 
     def MakeMylistDB(self, num: int = 5) -> list[dict]:
-        """mylist_db.Select()で取得されるマイリストデータセット
+        """mylist_db.select()で取得されるマイリストデータセット
         """
         res = []
         col = ["id", "username", "mylistname", "type", "showname", "url",
@@ -92,7 +92,7 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
 
             mockmw = MagicMock()
             mockmdb = MagicMock()
-            mockmdb.Select.side_effect = lambda: m_list
+            mockmdb.select.side_effect = lambda: m_list
             mockmw.mylist_db = mockmdb
 
             pupmi.mylist_db = mockmw.mylist_db
@@ -124,7 +124,7 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
             # 実行後呼び出し確認
             mc = mockmw.mock_calls
             self.assertEqual(1, len(mc))
-            self.assertEqual(call.mylist_db.Select(), mc[0])
+            self.assertEqual(call.mylist_db.select(), mc[0])
             mockmw.reset_mock()
 
             # インターバル文字列不正のレコードが含まれている

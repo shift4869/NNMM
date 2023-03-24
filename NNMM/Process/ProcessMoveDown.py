@@ -52,7 +52,7 @@ class ProcessMoveDown(ProcessBase.ProcessBase):
         src_v = self.values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
         list_data = self.window["-LIST-"].Values  # 現在のマイリストテーブルの全リスト
 
-        max_index = len(self.mylist_db.Select()) - 1
+        max_index = len(self.mylist_db.select()) - 1
         if src_index >= max_index:
             logger.info(f"{src_v} -> index is {max_index} , can't move down.")
             return 1

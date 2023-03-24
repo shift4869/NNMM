@@ -19,7 +19,7 @@ class TestProcessShowMylistInfo(unittest.TestCase):
         pass
 
     def MakeMylistDB(self):
-        """mylist_db.Select()で取得されるマイリストデータセット
+        """mylist_db.select()で取得されるマイリストデータセット
         """
         NUM = 5
         res = []

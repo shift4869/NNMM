@@ -41,7 +41,7 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMylist
             logger.error(f"{self.L_KIND} GetTargetMylist failed, attribute error.")
             return []
 
-        m_list = self.mylist_db.Select()
+        m_list = self.mylist_db.select()
         return m_list
 
 

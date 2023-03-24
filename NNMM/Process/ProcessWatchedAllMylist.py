@@ -42,7 +42,7 @@ class ProcessWatchedAllMylist(ProcessBase.ProcessBase):
             logger.error("WatchedAllMylist failed, argument error.")
             return -1
 
-        m_list = self.mylist_db.Select()
+        m_list = self.mylist_db.select()
         records = [m for m in m_list if m["is_include_new"]]
 
         all_num = len(records)

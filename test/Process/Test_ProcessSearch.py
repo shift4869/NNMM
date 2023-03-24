@@ -27,7 +27,7 @@ class TestProcessSearch(unittest.TestCase):
         return res
 
     def MakeMylistDB(self):
-        """mylist_db.Select()で取得されるマイリストデータセット
+        """mylist_db.select()で取得されるマイリストデータセット
         """
         NUM = 5
         res = []
@@ -120,7 +120,7 @@ class TestProcessSearch(unittest.TestCase):
                 mockwindow.__contains__.side_effect = expect_window_dict.__contains__
                 type(r).window = mockwindow
 
-                r.mylist_db.Select.return_value = self.MakeMylistDB()
+                r.mylist_db.select.return_value = self.MakeMylistDB()
                 return r
 
             mockmw = ReturnMW()
@@ -171,7 +171,7 @@ class TestProcessSearch(unittest.TestCase):
 
                 mc = mockmw.mock_calls
                 self.assertEqual(1, len(mc))
-                self.assertEqual(call.mylist_db.Select(), mc[0])
+                self.assertEqual(call.mylist_db.select(), mc[0])
                 mockmw.reset_mock()
 
             assertMockCall()
@@ -234,7 +234,7 @@ class TestProcessSearch(unittest.TestCase):
                 mockwindow.__contains__.side_effect = expect_window_dict.__contains__
                 type(r).window = mockwindow
 
-                r.mylist_db.Select.return_value = self.MakeMylistDB()
+                r.mylist_db.select.return_value = self.MakeMylistDB()
                 r.mylist_info_db.select_from_mylist_url = self.MakeMylistInfoDB
                 return r
 
@@ -289,7 +289,7 @@ class TestProcessSearch(unittest.TestCase):
 
                 mc = mockmw.mock_calls
                 self.assertEqual(1, len(mc))
-                self.assertEqual(call.mylist_db.Select(), mc[0])
+                self.assertEqual(call.mylist_db.select(), mc[0])
                 mockmw.reset_mock()
 
             assertMockCall()

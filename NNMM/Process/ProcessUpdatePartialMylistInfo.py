@@ -42,7 +42,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMy
             return []
 
         result = []
-        m_list = self.mylist_db.Select()
+        m_list = self.mylist_db.select()
 
         src_df = "%Y/%m/%d %H:%M"
         dst_df = "%Y-%m-%d %H:%M:%S"

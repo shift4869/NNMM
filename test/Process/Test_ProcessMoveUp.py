@@ -54,7 +54,7 @@ class TestProcessMoveUp(unittest.TestCase):
                 mockmw = MagicMock()
                 mockmw.window = expect_window_dict
                 mockmw.values = expect_values_dict
-                mockmw.mylist_db.Select = lambda: mylist_table_s
+                mockmw.mylist_db.select = lambda: mylist_table_s
                 mockmw.mylist_db.select_from_showname = Returnselect_from_showname
 
                 return mockmw

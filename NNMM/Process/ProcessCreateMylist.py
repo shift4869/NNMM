@@ -235,7 +235,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         dst = get_now_datetime()
 
         # マイリスト情報をDBに格納
-        id_index = max([int(r["id"]) for r in self.mylist_db.Select()]) + 1
+        id_index = max([int(r["id"]) for r in self.mylist_db.select()]) + 1
         self.mylist_db.Upsert(id_index, username, mylistname, url_type, showname, mylist_url, dst, dst, dst, check_interval, is_include_new)
 
         # 動画情報をDBに格納

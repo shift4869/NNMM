@@ -439,7 +439,7 @@ class TestProcessCreateMylist(unittest.TestCase):
 
             mockmb = MagicMock()
             type(mockmb).select_from_url = lambda s, url: []
-            type(mockmb).Select = lambda s: [{"id": 0}]
+            type(mockmb).select = lambda s: [{"id": 0}]
             type(mockmb).Upsert = Upsert_mock
             type(mockmw).mylist_db = mockmb
 

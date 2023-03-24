@@ -23,7 +23,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
         pass
 
     def MakeMylistDB(self, num: int = 5) -> list[dict]:
-        """mylist_db.Select()で取得されるマイリストデータセット
+        """mylist_db.select()で取得されるマイリストデータセット
         """
         res = []
         col = ["id", "username", "mylistname", "type", "showname", "url",
@@ -71,7 +71,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
         mockwindow.__contains__.side_effect = expect_window_dict.__contains__
         r.window = mockwindow
 
-        r.mylist_db.Select.side_effect = lambda: self.MakeMylistDB()
+        r.mylist_db.select.side_effect = lambda: self.MakeMylistDB()
         return r
 
     def test_PWAMrun(self):
@@ -102,7 +102,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
                 index = 1
                 mc = mockmw.mock_calls
                 self.assertEqual(b_count + all_num * 2, len(mc))
-                self.assertEqual(call.mylist_db.Select(), mc[0])
+                self.assertEqual(call.mylist_db.select(), mc[0])
                 for i, record in enumerate(records):
                     mylist_url = record.get("url")
                     self.assertEqual(call.mylist_info_db.update_status_in_mylist(mylist_url, ""), mc[index])
