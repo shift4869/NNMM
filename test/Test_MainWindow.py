@@ -278,7 +278,9 @@ class TestWindowMain(unittest.TestCase):
                 cf_layout = DummyCFLayout()
                 lf_layout = [[
                     sg.Frame("ログ", [
-                        [sg.Column([[sg.Output(size=(1080, 100), echo_stdout_stderr=True)]])]
+                        [sg.Column([[
+                            sg.Multiline(size=(1080, 100), auto_refresh=True, autoscroll=True, reroute_stdout=True, reroute_stderr=True)
+                        ]])]
                     ], size=(1370, 1000))
                 ]]
                 layout = [[
