@@ -54,7 +54,7 @@ class ProcessVideoPlay(ProcessBase.ProcessBase):
         selected = def_data[row]
 
         # 動画URLを取得
-        records = self.mylist_info_db.selectFromVideoID(selected[1])
+        records = self.mylist_info_db.select_from_video_id(selected[1])
         record = records[0]
         video_url = record.get("video_url")
 

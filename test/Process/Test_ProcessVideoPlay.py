@@ -92,7 +92,7 @@ class TestProcessVideoPlay(unittest.TestCase):
             table_list = self.MakeMylistInfoDB(mylist_url)
             return [r for r in table_list if r["video_id"] == video_id]
 
-        r.mylist_info_db.selectFromVideoID.side_effect = ReturnSelectFromVideoID
+        r.mylist_info_db.select_from_video_id.side_effect = ReturnSelectFromVideoID
         return r
 
     def test_PVPrun(self):
@@ -152,7 +152,7 @@ class TestProcessVideoPlay(unittest.TestCase):
                 self.assertEqual(call.values.__getitem__("-TABLE-"), mc[0])
                 self.assertEqual(call.values.__getitem__("-TABLE-"), mc[1])
                 self.assertEqual(call.window.__getitem__("-TABLE-"), mc[2])
-                self.assertEqual(call.mylist_info_db.selectFromVideoID(selected[1]), mc[3])
+                self.assertEqual(call.mylist_info_db.select_from_video_id(selected[1]), mc[3])
                 mockmw.reset_mock()
 
             assertMockCall()
