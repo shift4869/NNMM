@@ -56,6 +56,9 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
             "handleSIGHUP": False
         })
         session._browser = browser
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36"
+        }
 
         username = ""
         test_count = 0
@@ -64,7 +67,7 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
             # ブラウザエンジンでHTMLを生成
             # 初回起動時はchromiumインストールのために時間がかかる
             try:
-                response = await session.get(url)
+                response = await session.get(url, headers=headers)
                 await response.html.arender()
 
                 # 投稿者収集
@@ -190,34 +193,35 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
         self.window["-INPUT2-"].update(value="ロード中")
         self.window.refresh()
 
-        # asyncでマイリスト情報を収集する
-        # pyppeteerでページをレンダリングしてhtmlからスクレイピングする
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        now_video_list = loop.run_until_complete(VideoInfoHtmlFetcher.fetch_videoinfo(mylist_url))
-        s_record = {}
-        if len(now_video_list) > 0:
-            # マイリストに所属している動画情報の取得に成功したならば先頭レコードを保持
-            s_record = now_video_list[0]
-        if not s_record:
-            # 動画が一つも登録されていない場合、個別にマイリスト情報を取得する
-            s_record = loop.run_until_complete(self.AsyncGetMyListInfo(mylist_url))
-        loop.close()
+        # 2023/07/14 html解析が失敗するため必要な情報をポップアップで聞く方式にする
+        # # asyncでマイリスト情報を収集する
+        # # pyppeteerでページをレンダリングしてhtmlからスクレイピングする
+        # table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        # now_video_list = loop.run_until_complete(VideoInfoHtmlFetcher.fetch_videoinfo(mylist_url))
+        # s_record = {}
+        # if len(now_video_list) > 0:
+        #     # マイリストに所属している動画情報の取得に成功したならば先頭レコードを保持
+        #     s_record = now_video_list[0]
+        # if not s_record:
+        #     # 動画が一つも登録されていない場合、個別にマイリスト情報を取得する
+        #     s_record = loop.run_until_complete(self.AsyncGetMyListInfo(mylist_url))
+        # loop.close()
 
-        # マイリスト情報が取得できたか確認
-        if not s_record or not (s_record.keys() >= {"username", "mylistname", "showname"}):
-            sg.popup("ページ取得に失敗しました\n時間を置いてもう一度試してください\n新規追加処理を終了します", title="")
-            logger.error(f"Create mylist failed, '{mylist_url}' getting is failed.")
-            return -1
+        # # マイリスト情報が取得できたか確認
+        # if not s_record or not (s_record.keys() >= {"username", "mylistname", "showname"}):
+        #     sg.popup("ページ取得に失敗しました\n時間を置いてもう一度試してください\n新規追加処理を終了します", title="")
+        #     logger.error(f"Create mylist failed, '{mylist_url}' getting is failed.")
+        #     return -1
 
-        # 新規マイリスト追加
-        username = s_record["username"]
-        mylistname = s_record["mylistname"]
-        showname = s_record["showname"]
-        is_include_new = True
+        # # 新規マイリスト追加
+        # username = s_record["username"]
+        # mylistname = s_record["mylistname"]
+        # showname = s_record["showname"]
+        # is_include_new = True
 
-        # オートリロード間隔を取得する
+        # # オートリロード間隔を取得する
         check_interval = ""
         config = ConfigMain.ProcessConfigBase.get_config()
         i_str = config["general"].get("auto_reload", "")
@@ -231,30 +235,95 @@ class ProcessCreateMylist(ProcessBase.ProcessBase):
             logger.error("Create mylist failed, interval config error.")
             return -1
 
+        # 必要な情報ををポップアップでユーザーに問い合わせる
+        window_title = "登録情報入力"
+        username = ""
+        mylistname = ""
+        showname = ""
+        is_include_new = False
+
+        def make_layout():
+            horizontal_line = "-" * 132
+            csize = (20, 1)
+            tsize = (50, 1)
+            cf = []
+            if url_type == "uploaded":
+                cf = [
+                    [sg.Text(horizontal_line)],
+                    [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
+                    [sg.Text("URLタイプ", size=csize), sg.Input(url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
+                    [sg.Text("ユーザー名", size=csize), sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize)],
+                    [sg.Text(horizontal_line)],
+                    [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
+                ]
+            elif url_type == "mylist":
+                cf = [
+                    [sg.Text(horizontal_line)],
+                    [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
+                    [sg.Text("URLタイプ", size=csize), sg.Input(url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
+                    [sg.Text("ユーザー名", size=csize), sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize)],
+                    [sg.Text("マイリスト名", size=csize), sg.Input("", key="-MYLISTNAME-", background_color="light goldenrod", size=tsize)],
+                    [sg.Text(horizontal_line)],
+                    [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
+                ]
+            layout = [[
+                sg.Frame(window_title, cf)
+            ]]
+            return layout
+        layout = make_layout()
+        window = sg.Window(title=window_title, layout=layout, auto_size_text=True, finalize=True)
+        window["-USERNAME-"].set_focus(True)
+        button, values = window.read()
+        window.close()
+        del window
+        if button != "-REGISTER-":
+            logger.info("Create mylist canceled.")
+            return 1
+        else:
+            if url_type == "uploaded":
+                username = values["-USERNAME-"]
+                mylistname = "投稿動画"
+                showname = f"{username}さんの投稿動画"
+                is_include_new = False
+            elif url_type == "mylist":
+                username = values["-USERNAME-"]
+                mylistname = values["-MYLISTNAME-"]
+                showname = f"「{mylistname}」-{username}さんのマイリスト"
+                is_include_new = False
+
+        # ユーザー入力値が不正の場合は登録しない
+        if any([username == "",
+                mylistname == "",
+                showname == "",
+                check_interval == ""]):
+            sg.popup("入力されたマイリスト情報が不正です\n新規追加処理を終了します", title="")
+            logger.info(f"Create mylist canceled, can't retrieve the required information.")
+            return 1
+
         # 現在時刻取得
         dst = get_now_datetime()
 
         # マイリスト情報をDBに格納
         id_index = max([int(r["id"]) for r in self.mylist_db.select()]) + 1
-        self.mylist_db.Upsert(id_index, username, mylistname, url_type, showname, mylist_url, dst, dst, dst, check_interval, is_include_new)
+        self.mylist_db.upsert(id_index, username, mylistname, url_type, showname, mylist_url, dst, dst, dst, check_interval, is_include_new)
 
-        # 動画情報をDBに格納
-        records = []
-        for m in now_video_list:
-            dst = get_now_datetime()
-            r = {
-                "video_id": m["video_id"],
-                "title": m["title"],
-                "username": m["username"],
-                "status": "未視聴",  # 初追加時はすべて未視聴扱い
-                "uploaded_at": m["uploaded_at"],
-                "registered_at": m["registered_at"],
-                "video_url": m["video_url"],
-                "mylist_url": m["mylist_url"],
-                "created_at": dst,
-            }
-            records.append(r)
-        self.mylist_info_db.upsert_from_list(records)
+        # # 動画情報をDBに格納
+        # records = []
+        # for m in now_video_list:
+        #     dst = get_now_datetime()
+        #     r = {
+        #         "video_id": m["video_id"],
+        #         "title": m["title"],
+        #         "username": m["username"],
+        #         "status": "未視聴",  # 初追加時はすべて未視聴扱い
+        #         "uploaded_at": m["uploaded_at"],
+        #         "registered_at": m["registered_at"],
+        #         "video_url": m["video_url"],
+        #         "mylist_url": m["mylist_url"],
+        #         "created_at": dst,
+        #     }
+        #     records.append(r)
+        # self.mylist_info_db.upsert_from_list(records)
 
         # 後続処理へ
         self.window["-INPUT1-"].update(value=mylist_url)

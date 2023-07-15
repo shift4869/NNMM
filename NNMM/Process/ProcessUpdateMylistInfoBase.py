@@ -67,6 +67,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
 
         func_list = []
         for record in m_list:
+            # html解析が失敗するため一旦RSS更新のみとする
             # mylist_url = record.get("url")
             # prev_video_list = self.mylist_info_db.select_from_mylist_url(mylist_url)
             # if not prev_video_list:
