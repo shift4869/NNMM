@@ -77,8 +77,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
         VF = VideoInfoRssFetcher
 
         # RSS取得
-        session, response = await self._get_session_response(self.mylist_url.fetch_url, False, "lxml-xml", None)
-        await session.close()
+        response = await self._get_session_response(self.mylist_url.fetch_url)
         if not response:
             raise ValueError("rss request failed.")
 

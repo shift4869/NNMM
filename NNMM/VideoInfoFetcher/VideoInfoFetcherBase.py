@@ -3,15 +3,16 @@ import asyncio
 import logging.config
 import pprint
 import traceback
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from logging import INFO, getLogger
-import warnings
-from bs4 import XMLParsedAsHTMLWarning
 
+import httpx
 import pyppeteer
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 from lxml.html.soupparser import fromstring as soup_parse
 from requests_html import AsyncHTMLSession, HTMLResponse
 
@@ -57,11 +58,7 @@ class VideoInfoFetcherBase(ABC):
             self.url = MylistURL.create(url)
         self.source_type = source_type
 
-    async def _get_session_response(self,
-                                    request_url: str,
-                                    do_rendering: bool = False,
-                                    parse_features: str = "html.parser",
-                                    session: AsyncHTMLSession = None) -> tuple[AsyncHTMLSession, HTMLResponse]:
+    async def _get_session_response(self, request_url: str):
         """非同期でページ取得する
 
         Notes:
@@ -81,46 +78,31 @@ class VideoInfoFetcherBase(ABC):
                                     リトライ回数超過時None
                                     正常時 response.html.lxml が非Noneであることが保証されたresponse
         """
-        if not session:
-            # セッション開始
-            session = AsyncHTMLSession()
-            browser = await pyppeteer.launch({
-                "ignoreHTTPSErrors": True,
-                "headless": True,
-                "handleSIGINT": False,
-                "handleSIGTERM": False,
-                "handleSIGHUP": False
-            })
-            session._browser = browser
+        # if not session:
+        #     # セッション開始
+        #     session = AsyncHTMLSession()
+        #     browser = await pyppeteer.launch({
+        #         "ignoreHTTPSErrors": True,
+        #         "headless": True,
+        #         "handleSIGINT": False,
+        #         "handleSIGTERM": False,
+        #         "handleSIGHUP": False
+        #     })
+        #     session._browser = browser
 
         response = None
         for _ in range(self.MAX_RETRY_NUM):
             try:
-                response = await session.get(request_url)
-                response.raise_for_status()
-
-                if do_rendering:
-                    await response.html.arender(sleep=2)
-                response.raise_for_status()
-
-                # if parse_features != "html.parser":
-                #     response.html._lxml = soup_parse(response.html.html, features=parse_features)
-
-                # response.html.lxml は内容は xml 形式の Element だが
-                # 改行や閉じタグが含まれるため html として解釈する
-                # その場合 bs4 から警告が出るので、それを抑制する
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
-                    if (response is not None) and (response.html.lxml is not None):
-                        break
-
-                await asyncio.sleep(1)
+                async with httpx.AsyncClient(follow_redirects=True) as client:
+                    response = await client.get(request_url)
+                    response.raise_for_status()
+                    break
             except Exception:
                 logger.error(traceback.format_exc())
         else:
             response = None
 
-        return (session, response)
+        return response
 
     async def _get_videoinfo_from_api(self, video_id_list: VideoidList) -> FetchedAPIVideoInfo:
         """動画IDからAPIを通して動画情報を取得する
@@ -145,37 +127,32 @@ class VideoInfoFetcherBase(ABC):
         uploaded_at_list = []
         video_url_list = []
         username_list = []
-        session: AsyncHTMLSession = None
         for video_id in video_id_list:
             url = self.API_URL_BASE + video_id.id
-            session, response = await self._get_session_response(url, False, "lxml-xml", session)
-            if response:
-                thumb_lx = response.html.lxml.findall("thumb")[0]
+            response = await self._get_session_response(url)
+            soup = BeautifulSoup(response.text, "lxml-xml")
+            if soup:
+                thumb_lx = soup.find_all("thumb")[0]
 
                 # 動画タイトル
-                title_lx = thumb_lx.findall("title")
+                title_lx = thumb_lx.find_all("title")
                 title = title_lx[0].text
                 title_list.append(Title(title))
 
                 # 投稿日時
-                uploaded_at_lx = thumb_lx.findall("first_retrieve")
+                uploaded_at_lx = thumb_lx.find_all("first_retrieve")
                 uploaded_at = datetime.strptime(uploaded_at_lx[0].text, src_df).strftime(dst_df)
                 uploaded_at_list.append(UploadedAt(uploaded_at))
 
                 # 動画URL
-                video_url_lx = thumb_lx.findall("watch_url")
+                video_url_lx = thumb_lx.find_all("watch_url")
                 video_url = video_url_lx[0].text
                 video_url_list.append(VideoURL.create(video_url))
 
                 # 投稿者
-                username_lx = thumb_lx.findall("user_nickname")
+                username_lx = thumb_lx.find_all("user_nickname")
                 username = username_lx[0].text
                 username_list.append(Username(username))
-
-        if session:
-            if session._browser:
-                await session._browser.disconnect()
-            await session.close()
 
         # ValueObjectに変換
         title_list = TitleList.create(title_list)

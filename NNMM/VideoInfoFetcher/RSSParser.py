@@ -194,8 +194,7 @@ if __name__ == "__main__":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     for url in urls:
         virf = VideoInfoRssFetcher(url)
-        session, response = loop.run_until_complete(virf._get_session_response(virf.mylist_url.fetch_url, False, "lxml-xml", None))
-        loop.run_until_complete(session.close())
+        response = loop.run_until_complete(virf._get_session_response(virf.mylist_url.fetch_url))
         soup = BeautifulSoup(response.text, "lxml-xml")
 
         rp = RSSParser(url, soup)

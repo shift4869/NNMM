@@ -4,6 +4,7 @@ import logging.config
 import pprint
 from dataclasses import dataclass
 from logging import INFO, getLogger
+from bs4 import BeautifulSoup
 
 from requests_html import HtmlElement
 
@@ -30,7 +31,7 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase):
         elif MylistURL.is_valid(url):
             self.mylist_url = MylistURL.create(url)
 
-    async def _analysis_html(self, lxml: HtmlElement) -> FetchedPageVideoInfo:
+    async def _analysis_html(self, soup: HtmlElement) -> FetchedPageVideoInfo:
         """htmlを解析する
 
         Notes:
@@ -46,7 +47,7 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase):
             AttributeError | ValueError: html解析失敗時
         """
         mylist_url = self.mylist_url.non_query_url
-        parser: HtmlParser = HtmlParser(mylist_url, lxml)
+        parser: HtmlParser = HtmlParser(mylist_url, soup)
         res = await parser.parse()
 
         if not res:
@@ -69,13 +70,13 @@ class VideoInfoHtmlFetcher(VideoInfoFetcherBase):
             FetchedVideoInfo.result (list[dict]): 動画情報をまとめた辞書リスト キーはFetchedVideoInfoを参照
         """
         # ページ取得
-        session, response = await self._get_session_response(self.mylist_url.non_query_url, True, "html.parser", None)
-        await session.close()
+        response = await self._get_session_response(self.mylist_url.non_query_url)
         if not response:
             raise ValueError("html request failed.")
 
         # 取得ページと動画IDから必要な情報を収集する
-        html_d = await self._analysis_html(response.html.lxml)
+        soup = BeautifulSoup(response.text, "lxml-xml")
+        html_d = await self._analysis_html(soup)
 
         video_id_list = html_d.video_id_list
         video_url_list = html_d.video_url_list

@@ -300,34 +300,26 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         mock.html = html
         return mock
 
-    def _make_session_response_mock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
-        async def return_session_response(request_url: str,
-                                          do_rendering: bool = False,
-                                          parse_features: str = "html.parser",
-                                          session: AsyncHTMLSession = None) -> tuple[AsyncMock, MagicMock]:
-            ar_session = AsyncMock()
+    def _make_session_response_mock(self, mock, status_code: int = 200, error_target: str = ""):
+        async def return_session_response(request_url: str) -> MagicMock:
             if error_target == "ValueError":
                 raise ValueError
             if status_code == 503:
-                return (ar_session, None)
+                return None
 
             r_response = self._make_response_mock(request_url, status_code, error_target)
-            return (ar_session, r_response)
-
+            return r_response
         mock.side_effect = return_session_response
         return mock
 
-    def _make_api_session_response_mock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
-        async def return_session_response(request_url: str, do_rendering: bool, session: AsyncHTMLSession = None) -> tuple[AsyncMock, MagicMock]:
-            ar_session = AsyncMock()
+    def _make_api_session_response_mock(self, mock, status_code: int = 200, error_target: str = ""):
+        async def return_session_response(request_url: str) -> MagicMock:
             if error_target == "ValueError":
                 raise ValueError
             if status_code == 503:
-                return (ar_session, None)
-
+                return None
             r_response = self._make_api_response_mock(request_url, status_code, error_target)
-            return (ar_session, r_response)
-
+            return r_response
         mock.side_effect = return_session_response
         return mock
 
