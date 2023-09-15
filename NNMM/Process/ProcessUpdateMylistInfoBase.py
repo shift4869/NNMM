@@ -152,49 +152,36 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         logger.info(f"{self.L_KIND} update thread done.")
         return 0
 
-    async def get_mylist_info_consumer(self, q: asyncio.Queue, all_index_num: int):
-        mylist_url = await q.get()
+    def get_mylist_info_worker(self, mylist_url: str, all_index_num: int):
         result = None
         try:
-            result = (mylist_url, await VideoInfoRssFetcher.fetch_videoinfo(mylist_url))
+            result = asyncio.run(VideoInfoRssFetcher.fetch_videoinfo(mylist_url))
         except Exception as e:
             pass
-        finally:
-            q.task_done()
 
-        if not result:
-            return []
+        with self.lock:
+            self.done_count = self.done_count + 1
 
         # 左下テキストボックスにプログレス表示
-        self.done_count = self.done_count + 1
-        # self.done_count = all_index_num - int(q._unfinished_tasks)
         p_str = f"取得中({self.done_count}/{all_index_num})"
         self.window["-INPUT2-"].update(value=p_str)
         logger.info(mylist_url + f" : getting done ... ({self.done_count}/{all_index_num}).")
         return result
 
-    async def get_mylist_info_producer(self, m_list: list[Mylist]):
-        q = asyncio.Queue()
-        all_index_num = len(m_list)
-        mylist_url_list = [record.get("url", "") for record in m_list]
-        thread_num = 4
-        result = []
-        # for i in range(0, len(mylist_url_list), thread_num):
-        #     mylist_url_slice = mylist_url_list[i:i + thread_num]
-        #     for mylist_url in mylist_url_slice:
-        #         await q.put(mylist_url)
-        #     tasks = [self.get_mylist_info_consumer(q, all_index_num) for _ in range(len(mylist_url_slice))]
-        #     result.extend(await asyncio.gather(*tasks, return_exceptions=True))
-        #     await asyncio.sleep(1)
-        for mylist_url in mylist_url_list:
-            await q.put(mylist_url)
-        tasks = [self.get_mylist_info_consumer(q, all_index_num) for _ in range(len(mylist_url_list))]
-        result.extend(await asyncio.gather(*tasks, return_exceptions=True))
-        return result
-
     def get_mylist_info_execute(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
-        result_buf = asyncio.run(self.get_mylist_info_producer(m_list))
-        result_buf = [result if isinstance(result, list) else [] for result in result_buf]
+        result_buf = []
+        # result_buf = asyncio.run(self.get_mylist_info_producer(m_list))
+        # result_buf = [result if isinstance(result, list) else [] for result in result_buf]
+        all_index_num = len(m_list)
+        with ThreadPoolExecutor(max_workers=8, thread_name_prefix="ap_thread") as executor:
+            futures = []
+            for record in m_list:
+                mylist_url = record.get("url", "")
+                future = executor.submit(
+                    self.get_mylist_info_worker, mylist_url, all_index_num
+                )
+                futures.append((mylist_url, future))
+            result_buf = [(f[0], f[1].result()) for f in futures]
         return result_buf
 
     def update_mylist_info_execute(self, m_list: list[Mylist], prev_video_lists: list[list[MylistInfo]], now_video_lists: list[list[MylistInfo]]) -> list[int]:
