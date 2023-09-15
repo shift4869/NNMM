@@ -117,32 +117,35 @@ class VideoInfoFetcherBase(ABC):
         uploaded_at_list = []
         video_url_list = []
         username_list = []
-        for video_id in video_id_list:
-            url = self.API_URL_BASE + video_id.id
-            response = await self._get_session_response(url)
-            soup = BeautifulSoup(response.text, "lxml-xml")
-            if soup:
-                thumb_lx = soup.find_all("thumb")[0]
+        with httpx.Client(follow_redirects=True, timeout=httpx.Timeout(60, read=10)) as client:
+            for video_id in video_id_list:
+                url = self.API_URL_BASE + video_id.id
+                # response = await self._get_session_response(url)
+                response = client.get(url)
+                response.raise_for_status()
+                soup = BeautifulSoup(response.text, "lxml-xml")
+                if soup:
+                    thumb_lx = soup.find_all("thumb")[0]
 
-                # 動画タイトル
-                title_lx = thumb_lx.find_all("title")
-                title = title_lx[0].text
-                title_list.append(Title(title))
+                    # 動画タイトル
+                    title_lx = thumb_lx.find_all("title")
+                    title = title_lx[0].text
+                    title_list.append(Title(title))
 
-                # 投稿日時
-                uploaded_at_lx = thumb_lx.find_all("first_retrieve")
-                uploaded_at = datetime.strptime(uploaded_at_lx[0].text, src_df).strftime(dst_df)
-                uploaded_at_list.append(UploadedAt(uploaded_at))
+                    # 投稿日時
+                    uploaded_at_lx = thumb_lx.find_all("first_retrieve")
+                    uploaded_at = datetime.strptime(uploaded_at_lx[0].text, src_df).strftime(dst_df)
+                    uploaded_at_list.append(UploadedAt(uploaded_at))
 
-                # 動画URL
-                video_url_lx = thumb_lx.find_all("watch_url")
-                video_url = video_url_lx[0].text
-                video_url_list.append(VideoURL.create(video_url))
+                    # 動画URL
+                    video_url_lx = thumb_lx.find_all("watch_url")
+                    video_url = video_url_lx[0].text
+                    video_url_list.append(VideoURL.create(video_url))
 
-                # 投稿者
-                username_lx = thumb_lx.find_all("user_nickname")
-                username = username_lx[0].text
-                username_list.append(Username(username))
+                    # 投稿者
+                    username_lx = thumb_lx.find_all("user_nickname")
+                    username = username_lx[0].text
+                    username_list.append(Username(username))
 
         # ValueObjectに変換
         title_list = TitleList.create(title_list)
