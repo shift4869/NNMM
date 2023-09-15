@@ -267,7 +267,7 @@ class ConcreteProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateM
             self.assertEqual(NUM, len(mc))
             for mc_e, func, record in zip(mc, f_list, m_list):
                 mylist_url = record.get("url")
-                self.assertEqual(call(puami.get_mylist_info_worker, func, mylist_url, NUM), mc_e)
+                self.assertEqual(call(puami.get_mylist_info_consumer, func, mylist_url, NUM), mc_e)
             r.submit.reset_mock()
 
             mc = mocktpe.mock_calls
@@ -311,7 +311,7 @@ class ConcreteProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateM
             func.side_effect = lambda url: [url]
             mylist_url = "https://www.nicovideo.jp/user/10000001/video"
             expect = [mylist_url]
-            actual = puami.get_mylist_info_worker(func, mylist_url, NUM)
+            actual = puami.get_mylist_info_consumer(func, mylist_url, NUM)
             self.assertEqual(expect, actual)
             self.assertEqual(1, puami.done_count)
 
@@ -330,18 +330,18 @@ class ConcreteProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateM
             # 異常系
             # funcが呼び出し可能でない
             func = "不正なメソッド指定"
-            actual = puami.get_mylist_info_worker(func, mylist_url, NUM)
+            actual = puami.get_mylist_info_consumer(func, mylist_url, NUM)
             self.assertEqual([], actual)
 
             # マイリストURLが空
             func = AsyncMock()
             mylist_url = ""
-            actual = puami.get_mylist_info_worker(func, mylist_url, NUM)
+            actual = puami.get_mylist_info_consumer(func, mylist_url, NUM)
             self.assertEqual([], actual)
 
             # 属性エラー
             del puami.window
-            actual = puami.get_mylist_info_worker(func, mylist_url, NUM)
+            actual = puami.get_mylist_info_consumer(func, mylist_url, NUM)
             self.assertEqual([], actual)
 
     def test_update_mylist_info_execute(self):

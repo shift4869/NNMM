@@ -17,13 +17,12 @@ class Title():
 
     def __post_init__(self) -> None:
         """初期化後処理
-
-        バリデーションのみ
         """
         if not isinstance(self._name, str):
             raise TypeError("name is not string, invalid Title.")
         if self._name == "":
             raise ValueError("empty string, invalid Title")
+        object.__setattr__(self, "_name", self._name.strip())
 
     @property
     def name(self) -> str:

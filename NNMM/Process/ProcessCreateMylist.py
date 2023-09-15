@@ -13,7 +13,6 @@ from requests_html import AsyncHTMLSession
 from NNMM import ConfigMain
 from NNMM.GuiFunction import get_mylist_type, get_now_datetime, popup_get_text, update_mylist_pane, update_table_pane
 from NNMM.Process import ProcessBase
-from NNMM.VideoInfoFetcher.VideoInfoHtmlFetcher import VideoInfoHtmlFetcher
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)

@@ -4,11 +4,12 @@ import pprint
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
-from bs4 import BeautifulSoup, Tag
+import xmltodict
 
+from NNMM.VideoInfoFetcher.Util import find_values
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedPageVideoInfo import FetchedPageVideoInfo
-from NNMM.VideoInfoFetcher.ValueObjects.ItemInfo import ItemInfo
 from NNMM.VideoInfoFetcher.ValueObjects.Mylistid import Mylistid
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname
@@ -28,48 +29,18 @@ from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 @dataclass
 class RSSParser():
     mylist_url: UploadedURL | MylistURL
-    soup: BeautifulSoup
+    xml_dict: dict
 
     # 日付フォーマット
     SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-    def __init__(self, url: str, soup: BeautifulSoup):
+    def __init__(self, url: str, xml_text: str):
         if UploadedURL.is_valid(url):
             self.mylist_url = UploadedURL.create(url)
         elif MylistURL.is_valid(url):
             self.mylist_url = MylistURL.create(url)
-        self.soup = soup
-
-    def _get_iteminfo(self, item_lx: Tag) -> ItemInfo:
-        """一つのentryから動画ID, 動画タイトル, 投稿日時, 動画URLを抽出する
-
-        Notes:
-            投稿日時は "%Y-%m-%d %H:%M:%S" のフォーマットで返す
-            抽出結果のチェックはしない
-
-        Args:
-            item_lx (bs4.element.Tag): soup.find_allで取得されたitemタグ
-
-        Returns:
-            ItemInfo: 動画ID, 動画タイトル, 登録日時, 動画URL
-
-        Raises:
-            AttributeError, TypeError: エントリパース失敗時
-            ValueError: datetime.strptime 投稿日時解釈失敗時
-        """
-        RP = RSSParser
-
-        title = Title(item_lx.find("title").text)
-
-        link_lx = item_lx.find("link")
-        video_url = VideoURL.create(link_lx.text)
-
-        pubDate_lx = item_lx.find("pubDate")
-        dst = datetime.strptime(pubDate_lx.text, RP.SOURCE_DATETIME_FORMAT)
-        registered_at = RegisteredAt(dst.strftime(RP.DESTINATION_DATETIME_FORMAT))
-
-        return ItemInfo(title, registered_at, video_url)
+        self.xml_dict = xmltodict.parse(xml_text)
 
     def _get_mylist_url(self) -> UploadedURL | MylistURL:
         """マイリストURL
@@ -88,12 +59,11 @@ class RSSParser():
         """
         if isinstance(self.mylist_url, UploadedURL):
             # タイトルからユーザー名を取得
-            title_lx = self.soup.find_all("title")
+            title = find_values(self.xml_dict, "title", ["rss", "channel"], [], True)
             pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
-            username = re.findall(pattern, title_lx[0].text)[0]
+            username = re.findall(pattern, title)[0]
         elif isinstance(self.mylist_url, MylistURL):
-            creator_lx = self.soup.find_all("dc:creator")
-            username = creator_lx[0].text
+            username = find_values(self.xml_dict, "dc:creator", [], [], True)
         return Username(username)
 
     def _get_showname_myshowname(self) -> tuple[Showname, Myshowname]:
@@ -106,9 +76,8 @@ class RSSParser():
             return (showname, myshowname)
         elif isinstance(self.mylist_url, MylistURL):
             # マイリストの場合はタイトルから取得
-            title_lx = self.soup.find_all("title")
+            page_title = find_values(self.xml_dict, "title", ["rss", "channel"], ["item"], True)
             pattern = "^マイリスト (.*)‐ニコニコ動画$"
-            page_title = title_lx[0].text
             myshowname = Myshowname(re.findall(pattern, page_title)[0])
             showname = Showname.create(username, myshowname)
             return (showname, myshowname)
@@ -138,24 +107,36 @@ class RSSParser():
         showname, myshowname = self._get_showname_myshowname()
 
         # 動画エントリ取得
-        video_id_list = []
-        title_list = []
-        registered_at_list = []
-        video_url_list = []
-        items_lx = self.soup.find_all("item")
-        for item in items_lx:
-            # 動画エントリパース
-            iteminfo = self._get_iteminfo(item)
-            video_id = iteminfo.video_id
-            title = iteminfo.title
-            registered_at = iteminfo.registered_at
-            video_url = iteminfo.video_url
-
-            # 格納
-            video_id_list.append(video_id)
-            title_list.append(title)
-            registered_at_list.append(registered_at)
-            video_url_list.append(video_url)
+        items_dict = find_values(self.xml_dict, "item", [], [], True)
+        video_url_list = [
+            VideoURL.create(video_url)
+            for video_url in find_values(items_dict, "link", [], [], False)
+        ]
+        video_id_list = [
+            video_url.video_id
+            for video_url in video_url_list
+        ]
+        title_list = [
+            Title(title)
+            for title in find_values(items_dict, "title", [], [], False)
+        ]
+        registered_at_list = [
+            RegisteredAt(
+                datetime.strptime(
+                    pub_date, self.SOURCE_DATETIME_FORMAT
+                ).strftime(self.DESTINATION_DATETIME_FORMAT)
+            )
+            for pub_date in find_values(items_dict, "pubDate", [], [], False)
+        ]
+        num = len(video_url_list)
+        check_list = [
+            num == len(video_url_list),
+            num == len(video_id_list),
+            num == len(title_list),
+            num == len(registered_at_list),
+        ]
+        if not all(check_list):
+            raise ValueError("video entry parse failed.")
 
         # ValueObjectに変換
         video_id_list = VideoidList.create(video_id_list)
@@ -164,7 +145,6 @@ class RSSParser():
         video_url_list = VideoURLList.create(video_url_list)
 
         # 返り値設定
-        num = len(title_list)
         res = {
             "no": list(range(1, num + 1)),              # No. [1, ..., len()-1]
             "userid": userid,                           # ユーザーID 1234567
@@ -195,9 +175,7 @@ if __name__ == "__main__":
     for url in urls:
         virf = VideoInfoRssFetcher(url)
         response = loop.run_until_complete(virf._get_session_response(virf.mylist_url.fetch_url))
-        soup = BeautifulSoup(response.text, "lxml-xml")
-
-        rp = RSSParser(url, soup)
+        rp = RSSParser(url, response.text)
         soup_d = loop.run_until_complete(rp.parse())
 
         pprint.pprint(soup_d.to_dict())

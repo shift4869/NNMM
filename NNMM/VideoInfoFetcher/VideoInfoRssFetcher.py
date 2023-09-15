@@ -36,25 +36,9 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
         elif MylistURL.is_valid(url):
             self.mylist_url = MylistURL.create(url)
 
-    async def _analysis_rss(self, soup: BeautifulSoup) -> FetchedPageVideoInfo:
-        """RSSを解析する
-
-        Notes:
-            url_typeから投稿動画ページかマイリストページかを識別して処理を分ける
-            解析結果のdictの値の正当性はチェックしない
-
-        Args:
-            soup (BeautifulSoup): 解析対象のxml
-
-        Returns:
-            FetchedPageVideoInfo: 解析結果
-
-        Raises:
-            IndexError, TypeError: html解析失敗時
-            ValueError: url_typeが不正 または html解析失敗時
-        """
+    async def _analysis_rss(self, xml_text: str) -> FetchedPageVideoInfo:
         mylist_url = self.mylist_url.non_query_url
-        parser: RSSParser = RSSParser(mylist_url, soup)
+        parser: RSSParser = RSSParser(mylist_url, xml_text)
         res = await parser.parse()
 
         if not res:
@@ -81,29 +65,20 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
         if not response:
             raise ValueError("rss request failed.")
 
-        # RSS一時保存（DEBUG用）
-        # config = ConfigMain.ProcessConfigBase.get_config()
-        # rd_str = config["general"].get("rss_save_path", "")
-        # rd_path = Path(rd_str)
-        # rd_path.mkdir(exist_ok=True, parents=True)
-        # with (rd_path / "current.xml").open("w", encoding="utf-8") as fout:
-        #     fout.write(response.text)
-
         # RSSから必要な情報を収集する
-        soup = BeautifulSoup(response.text, "lxml-xml")
-        soup_d = await self._analysis_rss(soup)
+        rss_d = await self._analysis_rss(response.text)
 
-        userid = soup_d.userid
-        mylistid = soup_d.mylistid
-        video_id_list = soup_d.video_id_list
+        userid = rss_d.userid
+        mylistid = rss_d.mylistid
+        video_id_list = rss_d.video_id_list
 
         # 動画IDについてAPIを通して情報を取得する
         api_d = await self._get_videoinfo_from_api(video_id_list)
 
         # バリデーション
-        if soup_d.title_list != api_d.title_list:
+        if rss_d.title_list != api_d.title_list:
             raise ValueError("video title from rss and from api is different.")
-        if soup_d.video_url_list != api_d.video_url_list:
+        if rss_d.video_url_list != api_d.video_url_list:
             raise ValueError("video url from rss and from api is different.")
 
         # config取得
@@ -127,7 +102,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             pass  # 仮に書き込みに失敗しても以降の処理は続行する
 
         # 結合
-        video_d = FetchedVideoInfo.merge(soup_d, api_d)
+        video_d = FetchedVideoInfo.merge(rss_d, api_d)
         return video_d.result
 
     async def _fetch_videoinfo(self) -> list[dict]:

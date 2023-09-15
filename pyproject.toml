@@ -27,6 +27,7 @@ python = ">=3.9,<4.0"
 requests = "^2.28.2"
 requests-html = "^0.10.0"
 sqlalchemy = "^1.4.46"
+xmltodict = "^0.13.0"
 
 [tool.poetry.dev-dependencies]
 

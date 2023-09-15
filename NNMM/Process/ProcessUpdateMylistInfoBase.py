@@ -49,36 +49,6 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         """
         return []
 
-    def get_function_list(self, m_list: list[Mylist]) -> list[Callable[[str], list[dict]]]:
-        """それぞれのマイリストごとに初回ロードか確認し、
-           簡易版かレンダリング版かどちらで更新するかをリストで返す
-
-        Args:
-            m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
-                                   mylist_db.select系の返り値
-
-        Returns:
-            list[Callable[[str], list[dict]]]: それぞれのマイリストを更新するためのメソッドリスト、エラー時空リスト
-        """
-        # 属性チェック
-        if not hasattr(self, "mylist_info_db"):
-            logger.error(f"{self.L_KIND} GetFunctionList failed, attribute error.")
-            return []
-
-        func_list = []
-        for record in m_list:
-            # html解析が失敗するため一旦RSS更新のみとする
-            # mylist_url = record.get("url")
-            # prev_video_list = self.mylist_info_db.select_from_mylist_url(mylist_url)
-            # if not prev_video_list:
-            #     # 初めての動画情報取得ならページをレンダリングして取得
-            #     func_list.append(VideoInfoHtmlFetcher.fetch_videoinfo)
-            # else:
-            #     # 既に動画情報が存在するならRSSから取得
-            #     func_list.append(VideoInfoRssFetcher.fetch_videoinfo)
-            func_list.append(VideoInfoRssFetcher.fetch_videoinfo)
-        return func_list
-
     def get_prev_video_lists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
         """それぞれのマイリストごとに既存のレコードを取得する
 
@@ -157,14 +127,14 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
             self.window.write_event_value(self.E_DONE, "")
             return 1
 
-        func_list = self.get_function_list(m_list)
+        # func_list = self.get_function_list(m_list)
         prev_video_lists = self.get_prev_video_lists(m_list)
 
         # マルチスレッドですべてのマイリストの情報を取得する
         # now_video_listsにすべてのthreadの結果を格納して以降で利用する
         start = time.time()
         self.done_count = 0
-        now_video_lists = self.get_mylist_info_execute(func_list, m_list)
+        now_video_lists = self.get_mylist_info_execute(m_list)
         elapsed_time = time.time() - start
         logger.info(f"{self.L_KIND} getting done elapsed time : {elapsed_time:.2f} [sec]")
 
@@ -182,85 +152,50 @@ class ProcessUpdateMylistInfoBase(ProcessBase.ProcessBase):
         logger.info(f"{self.L_KIND} update thread done.")
         return 0
 
-    def get_mylist_info_execute(self, func_list: list[Callable[[str], list[dict]]], m_list: list[Mylist]) -> list[list[MylistInfo]]:
-        """それぞれのマイリストを引数に動画情報を取得する
+    async def get_mylist_info_consumer(self, q: asyncio.Queue, all_index_num: int):
+        mylist_url = await q.get()
+        result = None
+        try:
+            result = (mylist_url, await VideoInfoRssFetcher.fetch_videoinfo(mylist_url))
+        except Exception as e:
+            pass
+        finally:
+            q.task_done()
 
-        Args:
-            func_list (list[Callable[[str], list[dict]]]): それぞれのマイリストを更新するためのメソッドリスト
-            m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
-                                   mylist_db.select系の返り値
-
-        Returns:
-            list[list[MylistInfo]]: それぞれのマイリストについて取得した動画情報のリストのリスト
-                                    エラー時空リスト
-        """
-        result_buf = []
-        all_index_num = len(m_list)
-
-        # リストの大きさが一致しない場合はエラー
-        if len(func_list) != len(m_list):
+        if not result:
             return []
-
-        # ワーカースレッドを作成
-        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ap_thread") as executor:
-            futures = []
-
-            # 引数のメソッドリストとマイリストレコードリストをワーカーに渡す
-            for func, record in zip(func_list, m_list, strict=True):
-                mylist_url = record.get("url", "")
-
-                # メソッドが呼び出し可能でない または マイリストURLが空 ならばエラー
-                if not callable(func) or mylist_url == "":
-                    return []
-
-                # ワーカー起動
-                future = executor.submit(self.get_mylist_info_worker, func, mylist_url, all_index_num)
-                futures.append((mylist_url, future))
-
-            # 結果を取得する（futureパターン）
-            result_buf = [(f[0], f[1].result()) for f in futures]
-        # 結果を返す
-        return result_buf
-
-    def get_mylist_info_worker(self, func: Callable[[str], list[dict]], url: str, all_index_num: int) -> list[MylistInfo]:
-        """動画情報を取得するワーカー
-
-        Args:
-            func (Callable[[str], list[dict]]):
-                マイリスト情報取得用メソッド、以下のどちらかを想定している(async)
-                GetMyListInfo.AsyncGetMyListInfo
-                GetMyListInfo.AsyncGetMyListInfoLightWeight
-            url (str): マイリストURL
-            all_index_num (int): ワーカー全体数
-
-        Returns:
-            list[MylistInfo]: マイリストURLについて取得した動画情報のリスト
-                              エラー時空リスト
-        """
-        # 属性チェック
-        if not (set(["lock", "done_count", "window"]) <= set(dir(self))):
-            return []
-
-        # 引数チェック
-        if not callable(func) or url == "":
-            return []
-
-        # 処理カウントを進める
-        with self.lock:
-            self.done_count = self.done_count + 1
-
-        # マイリスト情報取得
-        # asyncなのでイベントループを張る
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        res = loop.run_until_complete(func(url))
-        loop.close()
 
         # 左下テキストボックスにプログレス表示
+        self.done_count = self.done_count + 1
+        # self.done_count = all_index_num - int(q._unfinished_tasks)
         p_str = f"取得中({self.done_count}/{all_index_num})"
         self.window["-INPUT2-"].update(value=p_str)
-        logger.info(url + f" : getting done ... ({self.done_count}/{all_index_num}).")
-        return res
+        logger.info(mylist_url + f" : getting done ... ({self.done_count}/{all_index_num}).")
+        return result
+
+    async def get_mylist_info_producer(self, m_list: list[Mylist]):
+        q = asyncio.Queue()
+        all_index_num = len(m_list)
+        mylist_url_list = [record.get("url", "") for record in m_list]
+        thread_num = 4
+        result = []
+        # for i in range(0, len(mylist_url_list), thread_num):
+        #     mylist_url_slice = mylist_url_list[i:i + thread_num]
+        #     for mylist_url in mylist_url_slice:
+        #         await q.put(mylist_url)
+        #     tasks = [self.get_mylist_info_consumer(q, all_index_num) for _ in range(len(mylist_url_slice))]
+        #     result.extend(await asyncio.gather(*tasks, return_exceptions=True))
+        #     await asyncio.sleep(1)
+        for mylist_url in mylist_url_list:
+            await q.put(mylist_url)
+        tasks = [self.get_mylist_info_consumer(q, all_index_num) for _ in range(len(mylist_url_list))]
+        result.extend(await asyncio.gather(*tasks, return_exceptions=True))
+        return result
+
+    def get_mylist_info_execute(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
+        result_buf = asyncio.run(self.get_mylist_info_producer(m_list))
+        result_buf = [result if isinstance(result, list) else [] for result in result_buf]
+        return result_buf
 
     def update_mylist_info_execute(self, m_list: list[Mylist], prev_video_lists: list[list[MylistInfo]], now_video_lists: list[list[MylistInfo]]) -> list[int]:
         """それぞれのマイリスト情報を更新する

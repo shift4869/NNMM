@@ -12,11 +12,13 @@ from logging import INFO, getLogger
 
 import httpx
 import pyppeteer
+import xmltodict
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 from lxml.html.soupparser import fromstring as soup_parse
 from requests_html import AsyncHTMLSession, HTMLResponse
 
 from NNMM import ConfigMain
+from NNMM.VideoInfoFetcher.Util import find_values
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.Title import Title
@@ -78,22 +80,10 @@ class VideoInfoFetcherBase(ABC):
                                     リトライ回数超過時None
                                     正常時 response.html.lxml が非Noneであることが保証されたresponse
         """
-        # if not session:
-        #     # セッション開始
-        #     session = AsyncHTMLSession()
-        #     browser = await pyppeteer.launch({
-        #         "ignoreHTTPSErrors": True,
-        #         "headless": True,
-        #         "handleSIGINT": False,
-        #         "handleSIGTERM": False,
-        #         "handleSIGHUP": False
-        #     })
-        #     session._browser = browser
-
         response = None
         for _ in range(self.MAX_RETRY_NUM):
             try:
-                async with httpx.AsyncClient(follow_redirects=True) as client:
+                async with httpx.AsyncClient(follow_redirects=True, timeout=httpx.Timeout(60, read=10)) as client:
                     response = await client.get(request_url)
                     response.raise_for_status()
                     break
@@ -200,7 +190,10 @@ if __name__ == "__main__":
             super().__init__(url, SourceType.HTML)
 
         async def _fetch_videoinfo(self) -> list[dict]:
-            return await self._get_videoinfo_from_api(VideoidList.create(["sm2959233", "sm500873", "sm9"]))
+            return await self._get_videoinfo_from_api(
+                VideoidList.create(["sm2959233", "sm500873", "sm9"])
+                # VideoidList.create([f"sm{i}" for i in range(100)])
+            )
 
     urls = [
         # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
