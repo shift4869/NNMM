@@ -1,14 +1,9 @@
-# coding: utf-8
-import asyncio
 import re
-import traceback
 import urllib.parse
 from logging import INFO, getLogger
 from time import sleep
 
-import pyppeteer
 import PySimpleGUI as sg
-from requests_html import AsyncHTMLSession
 
 from NNMM import ConfigMain
 from NNMM.GuiFunction import get_mylist_type, get_now_datetime, popup_get_text, update_mylist_pane, update_table_pane
@@ -21,111 +16,6 @@ logger.setLevel(INFO)
 class ProcessCreateMylist(ProcessBase.ProcessBase):
     def __init__(self):
         super().__init__(True, False, "マイリスト追加")
-
-    async def AsyncGetMyListInfo(self, url: str) -> dict:
-        """マイリスト情報を取得する
-
-        Notes:
-            以下をキーとする情報を辞書で返す
-            table_cols_name = ["作成者", "マイリストURL", "マイリスト表示名", "マイリスト名"]
-            table_cols = ["username", "mylist_url", "showname", "mylistname"]
-            実際に内部ブラウザでページを開き、
-            レンダリングして最終的に表示されたページから動画情報をスクレイピングする
-            動画が一つも登録されていないマイリストを前提とするため、動画情報は取得しない
-
-        Args:
-            url (str): 投稿動画ページのアドレス
-
-        Returns:
-            mylist_info (dict): マイリスト情報をまとめた辞書 キーはNotesを参照, エラー時 空辞書
-        """
-        # 入力チェック
-        url_type = get_mylist_type(url)
-        if url_type not in ["uploaded", "mylist"]:
-            logger.error("url_type is invalid , not target url.")
-            return {}
- 
-        # セッション開始
-        session = AsyncHTMLSession()
-        browser = await pyppeteer.launch({
-            "ignoreHTTPSErrors": True,
-            "headless": True,
-            "handleSIGINT": False,
-            "handleSIGTERM": False,
-            "handleSIGHUP": False
-        })
-        session._browser = browser
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36"
-        }
-
-        username = ""
-        test_count = 0
-        MAX_TEST_NUM = 5
-        while True:
-            # ブラウザエンジンでHTMLを生成
-            # 初回起動時はchromiumインストールのために時間がかかる
-            try:
-                response = await session.get(url, headers=headers)
-                await response.html.arender()
-
-                # 投稿者収集
-                # ひとまず投稿動画の投稿者のみ（単一）
-                username = ""
-                username_lx = response.html.lxml.find_class("UserDetailsHeader-nickname")
-                if username_lx != []:
-                    username = username_lx[0].text
-
-            except Exception as e:
-                logger.error(traceback.format_exc())
-                pass
-
-            if (username != "") or (test_count > MAX_TEST_NUM):
-                break
-            test_count = test_count + 1
-            sleep(3)
-
-        # responseの取得成否に関わらずセッションは閉じる
-        await session.close()
-
-        # {MAX_TEST_NUM}回レンダリングしても失敗した場合はエラー
-        if test_count > MAX_TEST_NUM:
-            logger.error("HTML pages request failed.")
-            return {}
-
-        # マイリスト作成者情報が取得できなかった場合は空リストを返して終了
-        if username == "":
-            logger.warning("HTML pages request is success , but username is nothing.")
-            return {}
-
-        # ループ脱出後はレンダリングが正常に行えたことが保証されている
-        # マイリスト情報を集める
-        table_cols_name = ["作成者", "マイリストURL", "マイリスト表示名", "マイリスト名"]
-        table_cols = ["username", "mylist_url", "showname", "mylistname"]
-        mylist_url = url
-
-        # マイリスト名収集
-        showname = ""
-        myshowname = ""
-        if url_type == "uploaded":
-            showname = f"{username}さんの投稿動画"
-            myshowname = "投稿動画"
-        elif url_type == "mylist":
-            myshowname_lx = response.html.lxml.find_class("MylistHeader-name")
-            if myshowname_lx == []:
-                logger.error("myshowname parse failed.")
-                return {}
-            myshowname = myshowname_lx[0].text
-            showname = f"「{myshowname}」-{username}さんのマイリスト"
-
-        # 結合
-        res = {}
-        value_list = [username, mylist_url, showname, myshowname]
-        if len(table_cols) != len(value_list):
-            return {}
-        res = dict(zip(table_cols, value_list))
-
-        return res
 
     def run(self, mw) -> int:
         """マイリスト追加ボタン押下時の処理

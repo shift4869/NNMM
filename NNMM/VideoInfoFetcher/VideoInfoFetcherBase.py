@@ -3,7 +3,6 @@ import asyncio
 import logging.config
 import pprint
 import traceback
-import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
@@ -11,14 +10,9 @@ from enum import Enum
 from logging import INFO, getLogger
 
 import httpx
-import pyppeteer
-import xmltodict
-from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
-from lxml.html.soupparser import fromstring as soup_parse
-from requests_html import AsyncHTMLSession, HTMLResponse
+from bs4 import BeautifulSoup
 
 from NNMM import ConfigMain
-from NNMM.VideoInfoFetcher.Util import find_values
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.Title import Title
