@@ -167,7 +167,7 @@ class TestProcessDownload(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch.object(logger, "error"))
-            mocknico = stack.enter_context(patch("niconico_dl.NicoNicoVideo"))
+            # mocknico = stack.enter_context(patch("niconico_dl.NicoNicoVideo"))
 
             pdl = ProcessDownload.ProcessDownload()
 

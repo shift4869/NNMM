@@ -73,7 +73,7 @@ class ProcessTimer(ProcessBase.ProcessBase):
             return -1
 
         # スキップ判定
-        pattern = "^更新中\([0-9]+\/[0-9]+\)$|^更新中$"
+        pattern = r"^更新中\([0-9]+\/[0-9]+\)$|^更新中$"
         v = self.window["-INPUT2-"].get()
         if self.values.get("-TIMER_SET-") == "-FIRST_SET-":
             # 初回起動ならスキップ

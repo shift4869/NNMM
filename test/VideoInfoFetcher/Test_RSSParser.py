@@ -9,7 +9,7 @@ import sys
 import unittest
 from datetime import datetime
 
-from bs4 import BeautifulSoup
+import xmltodict
 
 from NNMM.VideoInfoFetcher.RSSParser import RSSParser
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedPageVideoInfo import FetchedPageVideoInfo
@@ -108,19 +108,19 @@ class TestRSSParser(unittest.TestCase):
                 xml += f"<pubDate>{registered_at}</pubDate>"
             xml += "</item>"
 
-        xml += "</rss></channel>"
+        xml += "</channel></rss>"
         return xml
 
     def iteminfo(self, item_lx) -> ItemInfo:
         RP = RSSParser
 
-        title = Title(item_lx.find("title").text)
+        title = Title(item_lx["title"])
 
-        link_lx = item_lx.find("link")
-        video_url = VideoURL.create(link_lx.text)
+        link_lx = item_lx["link"]
+        video_url = VideoURL.create(link_lx)
 
-        pubDate_lx = item_lx.find("pubDate")
-        dst = datetime.strptime(pubDate_lx.text, RP.SOURCE_DATETIME_FORMAT)
+        pubDate_lx = item_lx["pubDate"]
+        dst = datetime.strptime(pubDate_lx, RP.SOURCE_DATETIME_FORMAT)
         registered_at = RegisteredAt(dst.strftime(RP.DESTINATION_DATETIME_FORMAT))
         return ItemInfo(title, registered_at, video_url)
 
@@ -130,8 +130,8 @@ class TestRSSParser(unittest.TestCase):
         urls = self._get_url_set()
         for url in urls:
             xml = self._make_xml(url)
-            soup = BeautifulSoup(xml, "lxml-xml")
-            rp = RSSParser(url, soup)
+            xml_dict = xmltodict.parse(xml)
+            rp = RSSParser(url, xml)
 
             if UploadedURL.is_valid(url):
                 mylist_url = UploadedURL.create(url)
@@ -139,37 +139,21 @@ class TestRSSParser(unittest.TestCase):
                 mylist_url = MylistURL.create(url)
 
             self.assertEqual(mylist_url, rp.mylist_url)
-            self.assertEqual(soup, rp.soup)
+            self.assertEqual(xml_dict, rp.xml_dict)
 
             # TODO::入力値チェックを入れる
-
-    def test_get_iteminfo(self):
-        """_get_iteminfo のテスト
-        """
-        url = self._get_url_set()[0]
-        xml = self._make_xml(url)
-        soup = BeautifulSoup(xml, "lxml-xml")
-        rp = RSSParser(url, soup)
-        items_lx = soup.find_all("item")
-
-        for item in items_lx:
-            expect = self.iteminfo(item)
-            actual = rp._get_iteminfo(item)
-            self.assertEqual(expect, actual)
 
     def test_get_mylist_url(self):
         """_get_mylist_url のテスト
         """
         url = self._get_url_set()[0]
         xml = self._make_xml(url)
-        soup = BeautifulSoup(xml, "lxml-xml")
-        rp = RSSParser(url, soup)
+        rp = RSSParser(url, xml)
         self.assertEqual(UploadedURL.create(url), rp._get_mylist_url())
 
         url = self._get_url_set()[2]
         xml = self._make_xml(url)
-        soup = BeautifulSoup(xml, "lxml-xml")
-        rp = RSSParser(url, soup)
+        rp = RSSParser(url, xml)
         self.assertEqual(MylistURL.create(url), rp._get_mylist_url())
 
     def test_get_userid_mylistid(self):
@@ -182,9 +166,8 @@ class TestRSSParser(unittest.TestCase):
             elif MylistURL.is_valid(url):
                 mylist_url = MylistURL.create(url)
             xml = self._make_xml(url)
-            soup = BeautifulSoup(xml, "lxml-xml")
 
-            rp = RSSParser(URL(url).non_query_url, soup)
+            rp = RSSParser(URL(url).non_query_url, xml)
 
             expect = (mylist_url.userid, mylist_url.mylistid)
             actual = rp._get_userid_mylistid()
@@ -196,27 +179,27 @@ class TestRSSParser(unittest.TestCase):
         # 投稿動画
         url = self._get_url_set()[0]
         xml = self._make_xml(url)
-        soup = BeautifulSoup(xml, "lxml-xml")
+        xml_dict = xmltodict.parse(xml)
 
         mylist_url = URL(url).non_query_url
-        rp = RSSParser(mylist_url, soup)
+        rp = RSSParser(mylist_url, xml)
 
-        title_lx = soup.find_all("title")
+        title_lx = xml_dict["rss"]["channel"]["title"]
         pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
-        expect = Username(re.findall(pattern, title_lx[0].text)[0])
+        expect = Username(re.findall(pattern, title_lx)[0])
         actual = rp._get_username()
         self.assertEqual(expect, actual)
 
         # マイリスト
         url = self._get_url_set()[2]
         xml = self._make_xml(url)
-        soup = BeautifulSoup(xml, "lxml-xml")
+        xml_dict = xmltodict.parse(xml)
 
         mylist_url = URL(url).non_query_url
-        rp = RSSParser(mylist_url, soup)
+        rp = RSSParser(mylist_url, xml)
 
-        creator_lx = soup.find_all("dc:creator")
-        expect = Username(creator_lx[0].text)
+        creator_lx = xml_dict["rss"]["channel"]["dc:creator"]
+        expect = Username(creator_lx)
         actual = rp._get_username()
         self.assertEqual(expect, actual)
 
@@ -226,10 +209,10 @@ class TestRSSParser(unittest.TestCase):
         # 投稿動画
         url = self._get_url_set()[0]
         xml = self._make_xml(url)
-        soup = BeautifulSoup(xml, "lxml-xml")
+        xml_dict = xmltodict.parse(xml)
 
         mylist_url = URL(url).non_query_url
-        rp = RSSParser(mylist_url, soup)
+        rp = RSSParser(mylist_url, xml)
 
         username = rp._get_username()
         myshowname = Myshowname("投稿動画")
@@ -241,18 +224,18 @@ class TestRSSParser(unittest.TestCase):
         # マイリスト
         url = self._get_url_set()[2]
         xml = self._make_xml(url)
-        soup = BeautifulSoup(xml, "lxml-xml")
+        xml_dict = xmltodict.parse(xml)
 
         mylist_url = URL(url).non_query_url
-        rp = RSSParser(mylist_url, soup)
+        rp = RSSParser(mylist_url, xml)
 
         username = rp._get_username()
-        title_lx = soup.find_all("title")
+        title_lx = xml_dict["rss"]["channel"]["title"]
         pattern = "^マイリスト (.*)‐ニコニコ動画$"
         
         myshowname = Myshowname("投稿動画")
 
-        myshowname = Myshowname(re.findall(pattern, title_lx[0].text)[0])
+        myshowname = Myshowname(re.findall(pattern, title_lx)[0])
         showname = Showname.create(username, myshowname)
         expect = (showname, myshowname)
         actual = rp._get_showname_myshowname()
@@ -266,18 +249,18 @@ class TestRSSParser(unittest.TestCase):
         urls = self._get_url_set()
         for url in urls:
             xml = self._make_xml(url)
-            soup = BeautifulSoup(xml, "lxml-xml")
+            xml_dict = xmltodict.parse(xml)
 
-            rp = RSSParser(URL(url).non_query_url, soup)
+            rp = RSSParser(URL(url).non_query_url, xml)
 
             if UploadedURL.is_valid(url):
                 mylist_url = UploadedURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid  # 投稿動画の場合、マイリストIDは空文字列
 
-                title_lx = soup.find_all("title")
+                title_lx = xml_dict["rss"]["channel"]["title"]
                 pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
-                username = Username(re.findall(pattern, title_lx[0].text)[0])
+                username = Username(re.findall(pattern, title_lx)[0])
 
                 myshowname = Myshowname("投稿動画")
                 showname = Showname.create(username, None)
@@ -286,19 +269,19 @@ class TestRSSParser(unittest.TestCase):
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid
 
-                creator_lx = soup.find_all("dc:creator")
-                username = Username(creator_lx[0].text)
+                creator_lx = xml_dict["rss"]["channel"]["dc:creator"]
+                username = Username(creator_lx)
 
-                title_lx = soup.find_all("title")
+                title_lx = xml_dict["rss"]["channel"]["title"]
                 pattern = "^マイリスト (.*)‐ニコニコ動画$"
-                myshowname = Myshowname(re.findall(pattern, title_lx[0].text)[0])
+                myshowname = Myshowname(re.findall(pattern, title_lx)[0])
                 showname = Showname.create(username, myshowname)
 
             video_id_list = []
             title_list = []
             registered_at_list = []
             video_url_list = []
-            items_lx = soup.find_all("item")
+            items_lx = xml_dict["rss"]["channel"]["item"]
             for item in items_lx:
                 iteminfo = self.iteminfo(item)
                 video_id_list.append(iteminfo.video_id)
