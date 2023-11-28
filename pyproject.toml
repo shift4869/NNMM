@@ -8,32 +8,30 @@ license = "GNU Lesser General Public License v3.0"
 [tool.poetry.dependencies]
 beautifulsoup4 = "^4.10.0"
 cryptography = "^36.0.1"
-cssselect = "^1.1.0"
 emoji = "^2.2.0"
 freezegun = "^1.2.2"
 httpx = "^0.25.0"
 isort = "^5.12.0"
 mock = "^5.0.1"
-niconico-dl = "^2.2.8"
-numpy = "^1.24.2"
-opencv-python = "^4.7.0.72"
 orjson = "^3.9.7"
-pandas = "^1.5.3"
-pillow = "^9.4.0"
 pycodestyle = "^2.10.0"
-pyppeteer = "^1.0.2"
 PySimpleGUI = "^4.60.4"
 python = ">=3.9,<4.0"
 requests = "^2.28.2"
-requests-html = "^0.10.0"
 sqlalchemy = "^1.4.46"
 xmltodict = "^0.13.0"
 
 [tool.poetry.dev-dependencies]
 
 [tool.isort]
-multi_line_output = 9
 line_length = 256
+multi_line_output = 9
+
+[tool.ruff]
+organizeImports = false
+
+[tool.ruff.lint]
+ignore = ["F401", "F541", "F841"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
