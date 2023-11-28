@@ -1,12 +1,9 @@
-# coding: utf-8
 import re
 from logging import INFO, getLogger
 
-import PySimpleGUI as sg
-
-from NNMM.GuiFunction import *
-from NNMM.MylistDBController import *
-from NNMM.MylistInfoDBController import *
+from NNMM.GuiFunction import popup_get_text, update_mylist_pane, update_table_pane
+from NNMM.MylistDBController import MylistDBController
+from NNMM.MylistInfoDBController import MylistInfoDBController
 from NNMM.Process import ProcessBase
 
 logger = getLogger(__name__)
@@ -38,8 +35,8 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
         try:
             self.window = mw.window
             self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
+            self.mylist_db: MylistDBController = mw.mylist_db
+            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
         except AttributeError:
             logger.error("MylistSearch failed, argument error.")
             return -1
@@ -66,7 +63,7 @@ class ProcessMylistSearch(ProcessBase.ProcessBase):
             if m["is_include_new"]:
                 m["showname"] = NEW_MARK + m["showname"]
                 include_new_index_list.append(i)
-            if re.search(pattern, m["showname"]):
+            if re.findall(pattern, m["showname"]):
                 match_index_list.append(i)
                 index = i  # 更新後にスクロールするインデックスを更新
         list_data = [m["showname"] for m in m_list]
@@ -127,8 +124,8 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
         try:
             self.window = mw.window
             self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
+            self.mylist_db: MylistDBController = mw.mylist_db
+            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
         except AttributeError:
             logger.error("MylistSearchFromVideo failed, argument error.")
             return -1
@@ -161,7 +158,7 @@ class ProcessMylistSearchFromVideo(ProcessBase.ProcessBase):
             mylist_url = m["url"]
             records = self.mylist_info_db.select_from_mylist_url(mylist_url)
             for r in records:
-                if re.search(pattern, r["title"]):
+                if re.findall(pattern, r["title"]):
                     match_index_list.append(i)
                     index = i  # 更新後にスクロールするインデックスを更新
         list_data = [m["showname"] for m in m_list]
@@ -220,8 +217,8 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
         try:
             self.window = mw.window
             self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
+            self.mylist_db: MylistDBController = mw.mylist_db
+            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
         except AttributeError:
             logger.error("VideoSearch failed, argument error.")
             return -1
@@ -246,7 +243,7 @@ class ProcessVideoSearch(ProcessBase.ProcessBase):
         records = self.window["-TABLE-"].Values  # 現在のtableの全リスト
         match_index_list = []
         for i, r in enumerate(records):
-            if re.search(pattern, r[2]):
+            if re.findall(pattern, r[2]):
                 match_index_list.append(i)
                 index = i  # 更新後にスクロールするインデックスを更新
 
@@ -334,8 +331,8 @@ class ProcessVideoSearchClear(ProcessBase.ProcessBase):
         try:
             self.window = mw.window
             self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
+            self.mylist_db: MylistDBController = mw.mylist_db
+            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
         except AttributeError:
             logger.error("VideoSearchClear failed, argument error.")
             return -1
