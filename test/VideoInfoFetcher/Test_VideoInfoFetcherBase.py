@@ -1,37 +1,27 @@
 import asyncio
-import re
-import shutil
 import sys
 import unittest
-import warnings
 from contextlib import ExitStack
-from datetime import datetime, timedelta
+from datetime import datetime
 from itertools import repeat
-from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlparse
 
-from bs4 import XMLParsedAsHTMLWarning
-from mock import AsyncMock, MagicMock, call, patch
+from mock import AsyncMock, MagicMock, patch
 
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
-from NNMM.VideoInfoFetcher.ValueObjects.RegisteredAt import RegisteredAt
 from NNMM.VideoInfoFetcher.ValueObjects.Title import Title
 from NNMM.VideoInfoFetcher.ValueObjects.TitleList import TitleList
 from NNMM.VideoInfoFetcher.ValueObjects.UploadedAt import UploadedAt
 from NNMM.VideoInfoFetcher.ValueObjects.UploadedAtList import UploadedAtList
 from NNMM.VideoInfoFetcher.ValueObjects.UploadedURL import UploadedURL
-from NNMM.VideoInfoFetcher.ValueObjects.Userid import Userid
 from NNMM.VideoInfoFetcher.ValueObjects.Username import Username
 from NNMM.VideoInfoFetcher.ValueObjects.UsernameList import UsernameList
-from NNMM.VideoInfoFetcher.ValueObjects.Videoid import Videoid
 from NNMM.VideoInfoFetcher.ValueObjects.VideoidList import VideoidList
 from NNMM.VideoInfoFetcher.ValueObjects.VideoURL import VideoURL
 from NNMM.VideoInfoFetcher.ValueObjects.VideoURLList import VideoURLList
 from NNMM.VideoInfoFetcher.VideoInfoFetcherBase import SourceType, VideoInfoFetcherBase
-
-RSS_PATH = "./test/rss/"
 
 
 # テスト用具体化ProcessBase
@@ -44,15 +34,6 @@ class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
 
 
 class TestVideoInfoFetcherBase(unittest.TestCase):
-    def setUp(self):
-        # xml 形式に近い html を解釈する際に
-        # bs4 から警告が出るので、それを抑制する
-        warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
-
-    def tearDown(self):
-        if Path(RSS_PATH).exists():
-            shutil.rmtree(RSS_PATH)
-
     def _get_url_set(self) -> list[str]:
         """urlセットを返す
         """
@@ -65,104 +46,19 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         ]
         return url_info
 
-    def _get_mylist_url_set(self) -> list[str]:
-        """mylist_urlセットを返す
-
-        Notes:
-            スクレイピングの場合はURLは開ければ良いため区別しない
-            mylist_url_info = [
-                "https://www.nicovideo.jp/user/11111111/video",
-                "https://www.nicovideo.jp/user/22222222/video",
-                "https://www.nicovideo.jp/mylist/00000011",
-                "https://www.nicovideo.jp/mylist/00000012",
-                "https://www.nicovideo.jp/mylist/00000031",
-            ]
-        """
-        return self._get_url_set()
-
-    def _get_videoinfo_set(self, mylist_url: str) -> list[tuple[str, str, str]]:
-        """動画情報セットを返す
-        """
-        mylist_url_info = self._get_mylist_url_set()
-        m_range = {
-            mylist_url_info[0]: range(1, 10),
-            mylist_url_info[1]: range(1, 10),
-            mylist_url_info[2]: range(1, 5),
-            mylist_url_info[3]: range(5, 10),
-            mylist_url_info[4]: range(1, 10),
-        }.get(mylist_url, range(1, 10))
-
-        pattern = r"https://www.nicovideo.jp/user/([0-9]{8})/.*"
-        userid = Userid(re.findall(pattern, mylist_url)[0])
-        n = userid.id[0]
-
-        res = []
-        src_df = "%Y-%m-%dT%H:%M:%S%z"
-        dst_df = "%Y-%m-%d %H:%M:%S"
-        for i in m_range:
-            video_id = Videoid(f"sm{n}00000{i:02}")
-            video_info = self._get_videoinfo(video_id.id)
-            uploaded_at = video_info["uploaded_at"]
-
-            rd = datetime.strptime(uploaded_at.dt_str, dst_df)
-            rd += timedelta(minutes=1)
-            registered_at = RegisteredAt(rd.strftime(dst_df))
-
-            video_info["uploaded_at"] = uploaded_at
-            video_info["registered_at"] = registered_at
-            res.append(video_info)
-
-        return res
-
-    def _get_videoinfo(self, video_id: str) -> list[tuple[str, str, str]]:
-        """動画情報を返す
-        """
-        # video_idのパターンはsm{投稿者id}00000{動画識別2桁}
-        pattern = r"sm([0-9]{1})00000([0-9]{2})"
-        n, m = re.findall(pattern, video_id)[0]
-        title = f"動画タイトル{n}_{m}"
-        uploaded_at = f"2022-04-29 0{n}:{m}:00"
-        video_url = "https://www.nicovideo.jp/watch/" + video_id
-        user_id = n * 8
-        username = f"動画投稿者{n}"
-
-        res = {
-            "video_id": Videoid(video_id),            # 動画ID [sm12345678]
-            "title": Title(title),                    # 動画タイトル [テスト動画]
-            "uploaded_at": UploadedAt(uploaded_at),   # 投稿日時 [%Y-%m-%d %H:%M:%S]
-            "video_url": VideoURL.create(video_url),  # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
-            "user_id": Userid(user_id),               # 投稿者id [投稿者1]
-            "username": Username(username),           # 投稿者 [投稿者1]
-        }
-        return res
-
-    def _get_xml_from_api(self, video_id: str) -> str:
-        """APIから返ってくる動画情報セットxmlを返す
-        """
-        video_info = self._get_videoinfo(video_id)
-        title = video_info.get("title").name
-        watch_url = video_info.get("video_url").original_url
-        user_id = video_info.get("user_id").id
-        user_nickname = video_info.get("username").name
-
-        src_df = "%Y-%m-%dT%H:%M:%S+0900"
-        dst_df = "%Y-%m-%d %H:%M:%S"
-        first_retrieve = video_info.get("uploaded_at").dt_str
-        first_retrieve = datetime.strptime(first_retrieve, dst_df).strftime(src_df)
-
-        xml = """<?xml version="1.0" encoding="utf-8"?>
-                    <nicovideo_thumb_response status="ok">
-                        <thumb>"""
-        xml += f"""<video_id>{video_id}</video_id>
-                <title>{title}</title>
-                <first_retrieve>{first_retrieve}</first_retrieve>
-                <watch_url>{watch_url}</watch_url>
-                <user_id>{user_id}</user_id>
-                <user_nickname>{user_nickname}</user_nickname>"""
-        xml += """</thumb>
-                    </nicovideo_thumb_response>"""
-
-        return xml
+    def _make_api_xml(self, index: int = 0) -> str:
+        return f"""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <nicovideo_thumb_response status="ok">
+                <thumb>
+                    <video_id>sm{index}</video_id>
+                    <first_retrieve>2007-03-06T00:33:{index:02}+09:00</first_retrieve>
+                    <title>動画タイトル_{index:02}</title>
+                    <watch_url>https://www.nicovideo.jp/watch/sm{index}</watch_url>
+                    <user_nickname>username_{index:02}</user_nickname>
+                </thumb>
+            </nicovideo_thumb_response>
+        """.strip()
 
     def test_VideoInfoFetcherBaseInit(self):
         """VideoInfoFetcherBase の初期化後の状態をテストする
@@ -231,20 +127,6 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             actual = loop.run_until_complete(cvif._get_session_response(request_url))
             expect = None
             self.assertEqual(expect, actual)
-
-    def _make_api_xml(self, index: int = 0) -> str:
-        return f"""
-            <?xml version="1.0" encoding="UTF-8"?>
-            <nicovideo_thumb_response status="ok">
-                <thumb>
-                    <video_id>sm{index}</video_id>
-                    <first_retrieve>2007-03-06T00:33:{index:02}+09:00</first_retrieve>
-                    <title>動画タイトル_{index:02}</title>
-                    <watch_url>https://www.nicovideo.jp/watch/sm{index}</watch_url>
-                    <user_nickname>username_{index:02}</user_nickname>
-                </thumb>
-            </nicovideo_thumb_response>
-        """.strip()
 
     def test_get_videoinfo_from_api(self):
         """_get_videoinfo_from_api のテスト TODO
