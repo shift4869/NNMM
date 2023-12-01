@@ -10,6 +10,7 @@ from enum import Enum
 from logging import INFO, getLogger
 
 import httpx
+import xmltodict
 from bs4 import BeautifulSoup
 
 from NNMM import ConfigMain
@@ -54,38 +55,32 @@ class VideoInfoFetcherBase(ABC):
             self.url = MylistURL.create(url)
         self.source_type = source_type
 
-    async def _get_session_response(self, request_url: str):
+    async def _get_session_response(self, request_url: str) -> httpx.Response | None:
         """非同期でページ取得する
 
         Notes:
-            この関数で取得したAsyncHTMLSession は呼び出し側で
-            await session.close() することを推奨
             接続は self.MAX_RETRY_NUM = 5 回試行する
             この回数リトライしてもページ取得できなかった場合、responseがNoneとなる
 
         Args:
-            do_rendering (bool): 動的にレンダリングするかどうか
-            parse_features (str): soup_parse に渡すparserを表す文字列 ["html.parser", "lxml-xml"]
-            session (AsyncHTMLSession, optional): 使い回すセッションがあれば指定
+            request_url (str): リクエストURL
 
         Returns:
-            session (AsyncHTMLSession): 非同期セッション
-            response (HTMLResponse): ページ取得結果のレスポンス
-                                    リトライ回数超過時None
-                                    正常時 response.html.lxml が非Noneであることが保証されたresponse
+            response (httpx.Response): ページ取得結果のレスポンス
+                                       リトライ回数超過時None
         """
         response = None
-        for _ in range(self.MAX_RETRY_NUM):
-            try:
-                async with httpx.AsyncClient(follow_redirects=True, timeout=httpx.Timeout(60, read=10)) as client:
-                    response = await client.get(request_url)
-                    response.raise_for_status()
-                    break
-            except Exception:
-                logger.error(traceback.format_exc())
-        else:
-            response = None
-
+        client_args = {
+            "follow_redirects":True,
+            "timeout": httpx.Timeout(60, read=10),
+            "transport": httpx.HTTPTransport(retries=self.MAX_RETRY_NUM)
+        }
+        try:
+            async with httpx.AsyncClient(**client_args) as client:
+                response = await client.get(request_url)
+                response.raise_for_status()
+        except Exception:
+            return None
         return response
 
     async def _get_videoinfo_from_api(self, video_id_list: VideoidList) -> FetchedAPIVideoInfo:
@@ -111,35 +106,35 @@ class VideoInfoFetcherBase(ABC):
         uploaded_at_list = []
         video_url_list = []
         username_list = []
-        with httpx.Client(follow_redirects=True, timeout=httpx.Timeout(60, read=10)) as client:
+        client_args = {
+            "follow_redirects":True,
+            "timeout": httpx.Timeout(60, read=10),
+            "transport": httpx.HTTPTransport(retries=self.MAX_RETRY_NUM)
+        }
+        async with httpx.AsyncClient(**client_args) as client:
             for video_id in video_id_list:
                 url = self.API_URL_BASE + video_id.id
-                # response = await self._get_session_response(url)
-                response = client.get(url)
+
+                response = await client.get(url)
                 response.raise_for_status()
-                soup = BeautifulSoup(response.text, "lxml-xml")
-                if soup:
-                    thumb_lx = soup.find_all("thumb")[0]
+                xml_dict = xmltodict.parse(response.text)
+                thumb_lx = xml_dict["nicovideo_thumb_response"]["thumb"]
 
-                    # 動画タイトル
-                    title_lx = thumb_lx.find_all("title")
-                    title = title_lx[0].text
-                    title_list.append(Title(title))
+                # 動画タイトル
+                title = thumb_lx["title"]
+                title_list.append(Title(title))
 
-                    # 投稿日時
-                    uploaded_at_lx = thumb_lx.find_all("first_retrieve")
-                    uploaded_at = datetime.strptime(uploaded_at_lx[0].text, src_df).strftime(dst_df)
-                    uploaded_at_list.append(UploadedAt(uploaded_at))
+                # 投稿日時
+                uploaded_at = datetime.strptime(thumb_lx["first_retrieve"], src_df).strftime(dst_df)
+                uploaded_at_list.append(UploadedAt(uploaded_at))
 
-                    # 動画URL
-                    video_url_lx = thumb_lx.find_all("watch_url")
-                    video_url = video_url_lx[0].text
-                    video_url_list.append(VideoURL.create(video_url))
+                # 動画URL
+                video_url = thumb_lx["watch_url"]
+                video_url_list.append(VideoURL.create(video_url))
 
-                    # 投稿者
-                    username_lx = thumb_lx.find_all("user_nickname")
-                    username = username_lx[0].text
-                    username_list.append(Username(username))
+                # 投稿者
+                username = thumb_lx["user_nickname"]
+                username_list.append(Username(username))
 
         # ValueObjectに変換
         title_list = TitleList.create(title_list)
@@ -172,7 +167,6 @@ class VideoInfoFetcherBase(ABC):
         except Exception:
             logger.error(traceback.format_exc())
             return []
-
         return res
 
 

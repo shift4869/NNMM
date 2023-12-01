@@ -17,9 +17,9 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 from mock import AsyncMock, MagicMock, patch
-from requests_html import HTML, AsyncHTMLSession
 
 from NNMM import GuiFunction
+from NNMM.VideoInfoFetcher.RSSParser import RSSParser
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.FetchedPageVideoInfo import FetchedPageVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
@@ -289,17 +289,6 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         mock.text = self._get_xml_from_rss(request_url)
         return mock
 
-    def _make_api_response_mock(self, request_url, status_code: int = 200, error_target: str = ""):
-        mock = MagicMock()
-
-        pattern = "^https://ext.nicovideo.jp/api/getthumbinfo/(sm[0-9]+)$"
-        video_id = re.findall(pattern, request_url)[0]
-        xml = self._get_xml_from_api(video_id)
-        html = HTML(html=xml)
-
-        mock.html = html
-        return mock
-
     def _make_session_response_mock(self, mock, status_code: int = 200, error_target: str = ""):
         async def return_session_response(request_url: str) -> MagicMock:
             if error_target == "ValueError":
@@ -308,17 +297,6 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 return None
 
             r_response = self._make_response_mock(request_url, status_code, error_target)
-            return r_response
-        mock.side_effect = return_session_response
-        return mock
-
-    def _make_api_session_response_mock(self, mock, status_code: int = 200, error_target: str = ""):
-        async def return_session_response(request_url: str) -> MagicMock:
-            if error_target == "ValueError":
-                raise ValueError
-            if status_code == 503:
-                return None
-            r_response = self._make_api_response_mock(request_url, status_code, error_target)
             return r_response
         mock.side_effect = return_session_response
         return mock
@@ -470,38 +448,25 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             self.assertEqual(source_type, virf.source_type)
 
     def test_analysis_rss(self):
-        """_analysis_rss のテスト
-        """
         with ExitStack() as stack:
-            mockps = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.RSSParser"))
+            # mockps = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.RSSParser"))
 
-            expect = "rss parse success."
-            r = AsyncMock()
-            r.parse.side_effect = lambda: expect
-            mockps.return_value = r
-
-            # 正常系
-            # 投稿動画ページ
             url = self._get_url_set()[0]
-            xml = self._get_xml_from_rss(url)
-            soup = BeautifulSoup(xml, "lxml-xml")
+            xml = self._get_xml_from_rss(url).strip()
+            parser: RSSParser = RSSParser(url, xml)
 
             virf = VideoInfoRssFetcher(url)
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(virf._analysis_rss(soup))
+            actual = loop.run_until_complete(virf._analysis_rss(xml))
+            expect = loop.run_until_complete(parser.parse())
             self.assertEqual(expect, actual)
 
-            # 異常系
-            expect = None
-            r = AsyncMock()
-            r.parse.side_effect = lambda: expect
-            mockps.return_value = r
             with self.assertRaises(ValueError):
                 virf = VideoInfoRssFetcher(url)
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-                actual = loop.run_until_complete(virf._analysis_rss(soup))
+                actual = loop.run_until_complete(virf._analysis_rss("invalid_xml"))
 
     def test_fetch_videoinfo_from_rss(self):
         """_fetch_videoinfo_from_rss のテスト

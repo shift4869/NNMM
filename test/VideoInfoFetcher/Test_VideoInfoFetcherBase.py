@@ -1,9 +1,3 @@
-# coding: utf-8
-"""VideoInfoFetcherBase のテスト
-
-VideoInfoFetcherBase の各種機能をテストする
-"""
-
 import asyncio
 import re
 import shutil
@@ -12,13 +6,15 @@ import unittest
 import warnings
 from contextlib import ExitStack
 from datetime import datetime, timedelta
+from itertools import repeat
 from pathlib import Path
 from urllib.error import HTTPError
+from urllib.parse import urlparse
 
 from bs4 import XMLParsedAsHTMLWarning
 from mock import AsyncMock, MagicMock, call, patch
-from requests_html import HTML, AsyncHTMLSession
 
+from NNMM.VideoInfoFetcher.ValueObjects.FetchedAPIVideoInfo import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.MylistURL import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.RegisteredAt import RegisteredAt
 from NNMM.VideoInfoFetcher.ValueObjects.Title import Title
@@ -168,34 +164,6 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
         return xml
 
-    def _make_api_response_mock(self, request_url, status_code: int = 200, error_target: str = ""):
-        mock = MagicMock()
-
-        pattern = "^https://ext.nicovideo.jp/api/getthumbinfo/(sm[0-9]+)$"
-        video_id = re.findall(pattern, request_url)[0]
-        xml = self._get_xml_from_api(video_id)
-        html = HTML(html=xml)
-
-        mock.html = html
-        return mock
-
-    def _make_api_session_response_mock(self, mock, status_code: int = 200, error_target: str = "") -> tuple[AsyncMock, MagicMock]:
-        async def ReturnSessionResponse(request_url: str,
-                                        do_rendering: bool,
-                                        parse_features: str = "html.parser",
-                                        session: AsyncHTMLSession = None) -> tuple[AsyncMock, MagicMock]:
-            ar_session = AsyncMock()
-            if error_target == "HTTPError":
-                raise HTTPError
-            if status_code == 503:
-                return (ar_session, None)
-
-            r_response = self._make_api_response_mock(request_url, status_code, error_target)
-            return (ar_session, r_response)
-
-        mock.side_effect = ReturnSessionResponse
-        return mock
-
     def test_VideoInfoFetcherBaseInit(self):
         """VideoInfoFetcherBase の初期化後の状態をテストする
         """
@@ -226,160 +194,108 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             cvif = ConcreteVideoInfoFetcher(url)
 
     def test_get_session_response(self):
-        """_get_session_response のテスト TODO
+        """_get_session_response のテスト
         """
-        return
         with ExitStack() as stack:
-            mockle = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.logger.error"))
-            mockas = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.AsyncHTMLSession"))
-            mockpp = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.pyppeteer.launch"))
-            mocksl = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.asyncio.sleep"))
+            mock_logger_error = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.logger.error"))
+            mock_async_client = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.httpx.AsyncClient"))
 
             # 正常系
-            MAX_RETRY_NUM = 5
-            session = AsyncMock()
-            response = AsyncMock()
+            mock_response = MagicMock()
+            mock_get = AsyncMock()
+            mock_get.get.side_effect = lambda url: mock_response
+            mock_aenter = MagicMock()
+            mock_aenter.__aenter__.side_effect = lambda: mock_get
+            mock_async_client.side_effect = lambda follow_redirects, timeout, transport: mock_aenter
 
-            def MakeReturnGet(retry_count=0, html_error=False):
-                global count
-                count = retry_count
-
-                async def ReturnGet(request_url):
-                    global count
-                    if count <= 0:
-                        if html_error:
-                            del response.text
-                        response.raise_for_status = AsyncMock
-                        return response
-                    else:
-                        count = count - 1
-                        response.raise_for_status = HTTPError
-                        return response
-
-                return ReturnGet
-
-            session.get.side_effect = MakeReturnGet()
-            mockas.side_effect = lambda: session
-
-            # do_renderingがTrue, sessionがNone
             url = self._get_url_set()[0]
             cvif = ConcreteVideoInfoFetcher(url)
+            request_url = cvif.url.non_query_url
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url))
-            expect = response.text
+            actual = loop.run_until_complete(cvif._get_session_response(request_url))
+            expect = mock_response
             self.assertEqual(expect, actual)
 
-            # 呼び出し確認
-            def assertMockCall(request_url, do_rendering, use_session):
-                if use_session is None:
-                    mockas.assert_called_once()
-                    mockas.reset_mock()
+            # 呼び出し確認::TODO
 
-                    mc = session.mock_calls
-                    self.assertEqual(1, len(mc))
-                    self.assertEqual(call.get(request_url), mc[0])
-                    session.reset_mock()
-                else:
-                    mockas.assert_not_called()
-                    mockas.reset_mock()
 
-                    mc = session.mock_calls
-                    self.assertEqual(2, len(mc))
-                    self.assertEqual(call.__bool__(), mc[0])
-                    self.assertEqual(call.get(request_url), mc[1])
-                    session.reset_mock()
-
-                mc = response.mock_calls
-                if do_rendering:
-                    self.assertEqual(1, len(mc))
-                    self.assertEqual(call.html.arender(sleep=2), mc[0])
-                else:
-                    self.assertEqual(0, len(mc))
-
-                self.assertIsNotNone(response.html.lxml)
-                response.reset_mock()
-
-            assertMockCall(cvif.url.non_query_url, True, None)
-
-            # do_renderingがFalse, sessionがNone
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, False, "html.parser", None))
-            expect = (session, response)
-            self.assertEqual(expect, actual)
-            assertMockCall(url, False, None)
-
-            # do_renderingがTrue, sessionがNoneでない
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", session))
-            expect = (session, response)
-            self.assertEqual(expect, actual)
-            assertMockCall(url, True, session)
-
-            # do_renderingがFalse, sessionがNoneでない
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, False, "html.parser", session))
-            expect = (session, response)
-            self.assertEqual(expect, actual)
-            assertMockCall(url, False, session)
-
-            # リトライして成功するパターン
-            session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM - 1, False)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
-            expect = (session, response)
-            self.assertEqual(expect, actual)
-
-            # TODO::"lxml-xml" 指定時のテスト
+            mock_response.reset_mock()
+            mock_get.reset_mock()
+            mock_aenter.reset_mock()
+            mock_async_client.reset_mock()
 
             # 異常系
             # MAX_RETRY_NUM回リトライしたが失敗したパターン
-            session.get.side_effect = MakeReturnGet(MAX_RETRY_NUM, False)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
-            expect = (session, None)
+            mock_get.get.side_effect = list(repeat(HTTPError, cvif.MAX_RETRY_NUM + 1))
+            actual = loop.run_until_complete(cvif._get_session_response(request_url))
+            expect = None
             self.assertEqual(expect, actual)
 
-            # responseの取得に成功したがresponse.html.lxmlが存在しないパターン
-            session.get.side_effect = MakeReturnGet(0, True)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_session_response(cvif.url.non_query_url, True, "html.parser", None))
-            expect = (session, None)
-            self.assertEqual(expect, actual)
+    def _make_api_xml(self, index: int = 0) -> str:
+        return f"""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <nicovideo_thumb_response status="ok">
+                <thumb>
+                    <video_id>sm{index}</video_id>
+                    <first_retrieve>2007-03-06T00:33:{index:02}+09:00</first_retrieve>
+                    <title>動画タイトル_{index:02}</title>
+                    <watch_url>https://www.nicovideo.jp/watch/sm{index}</watch_url>
+                    <user_nickname>username_{index:02}</user_nickname>
+                </thumb>
+            </nicovideo_thumb_response>
+        """.strip()
 
     def test_get_videoinfo_from_api(self):
         """_get_videoinfo_from_api のテスト TODO
         """
-        return
         with ExitStack() as stack:
-            mockapises = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.VideoInfoFetcherBase._get_session_response"))
+            mock_logger_error = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.logger.error"))
+            mock_async_client = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoFetcherBase.httpx.AsyncClient"))
 
-            # 正常系
-            mockapises = self._make_api_session_response_mock(mockapises, 200)
+            def make_response(request_url):
+                mock_response = MagicMock()
+                videoid = urlparse(request_url).path.split("/")[-1]
+                index = int(videoid[2:])
+                mock_response.text = self._make_api_xml(index)
+                return mock_response
+            mock_get = AsyncMock()
+            mock_get.get.side_effect = lambda url: make_response(url)
+            mock_aenter = MagicMock()
+            mock_aenter.__aenter__.side_effect = lambda: mock_get
+            mock_async_client.side_effect = lambda follow_redirects, timeout, transport: mock_aenter
 
-            expect = {}
-            mylist_url = self._get_url_set()[0]
-            video_info_list = self._get_videoinfo_set(mylist_url)
-            video_id_list = [video_info["video_id"] for video_info in video_info_list]
-            title_list = [video_info["title"] for video_info in video_info_list]
-            uploaded_at_list = [video_info["uploaded_at"] for video_info in video_info_list]
-            video_url_list = [video_info["video_url"] for video_info in video_info_list]
-            username_list = [video_info["username"] for video_info in video_info_list]
-            num = len(video_id_list)
+            num = 3
+            video_id_str_list = [f"sm{i}" for i in range(1, num + 1)]
+            video_id_list = VideoidList.create(video_id_str_list)
+            url = self._get_url_set()[0]
+            cvif = ConcreteVideoInfoFetcher(url)
 
-            video_id_list = VideoidList.create(video_id_list)
+            src_df = "%Y-%m-%dT%H:%M:%S%z"
+            dst_df = "%Y-%m-%d %H:%M:%S"
+            title_list = [
+                Title(f"動画タイトル_{i:02}")
+                for i in range(1, num + 1)
+            ]
+            uploaded_at_list = [
+                UploadedAt(
+                    datetime.strptime(f"2007-03-06T00:33:{i:02}+09:00", src_df).strftime(dst_df)
+                )
+                for i in range(1, num + 1)
+            ]
+            video_url_list = [
+                VideoURL.create(f"https://www.nicovideo.jp/watch/sm{i}")
+                for i in range(1, num + 1)
+            ]
+            username_list = [
+                Username(f"username_{i:02}")
+                for i in range(1, num + 1)
+            ]
             title_list = TitleList.create(title_list)
             uploaded_at_list = UploadedAtList.create(uploaded_at_list)
             video_url_list = VideoURLList.create(video_url_list)
             username_list = UsernameList.create(username_list)
-            
-            expect = {
+            res = {
                 "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
                 "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
                 "title_list": title_list,               # 動画タイトルリスト [テスト動画]
@@ -387,22 +303,30 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
                 "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
                 "username_list": username_list,         # 投稿者リスト [投稿者1]
             }
+            expect = FetchedAPIVideoInfo(**res)
 
-            cvif = ConcreteVideoInfoFetcher(mylist_url)
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
-            self.assertEqual(expect, actual.to_dict())
+            self.assertEqual(expect, actual)
 
-            # 異常系
-            # _get_session_response に失敗
-            mockapises = self._make_api_session_response_mock(mockapises, 503)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+            # 呼び出し確認::TODO
+
+            mock_get.reset_mock()
+            mock_aenter.reset_mock()
+            mock_async_client.reset_mock()
+
+            # getに失敗
+            mock_get.get.side_effect = ValueError
             with self.assertRaises(ValueError):
                 actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
 
-    def test_abstractmethod_fetch_videoinfo(self):
+            # 引数が不正
+            video_id_list = []
+            with self.assertRaises(ValueError):
+                actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
+
+    def test_fetch_videoinfo(self):
         """_fetch_videoinfo のテスト
         """
         url = self._get_url_set()[0]
@@ -412,7 +336,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         actual = loop.run_until_complete(cvif._fetch_videoinfo())
         self.assertEqual(["test_fetch_videoinfo"], actual)
 
-    def test_classmethod_fetch_videoinfo(self):
+    def test_fetch_videoinfo(self):
         """fetch_videoinfo のテスト
         """
         with ExitStack() as stack:

@@ -37,13 +37,12 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             self.mylist_url = MylistURL.create(url)
 
     async def _analysis_rss(self, xml_text: str) -> FetchedPageVideoInfo:
-        mylist_url = self.mylist_url.non_query_url
-        parser: RSSParser = RSSParser(mylist_url, xml_text)
-        res = await parser.parse()
-
-        if not res:
+        try:
+            mylist_url = self.mylist_url.non_query_url
+            parser: RSSParser = RSSParser(mylist_url, xml_text)
+            res = await parser.parse()
+        except Exception:
             raise ValueError("rss analysis failed.")
-
         return res
 
     async def _fetch_videoinfo_from_rss(self) -> list[dict]:
