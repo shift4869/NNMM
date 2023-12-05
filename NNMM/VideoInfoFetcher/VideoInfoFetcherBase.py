@@ -70,16 +70,17 @@ class VideoInfoFetcherBase(ABC):
                                        リトライ回数超過時None
         """
         response = None
-        client_args = {
-            "follow_redirects":True,
-            "timeout": httpx.Timeout(60, read=10),
-            "transport": httpx.HTTPTransport(retries=self.MAX_RETRY_NUM)
-        }
+        follow_redirects = True
+        timeout = httpx.Timeout(60, read=10)
+        transport = httpx.AsyncHTTPTransport(retries=self.MAX_RETRY_NUM)
         try:
-            async with httpx.AsyncClient(**client_args) as client:
+            async with httpx.AsyncClient(follow_redirects=follow_redirects,
+                                         timeout=timeout,
+                                         transport=transport) as client:
                 response = await client.get(request_url)
                 response.raise_for_status()
         except Exception:
+            logger.error(traceback.format_exc())
             return None
         return response
 
@@ -106,12 +107,12 @@ class VideoInfoFetcherBase(ABC):
         uploaded_at_list = []
         video_url_list = []
         username_list = []
-        client_args = {
-            "follow_redirects":True,
-            "timeout": httpx.Timeout(60, read=10),
-            "transport": httpx.HTTPTransport(retries=self.MAX_RETRY_NUM)
-        }
-        async with httpx.AsyncClient(**client_args) as client:
+        follow_redirects = True
+        timeout = httpx.Timeout(60, read=10)
+        transport = httpx.AsyncHTTPTransport(retries=self.MAX_RETRY_NUM)
+        async with httpx.AsyncClient(follow_redirects=follow_redirects,
+                                     timeout=timeout,
+                                     transport=transport) as client:
             for video_id in video_id_list:
                 url = self.API_URL_BASE + video_id.id
 
