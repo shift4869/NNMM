@@ -1,4 +1,3 @@
-# coding: utf-8
 """URL のテスト
 
 URL の各種機能をテストする
@@ -7,7 +6,7 @@ import sys
 import unittest
 import urllib.parse
 
-from NNMM.VideoInfoFetcher.ValueObjects.URL import URL
+from NNMM.VideoInfoFetcher.ValueObjects.url import URL
 
 
 class TestURL(unittest.TestCase):

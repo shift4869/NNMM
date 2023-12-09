@@ -1,4 +1,3 @@
-# coding: utf-8
 """Timer のテスト
 """
 import sys

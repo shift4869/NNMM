@@ -1,4 +1,3 @@
-# coding: utf-8
 """Userid のテスト
 
 Userid の各種機能をテストする
@@ -7,7 +6,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.VideoInfoFetcher.ValueObjects.Userid import Userid
+from NNMM.VideoInfoFetcher.ValueObjects.userid import Userid
 
 
 class TestUserid(unittest.TestCase):

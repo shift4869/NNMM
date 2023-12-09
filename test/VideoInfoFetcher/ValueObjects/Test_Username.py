@@ -1,4 +1,3 @@
-# coding: utf-8
 """Username のテスト
 
 Username の各種機能をテストする
@@ -7,7 +6,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.VideoInfoFetcher.ValueObjects.Username import Username
+from NNMM.VideoInfoFetcher.ValueObjects.username import Username
 
 
 class TestUsername(unittest.TestCase):

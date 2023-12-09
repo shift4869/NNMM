@@ -1,4 +1,3 @@
-# coding: utf-8
 """Mylistid のテスト
 
 Mylistid の各種機能をテストする
@@ -7,7 +6,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.VideoInfoFetcher.ValueObjects.Mylistid import Mylistid
+from NNMM.VideoInfoFetcher.ValueObjects.mylistid import Mylistid
 
 
 class TestMylistid(unittest.TestCase):

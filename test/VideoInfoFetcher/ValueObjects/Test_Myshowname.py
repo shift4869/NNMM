@@ -1,4 +1,3 @@
-# coding: utf-8
 """Myshowname のテスト
 
 Myshowname の各種機能をテストする
@@ -7,7 +6,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname
+from NNMM.VideoInfoFetcher.ValueObjects.myshowname import Myshowname
 
 
 class TestMyshowname(unittest.TestCase):

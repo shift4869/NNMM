@@ -1,9 +1,8 @@
-# coding: utf-8
 import re
 from dataclasses import dataclass
 
-from NNMM.VideoInfoFetcher.ValueObjects.Myshowname import Myshowname
-from NNMM.VideoInfoFetcher.ValueObjects.Username import Username
+from NNMM.VideoInfoFetcher.ValueObjects.myshowname import Myshowname
+from NNMM.VideoInfoFetcher.ValueObjects.username import Username
 
 
 @dataclass(frozen=True)

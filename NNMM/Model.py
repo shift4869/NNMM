@@ -1,4 +1,3 @@
-# coding: utf-8
 from sqlalchemy import Boolean, Column, Integer, String, create_engine, text
 from sqlalchemy.orm import Session, declarative_base
 

@@ -1,4 +1,3 @@
-# coding: utf-8
 import re
 import threading
 from datetime import datetime, timedelta
@@ -7,17 +6,17 @@ from typing import TYPE_CHECKING
 
 import PySimpleGUI as sg
 
-from NNMM.ConfigMain import ProcessConfigBase
-from NNMM.Process import ProcessBase
+from NNMM.config_main import ProcessConfigBase
+from NNMM.Process.process_base import ProcessBase
 
 if TYPE_CHECKING:
-    from NNMM.MainWindow import MainWindow
+    from NNMM.main_window import MainWindow
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessTimer(ProcessBase.ProcessBase):
+class ProcessTimer(ProcessBase):
     def __init__(self) -> None:
         super().__init__(False, False, "タイマーセット")
         self.timer_thread = None
@@ -113,6 +112,6 @@ class ProcessTimer(ProcessBase.ProcessBase):
 
 
 if __name__ == "__main__":
-    from NNMM import MainWindow
-    mw = MainWindow.MainWindow()
+    from NNMM import main_window
+    mw = main_window.MainWindow()()
     mw.run()

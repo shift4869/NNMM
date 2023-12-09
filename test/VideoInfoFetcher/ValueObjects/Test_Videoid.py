@@ -1,4 +1,3 @@
-# coding: utf-8
 """Videoid のテスト
 
 Videoid の各種機能をテストする
@@ -7,7 +6,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.VideoInfoFetcher.ValueObjects.Videoid import Videoid
+from NNMM.VideoInfoFetcher.ValueObjects.videoid import Videoid
 
 
 class TestVideoid(unittest.TestCase):

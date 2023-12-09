@@ -1,4 +1,3 @@
-# coding: utf-8
 """Title のテスト
 
 Title の各種機能をテストする
@@ -7,7 +6,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.VideoInfoFetcher.ValueObjects.Title import Title
+from NNMM.VideoInfoFetcher.ValueObjects.title import Title
 
 
 class TestTitle(unittest.TestCase):
