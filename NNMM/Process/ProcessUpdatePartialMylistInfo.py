@@ -58,7 +58,9 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase.ProcessUpdateMy
                 if dt < -1:
                     # インターバル文字列解釈エラー
                     mylist_url = m["url"]
+                    showname = m["showname"]
                     logger.error(f"{self.L_KIND} GetTargetMylist failed, update interval setting is invalid :")
+                    logger.error(f"\t{showname}")
                     logger.error(f"\t{mylist_url} : {interval_str}")
                     continue
 

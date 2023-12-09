@@ -42,6 +42,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             parser: RSSParser = RSSParser(mylist_url, xml_text)
             res = await parser.parse()
         except Exception:
+            logger.error(f"{self.mylist_url.non_query_url}: rss parse error.")
             raise ValueError("rss analysis failed.")
         return res
 
@@ -96,7 +97,8 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             with (rd_path / rss_file_name).open("w", encoding="utf-8") as fout:
                 fout.write(response.text)
         except Exception:
-            logger.error("RSS file save failed , but continue process.")
+            logger.error(f"{self.mylist_url.fetch_url}, getting failed.")
+            logger.error("RSS file save failed, but continue process.")
             logger.error(traceback.format_exc())
             pass  # 仮に書き込みに失敗しても以降の処理は続行する
 
