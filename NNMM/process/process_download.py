@@ -4,6 +4,7 @@ from logging import INFO, getLogger
 from typing import TYPE_CHECKING
 
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 # import niconico_dl
 
@@ -15,37 +16,17 @@ logger.setLevel(INFO)
 
 
 class ProcessDownload(ProcessBase):
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None) -> None:
-        # 派生クラスの生成時は引数ありで呼び出される
-        if process_name:
-            super().__init__(log_sflag, log_eflag, process_name)
-        else:
-            super().__init__(True, False, "動画ダウンロード")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw: "MainWindow") -> int:
+    def run(self) -> None:
         """動画ダウンロード処理
 
         Notes:
             "動画ダウンロード::-TR-"
             動画右クリックメニューから動画ダウンロードが選択された場合
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 動画ダウンロード開始成功したら0,
-                 エラー時-1
         """
         logger.info("Download video start.")
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error("Download video failed, argument error.")
-            return -1
 
         # テーブルの行が選択されていなかったら何もしない
         if not self.values["-TABLE-"]:
@@ -87,7 +68,7 @@ class ProcessDownload(ProcessBase):
             args=(self.record, ),
             daemon=True
         ).start()
-        return 0
+        return
 
     def download_thread(self, record) -> int:
         """動画ダウンロードワーカーを実行する処理
@@ -133,7 +114,6 @@ class ProcessDownload(ProcessBase):
             return -1
 
         video_url = record["video_url"]
-        # TODO::プログレス表示
         # with niconico_dl.NicoNicoVideo(video_url, log=True) as nico:
         #     data = nico.get_info()
         #     nico.download(data["video"]["title"] + ".mp4", load_chunk_size=8 * 1024 * 1024)
@@ -141,36 +121,20 @@ class ProcessDownload(ProcessBase):
 
 
 class ProcessDownloadThreadDone(ProcessBase):
-    def __init__(self) -> None:
-        super().__init__(False, True, "動画ダウンロード")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw: "MainWindow") -> int:
+    def run(self) -> None:
         """動画ダウンロードのマルチスレッド処理が終わった後の処理
 
         Notes:
             "-DOWNLOAD_THREAD_DONE-"
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 処理成功0, エラー時-1
         """
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error("Post download video process failed, argument error.")
-            return -1
-
         # 左下の表示を更新する
         self.window["-INPUT2-"].update(value="動画DL完了!")
 
         logger.info("Download video done.")
-        return 0
+        return
 
 
 if __name__ == "__main__":
@@ -183,8 +147,7 @@ if __name__ == "__main__":
 
     # DownloadVideo(video_url)
     # print("Downloaded!")
-    
+
     from NNMM import main_window
     mw = main_window.MainWindow()
     mw.run()
-    pass

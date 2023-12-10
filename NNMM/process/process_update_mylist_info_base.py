@@ -4,13 +4,13 @@ import time
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
-from typing import Callable
 
 from NNMM.gui_function import get_now_datetime, is_mylist_include_new_video, update_mylist_pane, update_table_pane
 from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.video_info_fetcher.video_info_rss_fetcher import VideoInfoRssFetcher
 
 logger = getLogger(__name__)
@@ -18,12 +18,12 @@ logger.setLevel(INFO)
 
 
 class ProcessUpdateMylistInfoBase(ProcessBase):
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
+    def __init__(self, process_info: ProcessInfo) -> None:
         """マイリストのマイリスト情報を更新するクラスのベース
 
         Notes:
             このクラスのインスタンスは直接作成・呼び出しは行わない
-            このクラスの派生クラスはGetTargetMylist をオーバーライドする必要がある
+            このクラスの派生クラスは get_target_mylist をオーバーライドする必要がある
 
         Attributes:
             lock (threading.Lock): マルチスレッドで使う排他ロック
@@ -31,7 +31,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
             L_KIND (str): ログ出力用のメッセージベース
             E_DONE (str): 後続処理へのイベントキー
         """
-        super().__init__(log_sflag, log_eflag, process_name)
+        super().__init__(process_info)
 
         self.lock = threading.Lock()
         self.done_count = 0
@@ -46,7 +46,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         Returns:
             list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
         """
-        return []
+        raise NotImplementedError
 
     def get_prev_video_lists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
         """それぞれのマイリストごとに既存のレコードを取得する
@@ -58,11 +58,6 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         Returns:
             list[list[MylistInfo]]: それぞれのマイリストに含まれる動画情報のリストのリスト
         """
-        # 属性チェック
-        if not hasattr(self, "mylist_info_db"):
-            logger.error(f"{self.L_KIND} GetFunctionList failed, attribute error.")
-            return []
-
         prev_video_lists = []
         for record in m_list:
             mylist_url = record.get("url")
@@ -70,26 +65,10 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
             prev_video_lists.append(prev_video_list)
         return prev_video_lists
 
-    def run(self, mw):
+    def run(self) -> None:
         """すべてのマイリストのマイリスト情報を更新する
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0, エラー時-1
         """
         logger.info(f"{self.L_KIND} update start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error(f"{self.L_KIND} update failed, argument error.")
-            return -1
 
         self.window["-INPUT2-"].update(value="更新中")
         self.window.refresh()
@@ -97,34 +76,26 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         # 登録されたすべてのマイリストから現在のマイリスト情報を取得する
         # 処理中もGUIイベントを処理するため別スレッドで起動
         threading.Thread(target=self.update_mylist_info_thread,
-                         args=(mw, ), daemon=True).start()
+                         daemon=True).start()
 
         logger.info(f"{self.L_KIND} update thread start success.")
-        return 0
+        return
 
-    def update_mylist_info_thread(self, mw):
+    def update_mylist_info_thread(self) -> None:
         """マイリスト情報を更新する（マルチスレッド前提）
 
         Notes:
             それぞれのマイリストごとに初回ロードか確認し、
             簡易版かレンダリングかどちらで更新するかを保持する
-
-        Returns:
-            int: 成功時0, 更新対象無し1, エラー時-1
         """
         logger.info(f"{self.L_KIND} update thread start.")
-
-        # 属性チェック
-        if not hasattr(self, "window"):
-            logger.error(f"{self.L_KIND} update thread failed, attribute error.")
-            return -1
 
         # 更新対象取得
         m_list = self.get_target_mylist()
         if not m_list:
             logger.info("Target Mylist is nothing.")
             self.window.write_event_value(self.E_DONE, "")
-            return 1
+            return
 
         prev_video_lists = self.get_prev_video_lists(m_list)
 
@@ -145,10 +116,10 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
 
         # 後続処理へ
         threading.Thread(target=self.thread_done,
-                         args=(mw, ), daemon=False).start()
+                         daemon=False).start()
 
         logger.info(f"{self.L_KIND} update thread done.")
-        return 0
+        return
 
     def get_mylist_info_worker(self, mylist_url: str, all_index_num: int) -> list[dict] | None:
         result = None
@@ -180,7 +151,10 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
             result_buf = [(f[0], f[1].result()) for f in futures]
         return result_buf
 
-    def update_mylist_info_execute(self, m_list: list[Mylist], prev_video_lists: list[list[MylistInfo]], now_video_lists: list[list[MylistInfo]]) -> list[int]:
+    def update_mylist_info_execute(self,
+                                   m_list: list[Mylist],
+                                   prev_video_lists: list[list[MylistInfo]],
+                                   now_video_lists: list[list[MylistInfo]]) -> list[int]:
         """それぞれのマイリスト情報を更新する
 
         Args:
@@ -207,7 +181,10 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
             # 引数のマイリストレコードとprev_video_listをワーカーに渡す
             for m, prev_video_list in zip(m_list, prev_video_lists):
                 # ワーカー起動
-                future = executor.submit(self.update_mylist_info_worker, m, prev_video_list, now_video_lists)
+                future = executor.submit(
+                    self.update_mylist_info_worker,
+                    m, prev_video_list, now_video_lists
+                )
                 futures.append((m.get("url"), future))
 
             # 結果を取得する（futureパターン）
@@ -215,7 +192,10 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         # 結果を返す
         return result_buf
 
-    def update_mylist_info_worker(self, m_record: Mylist, prev_video_list: list[MylistInfo], now_video_lists: list[list[MylistInfo]]) -> int:
+    def update_mylist_info_worker(self,
+                                  m_record: Mylist,
+                                  prev_video_list: list[MylistInfo],
+                                  now_video_lists: list[list[MylistInfo]]) -> int:
         """動画情報を更新するワーカー
 
         Note:
@@ -230,12 +210,6 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         Returns:
             int: 更新成功時0, 取得レコード0件なら1, エラー時-1
         """
-        # 属性チェック
-        k = ["lock", "done_count", "window", "mylist_db", "mylist_info_db"]
-        if not (set(k) <= set(dir(self))):
-            logger.error(f"{self.L_KIND} UpdateMylistInfoWorker failed, attribute error")
-            return -1
-
         # 引数チェック
         mylist_info_cols = MylistInfo.__table__.c.keys()
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
@@ -361,49 +335,32 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
         return 0
 
-    def thread_done(self, mw):
+    def thread_done(self) -> None:
         logger.info(f"{self.L_KIND} update post process start.")
 
-        pb = self.POST_PROCESS()
-        pb.run(mw)
+        process_info = self.process_info
+        process_info.name = "-UPDATE_THREAD_DONE-"
+        pb = self.POST_PROCESS(process_info)
+        pb.run()
 
         logger.info(f"{self.L_KIND} update post process done.")
 
 
 class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase):
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
+    def __init__(self, process_info: ProcessInfo) -> None:
         """マイリストのマイリスト情報を更新するクラスのベース
 
         Notes:
             このクラスのインスタンスは直接作成・呼び出しは行わない
             必要ならrunをオーバーライドしてそれぞれの後処理を実装する
-
-        Attributes:
-            L_KIND (str): ログ出力用のメッセージベース
         """
-        super().__init__(log_sflag, log_eflag, process_name)
+        super().__init__(process_info)
 
         self.L_KIND = "UpdateMylist Base"
 
-    def run(self, mw) -> int:
+    def run(self) -> None:
         """すべてのマイリストのマイリスト情報を更新後の後処理
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0, エラー時-1
         """
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error(f"{self.L_KIND} update failed, argument error.")
-            return -1
-
         # 左下の表示を更新する
         self.window["-INPUT2-"].update(value="更新完了！")
 
@@ -433,7 +390,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase):
         update_mylist_pane(self.window, self.mylist_db)
 
         logger.info(f"{self.L_KIND} update success.")
-        return 0
+        return
 
 
 if __name__ == "__main__":

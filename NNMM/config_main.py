@@ -9,6 +9,7 @@ from NNMM.gui_function import update_mylist_pane
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 
 class ProcessConfigBase(ProcessBase):
@@ -20,8 +21,8 @@ class ProcessConfigBase(ProcessBase):
     CONFIG_FILE_PATH = "./config/config.ini"
     config = None
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
     @classmethod
     def make_layout(cls) -> list[list[sg.Frame]]:
@@ -53,10 +54,6 @@ class ProcessConfigBase(ProcessBase):
             [sg.Text("・マイリスト・動画情報保存DBのパス")],
             [sg.Input(key="-C_DB_PATH-"), sg.FileBrowse()],
             [sg.Text(horizontal_line)],
-            # [sg.Text("・ニコニコアカウント")],
-            # [sg.Text("email:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_EMAIL-")],
-            # [sg.Text("password:", size=(8, 1)), sg.Input(key="-C_ACCOUNT_PASSWORD-", password_char="*")],
-            # [sg.Text(horizontal_line)],
             [sg.Text("")],
             [sg.Text("")],
             [sg.Column([[sg.Button("設定保存", key="-C_CONFIG_SAVE-")]], justification="right")],
@@ -96,22 +93,15 @@ class ProcessConfigBase(ProcessBase):
 
 
 class ProcessMylistLoadCSV(ProcessConfigBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def __init__(self):
-        super().__init__(True, True, "マイリスト一覧入力")
-
-    def run(self, mw) -> int:
+    def run(self) -> None:
         """マイリスト一覧読込ボタンが押されたときの処理
 
         Notes:
             "-C_MYLIST_LOAD-"
             csvを読み込んで現在のマイリストに追加する
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0, キャンセル時1, エラー時-1
         """
         # 読込ファイルパスをユーザーから取得する
         default_path = Path("") / "input.csv"
@@ -124,40 +114,36 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
 
         # キャンセルされた場合は何もしない
         if not sd_path_str:
-            return 1
+            return
 
         # マイリスト読込
         sd_path = Path(sd_path_str)
-        res = load_mylist(mw.mylist_db, str(sd_path))
+        if not sd_path.is_file():
+            sg.popup("読込ファイルが存在しません")
+            return
 
-        update_mylist_pane(mw.window, mw.mylist_db)
+        res = load_mylist(self.mylist_db, str(sd_path))
+
+        update_mylist_pane(self.window, self.mylist_db)
 
         # 結果通知
         if res == 0:
             sg.popup("読込完了")
-            return 0
         else:
             sg.popup("読込失敗")
-            return -1
+        return
 
 
 class ProcessMylistSaveCSV(ProcessConfigBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def __init__(self):
-        super().__init__(True, True, "マイリスト一覧出力")
-
-    def run(self, mw) -> int:
+    def run(self) -> None:
         """マイリスト一覧保存ボタンが押されたときの処理
 
         Notes:
             "-C_MYLIST_SAVE-"
             現在のマイリストをcsvとして保存する
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0, キャンセル時1, エラー時-1
         """
         # 保存先ファイルパスをユーザーから取得する
         default_path = Path("") / "result.csv"
@@ -174,37 +160,30 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
 
         # マイリスト保存
         sd_path = Path(sd_path_str)
-        res = save_mylist(mw.mylist_db, str(sd_path))
+        res = save_mylist(self.mylist_db, str(sd_path))
 
         # 結果通知
         if res == 0:
             sg.popup("保存完了")
-            return 0
         else:
             sg.popup("保存失敗")
-            return -1
+        return
 
 
 class ProcessConfigLoad(ProcessConfigBase):
-    def __init__(self):
-        super().__init__(False, False, "設定読込")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw):
+    def run(self) -> None:
         """設定タブを開いたときの処理
 
         Notes:
             "-TAB_CHANGED-" -> select_tab == "設定"
             config.iniをロードして現在の設定値をレイアウトに表示する
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0
         """
         ProcessConfigBase.set_config()
         c = ProcessConfigBase.get_config()
-        window = mw.window
+        window = self.window
 
         # General
         window["-C_BROWSER_PATH-"].update(value=c["general"]["browser_path"])
@@ -220,29 +199,23 @@ class ProcessConfigLoad(ProcessConfigBase):
 
         # 選択された状態になるので外す
         window["-C_BROWSER_PATH-"].update(select=False)
-        return 0
+        return
 
 
 class ProcessConfigSave(ProcessConfigBase):
-    def __init__(self):
-        super().__init__(True, True, "設定保存")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw):
+    def run(self) -> None:
         """設定保存ボタンが押されたときの処理
 
         Notes:
             "-C_CONFIG_SAVE-"
             GUIで設定された値をconfig.iniに保存する
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0
         """
         c = configparser.ConfigParser()
         c.read(ProcessConfigBase.CONFIG_FILE_PATH, encoding="utf-8")
-        window = mw.window
+        window = self.window
 
         # General
         c["general"]["browser_path"] = window["-C_BROWSER_PATH-"].get()
@@ -267,28 +240,23 @@ class ProcessConfigSave(ProcessConfigBase):
                 shutil.move(sd_prev, sd_new)
 
                 # 以降の処理で新しいパスに移動させたDBを参照するように再設定
-                mw.db_fullpath = str(sd_new)
-                mw.mylist_db = MylistDBController(db_fullpath=str(sd_new))
-                mw.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
+                self.db_fullpath = str(sd_new)
+                self.mylist_db = MylistDBController(db_fullpath=str(sd_new))
+                self.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
 
                 # 移動成功
                 db_move_success = True
         if db_move_success:
             c["db"]["save_path"] = window["-C_DB_PATH-"].get()
 
-        # Niconico
-        # c["niconico"]["email"] = window["-C_ACCOUNT_EMAIL-"].get()
-        # c["niconico"]["password"] = window["-C_ACCOUNT_PASSWORD-"].get()
-
         # ファイルを保存する
         with Path(ProcessConfigBase.CONFIG_FILE_PATH).open("w", encoding="utf-8") as fout:
             c.write(fout)
         ProcessConfigBase.set_config()
-        return 0
+        return
 
 
 if __name__ == "__main__":
-    ps = ProcessConfigSave()
     from NNMM import main_window
     mw = main_window.MainWindow()
     mw.run()

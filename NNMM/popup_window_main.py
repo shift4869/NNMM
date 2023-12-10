@@ -9,6 +9,7 @@ from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 if TYPE_CHECKING:
     from NNMM.main_window import MainWindow
@@ -18,18 +19,8 @@ logger.setLevel(INFO)
 
 
 class PopupWindowBase(ProcessBase):
-    """情報ウィンドウのベースクラス
-
-    派生クラスと外部から使用されるクラス変数とクラスメソッドを定義する
-    このベースクラス自体は抽象クラスのためインスタンスは作成できない
-    """
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None) -> None:
+    def __init__(self, process_info: ProcessInfo) -> None:
         """コンストラクタ
-
-        Args:
-            log_sflag (bool): 開始時ログ出力フラグ
-            log_eflag (bool): 終了時時ログ出力フラグ
-            process_name (str): 処理名
 
         Atributes:
             window (MainWindow|None): 子window
@@ -37,70 +28,53 @@ class PopupWindowBase(ProcessBase):
             size (tuple[str,str]): windowサイズ
             process_dict (dict): イベント処理の対応辞書
         """
-        # 派生クラスの生成時は引数ありで呼び出される
-        if process_name:
-            super().__init__(log_sflag, log_eflag, process_name)
-        else:
-            super().__init__(True, True, "ウィンドウベース")
+        super().__init__(process_info)
 
-        self.window = None
+        self.popup_window = None
         self.title = ""
         self.size = (100, 100)
         self.process_dict = {}
 
     @abstractmethod
-    def make_window_layout(self, mw: "MainWindow") -> list[list[sg.Frame]] | None:
-        """画面のレイアウトを作成する
-
-        Args:
-            mw (MainWindow): 親windowの情報
-
-        Returns:
-            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
-        """
-        return None
-
-    @abstractmethod
-    def init(self, mw: "MainWindow") -> int:
+    def init(self) -> int:
         """初期化
-
-        Args:
-            mw (MainWindow): 親windowの情報
 
         Returns:
             int: 成功時0、エラー時-1
         """
-        return -1
+        raise NotImplementedError
 
-    def run(self, mw: "MainWindow") -> int:
-        """子windowイベントループ
-
-        Args:
-            mw (MainWindow): 親windowの情報
+    @abstractmethod
+    def make_window_layout(self) -> list[list[sg.Frame]] | None:
+        """画面のレイアウトを作成する
 
         Returns:
-            int: 正常終了時0、エラー時-1
+            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
+        """
+        raise NotImplementedError
+
+    def run(self) -> None:
+        """子windowイベントループ
         """
         # 初期化
-        res = self.init(mw)
+        res = self.init()
         if res == -1:
             sg.popup_ok("情報ウィンドウの初期化に失敗しました。")
-            return -1
+            return
 
         # ウィンドウレイアウト作成
-        layout = self.make_window_layout(mw)
-
+        layout = self.make_window_layout()
         if not layout:
             sg.popup_ok("情報ウィンドウのレイアウト表示に失敗しました。")
-            return -1
+            return
 
         # ウィンドウオブジェクト作成
-        self.window = sg.Window(self.title, layout, size=self.size, finalize=True, resizable=True, modal=True)
+        self.popup_window = sg.Window(self.title, layout, size=self.size, finalize=True, resizable=True, modal=True)
 
         # イベントのループ
         while True:
             # イベントの読み込み
-            event, values = self.window.read()
+            event, values = self.popup_window.read()
 
             if event in [sg.WIN_CLOSED, "-EXIT-"]:
                 # 終了ボタンかウィンドウの×ボタンが押されれば終了
@@ -110,29 +84,65 @@ class PopupWindowBase(ProcessBase):
             # イベント処理
             if self.process_dict.get(event):
                 self.values = values
-                pb = self.process_dict.get(event)()
-                pb.run(self)
+                process_info = ProcessInfo.create(event, self)
+                process_info.window = self.popup_window
+                pb: ProcessBase = self.process_dict.get(event)(process_info)
+                pb.run()
 
         # ウィンドウ終了処理
-        self.window.close()
-        return 0
+        self.popup_window.close()
+        return
 
 
 class PopupMylistWindow(PopupWindowBase):
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
-        if process_name:
-            super().__init__(log_sflag, log_eflag, process_name)
-        else:
-            super().__init__(True, True, "マイリスト情報ウィンドウ")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def make_window_layout(self, mw: "MainWindow") -> list[list[sg.Frame]] | None:
+    def init(self) -> int:
+        """初期化
+
+        Returns:
+            int: 成功時0、エラー時-1
+        """
+        # 親windowからの情報を取得する
+        values = self.values.get("-LIST-")
+
+        # 選択されたマイリストのShownameを取得する
+        if values and len(values) > 0:
+            values = values[0]
+        else:
+            logger.error("Mylist popup window Init failed, mylist is not selected.")
+            return -1
+
+        # 新着表示のマークがある場合は削除する
+        NEW_MARK = "*:"
+        if values[:2] == NEW_MARK:
+            values = values[2:]
+
+        # 選択されたマイリストのマイリストレコードオブジェクトを取得する
+        record = self.mylist_db.select_from_showname(values)
+        if record and len(record) == 1:
+            record = record[0]
+        else:
+            logger.error("Mylist popup window Init failed, mylist is not found in mylist_db.")
+            return -1
+
+        # recordを設定(make_window_layoutで使用する)
+        self.record = record
+
+        # 子ウィンドウの初期値設定
+        self.title = "マイリスト情報"
+        self.size = (580, 450)
+        self.process_dict = {
+            "-SAVE-": PopupMylistWindowSave,
+        }
+        return 0
+
+    def make_window_layout(self) -> list[list[sg.Frame]] | None:
         """画面のレイアウトを作成する
 
         Notes:
             先にInitを実行し、self.recordを設定しておく必要がある
-
-        Args:
-            mw (MainWindow): 親windowの情報（使用しない）
 
         Returns:
             list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
@@ -212,140 +222,114 @@ class PopupMylistWindow(PopupWindowBase):
         ]]
         return layout
 
-    def init(self, mw: "MainWindow") -> int:
-        """初期化
-
-        Args:
-            mw (MainWindow): 親windowの情報
-
-        Returns:
-            int: 成功時0、エラー時-1
-        """
-        # 親windowからの情報を取得する
-        values = []
-        try:
-            values: list[dict] = mw.values.get("-LIST-")
-            self.mylist_db: MylistDBController = mw.mylist_db
-            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
-        except AttributeError:
-            logger.error("Mylist popup window Init failed, argument error.")
-            return -1
-
-        # 選択されたマイリストのShownameを取得する
-        if values and len(values) > 0:
-            values = values[0]
-        else:
-            logger.error("Mylist popup window Init failed, mylist is not selected.")
-            return -1
-
-        # 新着表示のマークがある場合は削除する
-        NEW_MARK = "*:"
-        if values[:2] == NEW_MARK:
-            values = values[2:]
-
-        # 選択されたマイリストのマイリストレコードオブジェクトを取得する
-        record = self.mylist_db.select_from_showname(values)
-        if record and len(record) == 1:
-            record = record[0]
-        else:
-            logger.error("Mylist popup window Init failed, mylist is not found in mylist_db.")
-            return -1
-
-        # recordを設定(MakeWindowLayoutで使用する)
-        self.record = record
-
-        # 子ウィンドウの初期値設定
-        self.title = "マイリスト情報"
-        self.size = (580, 450)
-        self.process_dict = {
-            "-SAVE-": PopupMylistWindowSave,
-        }
-        return 0
 
 
 class PopupMylistWindowSave(ProcessBase):
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
-        # 派生クラスの生成時は引数ありで呼び出される
-        if process_name:
-            super().__init__(log_sflag, log_eflag, process_name)
-        else:
-            super().__init__(True, True, "マイリスト情報ウィンドウSave")
-    
-    def run(self, mw: "MainWindow") -> int:
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
+
+    def run(self) -> None:
         """ポップアップwindow上の変更を保存する
 
         Notes:
             "-SAVE-"
             マイリスト情報windowの保存ボタンが押された時呼び出される
 
-        Args:
-            mw (MainWindow): ポップアップwindowの情報
-
         Returns:
             int: 正常終了時0、エラー時-1
         """
-        try:
-            self.window: sg.Window = mw.window
-            self.values: dict = mw.values
-            self.mylist_db: MylistDBController = mw.mylist_db
-            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
-        except AttributeError:
-            logger.error("Mylist popup window save, argument error.")
-            return -1
+        self.popup_window: sg.Window = self.window
 
         # キーチェック
         PMW_ROWS = ["-ID_INDEX-", "-USERNAME-", "-MYLISTNAME-", "-TYPE-", "-SHOWNAME-", "-URL-",
                     "-CREATED_AT-", "-UPDATED_AT-", "-CHECKED_AT-", "-IS_INCLUDE_NEW-", "-CHECK_INTERVAL_NUM-", "-CHECK_INTERVAL_UNIT-"]
-        allkeys = list(self.window.AllKeysDict.keys())
+        allkeys = list(self.popup_window.AllKeysDict.keys())
         for k in PMW_ROWS:
             if k not in allkeys:
                 logger.error("Mylist popup window layout key error.")
-                return -1
+                return
 
         # 値の設定
-        id_index = self.window["-ID_INDEX-"].get()
-        username = self.window["-USERNAME-"].get()
-        mylistname = self.window["-MYLISTNAME-"].get()
-        typename = self.window["-TYPE-"].get()
-        showname = self.window["-SHOWNAME-"].get()
-        url = self.window["-URL-"].get()
-        created_at = self.window["-CREATED_AT-"].get()
-        updated_at = self.window["-UPDATED_AT-"].get()
-        checked_at = self.window["-CHECKED_AT-"].get()
-        is_include_new = str(self.window["-IS_INCLUDE_NEW-"].get()) == "True"
+        id_index = self.popup_window["-ID_INDEX-"].get()
+        username = self.popup_window["-USERNAME-"].get()
+        mylistname = self.popup_window["-MYLISTNAME-"].get()
+        typename = self.popup_window["-TYPE-"].get()
+        showname = self.popup_window["-SHOWNAME-"].get()
+        url = self.popup_window["-URL-"].get()
+        created_at = self.popup_window["-CREATED_AT-"].get()
+        updated_at = self.popup_window["-UPDATED_AT-"].get()
+        checked_at = self.popup_window["-CHECKED_AT-"].get()
+        is_include_new = str(self.popup_window["-IS_INCLUDE_NEW-"].get()) == "True"
 
         # インターバル文字列を結合して解釈できるかどうか確認する
-        check_interval_num = self.window["-CHECK_INTERVAL_NUM-"].get()
-        check_interval_unit = self.window["-CHECK_INTERVAL_UNIT-"].get()
+        check_interval_num = self.popup_window["-CHECK_INTERVAL_NUM-"].get()
+        check_interval_unit = self.popup_window["-CHECK_INTERVAL_UNIT-"].get()
         check_interval = str(check_interval_num) + check_interval_unit
         interval_str = check_interval
         dt = interval_translate(interval_str) - 1
         if dt < -1:
             # インターバル文字列解釈エラー
             logger.error(f"update interval setting is invalid : {interval_str}")
-            return -1
+            return
 
         # マイリスト情報更新
         self.mylist_db.upsert(id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)
         logger.info("マイリスト情報Saved")
-        return 0
+        return
 
 
 class PopupVideoWindow(PopupWindowBase):
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
-        if process_name:
-            super().__init__(log_sflag, log_eflag, process_name)
-        else:
-            super().__init__(True, True, "動画情報ウィンドウ")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def make_window_layout(self, mw: "MainWindow") -> list[list[sg.Frame]]:
+    def init(self) -> int:
+        """初期化
+
+        Returns:
+            int: 成功時0、エラー時-1
+        """
+        # 親windowからの情報を取得する
+        window = self.window
+        values = self.values
+
+        # 引数設定チェック
+        if window is None or values is None:
+            logger.error("MylistInfo popup window Init failed, argument error.")
+            return -1
+
+        # テーブルの行が選択されていなかったら何もしない
+        if not values["-TABLE-"]:
+            logger.info("Table row is not selected.")
+            return -1
+
+        # 選択されたテーブル行番号
+        row = int(values["-TABLE-"][0])
+        # 現在のテーブルの全リスト
+        def_data = window["-TABLE-"].Values
+        # 選択されたテーブル行
+        selected = def_data[row]
+
+        # 動画情報を取得する
+        video_id = selected[1]
+        mylist_url = selected[8]
+        records = self.mylist_info_db.select_from_id_url(video_id, mylist_url)
+
+        if records == [] or len(records) != 1:
+            logger.error("Selected row is invalid.")
+            return -1
+
+        self.record = records[0]
+
+        # 子ウィンドウの初期値
+        self.title = "動画情報"
+        self.size = (580, 400)
+        return 0
+
+    def make_window_layout(self) -> list[list[sg.Frame]]:
         """画面のレイアウトを作成する
 
         Notes:
             先にInitを実行し、self.recordを設定しておく必要がある
-
-        Args:
-            mw (MainWindow): 親windowの情報（使用しない）
 
         Returns:
             list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
@@ -400,61 +384,8 @@ class PopupVideoWindow(PopupWindowBase):
         ]]
         return layout
 
-    def init(self, mw: "MainWindow") -> int:
-        """初期化
-
-        Args:
-            mw (MainWindow): 親windowの情報
-
-        Returns:
-            int: 成功時0、エラー時-1
-        """
-        # 親windowからの情報を取得する
-        window = None
-        values = None
-        try:
-            window: sg.Window = mw.window
-            values: dict = mw.values
-            self.mylist_db: MylistDBController = mw.mylist_db
-            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
-        except AttributeError:
-            logger.error("MylistInfo popup window Init failed, argument error.")
-            return -1
-
-        # 引数設定チェック
-        if window is None or values is None:
-            logger.error("MylistInfo popup window Init failed, argument error.")
-            return -1
-
-        # テーブルの行が選択されていなかったら何もしない
-        if not values["-TABLE-"]:
-            logger.info("Table row is not selected.")
-            return -1
-
-        # 選択されたテーブル行番号
-        row = int(values["-TABLE-"][0])
-        # 現在のテーブルの全リスト
-        def_data = window["-TABLE-"].Values
-        # 選択されたテーブル行
-        selected = def_data[row]
-
-        # 動画情報を取得する
-        video_id = selected[1]
-        mylist_url = selected[8]
-        records = self.mylist_info_db.select_from_id_url(video_id, mylist_url)
-
-        if records == [] or len(records) != 1:
-            logger.error("Selected row is invalid.")
-            return -1
-
-        self.record = records[0]
-
-        # 子ウィンドウの初期値
-        self.title = "動画情報"
-        self.size = (580, 400)
-        return 0
-
 
 if __name__ == "__main__":
-    mw = MainWindow()
+    from NNMM import main_window
+    mw = main_window.MainWindow()
     mw.run()

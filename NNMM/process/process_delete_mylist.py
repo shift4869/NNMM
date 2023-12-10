@@ -4,42 +4,25 @@ import PySimpleGUI as sg
 
 from NNMM.gui_function import update_mylist_pane
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessDeleteMylist(ProcessBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def __init__(self):
-        super().__init__(True, True, "マイリスト削除")
-
-    def run(self, mw) -> int:
+    def run(self) -> None:
         """マイリスト削除ボタン押下時の処理
 
         Notes:
             "-DELETE-"
             左下のマイリスト削除ボタンが押された場合
             またはマイリスト右クリックメニューからマイリスト削除が選択された場合
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: マイリスト削除に成功したら0,
-                 キャンセルされたなら1,
-                 エラー時-1
         """
         logger.info("Delete mylist start.")
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error("Delete mylist failed, argument error.")
-            return -1
 
         # 対象マイリストの候補を取得する
         # 優先順位は(1)マイリストペインにて選択中のマイリスト＞(2)現在テーブルペインに表示中のマイリスト＞(3)左下テキストボックス内入力
@@ -64,10 +47,10 @@ class ProcessDeleteMylist(ProcessBase):
             prev_mylist = self.mylist_db.select_from_url(mylist_url)[0]
             if not prev_mylist:
                 logger.error("Delete mylist failed, target mylist not found.")
-                return -1
+                return
         except IndexError:
             logger.error("Delete mylist failed, target mylist not found.")
-            return -1
+            return
 
         # 確認
         showname = prev_mylist.get("showname", "")
@@ -76,7 +59,7 @@ class ProcessDeleteMylist(ProcessBase):
         if res == "Cancel":
             self.window["-INPUT2-"].update(value="マイリスト削除キャンセル")
             logger.error("Delete mylist canceled.")
-            return 1
+            return
 
         # マイリスト情報から対象動画の情報を削除する
         self.mylist_info_db.delete_in_mylist(mylist_url)
@@ -93,7 +76,7 @@ class ProcessDeleteMylist(ProcessBase):
 
         self.window["-INPUT2-"].update(value="マイリスト削除完了")
         logger.info("Delete mylist success.")
-        return 0
+        return
 
 
 if __name__ == "__main__":

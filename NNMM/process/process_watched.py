@@ -2,40 +2,24 @@ from logging import INFO, getLogger
 
 from NNMM.gui_function import is_mylist_include_new_video, update_mylist_pane, update_table_pane
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessWatched(ProcessBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def __init__(self):
-        super().__init__(True, True, "視聴済にする")
-
-    def run(self, mw):
+    def run(self) -> None:
         """動画の状況ステータスを""(視聴済)に設定する
 
         Notes:
             "視聴済にする::-TR-"
             テーブル右クリックで「視聴済にする」が選択された場合
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 処理成功した場合0, エラー時-1
         """
         logger.info("Watched start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error("Watched failed, argument error.")
-            return -1
 
         # 現在のtableの全リスト
         def_data = self.window["-TABLE-"].Values
@@ -43,7 +27,7 @@ class ProcessWatched(ProcessBase):
         # 行が選択されていないなら何もしない
         if not self.values["-TABLE-"]:
             logger.error("Watched failed, no record selected.")
-            return -1
+            return
 
         # 選択された行（複数可）についてすべて処理する
         all_num = len(self.values["-TABLE-"])
@@ -82,7 +66,7 @@ class ProcessWatched(ProcessBase):
         update_mylist_pane(self.window, self.mylist_db)
 
         logger.info("Watched success.")
-        return 0
+        return
 
 
 if __name__ == "__main__":

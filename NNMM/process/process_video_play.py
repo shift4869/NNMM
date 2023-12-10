@@ -6,44 +6,29 @@ import PySimpleGUI as sg
 from NNMM import config_main
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.process_watched import ProcessWatched
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessVideoPlay(ProcessBase):
-    def __init__(self):
-        super().__init__(True, True, "ブラウザで開く")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw) -> int:
+    def run(self) -> None:
         """選択された動画をブラウザで開く
 
         Notes:
             "ブラウザで開く::-TR-"
             テーブル右クリックで「再生」が選択された場合
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0, エラー時-1
         """
         logger.info(f"VideoPlay start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error("VideoPlay failed, argument error.")
-            return -1
 
         # テーブルの行が選択されていなかったら何もしない
         if not self.values["-TABLE-"]:
             logger.info("VideoPlay failed, Table row is not selected.")
-            return -1
+            return
 
         # 選択されたテーブル行数
         row = int(self.values["-TABLE-"][0])
@@ -70,7 +55,7 @@ class ProcessVideoPlay(ProcessBase):
             sg.popup_ok("ブラウザパスが不正です。設定タブから設定してください。")
             logger.info(f"{cmd} -> invalid browser path.")
             logger.info(f"{video_url} -> video page open failed.")
-            return -1
+            return
 
         # 視聴済にする
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
@@ -79,10 +64,10 @@ class ProcessVideoPlay(ProcessBase):
         if def_data[row][STATUS_INDEX] != "":
             # 視聴済にする
             pb = ProcessWatched()
-            pb.run(mw)
+            pb.run()
 
         logger.info(f"VideoPlay success.")
-        return 0
+        return
 
 
 if __name__ == "__main__":

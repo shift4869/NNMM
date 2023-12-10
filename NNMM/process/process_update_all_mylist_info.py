@@ -2,22 +2,15 @@ from logging import INFO, getLogger
 
 from NNMM.model import Mylist
 from NNMM.process.process_update_mylist_info_base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfoBase):
-
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
-        """すべてのマイリストのマイリスト情報を更新するクラス
-
-        Attributes:
-            L_KIND (str): ログ出力用のメッセージベース
-            E_DONE (str): 後続処理へのイベントキー
-        """
-        super().__init__(True, False, "全マイリスト内容更新")
-
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
         self.POST_PROCESS = ProcessUpdateAllMylistInfoThreadDone
         self.L_KIND = "All mylist"
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
@@ -31,19 +24,13 @@ class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfoBase):
         Returns:
             list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
         """
-        # 属性チェック
-        if not hasattr(self, "mylist_db"):
-            logger.error(f"{self.L_KIND} GetTargetMylist failed, attribute error.")
-            return []
-
         m_list = self.mylist_db.select()
         return m_list
 
 
 class ProcessUpdateAllMylistInfoThreadDone(ProcessUpdateMylistInfoThreadDoneBase):
-
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
-        super().__init__(False, True, "全マイリスト内容更新")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
         self.L_KIND = "All mylist"
 
 

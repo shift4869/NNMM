@@ -2,48 +2,31 @@ import re
 from logging import INFO, getLogger
 
 from NNMM.gui_function import popup_get_text, update_mylist_pane, update_table_pane
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessMylistSearch(ProcessBase):
-    def __init__(self):
-        super().__init__(True, True, "マイリスト検索（マイリスト名）")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw):
+    def run(self) -> None:
         """マイリスト名でマイリストを検索
 
         Notes:
             "検索（マイリスト）::-MR-"
             マイリスト右クリックで「検索（マイリスト）」が選択された場合
             入力されたマイリスト名を持つマイリストをハイライト表示する
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 処理成功した場合0, キャンセル時1, エラー時-1
         """
         logger.info("MylistSearch start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db: MylistDBController = mw.mylist_db
-            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
-        except AttributeError:
-            logger.error("MylistSearch failed, argument error.")
-            return -1
 
         pattern = popup_get_text("マイリスト名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("MylistSearch is canceled or target word is null.")
-            return 1
+            return
 
         logger.info(f"search word -> {pattern}.")
 
@@ -92,14 +75,14 @@ class ProcessMylistSearch(ProcessBase):
             self.window["-INPUT2-"].update(value="該当なし")
 
         logger.info("MylistSearch success.")
-        return 0
+        return
 
 
 class ProcessMylistSearchFromVideo(ProcessBase):
-    def __init__(self):
-        super().__init__(True, True, "マイリスト検索（動画名）")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw):
+    def run(self) -> None:
         """マイリストの中に含んでいる動画名でマイリストを検索
 
         Notes:
@@ -109,29 +92,13 @@ class ProcessMylistSearchFromVideo(ProcessBase):
 
         Todo:
             動画テーブルを表示させて動画レコードまでハイライトする
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 処理成功した場合0, キャンセル時1, エラー時-1
         """
         logger.info("MylistSearchFromVideo start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db: MylistDBController = mw.mylist_db
-            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
-        except AttributeError:
-            logger.error("MylistSearchFromVideo failed, argument error.")
-            return -1
 
         pattern = popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("MylistSearchFromVideo is canceled or target word is null.")
-            return 1
+            return
 
         logger.info(f"search word -> {pattern}.")
 
@@ -187,44 +154,28 @@ class ProcessMylistSearchFromVideo(ProcessBase):
             self.window["-INPUT2-"].update(value="該当なし")
 
         logger.info("MylistSearchFromVideo success.")
-        return 0
+        return
 
 
 class ProcessVideoSearch(ProcessBase):
-    def __init__(self):
-        super().__init__(True, True, "動画検索")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw):
+    def run(self) -> None:
         """マイリストの中に含んでいる動画名でマイリストを検索
 
         Notes:
             "検索（動画名）::-TR-"
             動画テーブル右クリックで「検索（動画名）」が選択された場合
             現在表示中の動画テーブルから入力された動画名を持つ動画をハイライト表示する
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 処理成功した場合0, キャンセル時1, エラー時-1
         """
         logger.info("VideoSearch start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db: MylistDBController = mw.mylist_db
-            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
-        except AttributeError:
-            logger.error("VideoSearch failed, argument error.")
-            return -1
 
         # 検索対象ワードをユーザーに問い合わせる
         pattern = popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("VideoSearch is canceled or target word is null.")
-            return 1
+            return
 
         logger.info(f"search word -> {pattern}.")
 
@@ -265,72 +216,42 @@ class ProcessVideoSearch(ProcessBase):
             self.window["-INPUT2-"].update(value="該当なし")
 
         logger.info("VideoSearch success.")
-        return 0
+        return
 
 
 class ProcessMylistSearchClear(ProcessBase):
-    def __init__(self):
-        super().__init__(True, True, "強調表示を解除")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw):
+    def run(self) -> None:
         """マイリスト表示のハイライトを解除する
 
         Notes:
             "強調表示を解除::-MR-"
             マイリスト右クリックで「強調表示を解除」が選択された場合
             現在表示中のマイリストの表示をもとに戻す
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 処理成功した場合0, エラー時-1
         """
         logger.info("MylistSearchClear start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.mylist_db = mw.mylist_db
-        except AttributeError:
-            logger.error("MylistSearchClear failed, argument error.")
-            return -1
 
         update_mylist_pane(self.window, self.mylist_db)
 
         logger.info("MylistSearchClear success.")
-        return 0
+        return
 
 
 class ProcessVideoSearchClear(ProcessBase):
-    def __init__(self):
-        super().__init__(True, True, "強調表示を解除")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw):
+    def run(self) -> None:
         """マイリスト表示のハイライトを解除する
 
         Notes:
             "強調表示を解除::-TR-"
             動画テーブル右クリックで「強調表示を解除」が選択された場合
             現在表示中の動画テーブルの表示をもとに戻す
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 処理成功した場合0, エラー時-1
         """
         logger.info("VideoSearchClear start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db: MylistDBController = mw.mylist_db
-            self.mylist_info_db: MylistInfoDBController = mw.mylist_info_db
-        except AttributeError:
-            logger.error("VideoSearchClear failed, argument error.")
-            return -1
 
         # マイリストURL取得
         # 右上のテキストボックスから取得する
@@ -340,7 +261,7 @@ class ProcessVideoSearchClear(ProcessBase):
         update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info("VideoSearchClear success.")
-        return 0
+        return
 
 
 if __name__ == "__main__":

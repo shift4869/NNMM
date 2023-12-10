@@ -1,21 +1,17 @@
 from abc import ABC, abstractmethod
-from logging import INFO, getLogger
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from NNMM.main_window import MainWindow
-
-logger = getLogger(__name__)
-logger.setLevel(INFO)
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 
 class ProcessBase(ABC):
-    def __init__(self, log_sflag: bool, log_eflag: bool, process_name: str) -> None:
-        self.log_sflag = log_sflag
-        self.log_eflag = log_eflag
-        self.process_name = process_name
-        self.main_window = None
+    def __init__(self, process_info: ProcessInfo) -> None:
+        self.process_info = process_info
+        self.name = process_info.name
+        self.window = process_info.window
+        self.values = process_info.values
+        self.mylist_db = process_info.mylist_db
+        self.mylist_info_db = process_info.mylist_info_db
 
     @abstractmethod
-    def run(self, mw: "MainWindow") -> int:
-        return 0
+    def run(self) -> None:
+        raise NotImplementedError

@@ -2,40 +2,24 @@ from logging import INFO, getLogger
 
 from NNMM.gui_function import update_table_pane
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessShowMylistInfo(ProcessBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def __init__(self):
-        super().__init__(True, True, "マイリスト内容表示")
-
-    def run(self, mw):
+    def run(self) -> None:
         """選択されたマイリストに含まれる動画情報レコードを表示する
 
         Notes:
             "-LIST-+DOUBLE CLICK+"
             リストボックスの項目がダブルクリックされた場合（単一）
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 処理成功した場合0, エラー時-1
         """
         logger.info("ShowMylistInfo start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error("ShowMylistInfo failed, argument error.")
-            return -1
 
         # ダブルクリックされたリストボックスの選択値を取得
         v = self.values["-LIST-"][0]
@@ -55,7 +39,7 @@ class ProcessShowMylistInfo(ProcessBase):
 
         logger.info(f"{mylist_url} -> mylist info shown.")
         logger.info("ShowMylistInfo success.")
-        return 0
+        return
 
 
 if __name__ == "__main__":

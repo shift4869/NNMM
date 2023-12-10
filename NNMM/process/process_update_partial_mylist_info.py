@@ -4,21 +4,21 @@ from logging import INFO, getLogger
 from NNMM.gui_function import interval_translate
 from NNMM.model import Mylist
 from NNMM.process.process_update_mylist_info_base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
-
-    def __init__(self):
+    def __init__(self, process_info: ProcessInfo) -> None:
         """一部（複数の）マイリストのマイリスト情報を更新するクラス
 
         Attributes:
             L_KIND (str): ログ出力用のメッセージベース
             E_DONE (str): 後続処理へのイベントキー
         """
-        super().__init__(True, False, "複数マイリスト内容更新")
+        super().__init__(process_info)
 
         self.POST_PROCESS = ProcessUpdatePartialMylistInfoThreadDone
         self.L_KIND = "Partial mylist"
@@ -34,11 +34,6 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
         Returns:
             list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
         """
-        # 属性チェック
-        if not hasattr(self, "mylist_db"):
-            logger.error(f"{self.L_KIND} GetTargetMylist failed, attribute error.")
-            return []
-
         result = []
         m_list = self.mylist_db.select()
 
@@ -57,7 +52,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
                     # インターバル文字列解釈エラー
                     mylist_url = m["url"]
                     showname = m["showname"]
-                    logger.error(f"{self.L_KIND} GetTargetMylist failed, update interval setting is invalid :")
+                    logger.error(f"{self.L_KIND} get_target_mylist failed, update interval setting is invalid :")
                     logger.error(f"\t{showname}")
                     logger.error(f"\t{mylist_url} : {interval_str}")
                     continue
@@ -70,16 +65,15 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
                     result.append(m)
         except (KeyError, ValueError):
             # マイリストオブジェクトのキーエラーなど
-            logger.error(f"{self.L_KIND} GetTargetMylist failed, KeyError.")
+            logger.error(f"{self.L_KIND} get_target_mylist failed, KeyError.")
             return []
 
         return result
 
 
 class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateMylistInfoThreadDoneBase):
-
-    def __init__(self):
-        super().__init__(False, True, "複数マイリスト内容更新")
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
         self.L_KIND = "Partial mylist"
 
 

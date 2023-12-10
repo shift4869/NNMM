@@ -2,40 +2,24 @@ from logging import INFO, getLogger
 
 from NNMM.gui_function import update_mylist_pane, update_table_pane
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessWatchedAllMylist(ProcessBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def __init__(self):
-        super().__init__(True, True, "視聴済にする（全て）")
-
-    def run(self, mw):
+    def run(self) -> None:
         """すべてのマイリストに含まれる動画情報についてすべて"視聴済"にする
 
         Notes:
             "視聴済にする（全て）::-MR-"
             マイリスト右クリックで「視聴済にする（全て）」が選択された場合
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0, エラー時-1
         """
         logger.info(f"WatchedAllMylist start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error("WatchedAllMylist failed, argument error.")
-            return -1
 
         m_list = self.mylist_db.select()
         records = [m for m in m_list if m["is_include_new"]]
@@ -73,7 +57,7 @@ class ProcessWatchedAllMylist(ProcessBase):
         update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info(f"WatchedAllMylist success.")
-        return 0
+        return
    
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process import process_base, process_create_mylist, process_delete_mylist, process_download, process_move_down, process_move_up, process_not_watched, process_search, process_show_mylist_info, process_show_mylist_info_all
 from NNMM.process import process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -204,7 +205,7 @@ class MainWindow():
 
         return layout
 
-    def run(self) -> int:
+    def run(self) -> None:
         """メインイベントループ
 
         Returns:
@@ -222,14 +223,15 @@ class MainWindow():
             # イベント処理
             if self.process_dict.get(event):
                 self.values = values
+                process_info = ProcessInfo.create(event, self)
 
                 try:
-                    pb: process_base.ProcessBase = self.process_dict.get(event)()
+                    pb: process_base.ProcessBase = self.process_dict.get(event)(process_info)
 
                     if pb is None or not hasattr(pb, "run"):
                         continue
 
-                    pb.run(self)
+                    pb.run()
                 except Exception:
                     logger.error(traceback.format_exc())
                     logger.error("main event loop error.")
@@ -239,12 +241,14 @@ class MainWindow():
                 select_tab = values["-TAB_CHANGED-"]
                 if select_tab == "設定":
                     # 設定タブを開いたときの処理
-                    pb = config_main.ProcessConfigLoad()
-                    pb.run(self)
+                    self.values = values
+                    process_info = ProcessInfo.create(event, self)
+                    pb = config_main.ProcessConfigLoad(process_info)
+                    pb.run()
 
         # ウィンドウ終了処理
         self.window.close()
-        return 0
+        return
 
 
 if __name__ == "__main__":

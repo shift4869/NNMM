@@ -1,17 +1,17 @@
 from logging import INFO, getLogger
 
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class ProcessShowMylistInfoAll(ProcessBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def __init__(self):
-        super().__init__(True, True, "最近追加された動画を一覧表示")
-
-    def run(self, mw):
+    def run(self) -> None:
         """すべてのマイリストを横断的に探索し、含まれる動画情報レコードを100件まで表示する
 
         Notes:
@@ -25,24 +25,8 @@ class ProcessShowMylistInfoAll(ProcessBase):
                 投稿日時→投コメ修正などの更新でも日時が更新されてしまう
             初回格納時の投稿日時のみ保持するようにし、
             それ以降投稿日時が上書きされないようにした上で投稿日時順ソートが有効か
-
-        Args:
-            mw (MainWindow): メインウィンドウオブジェクト
-
-        Returns:
-            int: 成功時0, エラー時-1
         """
         logger.info("ShowMylistInfoAll start.")
-
-        # 引数チェック
-        try:
-            self.window = mw.window
-            self.values = mw.values
-            self.mylist_db = mw.mylist_db
-            self.mylist_info_db = mw.mylist_info_db
-        except AttributeError:
-            logger.error("ShowMylistInfoAll failed, argument error.")
-            return -1
 
         # 現在選択中のマイリストがある場合そのindexを保存
         index = 0
@@ -73,7 +57,7 @@ class ProcessShowMylistInfoAll(ProcessBase):
         self.window["-TABLE-"].update(row_colors=[(0, "", "")])
 
         logger.info("ShowMylistInfoAll success.")
-        return 0
+        return
 
 
 if __name__ == "__main__":
