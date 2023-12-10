@@ -8,7 +8,7 @@ from NNMM.csv_save_load import load_mylist, save_mylist
 from NNMM.gui_function import update_mylist_pane
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.Process.process_base import ProcessBase
+from NNMM.process.process_base import ProcessBase
 
 
 class ProcessConfigBase(ProcessBase):

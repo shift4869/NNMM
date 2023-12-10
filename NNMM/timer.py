@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import PySimpleGUI as sg
 
 from NNMM.config_main import ProcessConfigBase
-from NNMM.Process.process_base import ProcessBase
+from NNMM.process.process_base import ProcessBase
 
 if TYPE_CHECKING:
     from NNMM.main_window import MainWindow

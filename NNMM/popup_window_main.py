@@ -8,7 +8,7 @@ from NNMM.gui_function import interval_translate
 from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.Process.process_base import ProcessBase
+from NNMM.process.process_base import ProcessBase
 
 if TYPE_CHECKING:
     from NNMM.main_window import MainWindow
