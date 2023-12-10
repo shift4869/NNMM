@@ -6,7 +6,7 @@ from datetime import datetime
 
 import xmltodict
 
-from NNMM.video_info_fetcher.util import find_values
+from NNMM.util import find_values
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
@@ -29,11 +29,10 @@ class RSSParser():
     mylist_url: UploadedURL | MylistURL
     xml_dict: dict
 
-    # 日付フォーマット
     SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-    def __init__(self, url: str, xml_text: str):
+    def __init__(self, url: str, xml_text: str) -> None:
         if UploadedURL.is_valid(url):
             self.mylist_url = UploadedURL.create(url)
         elif MylistURL.is_valid(url):
@@ -57,11 +56,11 @@ class RSSParser():
         """
         if isinstance(self.mylist_url, UploadedURL):
             # タイトルからユーザー名を取得
-            title = find_values(self.xml_dict, "title", ["rss", "channel"], [], True)
+            title = find_values(self.xml_dict, "title", True, ["rss", "channel"], [])
             pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
             username = re.findall(pattern, title)[0]
         elif isinstance(self.mylist_url, MylistURL):
-            username = find_values(self.xml_dict, "dc:creator", [], [], True)
+            username = find_values(self.xml_dict, "dc:creator", True, [], [])
         return Username(username)
 
     def _get_showname_myshowname(self) -> tuple[Showname, Myshowname]:
@@ -74,7 +73,7 @@ class RSSParser():
             return (showname, myshowname)
         elif isinstance(self.mylist_url, MylistURL):
             # マイリストの場合はタイトルから取得
-            page_title = find_values(self.xml_dict, "title", ["rss", "channel"], ["item"], True)
+            page_title = find_values(self.xml_dict, "title", True, ["rss", "channel"], ["item"])
             pattern = "^マイリスト (.*)‐ニコニコ動画$"
             myshowname = Myshowname(re.findall(pattern, page_title)[0])
             showname = Showname.create(username, myshowname)
@@ -105,10 +104,10 @@ class RSSParser():
         showname, myshowname = self._get_showname_myshowname()
 
         # 動画エントリ取得
-        items_dict = find_values(self.xml_dict, "item", [], [], True)
+        items_dict = find_values(self.xml_dict, "item", True, [], [])
         video_url_list = [
             VideoURL.create(video_url)
-            for video_url in find_values(items_dict, "link", [], [], False)
+            for video_url in find_values(items_dict, "link", False, [], [])
         ]
         video_id_list = [
             video_url.video_id
@@ -116,7 +115,7 @@ class RSSParser():
         ]
         title_list = [
             Title(title)
-            for title in find_values(items_dict, "title", [], [], False)
+            for title in find_values(items_dict, "title", False, [], [])
         ]
         registered_at_list = [
             RegisteredAt(
@@ -124,7 +123,7 @@ class RSSParser():
                     pub_date, self.SOURCE_DATETIME_FORMAT
                 ).strftime(self.DESTINATION_DATETIME_FORMAT)
             )
-            for pub_date in find_values(items_dict, "pubDate", [], [], False)
+            for pub_date in find_values(items_dict, "pubDate", False, [], [])
         ]
         num = len(video_url_list)
         check_list = [
