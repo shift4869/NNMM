@@ -150,7 +150,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         logger.info(f"{self.L_KIND} update thread done.")
         return 0
 
-    def get_mylist_info_worker(self, mylist_url: str, all_index_num: int):
+    def get_mylist_info_worker(self, mylist_url: str, all_index_num: int) -> list[dict] | None:
         result = None
         try:
             result = asyncio.run(VideoInfoRssFetcher.fetch_videoinfo(mylist_url))
