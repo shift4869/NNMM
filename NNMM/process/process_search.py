@@ -157,6 +157,79 @@ class ProcessMylistSearchFromVideo(ProcessBase):
         return
 
 
+class ProcessMylistSearchFromMylistURL(ProcessBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
+
+    def run(self) -> None:
+        """マイリストURLでマイリストを検索
+
+        Notes:
+            "検索（URL）::-MR-"
+            マイリスト右クリックで「検索（URL）」が選択された場合
+            入力されたURLをマイリストURLとして持つマイリストをハイライト表示する
+        """
+        logger.info("MylistSearchFromMylistURL start.")
+
+        search_mylist_url = popup_get_text("マイリストURL入力（完全一致）")
+        if search_mylist_url is None or search_mylist_url == "":
+            logger.info("MylistSearchFromMylistURL is canceled or target word is null.")
+            return
+
+        logger.info(f"search word -> {search_mylist_url}.")
+
+        # 現在マイリストが選択中の場合indexを保存
+        index = 0
+        if self.window["-LIST-"].get_indexes():
+            index = self.window["-LIST-"].get_indexes()[0]
+
+        # マイリスト画面表示更新
+        NEW_MARK = "*:"
+        list_data = self.window["-LIST-"].Values
+        m_list = self.mylist_db.select()
+        include_new_index_list = []
+        match_index_list = []
+        for i, m in enumerate(m_list):
+            # 新着マイリストチェック
+            if m["is_include_new"]:
+                m["showname"] = NEW_MARK + m["showname"]
+                include_new_index_list.append(i)
+
+            # マイリスト内の動画情報を探索
+            if search_mylist_url == m["url"]:
+                match_index_list.append(i)
+                index = i  # 更新後にスクロールするインデックスを更新
+        list_data = [m["showname"] for m in m_list]
+        self.window["-LIST-"].update(values=list_data)
+
+        # 新着マイリストの背景色とテキスト色を変更する
+        # update(values=list_data)で更新されるとデフォルトに戻る？
+        # 強調したいindexのみ適用すればそれ以外はデフォルトになる
+        for i in include_new_index_list:
+            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
+
+        # 検索でヒットした項目の背景色とテキスト色を変更する
+        for i in match_index_list:
+            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light goldenrod")
+
+        # indexをセットしてスクロール
+        # scroll_to_indexは強制的にindexを一番上に表示するのでWidget.seeを使用
+        # window["-LIST-"].update(scroll_to_index=index)
+        self.window["-LIST-"].Widget.see(index)
+        self.window["-LIST-"].update(set_to_index=index)
+
+        # 検索結果表示
+        if len(match_index_list) > 0:
+            logger.info(f"search result -> {len(match_index_list)} mylist(s) found.")
+            self.window["-INPUT2-"].update(value=f"{len(match_index_list)}件ヒット！")
+        else:
+            logger.info(f"search result -> Nothing mylist(s) found.")
+            self.window["-INPUT2-"].update(value="該当なし")
+
+        logger.info("MylistSearchFromMylistURL success.")
+        return
+
+
 class ProcessVideoSearch(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
