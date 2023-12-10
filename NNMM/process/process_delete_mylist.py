@@ -2,9 +2,7 @@ from logging import INFO, getLogger
 
 import PySimpleGUI as sg
 
-from NNMM.gui_function import *
-from NNMM.mylist_db_controller import *
-from NNMM.mylist_info_db_controller import *
+from NNMM.gui_function import update_mylist_pane
 from NNMM.process.process_base import ProcessBase
 
 logger = getLogger(__name__)

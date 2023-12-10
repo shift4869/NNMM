@@ -1,10 +1,6 @@
 from logging import INFO, getLogger
 
-import PySimpleGUI as sg
-
-from NNMM.gui_function import *
-from NNMM.mylist_db_controller import *
-from NNMM.mylist_info_db_controller import *
+from NNMM.model import Mylist
 from NNMM.process.process_update_mylist_info_base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
 
 logger = getLogger(__name__)

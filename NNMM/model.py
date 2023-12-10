@@ -33,9 +33,9 @@ class MylistInfo(Base):
     mylist_url = Column(String(512), nullable=False)
     created_at = Column(String(256))
 
-    def __init__(self, *args, **kwargs):
-        super(Base, self).__init__(*args, **kwargs)
-        self.status = "未視聴"
+    # def __init__(self, *args, **kwargs):
+    #     super(Base, self).__init__(*args, **kwargs)
+    #     self.status = "未視聴"
 
     def __init__(self, video_id, title, username, status, uploaded_at, registered_at, video_url, mylist_url, created_at):
         # self.id = id
@@ -98,8 +98,8 @@ class Mylist(Base):
     check_interval = Column(String(256))
     is_include_new = Column(Boolean, server_default=text("True"))
 
-    def __init__(self, *args, **kwargs):
-        super(Base, self).__init__(*args, **kwargs)
+    # def __init__(self, *args, **kwargs):
+    #     super(Base, self).__init__(*args, **kwargs)
 
     def __init__(self, id, username, mylistname, type, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new):
         self.id = id
@@ -137,9 +137,6 @@ class Mylist(Base):
 
 
 if __name__ == "__main__":
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import Session
-
     engine = create_engine("sqlite:///test_NNMM_DB.db", echo=True)
     Base.metadata.create_all(engine)
 
