@@ -74,5 +74,5 @@ class ProcessMoveDown(ProcessBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
-    mw = main_window.MainWindow()()
+    mw = main_window.MainWindow()
     mw.run()

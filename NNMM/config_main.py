@@ -290,5 +290,5 @@ class ProcessConfigSave(ProcessConfigBase):
 if __name__ == "__main__":
     ps = ProcessConfigSave()
     from NNMM import main_window
-    mw = main_window.MainWindow()()
+    mw = main_window.MainWindow()
     mw.run()

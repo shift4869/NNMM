@@ -185,6 +185,6 @@ if __name__ == "__main__":
     # print("Downloaded!")
     
     from NNMM import main_window
-    mw = main_window.MainWindow()()
+    mw = main_window.MainWindow()
     mw.run()
     pass

@@ -11,7 +11,6 @@ logger.setLevel(INFO)
 
 
 class ProcessMylistSearch(ProcessBase):
-
     def __init__(self):
         super().__init__(True, True, "マイリスト検索（マイリスト名）")
 
@@ -97,7 +96,6 @@ class ProcessMylistSearch(ProcessBase):
 
 
 class ProcessMylistSearchFromVideo(ProcessBase):
-
     def __init__(self):
         super().__init__(True, True, "マイリスト検索（動画名）")
 
@@ -193,7 +191,6 @@ class ProcessMylistSearchFromVideo(ProcessBase):
 
 
 class ProcessVideoSearch(ProcessBase):
-
     def __init__(self):
         super().__init__(True, True, "動画検索")
 
@@ -272,7 +269,6 @@ class ProcessVideoSearch(ProcessBase):
 
 
 class ProcessMylistSearchClear(ProcessBase):
-
     def __init__(self):
         super().__init__(True, True, "強調表示を解除")
 
@@ -307,7 +303,6 @@ class ProcessMylistSearchClear(ProcessBase):
 
 
 class ProcessVideoSearchClear(ProcessBase):
-
     def __init__(self):
         super().__init__(True, True, "強調表示を解除")
 
@@ -350,5 +345,5 @@ class ProcessVideoSearchClear(ProcessBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
-    mw = main_window.MainWindow()()
+    mw = main_window.MainWindow()
     mw.run()
