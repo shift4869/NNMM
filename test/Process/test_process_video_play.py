@@ -1,5 +1,3 @@
-"""ProcessVideoPlay のテスト
-"""
 import sys
 import unittest
 from contextlib import ExitStack
@@ -8,9 +6,9 @@ from pathlib import Path
 
 from mock import MagicMock, call, patch
 
-from NNMM.Process import ProcessVideoPlay
+from NNMM.Process.process_video_play import ProcessVideoPlay
 
-logger = getLogger("NNMM.Process.ProcessVideoPlay")
+logger = getLogger("NNMM.Process.process_video_play")
 logger.setLevel(WARNING)
 
 
@@ -100,12 +98,12 @@ class TestProcessVideoPlay(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch.object(logger, "info"))
             mockle = stack.enter_context(patch.object(logger, "error"))
-            mockcmd = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
-            mockecs = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.sg.execute_command_subprocess"))
-            mockpok = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.sg.popup_ok"))
-            mockpw = stack.enter_context(patch("NNMM.Process.ProcessVideoPlay.ProcessWatched"))
+            mockcmd = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.get_config"))
+            mockecs = stack.enter_context(patch("NNMM.Process.process_video_play.sg.execute_command_subprocess"))
+            mockpok = stack.enter_context(patch("NNMM.Process.process_video_play.sg.popup_ok"))
+            mockpw = stack.enter_context(patch("NNMM.Process.process_video_play.ProcessWatched"))
 
-            pvp = ProcessVideoPlay.ProcessVideoPlay()
+            pvp = ProcessVideoPlay()
 
             # 正常系
             DUMMY_EXE = "./test/dummy.exe"

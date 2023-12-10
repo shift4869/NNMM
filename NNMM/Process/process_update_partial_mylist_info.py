@@ -4,7 +4,7 @@ from logging import INFO, getLogger
 from NNMM.gui_function import *
 from NNMM.mylist_db_controller import *
 from NNMM.mylist_info_db_controller import *
-from NNMM.Process.process_update_mylist_info_base import ProcessUpdateMylistInfoBase
+from NNMM.Process.process_update_mylist_info_base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -77,7 +77,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
         return result
 
 
-class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateMylistInfoBase.ProcessUpdateMylistInfoThreadDoneBase):
+class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateMylistInfoThreadDoneBase):
 
     def __init__(self):
         super().__init__(False, True, "複数マイリスト内容更新")

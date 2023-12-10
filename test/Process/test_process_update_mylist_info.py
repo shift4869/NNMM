@@ -1,22 +1,13 @@
-"""ProcessUpdateMylistInfo のテスト
-"""
 import sys
 import unittest
 from contextlib import ExitStack
 
 from mock import MagicMock, call, patch
 
-from NNMM.Process import ProcessUpdateMylistInfo
+from NNMM.Process.process_update_mylist_info import ProcessUpdateMylistInfo, ProcessUpdateMylistInfoThreadDone
 
 
 class TestProcessUpdateMylistInfo(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def MakeMylistDB(self, num: int = 5) -> list[dict]:
         """mylist_db.select()で取得されるマイリストデータセット
         """
@@ -63,10 +54,10 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
         """ProcessUpdateMylistInfo の初期状態をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.Process.process_update_mylist_info.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.process_update_mylist_info.logger.error"))
 
-            pumi = ProcessUpdateMylistInfo.ProcessUpdateMylistInfo()
+            pumi = ProcessUpdateMylistInfo()
 
             self.assertEqual("Mylist", pumi.L_KIND)
             self.assertEqual("-UPDATE_THREAD_DONE-", pumi.E_DONE)
@@ -75,10 +66,10 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
         """GetTargetMylist をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.Process.process_update_mylist_info.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.process_update_mylist_info.logger.error"))
 
-            pumi = ProcessUpdateMylistInfo.ProcessUpdateMylistInfo()
+            pumi = ProcessUpdateMylistInfo()
 
             # 正常系
             m_list = self.MakeMylistDB()
@@ -137,10 +128,10 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
         """ProcessUpdateMylistInfoThreadDone の初期状態をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdateMylistInfo.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.Process.process_update_mylist_info.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.process_update_mylist_info.logger.error"))
 
-            pumitd = ProcessUpdateMylistInfo.ProcessUpdateMylistInfoThreadDone()
+            pumitd = ProcessUpdateMylistInfoThreadDone()
             self.assertEqual("Mylist", pumitd.L_KIND)
 
 

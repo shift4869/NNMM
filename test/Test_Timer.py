@@ -8,9 +8,9 @@ from logging import WARNING, getLogger
 import freezegun
 from mock import MagicMock, patch
 
-from NNMM.Timer import ProcessTimer
+from NNMM.timer import ProcessTimer
 
-logger = getLogger("NNMM.Timer")
+logger = getLogger("NNMM.timer")
 logger.setLevel(WARNING)
 
 
@@ -31,7 +31,7 @@ class TestTimer(unittest.TestCase):
             mockfg = stack.enter_context(freezegun.freeze_time(f_now))
             mockli = stack.enter_context(patch.object(logger, "info"))
             mockle = stack.enter_context(patch.object(logger, "error"))
-            mockcpg = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
+            mockcpg = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.get_config"))
             mocktr = stack.enter_context(patch("threading.Timer"))
 
             pt = ProcessTimer()

@@ -141,7 +141,7 @@ class TestConfigMain(unittest.TestCase):
         """設定iniの取得をテストする
         """
         with ExitStack() as stack:
-            mock = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
+            mock = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.set_config"))
 
             # 初回取得
             ProcessConfigBase.config = None
@@ -162,9 +162,9 @@ class TestConfigMain(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockpgf = stack.enter_context(patch("PySimpleGUI.popup_get_file"))
-            mocklml = stack.enter_context(patch("NNMM.ConfigMain.load_mylist"))
+            mocklml = stack.enter_context(patch("NNMM.config_main.load_mylist"))
             mockpu = stack.enter_context(patch("PySimpleGUI.popup"))
-            mockums = stack.enter_context(patch("NNMM.ConfigMain.update_mylist_pane"))
+            mockums = stack.enter_context(patch("NNMM.config_main.update_mylist_pane"))
 
             TEST_INPUT_PATH = "./test/input.csv"
             mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH]
@@ -256,7 +256,7 @@ class TestConfigMain(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockpgf = stack.enter_context(patch("PySimpleGUI.popup_get_file"))
-            mocksml = stack.enter_context(patch("NNMM.ConfigMain.save_mylist"))
+            mocksml = stack.enter_context(patch("NNMM.config_main.save_mylist"))
             mockpu = stack.enter_context(patch("PySimpleGUI.popup"))
 
             TEST_RESULT_PATH = "./test/result.csv"
@@ -342,8 +342,8 @@ class TestConfigMain(unittest.TestCase):
         """設定タブを開いたときの処理のテスト
         """
         with ExitStack() as stack:
-            mocksc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
-            mockgc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config"))
+            mocksc = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.set_config"))
+            mockgc = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.get_config"))
 
             expect_dict = {
                 "general": {
@@ -401,9 +401,9 @@ class TestConfigMain(unittest.TestCase):
         with ExitStack() as stack:
             mockcp = stack.enter_context(patch("configparser.ConfigParser"))
             mockfp = stack.enter_context(patch("pathlib.Path.open", mock_open()))
-            mocksc = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.set_config"))
-            mockmc = stack.enter_context(patch("NNMM.ConfigMain.MylistDBController"))
-            mockmbc = stack.enter_context(patch("NNMM.ConfigMain.MylistInfoDBController"))
+            mocksc = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.set_config"))
+            mockmc = stack.enter_context(patch("NNMM.config_main.MylistDBController"))
+            mockmbc = stack.enter_context(patch("NNMM.config_main.MylistInfoDBController"))
 
             mockread = MagicMock()
             TEST_PREV_SAVE_PATH = "./test/p_test.db"

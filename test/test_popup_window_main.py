@@ -9,9 +9,9 @@ from logging import WARNING, getLogger
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.PopupWindowMain import PopupMylistWindow, PopupMylistWindowSave, PopupVideoWindow, PopupWindowBase
+from NNMM.popup_window_main import PopupMylistWindow, PopupMylistWindowSave, PopupVideoWindow, PopupWindowBase
 
-logger = getLogger("NNMM.PopupWindowMain")
+logger = getLogger("NNMM.popup_window_main")
 logger.setLevel(WARNING)
 
 
@@ -65,8 +65,8 @@ class TestPopupWindowMain(unittest.TestCase):
 
         with ExitStack() as stack:
             mock_logger_info = stack.enter_context(patch.object(logger, "info"))
-            mock_window = stack.enter_context(patch("NNMM.PopupWindowMain.sg.Window"))
-            mock_popup_ok = stack.enter_context(patch("NNMM.PopupWindowMain.sg.popup_ok"))
+            mock_window = stack.enter_context(patch("NNMM.popup_window_main.sg.Window"))
+            mock_popup_ok = stack.enter_context(patch("NNMM.popup_window_main.sg.popup_ok"))
 
             mock_window.return_value.read.side_effect = [("-DO-", "value1"), ("-EXIT-", "value2")]
 

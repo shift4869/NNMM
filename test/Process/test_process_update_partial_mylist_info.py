@@ -1,5 +1,3 @@
-"""ProcessUpdatePartialMylistInfo のテスト
-"""
 import sys
 import unittest
 from contextlib import ExitStack
@@ -9,17 +7,10 @@ import freezegun
 from mock import MagicMock, call, patch
 
 from NNMM.gui_function import interval_translate
-from NNMM.Process import ProcessUpdatePartialMylistInfo
+from NNMM.Process.process_update_partial_mylist_info import ProcessUpdatePartialMylistInfo, ProcessUpdatePartialMylistInfoThreadDone
 
 
 class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def MakeMylistDB(self, num: int = 5) -> list[dict]:
         """mylist_db.select()で取得されるマイリストデータセット
         """
@@ -67,10 +58,10 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
         """ProcessUpdatePartialMylistInfo の初期状態をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdatePartialMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdatePartialMylistInfo.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.Process.process_update_partial_mylist_info.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.process_update_partial_mylist_info.logger.error"))
 
-            pupmi = ProcessUpdatePartialMylistInfo.ProcessUpdatePartialMylistInfo()
+            pupmi = ProcessUpdatePartialMylistInfo()
 
             self.assertEqual("Partial mylist", pupmi.L_KIND)
             self.assertEqual("-PARTIAL_UPDATE_THREAD_DONE-", pupmi.E_DONE)
@@ -80,10 +71,10 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
         """
         with ExitStack() as stack:
             stack.enter_context(freezegun.freeze_time("2022-02-01 02:30:00"))
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdatePartialMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdatePartialMylistInfo.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.Process.process_update_partial_mylist_info.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.process_update_partial_mylist_info.logger.error"))
 
-            pupmi = ProcessUpdatePartialMylistInfo.ProcessUpdatePartialMylistInfo()
+            pupmi = ProcessUpdatePartialMylistInfo()
 
             # 正常系
             m_list = self.MakeMylistDB()
@@ -147,10 +138,10 @@ class TestProcessUpdatePartialMylistInfo(unittest.TestCase):
         """ProcessUpdatePartialMylistInfoThreadDone の初期状態をテストする
         """
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.Process.ProcessUpdatePartialMylistInfo.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.Process.ProcessUpdatePartialMylistInfo.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.Process.process_update_partial_mylist_info.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.Process.process_update_partial_mylist_info.logger.error"))
 
-            pupmitd = ProcessUpdatePartialMylistInfo.ProcessUpdatePartialMylistInfoThreadDone()
+            pupmitd = ProcessUpdatePartialMylistInfoThreadDone()
             self.assertEqual("Partial mylist", pupmitd.L_KIND)
 
 

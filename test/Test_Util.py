@@ -4,7 +4,7 @@ from pathlib import Path
 
 import orjson
 
-from NNMM.Util import Result, find_values
+from NNMM.util import Result, find_values
 
 
 class TestUtil(unittest.TestCase):

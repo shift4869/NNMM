@@ -1,7 +1,3 @@
-"""RSSParser のテスト
-
-RSSParser の各種機能をテストする
-"""
 import asyncio
 import re
 import sys
@@ -12,7 +8,7 @@ import xmltodict
 
 from NNMM.VideoInfoFetcher.rss_parser import RSSParser
 from NNMM.VideoInfoFetcher.ValueObjects.fetched_page_video_info import FetchedPageVideoInfo
-from NNMM.VideoInfoFetcher.ValueObjects.ItemInfo import ItemInfo
+from NNMM.VideoInfoFetcher.ValueObjects.item_info import ItemInfo
 from NNMM.VideoInfoFetcher.ValueObjects.mylist_url import MylistURL
 from NNMM.VideoInfoFetcher.ValueObjects.myshowname import Myshowname
 from NNMM.VideoInfoFetcher.ValueObjects.registered_at import RegisteredAt

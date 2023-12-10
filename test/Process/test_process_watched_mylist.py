@@ -1,5 +1,3 @@
-"""ProcessWatchedMylist のテスト
-"""
 import sys
 import unittest
 from contextlib import ExitStack
@@ -7,9 +5,9 @@ from logging import WARNING, getLogger
 
 from mock import MagicMock, call, patch
 
-from NNMM.Process import ProcessWatchedMylist
+from NNMM.Process.process_watched_mylist import ProcessWatchedMylist
 
-logger = getLogger("NNMM.Process.ProcessWatchedMylist")
+logger = getLogger("NNMM.Process.process_watched_mylist")
 logger.setLevel(WARNING)
 
 
@@ -66,10 +64,10 @@ class TestProcessWatchedMylist(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockle = stack.enter_context(patch.object(logger, "error"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessWatchedMylist.update_mylist_pane"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatchedMylist.update_table_pane"))
+            mockums = stack.enter_context(patch("NNMM.Process.process_watched_mylist.update_mylist_pane"))
+            mockuts = stack.enter_context(patch("NNMM.Process.process_watched_mylist.update_table_pane"))
 
-            pwm = ProcessWatchedMylist.ProcessWatchedMylist()
+            pwm = ProcessWatchedMylist()
 
             # 正常系
             mockmw = self.ReturnMW()

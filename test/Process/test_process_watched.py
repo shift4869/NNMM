@@ -1,5 +1,3 @@
-"""ProcessWatched のテスト
-"""
 import random
 import sys
 import unittest
@@ -8,9 +6,9 @@ from logging import WARNING, getLogger
 
 from mock import MagicMock, call, patch
 
-from NNMM.Process import ProcessWatched
+from NNMM.Process.process_watched import ProcessWatched
 
-logger = getLogger("NNMM.Process.ProcessWatched")
+logger = getLogger("NNMM.Process.process_watched")
 logger.setLevel(WARNING)
 
 
@@ -28,11 +26,11 @@ class TestProcessWatched(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch.object(logger, "info"))
             mockle = stack.enter_context(patch.object(logger, "error"))
-            mockiminv = stack.enter_context(patch("NNMM.Process.ProcessWatched.is_mylist_include_new_video"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatched.update_table_pane"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessWatched.update_mylist_pane"))
+            mockiminv = stack.enter_context(patch("NNMM.Process.process_watched.is_mylist_include_new_video"))
+            mockuts = stack.enter_context(patch("NNMM.Process.process_watched.update_table_pane"))
+            mockums = stack.enter_context(patch("NNMM.Process.process_watched.update_mylist_pane"))
 
-            pw = ProcessWatched.ProcessWatched()
+            pw = ProcessWatched()
 
             # 正常系
             NUM = 5

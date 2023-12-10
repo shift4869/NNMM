@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from logging import INFO, getLogger
 from pathlib import Path
 
-from bs4 import BeautifulSoup
-
 from NNMM import config_main
 from NNMM.VideoInfoFetcher.rss_parser import RSSParser
 from NNMM.VideoInfoFetcher.ValueObjects.fetched_page_video_info import FetchedPageVideoInfo
@@ -81,7 +79,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             raise ValueError("video url from rss and from api is different.")
 
         # config取得
-        config = ConfigMain.ProcessConfigBase.get_config()
+        config = config_main.ProcessConfigBase.get_config()
         if not config:
             raise ValueError("config read failed.")
 
@@ -111,7 +109,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
 
 if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
-    ConfigMain.ProcessConfigBase.set_config()
+    config_main.ProcessConfigBase.set_config()
 
     urls = [
         # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画

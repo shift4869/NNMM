@@ -10,7 +10,7 @@ from pathlib import Path
 
 from mock import mock_open, patch
 
-from NNMM import CSVSaveLoad
+from NNMM import csv_save_load
 from NNMM.model import Mylist
 from NNMM.mylist_db_controller import MylistDBController
 
@@ -107,7 +107,7 @@ class TestCSVSaveLoad(unittest.TestCase):
                 id_num = id_num + 1
                 records.append(d)
 
-            res = CSVSaveLoad.save_mylist(m_cont, CSV_PATH)
+            res = csv_save_load.save_mylist(m_cont, CSV_PATH)
             self.assertEqual(res, 0)
 
             # open呼び出し予測値
@@ -179,7 +179,7 @@ class TestCSVSaveLoad(unittest.TestCase):
             self.assertEqual(m_cont.select(), [])
 
             # ロード呼び出し
-            res = CSVSaveLoad.load_mylist(m_cont, CSV_PATH)
+            res = csv_save_load.load_mylist(m_cont, CSV_PATH)
             self.assertEqual(res, 0)
 
             # open呼び出し予測値

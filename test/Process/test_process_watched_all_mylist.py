@@ -1,5 +1,3 @@
-"""ProcessWatchedAllMylist のテスト
-"""
 import sys
 import unittest
 from contextlib import ExitStack
@@ -7,9 +5,9 @@ from logging import WARNING, getLogger
 
 from mock import MagicMock, call, patch
 
-from NNMM.Process import ProcessWatchedAllMylist
+from NNMM.Process.process_watched_all_mylist import ProcessWatchedAllMylist
 
-logger = getLogger("NNMM.Process.ProcessWatchedAllMylist")
+logger = getLogger("NNMM.Process.process_watched_all_mylist")
 logger.setLevel(WARNING)
 
 
@@ -79,10 +77,10 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch.object(logger, "info"))
             mockle = stack.enter_context(patch.object(logger, "error"))
-            mockums = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.update_mylist_pane"))
-            mockuts = stack.enter_context(patch("NNMM.Process.ProcessWatchedAllMylist.update_table_pane"))
+            mockums = stack.enter_context(patch("NNMM.Process.process_watched_all_mylist.update_mylist_pane"))
+            mockuts = stack.enter_context(patch("NNMM.Process.process_watched_all_mylist.update_table_pane"))
 
-            pwam = ProcessWatchedAllMylist.ProcessWatchedAllMylist()
+            pwam = ProcessWatchedAllMylist()
 
             # 正常系
             mylist_url_s = "https://www.nicovideo.jp/user/10000001/video"

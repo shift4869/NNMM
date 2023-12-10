@@ -1,6 +1,6 @@
-"""GuiFunction のテスト
+"""gui_function のテスト
 
-GuiFunction の各種機能をテストする
+gui_function の各種機能をテストする
 Guiの処理部分はモックで動作確認する(実際にGUIは表示されない)
 """
 import random
@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import freezegun
 from mock import MagicMock, PropertyMock
 
-from NNMM import GuiFunction
+from NNMM import gui_function
 from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
@@ -120,30 +120,30 @@ class TestGetMyListInfo(unittest.TestCase):
         # 正常系
         # 投稿動画ページのURL
         url = "https://www.nicovideo.jp/user/11111111/video"
-        actual = GuiFunction.get_mylist_type(url)
+        actual = gui_function.get_mylist_type(url)
         expect = "uploaded"
         self.assertEqual(expect, actual)
 
         # マイリストURL
         url = "https://www.nicovideo.jp/user/11111111/mylist/00000011"
-        actual = GuiFunction.get_mylist_type(url)
+        actual = gui_function.get_mylist_type(url)
         expect = "mylist"
         self.assertEqual(expect, actual)
 
         # 異常系
         # マイリストのURLだがリダイレクト元のURL
         url = "https://www.nicovideo.jp/mylist/00000011"
-        actual = GuiFunction.get_mylist_type(url)
+        actual = gui_function.get_mylist_type(url)
         self.assertEqual("", actual)
 
         # 全く関係ないURL
         url = "https://www.google.co.jp/"
-        actual = GuiFunction.get_mylist_type(url)
+        actual = gui_function.get_mylist_type(url)
         self.assertEqual("", actual)
 
         # ニコニコの別サービスのURL
         url = "https://seiga.nicovideo.jp/seiga/im11111111"
-        actual = GuiFunction.get_mylist_type(url)
+        actual = gui_function.get_mylist_type(url)
         self.assertEqual("", actual)
 
     def test_get_now_datetime(self):
@@ -154,12 +154,12 @@ class TestGetMyListInfo(unittest.TestCase):
         f_now = "2021-10-22 01:00:00"
         with freezegun.freeze_time(f_now):
             # 正常系
-            actual = GuiFunction.get_now_datetime()
+            actual = gui_function.get_now_datetime()
             expect = f_now
             self.assertEqual(expect, actual)
 
             # 異常系
-            actual = GuiFunction.get_now_datetime()
+            actual = gui_function.get_now_datetime()
             expect = datetime.strptime(f_now, dst_df) + timedelta(minutes=1)
             expect = expect.strftime(dst_df)
             self.assertNotEqual(expect, actual)
@@ -189,7 +189,7 @@ class TestGetMyListInfo(unittest.TestCase):
         # 正常系
         # 全て視聴済
         table_list = table_list_factory()
-        actual = GuiFunction.is_mylist_include_new_video(table_list)
+        actual = gui_function.is_mylist_include_new_video(table_list)
         self.assertEqual(False, actual)
 
         # 未視聴を含む
@@ -197,11 +197,11 @@ class TestGetMyListInfo(unittest.TestCase):
         t_id = random.sample(range(0, len(table_list) - 1), 2)
         for i in t_id:
             table_list[i][STATUS_INDEX] = "未視聴"
-        actual = GuiFunction.is_mylist_include_new_video(table_list)
+        actual = gui_function.is_mylist_include_new_video(table_list)
         self.assertEqual(True, actual)
 
         # 空リストはFalse
-        actual = GuiFunction.is_mylist_include_new_video([])
+        actual = gui_function.is_mylist_include_new_video([])
         self.assertEqual(False, actual)
 
         # 異常系
@@ -209,14 +209,14 @@ class TestGetMyListInfo(unittest.TestCase):
         with self.assertRaises(KeyError):
             table_list = table_list_factory()
             table_list = [t[:STATUS_INDEX] for t in table_list]
-            actual = GuiFunction.is_mylist_include_new_video(table_list)
+            actual = gui_function.is_mylist_include_new_video(table_list)
             self.assertEqual(False, actual)
 
         # 状況ステータスの位置が異なる
         with self.assertRaises(KeyError):
             table_list = table_list_factory()
             table_list = [[t[-1]] + t[:-1] for t in table_list]
-            actual = GuiFunction.is_mylist_include_new_video(table_list)
+            actual = gui_function.is_mylist_include_new_video(table_list)
             self.assertEqual(False, actual)
         pass
 
@@ -227,41 +227,41 @@ class TestGetMyListInfo(unittest.TestCase):
         # 分
         e_val = random.randint(1, 59)
         interval_str = f"{e_val}分"
-        actual = GuiFunction.interval_translate(interval_str)
+        actual = gui_function.interval_translate(interval_str)
         expect = e_val
         self.assertEqual(expect, actual)
 
         # 時間
         e_val = random.randint(1, 23)
         interval_str = f"{e_val}時間"
-        actual = GuiFunction.interval_translate(interval_str)
+        actual = gui_function.interval_translate(interval_str)
         expect = e_val * 60
         self.assertEqual(expect, actual)
 
         # 日
         e_val = random.randint(1, 31)
         interval_str = f"{e_val}日"
-        actual = GuiFunction.interval_translate(interval_str)
+        actual = gui_function.interval_translate(interval_str)
         expect = e_val * 60 * 24
         self.assertEqual(expect, actual)
 
         # 週間
         e_val = random.randint(1, 5)
         interval_str = f"{e_val}週間"
-        actual = GuiFunction.interval_translate(interval_str)
+        actual = gui_function.interval_translate(interval_str)
         expect = e_val * 60 * 24 * 7
         self.assertEqual(expect, actual)
 
         # 月
         e_val = random.randint(1, 12)
         interval_str = f"{e_val}ヶ月"
-        actual = GuiFunction.interval_translate(interval_str)
+        actual = gui_function.interval_translate(interval_str)
         expect = e_val * 60 * 24 * 31
         self.assertEqual(expect, actual)
 
         # 異常系
         interval_str = "不正なinterval_str"
-        actual = GuiFunction.interval_translate(interval_str)
+        actual = gui_function.interval_translate(interval_str)
         expect = -1
         self.assertEqual(expect, actual)
         pass
@@ -313,7 +313,7 @@ class TestGetMyListInfo(unittest.TestCase):
         mockwin = {"-LIST-": r_response}
 
         # 実行
-        actual = GuiFunction.update_mylist_pane(mockwin, m_cont)
+        actual = gui_function.update_mylist_pane(mockwin, m_cont)
         self.assertEqual(0, actual)
 
         # mock呼び出し確認
@@ -417,7 +417,7 @@ class TestGetMyListInfo(unittest.TestCase):
         }
 
         # 1回目の実行
-        actual = GuiFunction.update_table_pane(mockwin, m_cont, mb_cont)
+        actual = gui_function.update_table_pane(mockwin, m_cont, mb_cont)
         self.assertEqual(0, actual)
 
         # mock呼び出し確認
@@ -446,7 +446,7 @@ class TestGetMyListInfo(unittest.TestCase):
         r_tableupdate.reset_mock()
 
         # 2回目の実行
-        actual = GuiFunction.update_table_pane(mockwin, m_cont, mb_cont)
+        actual = gui_function.update_table_pane(mockwin, m_cont, mb_cont)
         self.assertEqual(0, actual)
 
         # window["-INPUT1-"].get()が呼び出されていることを確認

@@ -5,7 +5,7 @@ ItemInfo の各種機能をテストする
 import sys
 import unittest
 
-from NNMM.VideoInfoFetcher.ValueObjects.ItemInfo import ItemInfo
+from NNMM.VideoInfoFetcher.ValueObjects.item_info import ItemInfo
 from NNMM.VideoInfoFetcher.ValueObjects.registered_at import RegisteredAt
 from NNMM.VideoInfoFetcher.ValueObjects.title import Title
 from NNMM.VideoInfoFetcher.ValueObjects.video_url import VideoURL

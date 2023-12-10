@@ -1,8 +1,3 @@
-"""VideoInfoRssFetcher のテスト
-
-VideoInfoRssFetcher の各種機能をテストする
-"""
-
 import asyncio
 import re
 import shutil
@@ -17,7 +12,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from mock import AsyncMock, MagicMock, patch
 
-from NNMM import GuiFunction
+from NNMM import gui_function
 from NNMM.VideoInfoFetcher.rss_parser import RSSParser
 from NNMM.VideoInfoFetcher.ValueObjects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.VideoInfoFetcher.ValueObjects.fetched_page_video_info import FetchedPageVideoInfo
@@ -392,7 +387,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         return mock
 
     def _make_expect_result(self, url):
-        url_type = GuiFunction.get_mylist_type(url)
+        url_type = gui_function.get_mylist_type(url)
         mylist_url = url
 
         mylist_info = self._get_mylist_info_set(mylist_url)
@@ -448,7 +443,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
 
     def test_analysis_rss(self):
         with ExitStack() as stack:
-            # mockps = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.RSSParser"))
+            mock_logger_error = stack.enter_context(patch("NNMM.VideoInfoFetcher.video_info_rss_fetcher.logger.error"))
 
             url = self._get_url_set()[0]
             xml = self._get_xml_from_rss(url).strip()
@@ -471,10 +466,10 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         """_fetch_videoinfo_from_rss のテスト
         """
         with ExitStack() as stack:
-            mockcpb = stack.enter_context(patch("NNMM.ConfigMain.ProcessConfigBase.get_config", self._make_config_mock))
-            mockses = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._get_session_response"))
-            mocksoup = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._analysis_rss"))
-            mockhapi = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._get_videoinfo_from_api"))
+            mockcpb = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.get_config", self._make_config_mock))
+            mockses = stack.enter_context(patch("NNMM.VideoInfoFetcher.video_info_rss_fetcher.VideoInfoRssFetcher._get_session_response"))
+            mocksoup = stack.enter_context(patch("NNMM.VideoInfoFetcher.video_info_rss_fetcher.VideoInfoRssFetcher._analysis_rss"))
+            mockhapi = stack.enter_context(patch("NNMM.VideoInfoFetcher.video_info_rss_fetcher.VideoInfoRssFetcher._get_videoinfo_from_api"))
 
             # 正常系
             mockses = self._make_session_response_mock(mockses, 200)
@@ -508,7 +503,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             # config取得に失敗
             # 二重にパッチを当てても想定どおりの挙動をしてくれる
             # withの間だけconfigを返す関数を無効化する
-            with patch("NNMM.ConfigMain.ProcessConfigBase.get_config", lambda: None):
+            with patch("NNMM.config_main.ProcessConfigBase.get_config", lambda: None):
                 with self.assertRaises(ValueError):
                     mockses = self._make_session_response_mock(mockses, 200)
                     url = urls[0]
@@ -558,7 +553,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         """_fetch_videoinfo のテスト
         """
         with ExitStack() as stack:
-            mockfvft = stack.enter_context(patch("NNMM.VideoInfoFetcher.VideoInfoRssFetcher.VideoInfoRssFetcher._fetch_videoinfo_from_rss"))
+            mockfvft = stack.enter_context(patch("NNMM.VideoInfoFetcher.video_info_rss_fetcher.VideoInfoRssFetcher._fetch_videoinfo_from_rss"))
 
             expect = "VideoInfoRssFetcher._fetch_videoinfo() called"
             mockfvft.side_effect = lambda: str(expect)
