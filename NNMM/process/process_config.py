@@ -4,12 +4,11 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM.csv_save_load import load_mylist, save_mylist
-from NNMM.gui_function import update_mylist_pane
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import load_mylist, save_mylist, update_mylist_pane
 
 
 class ProcessConfigBase(ProcessBase):

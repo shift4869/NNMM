@@ -3,7 +3,7 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM import config_main
+from NNMM.process import process_config
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.process_watched import ProcessWatched
 from NNMM.process.value_objects.process_info import ProcessInfo
@@ -42,7 +42,7 @@ class ProcessVideoPlay(ProcessBase):
         record = records[0]
         video_url = record.get("video_url")
 
-        config = config_main.ProcessConfigBase.get_config()
+        config = process_config.ProcessConfigBase.get_config()
         cmd = config["general"].get("browser_path", "")
         if cmd != "" and Path(cmd).is_file():
             # ブラウザに動画urlを渡す

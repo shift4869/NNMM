@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
-from NNMM.gui_function import interval_translate
 from NNMM.model import Mylist
 from NNMM.process.process_update_mylist_info_base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import interval_translate
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)

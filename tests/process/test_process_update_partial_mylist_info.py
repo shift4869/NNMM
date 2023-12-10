@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 import freezegun
 from mock import MagicMock, call, patch
 
-from NNMM.gui_function import interval_translate
 from NNMM.process.process_update_partial_mylist_info import ProcessUpdatePartialMylistInfo, ProcessUpdatePartialMylistInfoThreadDone
+from NNMM.util import interval_translate
 
 
 class TestProcessUpdatePartialMylistInfo(unittest.TestCase):

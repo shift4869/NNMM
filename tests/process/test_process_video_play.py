@@ -98,7 +98,7 @@ class TestProcessVideoPlay(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch.object(logger, "info"))
             mockle = stack.enter_context(patch.object(logger, "error"))
-            mockcmd = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.get_config"))
+            mockcmd = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.get_config"))
             mockecs = stack.enter_context(patch("NNMM.process.process_video_play.sg.execute_command_subprocess"))
             mockpok = stack.enter_context(patch("NNMM.process.process_video_play.sg.popup_ok"))
             mockpw = stack.enter_context(patch("NNMM.process.process_video_play.ProcessWatched"))

@@ -2,9 +2,9 @@ from logging import INFO, getLogger
 
 import PySimpleGUI as sg
 
-from NNMM.gui_function import update_mylist_pane
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import update_mylist_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)

@@ -3,7 +3,6 @@ import pprint
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
 
 import xmltodict
 

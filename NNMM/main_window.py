@@ -6,13 +6,12 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
-from NNMM import config_main, popup_window_main, timer
-from NNMM.gui_function import update_mylist_pane
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process import process_base, process_create_mylist, process_delete_mylist, process_download, process_move_down, process_move_up, process_not_watched, process_search, process_show_mylist_info, process_show_mylist_info_all
-from NNMM.process import process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
+from NNMM.process import process_base, process_config, process_create_mylist, process_delete_mylist, process_download, process_move_down, process_move_up, process_not_watched, process_popup, process_search, process_show_mylist_info
+from NNMM.process import process_show_mylist_info_all, process_timer, process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import update_mylist_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -25,7 +24,7 @@ class MainWindow():
         """メインウィンドウクラスのコンストラクタ
         """
         # 設定値初期化
-        self.config = config_main.ProcessConfigBase.set_config()
+        self.config = process_config.ProcessConfigBase.set_config()
 
         # DB操作コンポーネント設定
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
@@ -74,7 +73,7 @@ class MainWindow():
             "未視聴にする::-TR-": process_not_watched.ProcessNotWatched,
             "検索（動画名）::-TR-": process_search.ProcessVideoSearch,
             "強調表示を解除::-TR-": process_search.ProcessVideoSearchClear,
-            "情報表示::-TR-": popup_window_main.PopupVideoWindow,
+            "情報表示::-TR-": process_popup.PopupVideoWindow,
             "動画ダウンロード::-TR-": process_download.ProcessDownload,
             "全動画表示::-MR-": process_show_mylist_info_all.ProcessShowMylistInfoAll,
             "視聴済にする（選択）::-MR-": process_watched_mylist.ProcessWatchedMylist,
@@ -87,7 +86,7 @@ class MainWindow():
             "検索（動画名）::-MR-": process_search.ProcessMylistSearchFromVideo,
             "検索（URL）::-MR-": process_search.ProcessMylistSearchFromMylistURL,
             "強調表示を解除::-MR-": process_search.ProcessMylistSearchClear,
-            "情報表示::-MR-": popup_window_main.PopupMylistWindow,
+            "情報表示::-MR-": process_popup.PopupMylistWindow,
             "-LIST-+DOUBLE CLICK+": process_show_mylist_info.ProcessShowMylistInfo,
             "-CREATE-": process_create_mylist.ProcessCreateMylist,
             "-CREATE_THREAD_DONE-": process_create_mylist.ProcessCreateMylistThreadDone,
@@ -100,10 +99,10 @@ class MainWindow():
             "-ALL_UPDATE_THREAD_DONE-": process_update_all_mylist_info.ProcessUpdateAllMylistInfoThreadDone,
             "-PARTIAL_UPDATE-": process_update_partial_mylist_info.ProcessUpdatePartialMylistInfo,
             "-PARTIAL_UPDATE_THREAD_DONE-": process_update_partial_mylist_info.ProcessUpdatePartialMylistInfoThreadDone,
-            "-C_CONFIG_SAVE-": config_main.ProcessConfigSave,
-            "-C_MYLIST_SAVE-": config_main.ProcessMylistSaveCSV,
-            "-C_MYLIST_LOAD-": config_main.ProcessMylistLoadCSV,
-            "-TIMER_SET-": timer.ProcessTimer,
+            "-C_CONFIG_SAVE-": process_config.ProcessConfigSave,
+            "-C_MYLIST_SAVE-": process_config.ProcessMylistSaveCSV,
+            "-C_MYLIST_LOAD-": process_config.ProcessMylistLoadCSV,
+            "-TIMER_SET-": process_timer.ProcessTimer,
         }
 
         logger.info("window setup done.")
@@ -189,7 +188,7 @@ class MainWindow():
                 [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
             ], size=(1370, 1000))
         ]]
-        cf_layout = config_main.ProcessConfigBase.make_layout()
+        cf_layout = process_config.ProcessConfigBase.make_layout()
         lf_layout = [[
             sg.Frame("ログ", [
                 [sg.Column([[
@@ -245,7 +244,7 @@ class MainWindow():
                     # 設定タブを開いたときの処理
                     self.values = values
                     process_info = ProcessInfo.create(event, self)
-                    pb = config_main.ProcessConfigLoad(process_info)
+                    pb = process_config.ProcessConfigLoad(process_info)
                     pb.run()
 
         # ウィンドウ終了処理

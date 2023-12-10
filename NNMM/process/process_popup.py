@@ -1,18 +1,12 @@
 from abc import abstractmethod
 from logging import INFO, getLogger
-from typing import TYPE_CHECKING
 
 import PySimpleGUI as sg
 
-from NNMM.gui_function import interval_translate
 from NNMM.model import Mylist, MylistInfo
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-
-if TYPE_CHECKING:
-    from NNMM.main_window import MainWindow
+from NNMM.util import interval_translate
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -20,14 +14,6 @@ logger.setLevel(INFO)
 
 class PopupWindowBase(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
-        """コンストラクタ
-
-        Atributes:
-            window (MainWindow|None): 子window
-            title (str): windowタイトル
-            size (tuple[str,str]): windowサイズ
-            process_dict (dict): イベント処理の対応辞書
-        """
         super().__init__(process_info)
 
         self.popup_window = None

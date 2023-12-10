@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from logging import INFO, getLogger
 from pathlib import Path
 
-from NNMM import config_main
+from NNMM.process import process_config
 from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
@@ -79,7 +79,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             raise ValueError("video url from rss and from api is different.")
 
         # config取得
-        config = config_main.ProcessConfigBase.get_config()
+        config = process_config.ProcessConfigBase.get_config()
         if not config:
             raise ValueError("config read failed.")
 
@@ -109,7 +109,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
 
 if __name__ == "__main__":
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
-    config_main.ProcessConfigBase.set_config()
+    process_config.ProcessConfigBase.set_config()
 
     urls = [
         # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画

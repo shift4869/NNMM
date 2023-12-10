@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import PySimpleGUI as sg
 from mock import MagicMock, mock_open, patch
 
-from NNMM.config_main import ProcessConfigBase, ProcessConfigLoad, ProcessConfigSave, ProcessMylistLoadCSV, ProcessMylistSaveCSV
+from NNMM.process.process_config import ProcessConfigBase, ProcessConfigLoad, ProcessConfigSave, ProcessMylistLoadCSV, ProcessMylistSaveCSV
 
 if TYPE_CHECKING:
     from NNMM.main_window import MainWindow
@@ -141,7 +141,7 @@ class TestConfigMain(unittest.TestCase):
         """設定iniの取得をテストする
         """
         with ExitStack() as stack:
-            mock = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.set_config"))
+            mock = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.set_config"))
 
             # 初回取得
             ProcessConfigBase.config = None
@@ -342,8 +342,8 @@ class TestConfigMain(unittest.TestCase):
         """設定タブを開いたときの処理のテスト
         """
         with ExitStack() as stack:
-            mocksc = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.set_config"))
-            mockgc = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.get_config"))
+            mocksc = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.set_config"))
+            mockgc = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.get_config"))
 
             expect_dict = {
                 "general": {
@@ -401,7 +401,7 @@ class TestConfigMain(unittest.TestCase):
         with ExitStack() as stack:
             mockcp = stack.enter_context(patch("configparser.ConfigParser"))
             mockfp = stack.enter_context(patch("pathlib.Path.open", mock_open()))
-            mocksc = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.set_config"))
+            mocksc = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.set_config"))
             mockmc = stack.enter_context(patch("NNMM.config_main.MylistDBController"))
             mockmbc = stack.enter_context(patch("NNMM.config_main.MylistInfoDBController"))
 

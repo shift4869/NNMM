@@ -10,9 +10,7 @@ from logging import INFO, getLogger
 
 import httpx
 import xmltodict
-from bs4 import BeautifulSoup
 
-from NNMM import config_main
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
 from NNMM.video_info_fetcher.value_objects.title import Title
@@ -171,10 +169,11 @@ class VideoInfoFetcherBase(ABC):
 
 
 if __name__ == "__main__":
+    from NNMM.process import process_config
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     for name in logging.root.manager.loggerDict:
         getLogger(name).disabled = True
-    config_main.ProcessConfigBase.set_config()
+    process_config.ProcessConfigBase.set_config()
 
     class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
         def __init__(self, url: str):

@@ -4,10 +4,10 @@ from logging import INFO, getLogger
 
 import PySimpleGUI as sg
 
-from NNMM import config_main
-from NNMM.gui_function import get_mylist_type, get_now_datetime, popup_get_text, update_mylist_pane, update_table_pane
+from NNMM.process import process_config
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import get_mylist_type, get_now_datetime, popup_get_text, update_mylist_pane, update_table_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -62,7 +62,7 @@ class ProcessCreateMylist(ProcessBase):
 
         # オートリロード間隔を取得する
         check_interval = ""
-        config = config_main.ProcessConfigBase.get_config()
+        config = process_config.ProcessConfigBase.get_config()
         i_str = config["general"].get("auto_reload", "")
         try:
             if i_str == "(使用しない)" or i_str == "":

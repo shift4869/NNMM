@@ -356,7 +356,7 @@ class TestProcessCreateMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch.object(logger, "info"))
             mockle = stack.enter_context(patch.object(logger, "error"))
-            mockcpg = stack.enter_context(patch("NNMM.config_main.ProcessConfigBase.get_config"))
+            mockcpg = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.get_config"))
             mockgut = stack.enter_context(patch("NNMM.process.process_create_mylist.get_mylist_type"))
             mockgndt = stack.enter_context(patch("NNMM.process.process_create_mylist.get_now_datetime"))
             mockpgt = stack.enter_context(patch("NNMM.process.process_create_mylist.popup_get_text"))
