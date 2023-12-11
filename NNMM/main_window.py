@@ -20,7 +20,7 @@ logger.setLevel(INFO)
 class MainWindow():
     """メインウィンドウクラス
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """メインウィンドウクラスのコンストラクタ
         """
         # 設定値初期化
@@ -208,9 +208,6 @@ class MainWindow():
 
     def run(self) -> None:
         """メインイベントループ
-
-        Returns:
-            int: 正常終了時0
         """
         while True:
             # イベントの読み込み

@@ -1,8 +1,3 @@
-"""MylistInfoDBControllerのテスト
-
-MylistInfoDBController.MylistInfoDBController()の各種機能をテストする
-"""
-
 import copy
 import random
 import sys
