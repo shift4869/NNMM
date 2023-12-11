@@ -155,7 +155,7 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
 
         # キャンセルされた場合は何もしない
         if not sd_path_str:
-            return 1
+            return
 
         # マイリスト保存
         sd_path = Path(sd_path_str)
@@ -191,10 +191,6 @@ class ProcessConfigLoad(ProcessConfigBase):
 
         # DB
         window["-C_DB_PATH-"].update(value=c["db"]["save_path"])
-
-        # Niconico
-        # window["-C_ACCOUNT_EMAIL-"].update(value=c["niconico"]["email"])
-        # window["-C_ACCOUNT_PASSWORD-"].update(value=c["niconico"]["password"])
 
         # 選択された状態になるので外す
         window["-C_BROWSER_PATH-"].update(select=False)
@@ -240,8 +236,8 @@ class ProcessConfigSave(ProcessConfigBase):
 
                 # 以降の処理で新しいパスに移動させたDBを参照するように再設定
                 self.db_fullpath = str(sd_new)
-                self.mylist_db = MylistDBController(db_fullpath=str(sd_new))
-                self.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
+                self.process_info.mylist_db = MylistDBController(db_fullpath=str(sd_new))
+                self.process_info.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
 
                 # 移動成功
                 db_move_success = True

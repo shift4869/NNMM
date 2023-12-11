@@ -63,5 +63,5 @@ class ProcessInfo():
 if __name__ == "__main__":
     mw = MainWindow()
     mw.values = {"-TABLE-": ["test"]}
-    process_info = ProcessInfo.create("テストプロセス", mw)
+    process_info = ProcessInfo.create("-TEST_PROCESS-", mw)
     print(repr(process_info))

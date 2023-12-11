@@ -5,6 +5,8 @@ from NNMM.process.value_objects.process_info import ProcessInfo
 
 class ProcessBase(ABC):
     def __init__(self, process_info: ProcessInfo) -> None:
+        if not isinstance(process_info, ProcessInfo):
+            raise ValueError("process_info must be ProcessInfo.")
         self.process_info = process_info
         self.name = process_info.name
         self.window = process_info.window

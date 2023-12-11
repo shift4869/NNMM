@@ -1,53 +1,57 @@
-"""ProcessBase のテスト
-"""
 import sys
 import unittest
 
+import PySimpleGUI as sg
+from mock import MagicMock
+
+from NNMM.main_window import MainWindow
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 
-# テスト用具体化ProcessBase
 class ConcreteProcessBase(ProcessBase):
-    
-    def __init__(self, log_sflag: bool, log_eflag: bool, process_name: str) -> None:
-        super().__init__(log_sflag, log_eflag, process_name)
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
 
-    def run(self, mw) -> int:
-        return 0
+    def run(self) -> None:
+        return
 
 
 class TestProcessBase(unittest.TestCase):
+    def test_init(self):
+        process_name = "-TEST_PROCESS-"
+        main_window = MagicMock(spec=MainWindow)
+        main_window.window = MagicMock(spec=sg.Window)
+        main_window.values = MagicMock(spec=dict)
+        main_window.mylist_db = MagicMock(spec=MylistDBController)
+        main_window.mylist_info_db = MagicMock(spec=MylistInfoDBController)
+        process_info = ProcessInfo.create(process_name, main_window)
+        process_base = ConcreteProcessBase(process_info)
 
-    def setUp(self):
-        pass
+        self.assertEqual(process_name, process_base.name)
+        self.assertEqual(process_info, process_base.process_info)
+        self.assertEqual(process_info.window, process_base.window)
+        self.assertEqual(process_info.values, process_base.values)
+        self.assertEqual(process_info.mylist_db, process_base.mylist_db)
+        self.assertEqual(process_info.mylist_info_db, process_base.mylist_info_db)
 
-    def tearDown(self):
-        pass
+        with self.assertRaises(ValueError):
+            process_base = ConcreteProcessBase("invalid_process_info")
 
-    def test_ProcessBaseInit(self):
-        """ProcessBaseの初期化後の状態をテストする
-        """
-        e_log_sflag = True
-        e_log_eflag = False
-        e_process_name = "テスト用具体化処理"
-        cpb = ConcreteProcessBase(e_log_sflag, e_log_eflag, e_process_name)
+    def test_run(self):
+        process_name = "-TEST_PROCESS-"
+        main_window = MagicMock(spec=MainWindow)
+        main_window.window = MagicMock(spec=sg.Window)
+        main_window.values = MagicMock(spec=dict)
+        main_window.mylist_db = MagicMock(spec=MylistDBController)
+        main_window.mylist_info_db = MagicMock(spec=MylistInfoDBController)
+        process_info = ProcessInfo.create(process_name, main_window)
+        process_base = ConcreteProcessBase(process_info)
 
-        self.assertEqual(e_log_sflag, cpb.log_sflag)
-        self.assertEqual(e_log_eflag, cpb.log_eflag)
-        self.assertEqual(e_process_name, cpb.process_name)
-        self.assertEqual(None, cpb.main_window)
-
-    def test_ProcessBaserun(self):
-        """ProcessBaseのrunをテストする
-        """
-        e_log_sflag = True
-        e_log_eflag = False
-        e_process_name = "テスト用具体化処理"
-        cpb = ConcreteProcessBase(e_log_sflag, e_log_eflag, e_process_name)
-
-        e_mw = "dummy window"
-        actual = cpb.run(e_mw)
-        self.assertEqual(0, actual)
+        actual = process_base.run()
+        self.assertEqual(None, actual)
 
 
 if __name__ == "__main__":
