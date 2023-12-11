@@ -1,6 +1,7 @@
 import re
 import urllib.parse
 from logging import INFO, getLogger
+from typing import Literal
 
 import PySimpleGUI as sg
 
@@ -17,6 +18,35 @@ class ProcessCreateMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
+    def make_layout(self, url_type: Literal["uploaded", "mylist"], mylist_url: str, window_title: str) -> list[list[sg.Frame]]:
+        horizontal_line = "-" * 132
+        csize = (20, 1)
+        tsize = (50, 1)
+        cf = []
+        if url_type == "uploaded":
+            cf = [
+                [sg.Text(horizontal_line)],
+                [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
+                [sg.Text("URLタイプ", size=csize), sg.Input(url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
+                [sg.Text("ユーザー名", size=csize), sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize)],
+                [sg.Text(horizontal_line)],
+                [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
+            ]
+        elif url_type == "mylist":
+            cf = [
+                [sg.Text(horizontal_line)],
+                [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
+                [sg.Text("URLタイプ", size=csize), sg.Input(url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
+                [sg.Text("ユーザー名", size=csize), sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize)],
+                [sg.Text("マイリスト名", size=csize), sg.Input("", key="-MYLISTNAME-", background_color="light goldenrod", size=tsize)],
+                [sg.Text(horizontal_line)],
+                [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
+            ]
+        layout = [[
+            sg.Frame(window_title, cf)
+        ]]
+        return layout
+
     def run(self) -> None:
         """マイリスト追加ボタン押下時の処理
 
@@ -30,7 +60,8 @@ class ProcessCreateMylist(ProcessBase):
         # 追加するマイリストURLをユーザーに問い合わせる
         sample_url1 = "https://www.nicovideo.jp/user/*******/video"
         sample_url2 = "https://www.nicovideo.jp/user/*******/mylist/********"
-        mylist_url = popup_get_text(f"追加する マイリスト/ 投稿動画一覧 のURLを入力\n{sample_url1}\n{sample_url2}", title="追加URL")
+        message = f"追加する マイリスト/ 投稿動画一覧 のURLを入力\n{sample_url1}\n{sample_url2}"
+        mylist_url = popup_get_text(message, title="追加URL")
 
         # キャンセルされた場合
         if mylist_url is None or mylist_url == "":
@@ -68,11 +99,11 @@ class ProcessCreateMylist(ProcessBase):
             if i_str == "(使用しない)" or i_str == "":
                 check_interval = "15分"  # デフォルトは15分
             else:
-                pattern = "^([0-9]+)分毎$"
+                pattern = r"^([0-9]+)分毎$"
                 check_interval = re.findall(pattern, i_str)[0] + "分"
         except IndexError:
             logger.error("Create mylist failed, interval config error.")
-            return -1
+            return
 
         # 必要な情報をポップアップでユーザーに問い合わせる
         window_title = "登録情報入力"
@@ -81,35 +112,7 @@ class ProcessCreateMylist(ProcessBase):
         showname = ""
         is_include_new = False
 
-        def make_layout():
-            horizontal_line = "-" * 132
-            csize = (20, 1)
-            tsize = (50, 1)
-            cf = []
-            if url_type == "uploaded":
-                cf = [
-                    [sg.Text(horizontal_line)],
-                    [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
-                    [sg.Text("URLタイプ", size=csize), sg.Input(url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
-                    [sg.Text("ユーザー名", size=csize), sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize)],
-                    [sg.Text(horizontal_line)],
-                    [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
-                ]
-            elif url_type == "mylist":
-                cf = [
-                    [sg.Text(horizontal_line)],
-                    [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
-                    [sg.Text("URLタイプ", size=csize), sg.Input(url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
-                    [sg.Text("ユーザー名", size=csize), sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize)],
-                    [sg.Text("マイリスト名", size=csize), sg.Input("", key="-MYLISTNAME-", background_color="light goldenrod", size=tsize)],
-                    [sg.Text(horizontal_line)],
-                    [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
-                ]
-            layout = [[
-                sg.Frame(window_title, cf)
-            ]]
-            return layout
-        layout = make_layout()
+        layout = self.make_layout(url_type, mylist_url, window_title)
         window = sg.Window(title=window_title, layout=layout, auto_size_text=True, finalize=True)
         window["-USERNAME-"].set_focus(True)
         button, values = window.read()
@@ -117,7 +120,7 @@ class ProcessCreateMylist(ProcessBase):
         del window
         if button != "-REGISTER-":
             logger.info("Create mylist canceled.")
-            return 1
+            return
         else:
             if url_type == "uploaded":
                 username = values["-USERNAME-"]
@@ -144,13 +147,14 @@ class ProcessCreateMylist(ProcessBase):
 
         # マイリスト情報をDBに格納
         id_index = max([int(r["id"]) for r in self.mylist_db.select()]) + 1
-        self.mylist_db.upsert(id_index, username, mylistname, url_type, showname, mylist_url, dst, dst, dst, check_interval, is_include_new)
+        self.mylist_db.upsert(id_index, username, mylistname, url_type, showname, mylist_url,
+                              dst, dst, dst, check_interval, is_include_new)
 
         # 後続処理へ
         self.window["-INPUT1-"].update(value=mylist_url)
         self.window["-INPUT2-"].update(value="マイリスト追加完了")
         self.window.write_event_value("-CREATE_THREAD_DONE-", "")
-        return 0
+        return
 
 
 class ProcessCreateMylistThreadDone(ProcessBase):
@@ -164,8 +168,6 @@ class ProcessCreateMylistThreadDone(ProcessBase):
             "-CREATE_THREAD_DONE-"
             -CREATE-の処理が終わった後の処理
         """
-        # "-CREATE_THREAD_DONE-"
-        # -CREATE-の処理が終わった後の処理
         # マイリスト画面表示更新
         update_mylist_pane(self.window, self.mylist_db)
 
