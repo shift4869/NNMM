@@ -263,49 +263,27 @@ class TestProcessCreateMylist(unittest.TestCase):
         pass
 
     def test_ProcessCreateMylistThreadDone_init(self):
-        instance = ProcessCreateMylist(self.process_info)
+        instance = ProcessCreateMylistThreadDone(self.process_info)
         self.assertEqual(self.process_info, instance.process_info)
 
     def test_ProcessCreateMylistThreadDone_run(self):
-        return
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch.object(logger, "info"))
-            mockle = stack.enter_context(patch.object(logger, "error"))
-            mockums = stack.enter_context(patch("NNMM.process.process_create_mylist.update_mylist_pane"))
-            mockuts = stack.enter_context(patch("NNMM.process.process_create_mylist.update_table_pane"))
+            mockli = stack.enter_context(patch("NNMM.process.process_create_mylist.logger.info"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_create_mylist.update_mylist_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.process_create_mylist.update_table_pane"))
 
-            pcm_td = ProcessCreateMylistThreadDone()
+            instance = ProcessCreateMylistThreadDone(self.process_info)
 
-            mockmw = MagicMock()
-            type(mockmw).window = "window"
-            type(mockmw).values = {"-INPUT1-": "values"}
-            type(mockmw).mylist_db = "mylist_db"
-            type(mockmw).mylist_info_db = "mylist_info_db"
+            actual = instance.run()
+            self.assertIsNone(actual)
 
-            # 正常系
-            actual = pcm_td.run(mockmw)
-            self.assertEqual(0, actual)
+            mock_update_mylist_pane.assert_called_once_with(instance.window, instance.mylist_db)
+            mock_update_mylist_pane.reset_mock()
 
-            # mcal[{n回目の呼び出し}][args=0]
-            mcal = mockums.call_args_list
-            self.assertEqual(len(mcal), 1)
-            self.assertEqual((mockmw.window, mockmw.mylist_db), mcal[0][0])
-            mockums.reset_mock()
-
-            # tcal[{n回目の呼び出し}][args=0]
-            tcal = mockuts.call_args_list
-            self.assertEqual(len(tcal), 1)
-            self.assertEqual((mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db, mockmw.values["-INPUT1-"]), tcal[0][0])
-            mockuts.reset_mock()
-
-            # 異常系
-            # 引数エラー
-            del mockmw.window
-            del type(mockmw).window
-            actual = pcm_td.run(mockmw)
-            self.assertEqual(-1, actual)
-            mockums.assert_not_called()
-            mockuts.assert_not_called()
+            mock_update_table_pane.assert_called_once_with(
+                instance.window, instance.mylist_db, instance.mylist_info_db, instance.values["-INPUT1-"]
+            )
+            mock_update_table_pane.reset_mock()
         pass
 
 
