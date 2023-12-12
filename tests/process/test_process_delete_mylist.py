@@ -1,161 +1,150 @@
-"""ProcessDeleteMylist のテスト
-"""
 import sys
 import unittest
 from contextlib import ExitStack
 
-from mock import MagicMock, patch
+import PySimpleGUI as sg
+from mock import MagicMock, call, patch
 
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_delete_mylist import ProcessDeleteMylist
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 
 class TestProcessDeleteMylist(unittest.TestCase):
-
     def setUp(self):
-        pass
+        self.process_info = MagicMock(spec=ProcessInfo)
+        self.process_info.name = "-TEST_PROCESS-"
+        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.values = MagicMock(spec=dict)
+        self.process_info.mylist_db = MagicMock(spec=MylistDBController)
+        self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    def tearDown(self):
-        pass
-
-    def test_PCMrun(self):
-        """ProcessDeleteMylistのrunをテストする
-        """
+    def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.process_delete_mylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.process_delete_mylist.logger.error"))
-            mockums = stack.enter_context(patch("NNMM.process.process_delete_mylist.update_mylist_pane"))
-            mockpgt = stack.enter_context(patch("NNMM.process.process_delete_mylist.sg.popup_ok_cancel"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_delete_mylist.update_mylist_pane"))
+            mock_popup_ok_cancel = stack.enter_context(patch("NNMM.process.process_delete_mylist.sg.popup_ok_cancel"))
+            mock_mylist_db = MagicMock()
 
-            pdm = ProcessDeleteMylist()
+            instance = ProcessDeleteMylist(self.process_info)
 
             # 正常系
             showname_s = "sample_mylist_showname"
             mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
 
-            def Returnselect_from_showname(s, showname):
+            def return_select_from_showname(showname):
                 url_dict = {
                     showname_s: {"url": mylist_url_s},
                 }
                 res = url_dict.get(showname, {})
                 return [res] if res else []
 
-            def Returnselect_from_url(s, mylist_url):
+            def return_select_from_url(mylist_url):
                 showname_dict = {
                     mylist_url_s: {"showname": showname_s},
                 }
                 return [showname_dict.get(mylist_url, {})]
 
-            expect_values_dict = {
-                "-LIST-": [showname_s]
-            }
+            def pre_run(values_kind, s_prev_mylist, s_popup_ok_cancel):
+                mock_mylist_db.select_from_showname.reset_mock()
+                if values_kind == "-LIST-":
+                    instance.values = {
+                        "-LIST-": [showname_s]
+                    }
+                    mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
+                elif values_kind == "-LIST_NEW_MARK-":
+                    instance.values = {
+                        "-LIST-": ["*:" + showname_s]
+                    }
+                    mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
+                elif values_kind == "-INPUT1-":
+                    instance.values = {
+                        "-INPUT1-": mylist_url_s
+                    }
+                elif values_kind == "-INPUT2-":
+                    instance.values = {
+                        "-INPUT2-": mylist_url_s
+                    }
 
-            mockmw = MagicMock()
-            type(mockmw).values = expect_values_dict
-            mockmylist_db = MagicMock()
-            type(mockmylist_db).select_from_showname = Returnselect_from_showname
-            type(mockmylist_db).select_from_url = Returnselect_from_url
-            type(mockmw).mylist_db = mockmylist_db
+                mock_mylist_db.select_from_url.reset_mock()
+                if s_prev_mylist == "":
+                    mock_mylist_db.select_from_url.side_effect = lambda mylist_url: [{}]
+                elif s_prev_mylist == "invalid":
+                    mock_mylist_db.select_from_url.side_effect = lambda mylist_url: ""
+                else: 
+                    mock_mylist_db.select_from_url.side_effect = return_select_from_url
+                mock_mylist_db.delete_from_mylist_url.reset_mock()
+                instance.mylist_db = mock_mylist_db
 
-            actual = pdm.run(mockmw)
-            self.assertEqual(0, actual)
+                mock_popup_ok_cancel.reset_mock()
+                if s_popup_ok_cancel:
+                    mock_popup_ok_cancel.return_value = "Ok"
+                else:
+                    mock_popup_ok_cancel.return_value = "Cancel"
 
-            # 実行後呼び出し確認
-            def assertMockCall():
-                mc = mockpgt.mock_calls
-                self.assertEqual(2, len(mc))
-                self.assertEqual((f"{showname_s}\n{mylist_url_s}\nマイリスト削除します",), mc[0][1])
-                self.assertEqual({"title": "削除確認"}, mc[0][2])
-                mockpgt.reset_mock()
+                instance.mylist_info_db.delete_in_mylist = MagicMock()
+                instance.window.reset_mock()
+                mock_update_mylist_pane.reset_mock()
 
-                mc = mockmw.mock_calls
-                self.assertEqual(7, len(mc))
-                self.assertEqual("mylist_info_db.delete_in_mylist", mc[0][0])
-                self.assertEqual((mylist_url_s,), mc[0][1])
-                self.assertEqual("window.__getitem__", mc[1][0])
-                self.assertEqual(("-TABLE-",), mc[1][1])
-                self.assertEqual("window.__getitem__().update", mc[2][0])
-                self.assertEqual({"values": [[]]}, mc[2][2])
-                self.assertEqual("window.__getitem__", mc[3][0])
-                self.assertEqual(("-INPUT1-",), mc[3][1])
-                self.assertEqual("window.__getitem__().update", mc[4][0])
-                self.assertEqual({"value": ""}, mc[4][2])
-                self.assertEqual("window.__getitem__", mc[5][0])
-                self.assertEqual(("-INPUT2-",), mc[5][1])
-                self.assertEqual("window.__getitem__().update", mc[6][0])
-                self.assertEqual({"value": "マイリスト削除完了"}, mc[6][2])
-                mockmw.reset_mock()
+            def post_run(values_kind, s_prev_mylist, s_popup_ok_cancel):
+                if values_kind in ["-LIST-", "-LIST_NEW_MARK-"]:
+                    instance.mylist_db.select_from_showname.assert_called_once_with(showname_s)
+                else:
+                    instance.mylist_db.select_from_showname.assert_not_called()
 
-                mc = mockmylist_db.mock_calls
-                self.assertEqual(1, len(mc))
-                self.assertEqual("delete_from_mylist_url", mc[0][0])
-                self.assertEqual((mylist_url_s,), mc[0][1])
-                mockmylist_db.reset_mock()
+                instance.mylist_db.select_from_url.assert_called_once_with(mylist_url_s)
+                if s_prev_mylist in ["", "invalid"]:
+                    mock_popup_ok_cancel.assert_not_called()
+                    instance.mylist_info_db.delete_in_mylist.assert_not_called()
+                    instance.mylist_db.delete_from_mylist_url.assert_not_called()
+                    instance.window.assert_not_called()
+                    mock_update_mylist_pane.assert_not_called()
+                    return
 
-                mockums.assert_called()
-                mockums.reset_mock()
+                mock_popup_ok_cancel.assert_called_once_with(
+                    f"{showname_s}\n{mylist_url_s}\nマイリスト削除します", title="削除確認"
+                )
+                if s_popup_ok_cancel:
+                    pass
+                else:
+                    instance.mylist_info_db.delete_in_mylist.assert_not_called()
+                    instance.mylist_db.delete_from_mylist_url.assert_not_called()
+                    self.assertEqual([
+                        call.__getitem__("-INPUT2-"),
+                        call.__getitem__().update(value="マイリスト削除キャンセル"),
+                    ], instance.window.mock_calls)
+                    mock_update_mylist_pane.assert_not_called()
+                    return
 
-            assertMockCall()
+                instance.mylist_info_db.delete_in_mylist.assert_called_once_with(mylist_url_s)
+                instance.mylist_db.delete_from_mylist_url.assert_called_once_with(mylist_url_s)
+                mock_update_mylist_pane.assert_called_once_with(instance.window, instance.mylist_db)
 
-            # 新規マークつき
-            expect_values_dict["-LIST-"] = ["*:" + showname_s]
-            actual = pdm.run(mockmw)
-            self.assertEqual(0, actual)
-            assertMockCall()
+                self.assertEqual([
+                    call.__getitem__("-TABLE-"),
+                    call.__getitem__().update(values=[[]]),
+                    call.__getitem__("-INPUT1-"),
+                    call.__getitem__().update(value=""),
+                    call.__getitem__("-INPUT2-"),
+                    call.__getitem__().update(value="マイリスト削除完了"),
+                ], instance.window.mock_calls)
 
-            # マイリスト取得元について別分岐1
-            del expect_values_dict["-LIST-"]
-            expect_values_dict["-INPUT1-"] = mylist_url_s
-            actual = pdm.run(mockmw)
-            self.assertEqual(0, actual)
-            assertMockCall()
-
-            # マイリスト取得元について別分岐2
-            del expect_values_dict["-INPUT1-"]
-            expect_values_dict["-INPUT2-"] = mylist_url_s
-            actual = pdm.run(mockmw)
-            self.assertEqual(0, actual)
-            assertMockCall()
-
-            # 削除確認時にキャンセルが押された
-            del expect_values_dict["-INPUT2-"]
-            expect_values_dict["-LIST-"] = [showname_s]
-            mockpgt.return_value = "Cancel"
-
-            actual = pdm.run(mockmw)
-            self.assertEqual(1, actual)
-
-            mc = mockpgt.mock_calls
-            self.assertEqual(1, len(mc))
-            self.assertEqual((f"{showname_s}\n{mylist_url_s}\nマイリスト削除します",), mc[0][1])
-            self.assertEqual({"title": "削除確認"}, mc[0][2])
-            mockpgt.reset_mock()
-
-            mc = mockmw.mock_calls
-            self.assertEqual(2, len(mc))
-            self.assertEqual("window.__getitem__", mc[0][0])
-            self.assertEqual(("-INPUT2-",), mc[0][1])
-            self.assertEqual("window.__getitem__().update", mc[1][0])
-            self.assertEqual({"value": "マイリスト削除キャンセル"}, mc[1][2])
-            mockmw.reset_mock()
-
-            # 異常系
-            # IndexError
-            expect_values_dict["-LIST-"] = "invalid showname"
-            actual = pdm.run(mockmw)
-            self.assertEqual(-1, actual)
-
-            # 既存マイリストに存在しない場合
-            del expect_values_dict["-LIST-"]
-            expect_values_dict["-INPUT1-"] = "invalid showname"
-            actual = pdm.run(mockmw)
-            self.assertEqual(-1, actual)
-
-            # 引数エラー
-            del mockmw.values
-            del type(mockmw).values
-            actual = pdm.run(mockmw)
-            self.assertEqual(-1, actual)
-            pass
+            params_list = [
+                ("-LIST-", "s_prev_mylist", True),
+                ("-LIST_NEW_MARK-", "s_prev_mylist", True),
+                ("-INPUT1-", "s_prev_mylist", True),
+                ("-INPUT2-", "s_prev_mylist", True),
+                ("-LIST-", "", True),
+                ("-LIST-", "invalid", True),
+                ("-LIST-", "s_prev_mylist", False),
+            ]
+            for params in params_list:
+                pre_run(params[0], params[1], params[2])
+                actual = instance.run()
+                self.assertIsNone(actual)
+                post_run(params[0], params[1], params[2])
         pass
 
 
