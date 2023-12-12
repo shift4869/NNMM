@@ -27,7 +27,7 @@ class ProcessNotWatched(ProcessBase):
         # 行が選択されていないなら何もしない
         if not self.values["-TABLE-"]:
             logger.error("NotWatched failed, no record selected.")
-            return
+            return Result.failed
 
         # 選択された行（複数可）についてすべて処理する
         all_num = len(self.values["-TABLE-"])
@@ -64,7 +64,7 @@ class ProcessNotWatched(ProcessBase):
         update_mylist_pane(self.window, self.mylist_db)
 
         logger.info("NotWatched success.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":
