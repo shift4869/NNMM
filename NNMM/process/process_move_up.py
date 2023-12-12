@@ -21,7 +21,7 @@ class ProcessMoveUp(ProcessBase):
         """
         if not self.values["-LIST-"]:
             logger.error("MoveUp failed, no mylist selected.")
-            return -1
+            return Result.failed
 
         src_index = 0
         if self.window["-LIST-"].get_indexes():
@@ -31,7 +31,7 @@ class ProcessMoveUp(ProcessBase):
 
         if src_index == 0:
             logger.info(f"{src_v} -> index is 0 , can't move up.")
-            return
+            return Result.failed
 
         if src_v[:2] == "*:":
             src_v = src_v[2:]
@@ -50,7 +50,7 @@ class ProcessMoveUp(ProcessBase):
         self.window["-LIST-"].update(set_to_index=dst_index)
 
         logger.info(f"{src_v} -> index move up from {src_index} to {dst_index}.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":

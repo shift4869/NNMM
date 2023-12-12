@@ -1,111 +1,132 @@
-"""ProcessMoveUp のテスト
-"""
-import random
 import sys
 import unittest
 from contextlib import ExitStack
 
+import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_move_up import ProcessMoveUp
+from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 
 class TestProcessMoveUp(unittest.TestCase):
-
     def setUp(self):
-        pass
+        self.process_info = MagicMock(spec=ProcessInfo)
+        self.process_info.name = "-TEST_PROCESS-"
+        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.values = MagicMock(spec=dict)
+        self.process_info.mylist_db = MagicMock(spec=MylistDBController)
+        self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    def tearDown(self):
-        pass
-
-    def test_PMUrun(self):
-        """ProcessMoveUpのrunをテストする
-        """
+    def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.process_move_up.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.process_move_up.logger.error"))
-            mockums = stack.enter_context(patch("NNMM.process.process_move_up.update_mylist_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_move_up.update_mylist_pane"))
+            mock_window = MagicMock()
 
-            pmu = ProcessMoveUp()
+            instance = ProcessMoveUp(self.process_info)
+            def pre_run(s_src_index, s_max_index, s_src_v, s_dst_v):
+                instance.values.reset_mock()
+                if s_src_v == "":
+                    instance.values.__getitem__.side_effect = lambda key: []
+                else:
+                    instance.values.__getitem__.side_effect = lambda key: [s_src_v]
 
-            # 正常系
-            NUM = 5
-            mylist_table_s = [f"mylist_{i}" for i in range(NUM)]
-
-            def ReturnMW(index):
-                r = MagicMock()
-                r.get_indexes = lambda: [index]
-                r.Values = mylist_table_s
-
-                expect_window_dict = {
-                    "-LIST-": r
+                instance.window.reset_mock()
+                mock_window.reset_mock()
+                if s_src_index == -1:
+                    s_src_index = s_max_index
+                    mock_window.get_indexes.side_effect = lambda: 0
+                else:
+                    mock_window.get_indexes.side_effect = lambda: [s_src_index]
+                s_dst_index = s_src_index - 1
+                list_data = {
+                    s_src_index: s_src_v,
+                    s_dst_index: s_dst_v,
                 }
-                expect_values_dict = {
-                    "-LIST-": [mylist_table_s[index]]
-                }
+                mock_window.Values = list_data
+                instance.window.__getitem__.side_effect = lambda key: mock_window
 
-                def Returnselect_from_showname(showname):
-                    for i, s in enumerate(mylist_table_s):
-                        if showname in s:
-                            return [{"id": i}]
-                    return [{}]
+                instance.mylist_db.reset_mock()
+                def return_record(showname):
+                    if showname in s_src_v:
+                        return [{"id": s_src_index}]
+                    if showname in s_dst_v:
+                        return [{"id": s_dst_index}]
 
-                mockmw = MagicMock()
-                mockmw.window = expect_window_dict
-                mockmw.values = expect_values_dict
-                mockmw.mylist_db.select = lambda: mylist_table_s
-                mockmw.mylist_db.select_from_showname = Returnselect_from_showname
+                instance.mylist_db.select_from_showname.side_effect = return_record
+                instance.mylist_db.swap_id.reset_mock()
+                mock_update_mylist_pane.reset_mock()
 
-                return mockmw
+            def post_run(s_src_index, s_max_index, s_src_v, s_dst_v):
+                if s_src_v == "":
+                    self.assertEqual([
+                        call("-LIST-"),
+                    ], instance.values.__getitem__.mock_calls)
+                    mock_window.assert_not_called()
+                    instance.mylist_db.assert_not_called()
+                    mock_update_mylist_pane.assert_not_called()
+                    return
+                else:
+                    self.assertEqual([
+                        call("-LIST-"),
+                        call("-LIST-"),
+                    ], instance.values.__getitem__.mock_calls)
 
-            index = random.randint(1, NUM - 1)
-            mockmw = ReturnMW(index)
-            actual = pmu.run(mockmw)
-            self.assertEqual(0, actual)
+                if s_src_index == 0:
+                    mock_window.assert_not_called()
+                    instance.mylist_db.assert_not_called()
+                    mock_update_mylist_pane.assert_not_called()
+                    return
 
-            # 実行後呼び出し確認
-            def assertMockCall(index):
-                mc = mockmw.window["-LIST-"].mock_calls
-                self.assertEqual(1, len(mc))
-                self.assertEqual(call.update(set_to_index=index - 1), mc[0])
-                mockmw.window["-LIST-"].reset_mock()
+                if s_src_index == -1:
+                    s_src_index = s_max_index
+                    s_dst_index = s_src_index - 1
+                    self.assertEqual([
+                        call.get_indexes(),
+                        call.update(set_to_index=s_dst_index),
+                    ], mock_window.mock_calls)
+                else:
+                    s_dst_index = s_src_index - 1
+                    self.assertEqual([
+                        call.get_indexes(),
+                        call.get_indexes(),
+                        call.update(set_to_index=s_dst_index),
+                    ], mock_window.mock_calls)
 
-                mc = mockmw.mylist_db.mock_calls
-                self.assertEqual(1, len(mc))
-                self.assertEqual(call.swap_id(index, index - 1), mc[0])
-                mockmw.mylist_db.reset_mock()
+                if s_src_v.startswith("*:"):
+                    s_src_v = s_src_v[2:]
+                if s_dst_v.startswith("*:"):
+                    s_dst_v = s_dst_v[2:]
+                self.assertEqual([
+                    call.select_from_showname(s_src_v),
+                    call.select_from_showname(s_dst_v),
+                    call.swap_id(s_src_index, s_dst_index),
+                ], instance.mylist_db.mock_calls)
 
-                mockums.assert_called()
-                mockums.reset_mock()
+                mock_update_mylist_pane.assert_called_once_with(
+                    instance.window, instance.mylist_db
+                )
 
-            assertMockCall(index)
-
-            # 新着マークつき
-            mylist_table_s = [f"*:mylist_{i}" for i in range(NUM)]
-            index = random.randint(1, NUM - 1)
-            mockmw = ReturnMW(index)
-            actual = pmu.run(mockmw)
-            self.assertEqual(0, actual)
-            assertMockCall(index)
-
-            # 一番上のマイリストを選択した場合
-            index = 0
-            mockmw = ReturnMW(index)
-            actual = pmu.run(mockmw)
-            self.assertEqual(1, actual)
-
-            # 異常系
-            # マイリストが選択されていない
-            index = random.randint(1, NUM - 1)
-            mockmw = ReturnMW(index)
-            mockmw.values["-LIST-"] = []
-            actual = pmu.run(mockmw)
-            self.assertEqual(-1, actual)
-
-            # 引数エラー
-            del mockmw.window
-            actual = pmu.run(mockmw)
-            self.assertEqual(-1, actual)
+            params_list = [
+                (1, 1, "showname_1", "showname_2", Result.success),
+                (1, 1, "*:showname_1", "showname_2", Result.success),
+                (1, 1, "showname_1", "*:showname_2", Result.success),
+                (1, 1, "*:showname_1", "*:showname_2", Result.success),
+                (0, 1, "showname_1", "showname_2", Result.failed),
+                (1, 1, "", "showname_2", Result.failed),
+            ]
+            for params in params_list:
+                pre_run(params[0], params[1], params[2], params[3])
+                actual = instance.run()
+                expect = params[-1]
+                self.assertIs(expect, actual)
+                post_run(params[0], params[1], params[2], params[3])
+        pass
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ class TestProcessMoveDown(unittest.TestCase):
 
                 instance.mylist_db.reset_mock()
                 instance.mylist_db.select.side_effect = lambda: list(range(s_max_index + 1))
-                
+
                 def return_record(showname):
                     if showname in s_src_v:
                         return [{"id": s_src_index}]
