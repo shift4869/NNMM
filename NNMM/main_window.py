@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process import process_base, process_config, process_create_mylist, process_delete_mylist, process_download, process_move_down, process_move_up, process_not_watched, process_popup, process_search, process_show_mylist_info
+from NNMM.process import process_base, process_config, process_create_mylist, process_delete_mylist, process_move_down, process_move_up, process_not_watched, process_popup, process_search, process_show_mylist_info
 from NNMM.process import process_show_mylist_info_all, process_timer, process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import update_mylist_pane
@@ -74,7 +74,6 @@ class MainWindow():
             "検索（動画名）::-TR-": process_search.ProcessVideoSearch,
             "強調表示を解除::-TR-": process_search.ProcessVideoSearchClear,
             "情報表示::-TR-": process_popup.PopupVideoWindow,
-            "動画ダウンロード::-TR-": process_download.ProcessDownload,
             "全動画表示::-MR-": process_show_mylist_info_all.ProcessShowMylistInfoAll,
             "視聴済にする（選択）::-MR-": process_watched_mylist.ProcessWatchedMylist,
             "視聴済にする（全て）::-MR-": process_watched_all_mylist.ProcessWatchedAllMylist,
@@ -91,8 +90,6 @@ class MainWindow():
             "-CREATE-": process_create_mylist.ProcessCreateMylist,
             "-CREATE_THREAD_DONE-": process_create_mylist.ProcessCreateMylistThreadDone,
             "-DELETE-": process_delete_mylist.ProcessDeleteMylist,
-            "-DOWNLOAD-": process_download.ProcessDownload,
-            "-DOWNLOAD_THREAD_DONE-": process_download.ProcessDownloadThreadDone,
             "-UPDATE-": process_update_mylist_info.ProcessUpdateMylistInfo,
             "-UPDATE_THREAD_DONE-": process_update_mylist_info.ProcessUpdateMylistInfoThreadDone,
             "-ALL_UPDATE-": process_update_all_mylist_info.ProcessUpdateAllMylistInfo,
