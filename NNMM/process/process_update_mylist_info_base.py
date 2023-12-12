@@ -10,7 +10,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import get_now_datetime, is_mylist_include_new_video, update_mylist_pane, update_table_pane
+from NNMM.util import Result, get_now_datetime, is_mylist_include_new_video, update_mylist_pane, update_table_pane
 from NNMM.video_info_fetcher.video_info_rss_fetcher import VideoInfoRssFetcher
 
 logger = getLogger(__name__)
@@ -65,7 +65,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
             prev_video_lists.append(prev_video_list)
         return prev_video_lists
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """すべてのマイリストのマイリスト情報を更新する
         """
         logger.info(f"{self.L_KIND} update start.")
@@ -358,7 +358,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase):
 
         self.L_KIND = "UpdateMylist Base"
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """すべてのマイリストのマイリスト情報を更新後の後処理
         """
         # 左下の表示を更新する

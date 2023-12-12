@@ -10,6 +10,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_config import ProcessMylistSaveCSV
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -43,7 +44,7 @@ class TestProcessMylistSaveCSV(unittest.TestCase):
             # 正常系
             # 実行
             actual = process_mylist_save.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.success, actual)
 
             # 呼び出し確認
             default_path = Path("") / "result.csv"
@@ -76,7 +77,7 @@ class TestProcessMylistSaveCSV(unittest.TestCase):
             # 異常系
             # ファイル選択をキャンセルされた
             actual = process_mylist_save.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.failed, actual)
 
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list
@@ -90,7 +91,7 @@ class TestProcessMylistSaveCSV(unittest.TestCase):
 
             # マイリスト保存に失敗
             actual = process_mylist_save.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.failed, actual)
 
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list

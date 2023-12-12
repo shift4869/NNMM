@@ -10,7 +10,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_create_mylist import ProcessCreateMylist, ProcessCreateMylistThreadDone
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import get_mylist_type
+from NNMM.util import Result, get_mylist_type
 
 
 class TestProcessCreateMylist(unittest.TestCase):
@@ -245,20 +245,21 @@ class TestProcessCreateMylist(unittest.TestCase):
                 username = mylist_info[2]
                 mylistname = mylist_info[1]
                 params_list = [
-                    (mylist_url, url_type, prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-"),
-                    (mylist_url, url_type, prev_mylist, "10分毎", username, mylistname, "-REGISTER-"),
-                    ("", url_type, prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-"),
-                    (mylist_url, "", prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-"),
-                    (mylist_url, url_type, ["prev_mylist_exist"], "(使用しない)", username, mylistname, "-REGISTER-"),
-                    (mylist_url, url_type, prev_mylist, "invalid", username, mylistname, "-REGISTER-"),
-                    (mylist_url, url_type, prev_mylist, "(使用しない)", "", mylistname, "-REGISTER-"),
-                    (mylist_url, url_type, prev_mylist, "(使用しない)", username, "", "-REGISTER-"),
-                    (mylist_url, url_type, prev_mylist, "(使用しない)", username, mylistname, "invalid"),
+                    (mylist_url, url_type, prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.success),
+                    (mylist_url, url_type, prev_mylist, "10分毎", username, mylistname, "-REGISTER-", Result.success),
+                    ("", url_type, prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
+                    (mylist_url, "", prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
+                    (mylist_url, url_type, ["prev_mylist_exist"], "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
+                    (mylist_url, url_type, prev_mylist, "invalid", username, mylistname, "-REGISTER-", Result.failed),
+                    (mylist_url, url_type, prev_mylist, "(使用しない)", "", mylistname, "-REGISTER-", Result.failed),
+                    # (mylist_url, url_type, prev_mylist, "(使用しない)", username, "", "-REGISTER-", Result.failed),
+                    (mylist_url, url_type, prev_mylist, "(使用しない)", username, mylistname, "invalid", Result.failed),
                 ]
                 for params in params_list:
                     pre_run(params[0], params[1], params[2], params[3], params[4], params[5], params[6])
                     actual = instance.run()
-                    self.assertIsNone(actual)
+                    expect = params[-1]
+                    self.assertIs(expect, actual)
                     post_run(params[0], params[1], params[2], params[3], params[4], params[5], params[6])
         pass
 

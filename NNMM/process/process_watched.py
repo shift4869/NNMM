@@ -2,7 +2,7 @@ from logging import INFO, getLogger
 
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import is_mylist_include_new_video, update_mylist_pane, update_table_pane
+from NNMM.util import Result, is_mylist_include_new_video, update_mylist_pane, update_table_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -12,7 +12,7 @@ class ProcessWatched(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """動画の状況ステータスを""(視聴済)に設定する
 
         Notes:

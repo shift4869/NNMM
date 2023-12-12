@@ -6,6 +6,7 @@ from logging import INFO, getLogger
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.process_config import ProcessConfigBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -16,7 +17,7 @@ class ProcessTimer(ProcessBase):
         super().__init__(process_info)
         self.timer_thread = None
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """タイマー実行時の処理
 
         Notes:

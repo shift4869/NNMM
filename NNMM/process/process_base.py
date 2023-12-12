@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 
 class ProcessBase(ABC):
@@ -15,5 +16,5 @@ class ProcessBase(ABC):
         self.mylist_info_db = process_info.mylist_info_db
 
     @abstractmethod
-    def run(self) -> None:
+    def run(self) -> Result:
         raise NotImplementedError

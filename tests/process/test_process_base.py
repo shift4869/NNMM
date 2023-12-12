@@ -9,14 +9,15 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 
 class ConcreteProcessBase(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
-        return
+    def run(self) -> Result:
+        return Result.success
 
 
 class TestProcessBase(unittest.TestCase):
@@ -51,7 +52,7 @@ class TestProcessBase(unittest.TestCase):
         process_base = ConcreteProcessBase(process_info)
 
         actual = process_base.run()
-        self.assertEqual(None, actual)
+        self.assertIs(Result.success, actual)
 
 
 if __name__ == "__main__":

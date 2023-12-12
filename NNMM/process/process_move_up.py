@@ -2,7 +2,7 @@ from logging import INFO, getLogger
 
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import update_mylist_pane
+from NNMM.util import Result, update_mylist_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -12,7 +12,7 @@ class ProcessMoveUp(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリストの並び順を一つ上に移動させる
 
         Notes:

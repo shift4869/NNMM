@@ -10,6 +10,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_config import ProcessMylistLoadCSV
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -35,7 +36,7 @@ class TestProcessMylistLoadCSV(unittest.TestCase):
             mockums = stack.enter_context(patch("NNMM.process.process_config.update_mylist_pane"))
 
             TEST_INPUT_PATH = "./tests/input.csv"
-            mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH]
+            mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH, TEST_INPUT_PATH]
             mocklml.side_effect = [0, -1]
             Path(TEST_INPUT_PATH).touch()
 
@@ -45,7 +46,7 @@ class TestProcessMylistLoadCSV(unittest.TestCase):
             # 正常系
             # 実行
             actual = process_mylist_load.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.success, actual)
 
             # 呼び出し確認
             default_path = Path("") / "input.csv"
@@ -84,7 +85,7 @@ class TestProcessMylistLoadCSV(unittest.TestCase):
             # 異常系
             # ファイル選択をキャンセルされた
             actual = process_mylist_load.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.failed, actual)
 
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list
@@ -96,9 +97,10 @@ class TestProcessMylistLoadCSV(unittest.TestCase):
             mocklml.assert_not_called()
             mockpu.assert_not_called()
 
-            # マイリスト読込に失敗
+            # ファイルが存在しない
+            Path(TEST_INPUT_PATH).unlink(missing_ok=True)
             actual = process_mylist_load.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.failed, actual)
 
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list
@@ -107,10 +109,26 @@ class TestProcessMylistLoadCSV(unittest.TestCase):
             self.assertEqual(expect_kwargs, pgfcal[0][1])
             mockpgf.reset_mock()
 
-            lmlcal = mocklml.call_args_list
-            self.assertEqual(len(lmlcal), 1)
-            self.assertEqual((self.process_info.mylist_db, str(Path(TEST_INPUT_PATH))), lmlcal[0][0])
-            mocklml.reset_mock()
+            mocklml.assert_not_called()
+
+            pucal = mockpu.call_args_list
+            self.assertEqual(len(pucal), 1)
+            self.assertEqual(("読込ファイルが存在しません", ), pucal[0][0])
+            mockpu.reset_mock()
+
+            # 読込に失敗
+            Path(TEST_INPUT_PATH).touch()
+            actual = process_mylist_load.run()
+            self.assertIs(Result.failed, actual)
+
+            # 呼び出し確認
+            pgfcal = mockpgf.call_args_list
+            self.assertEqual(len(pgfcal), 1)
+            self.assertEqual(("読込ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(expect_kwargs, pgfcal[0][1])
+            mockpgf.reset_mock()
+
+            mocklml.assert_called()
 
             pucal = mockpu.call_args_list
             self.assertEqual(len(pucal), 1)

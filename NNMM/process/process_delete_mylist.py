@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import update_mylist_pane
+from NNMM.util import Result, update_mylist_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -14,7 +14,7 @@ class ProcessDeleteMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリスト削除ボタン押下時の処理
 
         Notes:
@@ -47,10 +47,10 @@ class ProcessDeleteMylist(ProcessBase):
             prev_mylist = self.mylist_db.select_from_url(mylist_url)[0]
             if not prev_mylist:
                 logger.error("Delete mylist failed, target mylist not found.")
-                return
+                return Result.failed
         except IndexError:
             logger.error("Delete mylist failed, target mylist not found.")
-            return
+            return Result.failed
 
         # 確認
         showname = prev_mylist.get("showname", "")
@@ -59,7 +59,7 @@ class ProcessDeleteMylist(ProcessBase):
         if res == "Cancel":
             self.window["-INPUT2-"].update(value="マイリスト削除キャンセル")
             logger.error("Delete mylist canceled.")
-            return
+            return Result.failed
 
         # マイリスト情報から対象動画の情報を削除する
         self.mylist_info_db.delete_in_mylist(mylist_url)
@@ -76,7 +76,7 @@ class ProcessDeleteMylist(ProcessBase):
 
         self.window["-INPUT2-"].update(value="マイリスト削除完了")
         logger.info("Delete mylist success.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":

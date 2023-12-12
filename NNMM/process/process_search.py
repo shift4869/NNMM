@@ -3,7 +3,7 @@ from logging import INFO, getLogger
 
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import popup_get_text, update_mylist_pane, update_table_pane
+from NNMM.util import Result, popup_get_text, update_mylist_pane, update_table_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -13,7 +13,7 @@ class ProcessMylistSearch(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリスト名でマイリストを検索
 
         Notes:
@@ -82,7 +82,7 @@ class ProcessMylistSearchFromVideo(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリストの中に含んでいる動画名でマイリストを検索
 
         Notes:
@@ -161,7 +161,7 @@ class ProcessMylistSearchFromMylistURL(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリストURLでマイリストを検索
 
         Notes:
@@ -234,7 +234,7 @@ class ProcessVideoSearch(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリストの中に含んでいる動画名でマイリストを検索
 
         Notes:
@@ -296,7 +296,7 @@ class ProcessMylistSearchClear(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリスト表示のハイライトを解除する
 
         Notes:
@@ -316,7 +316,7 @@ class ProcessVideoSearchClear(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリスト表示のハイライトを解除する
 
         Notes:

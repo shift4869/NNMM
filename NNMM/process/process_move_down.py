@@ -2,7 +2,7 @@ from logging import INFO, getLogger
 
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import update_mylist_pane
+from NNMM.util import Result, update_mylist_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -12,7 +12,7 @@ class ProcessMoveDown(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリストの並び順を一つ下に移動させる
 
         Notes:
@@ -21,7 +21,7 @@ class ProcessMoveDown(ProcessBase):
         """
         if not self.values["-LIST-"]:
             logger.error("MoveDown failed, no mylist selected.")
-            return
+            return Result.failed
 
         src_index = 0
         if self.window["-LIST-"].get_indexes():
@@ -31,8 +31,8 @@ class ProcessMoveDown(ProcessBase):
 
         max_index = len(self.mylist_db.select()) - 1
         if src_index >= max_index:
-            logger.info(f"{src_v} -> index is {max_index} , can't move down.")
-            return
+            logger.error(f"{src_v} -> index is {max_index} , can't move down.")
+            return Result.failed
 
         if src_v[:2] == "*:":
             src_v = src_v[2:]
@@ -51,7 +51,7 @@ class ProcessMoveDown(ProcessBase):
         self.window["-LIST-"].update(set_to_index=dst_index)
 
         logger.info(f"{src_v} -> index move down from {src_index} to {dst_index}.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":

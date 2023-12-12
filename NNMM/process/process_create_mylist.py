@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 from NNMM.process import process_config
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import get_mylist_type, get_now_datetime, popup_get_text, update_mylist_pane, update_table_pane
+from NNMM.util import Result, get_mylist_type, get_now_datetime, popup_get_text, update_mylist_pane, update_table_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -47,7 +47,7 @@ class ProcessCreateMylist(ProcessBase):
         ]]
         return layout
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリスト追加ボタン押下時の処理
 
         Notes:
@@ -66,7 +66,7 @@ class ProcessCreateMylist(ProcessBase):
         # キャンセルされた場合
         if mylist_url is None or mylist_url == "":
             logger.info("Create mylist canceled.")
-            return
+            return Result.failed
 
         # クエリ除去
         mylist_url = urllib.parse.urlunparse(
@@ -78,14 +78,14 @@ class ProcessCreateMylist(ProcessBase):
         if url_type == "":
             sg.popup("入力されたURLには対応していません\n新規追加処理を終了します", title="")
             logger.info(f"Create mylist failed, '{mylist_url}' is invalid url.")
-            return
+            return Result.failed
 
         # 既存マイリストと重複していた場合何もしない
         prev_mylist = self.mylist_db.select_from_url(mylist_url)
         if prev_mylist:
             sg.popup("既存マイリスト一覧に含まれています\n新規追加処理を終了します", title="")
             logger.info(f"Create mylist canceled, '{mylist_url}' is already included.")
-            return
+            return Result.failed
 
         # マイリスト情報収集開始
         self.window["-INPUT2-"].update(value="ロード中")
@@ -103,7 +103,7 @@ class ProcessCreateMylist(ProcessBase):
                 check_interval = re.findall(pattern, i_str)[0] + "分"
         except IndexError:
             logger.error("Create mylist failed, interval config error.")
-            return
+            return Result.failed
 
         # 必要な情報をポップアップでユーザーに問い合わせる
         window_title = "登録情報入力"
@@ -120,7 +120,7 @@ class ProcessCreateMylist(ProcessBase):
         del window
         if button != "-REGISTER-":
             logger.info("Create mylist canceled.")
-            return
+            return Result.failed
         else:
             if url_type == "uploaded":
                 username = values["-USERNAME-"]
@@ -140,7 +140,7 @@ class ProcessCreateMylist(ProcessBase):
                 check_interval == ""]):
             sg.popup("入力されたマイリスト情報が不正です\n新規追加処理を終了します", title="")
             logger.info(f"Create mylist canceled, can't retrieve the required information.")
-            return
+            return Result.failed
 
         # 現在時刻取得
         dst = get_now_datetime()
@@ -154,14 +154,14 @@ class ProcessCreateMylist(ProcessBase):
         self.window["-INPUT1-"].update(value=mylist_url)
         self.window["-INPUT2-"].update(value="マイリスト追加完了")
         self.window.write_event_value("-CREATE_THREAD_DONE-", "")
-        return
+        return Result.success
 
 
 class ProcessCreateMylistThreadDone(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリスト追加の後処理
 
         Notes:

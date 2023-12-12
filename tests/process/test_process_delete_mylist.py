@@ -9,6 +9,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_delete_mylist import ProcessDeleteMylist
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 
 class TestProcessDeleteMylist(unittest.TestCase):
@@ -132,18 +133,19 @@ class TestProcessDeleteMylist(unittest.TestCase):
                 ], instance.window.mock_calls)
 
             params_list = [
-                ("-LIST-", "s_prev_mylist", True),
-                ("-LIST_NEW_MARK-", "s_prev_mylist", True),
-                ("-INPUT1-", "s_prev_mylist", True),
-                ("-INPUT2-", "s_prev_mylist", True),
-                ("-LIST-", "", True),
-                ("-LIST-", "invalid", True),
-                ("-LIST-", "s_prev_mylist", False),
+                ("-LIST-", "s_prev_mylist", True, Result.success),
+                ("-LIST_NEW_MARK-", "s_prev_mylist", True, Result.success),
+                ("-INPUT1-", "s_prev_mylist", True, Result.success),
+                ("-INPUT2-", "s_prev_mylist", True, Result.success),
+                ("-LIST-", "", True, Result.failed),
+                ("-LIST-", "invalid", True, Result.failed),
+                ("-LIST-", "s_prev_mylist", False, Result.failed),
             ]
             for params in params_list:
                 pre_run(params[0], params[1], params[2])
                 actual = instance.run()
-                self.assertIsNone(actual)
+                expect = params[-1]
+                self.assertIs(expect, actual)
                 post_run(params[0], params[1], params[2])
         pass
 

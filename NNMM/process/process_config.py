@@ -8,7 +8,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import load_mylist, save_mylist, update_mylist_pane
+from NNMM.util import Result, load_mylist, save_mylist, update_mylist_pane
 
 
 class ProcessConfigBase(ProcessBase):
@@ -95,7 +95,7 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリスト一覧読込ボタンが押されたときの処理
 
         Notes:
@@ -113,13 +113,13 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
 
         # キャンセルされた場合は何もしない
         if not sd_path_str:
-            return
+            return Result.failed
 
         # マイリスト読込
         sd_path = Path(sd_path_str)
         if not sd_path.is_file():
             sg.popup("読込ファイルが存在しません")
-            return
+            return Result.failed
 
         res = load_mylist(self.mylist_db, str(sd_path))
 
@@ -128,16 +128,17 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
         # 結果通知
         if res == 0:
             sg.popup("読込完了")
+            return Result.success
         else:
             sg.popup("読込失敗")
-        return
+            return Result.failed
 
 
 class ProcessMylistSaveCSV(ProcessConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """マイリスト一覧保存ボタンが押されたときの処理
 
         Notes:
@@ -155,7 +156,7 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
 
         # キャンセルされた場合は何もしない
         if not sd_path_str:
-            return
+            return Result.failed
 
         # マイリスト保存
         sd_path = Path(sd_path_str)
@@ -164,16 +165,17 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
         # 結果通知
         if res == 0:
             sg.popup("保存完了")
+            return Result.success
         else:
             sg.popup("保存失敗")
-        return
+            return Result.failed
 
 
 class ProcessConfigLoad(ProcessConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """設定タブを開いたときの処理
 
         Notes:
@@ -194,14 +196,14 @@ class ProcessConfigLoad(ProcessConfigBase):
 
         # 選択された状態になるので外す
         window["-C_BROWSER_PATH-"].update(select=False)
-        return
+        return Result.success
 
 
 class ProcessConfigSave(ProcessConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """設定保存ボタンが押されたときの処理
 
         Notes:
@@ -248,7 +250,7 @@ class ProcessConfigSave(ProcessConfigBase):
         with Path(ProcessConfigBase.CONFIG_FILE_PATH).open("w", encoding="utf-8") as fout:
             c.write(fout)
         ProcessConfigBase.set_config()
-        return
+        return Result.success
 
 
 if __name__ == "__main__":

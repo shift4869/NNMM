@@ -9,6 +9,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_config import ProcessConfigLoad
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -58,7 +59,7 @@ class TestProcessConfigLoad(unittest.TestCase):
             self.process_info.window = mock_dict
             process_config_load = ProcessConfigLoad(self.process_info)
             actual = process_config_load.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.success, actual)
 
             # ucal[{n回目の呼び出し}][args=0]
             # ucal[{n回目の呼び出し}][kwargs=1]

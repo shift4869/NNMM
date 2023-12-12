@@ -8,10 +8,10 @@ import PySimpleGUI as sg
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process import process_base, process_config, process_create_mylist, process_delete_mylist, process_move_down, process_move_up, process_not_watched, process_popup, process_search, process_show_mylist_info
-from NNMM.process import process_show_mylist_info_all, process_timer, process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
+from NNMM.process import process_base, process_config, process_create_mylist, process_delete_mylist, process_move_down, process_move_up, process_not_watched, process_popup, process_search, process_show_mylist_info, process_show_mylist_info_all
+from NNMM.process import process_timer, process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import update_mylist_pane
+from NNMM.util import Result, update_mylist_pane
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -203,7 +203,7 @@ class MainWindow():
 
         return layout
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """メインイベントループ
         """
         while True:

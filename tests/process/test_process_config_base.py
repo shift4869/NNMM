@@ -9,6 +9,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_config import ProcessConfigBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -17,8 +18,8 @@ class ConcreteProcessConfigBase(ProcessConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
-        return
+    def run(self) -> Result:
+        return Result.success
 
 
 class TestProcessConfigBase(unittest.TestCase):

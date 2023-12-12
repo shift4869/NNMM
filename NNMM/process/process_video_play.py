@@ -7,6 +7,7 @@ from NNMM.process import process_config
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.process_watched import ProcessWatched
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -16,7 +17,7 @@ class ProcessVideoPlay(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """選択された動画をブラウザで開く
 
         Notes:

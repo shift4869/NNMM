@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 from NNMM.model import Mylist, MylistInfo
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import interval_translate
+from NNMM.util import Result, interval_translate
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -39,7 +39,7 @@ class PopupWindowBase(ProcessBase):
         """
         raise NotImplementedError
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """子windowイベントループ
         """
         # 初期化
@@ -214,7 +214,7 @@ class PopupMylistWindowSave(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """ポップアップwindow上の変更を保存する
 
         Notes:

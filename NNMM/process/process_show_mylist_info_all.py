@@ -2,6 +2,7 @@ from logging import INFO, getLogger
 
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -11,7 +12,7 @@ class ProcessShowMylistInfoAll(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         """すべてのマイリストを横断的に探索し、含まれる動画情報レコードを100件まで表示する
 
         Notes:

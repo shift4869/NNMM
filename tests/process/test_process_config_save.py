@@ -11,6 +11,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_config import ProcessConfigSave
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -96,7 +97,7 @@ class TestProcessConfigSave(unittest.TestCase):
             # 実行
             process_mylist_save = ProcessConfigSave(self.process_info)
             actual = process_mylist_save.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.success, actual)
 
             # 呼び出し確認
             # rcal[{n回目の呼び出し}][args=0]

@@ -12,6 +12,7 @@ from NNMM.process import process_config, process_create_mylist, process_delete_m
 from NNMM.process import process_timer, process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
 from NNMM.process.process_base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 logger = getLogger("NNMM.main_window")
 logger.setLevel(WARNING)
@@ -23,8 +24,8 @@ class ConcreteProcessBase(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
-        return
+    def run(self) -> Result:
+        return Result.success
 
 
 # テスト用具体化ProcessBase(エラー想定)
@@ -32,7 +33,7 @@ class ConcreteErrorProcessBase(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> None:
+    def run(self) -> Result:
         raise Exception
 
 
