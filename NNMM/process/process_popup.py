@@ -221,7 +221,7 @@ class PopupMylistWindowSave(ProcessBase):
             マイリスト情報windowの保存ボタンが押された時呼び出される
 
         Returns:
-            int: 正常終了時0、エラー時-1
+            Result: 成功時success, エラー時failed
         """
         self.popup_window: sg.Window = self.window
 
@@ -232,7 +232,7 @@ class PopupMylistWindowSave(ProcessBase):
         for k in PMW_ROWS:
             if k not in allkeys:
                 logger.error("Mylist popup window layout key error.")
-                return
+                return Result.failed
 
         # 値の設定
         id_index = self.popup_window["-ID_INDEX-"].get()
@@ -255,12 +255,12 @@ class PopupMylistWindowSave(ProcessBase):
         if dt < -1:
             # インターバル文字列解釈エラー
             logger.error(f"update interval setting is invalid : {interval_str}")
-            return
+            return Result.failed
 
         # マイリスト情報更新
         self.mylist_db.upsert(id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)
         logger.info("マイリスト情報Saved")
-        return
+        return Result.success
 
 
 class PopupVideoWindow(PopupWindowBase):
