@@ -66,6 +66,7 @@ class TestPopupWindowBase(unittest.TestCase):
                 mock_init.reset_mock()
                 mock_init.return_value = s_init
                 instance.init = mock_init
+
                 mock_layout.reset_mock()
                 mock_layout.return_value = s_layout
                 instance.make_window_layout = mock_layout
