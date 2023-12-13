@@ -22,11 +22,11 @@ class PopupWindowBase(ProcessBase):
         self.process_dict = {}
 
     @abstractmethod
-    def init(self) -> int:
+    def init(self) -> Result:
         """初期化
 
         Returns:
-            int: 成功時0、エラー時-1
+            Result: 成功時success, エラー時failed
         """
         raise NotImplementedError
 
@@ -35,7 +35,7 @@ class PopupWindowBase(ProcessBase):
         """画面のレイアウトを作成する
 
         Returns:
-            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
+            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト, 失敗時None
         """
         raise NotImplementedError
 
@@ -44,15 +44,15 @@ class PopupWindowBase(ProcessBase):
         """
         # 初期化
         res = self.init()
-        if res == -1:
+        if res == Result.failed:
             sg.popup_ok("情報ウィンドウの初期化に失敗しました。")
-            return
+            return Result.failed
 
         # ウィンドウレイアウト作成
         layout = self.make_window_layout()
         if not layout:
             sg.popup_ok("情報ウィンドウのレイアウト表示に失敗しました。")
-            return
+            return Result.failed
 
         # ウィンドウオブジェクト作成
         self.popup_window = sg.Window(self.title, layout, size=self.size, finalize=True, resizable=True, modal=True)
@@ -77,18 +77,18 @@ class PopupWindowBase(ProcessBase):
 
         # ウィンドウ終了処理
         self.popup_window.close()
-        return
+        return Result.success
 
 
 class PopupMylistWindow(PopupWindowBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def init(self) -> int:
+    def init(self) -> Result:
         """初期化
 
         Returns:
-            int: 成功時0、エラー時-1
+            Result: 成功時success, エラー時failed
         """
         # 親windowからの情報を取得する
         values = self.values.get("-LIST-")
@@ -98,7 +98,7 @@ class PopupMylistWindow(PopupWindowBase):
             values = values[0]
         else:
             logger.error("Mylist popup window Init failed, mylist is not selected.")
-            return -1
+            return Result.failed
 
         # 新着表示のマークがある場合は削除する
         NEW_MARK = "*:"
@@ -111,7 +111,7 @@ class PopupMylistWindow(PopupWindowBase):
             record = record[0]
         else:
             logger.error("Mylist popup window Init failed, mylist is not found in mylist_db.")
-            return -1
+            return Result.failed
 
         # recordを設定(make_window_layoutで使用する)
         self.record = record
@@ -122,7 +122,7 @@ class PopupMylistWindow(PopupWindowBase):
         self.process_dict = {
             "-SAVE-": PopupMylistWindowSave,
         }
-        return 0
+        return Result.success
 
     def make_window_layout(self) -> list[list[sg.Frame]] | None:
         """画面のレイアウトを作成する
@@ -207,7 +207,6 @@ class PopupMylistWindow(PopupWindowBase):
             sg.Frame(self.title, cf)
         ]]
         return layout
-
 
 
 class PopupMylistWindowSave(ProcessBase):

@@ -105,7 +105,8 @@ class TestProcessNotWatched(unittest.TestCase):
                         instance.window,
                         instance.mylist_db,
                         instance.mylist_info_db,
-                        mylist_url)
+                        mylist_url
+                    )
                 ], mock_update_table_pane.mock_calls)
 
                 self.assertEqual([

@@ -39,7 +39,9 @@ exclude = [
 line-length = 256
 
 [tool.ruff.lint]
+select = ["E", "F"]
 ignore = ["F401", "F541", "F841"]
+preview = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
