@@ -248,6 +248,9 @@ class ProcessVideoSearch(ProcessBase):
             "検索（動画名）::-TR-"
             動画テーブル右クリックで「検索（動画名）」が選択された場合
             現在表示中の動画テーブルから入力された動画名を持つ動画をハイライト表示する
+
+        Returns:
+            Result: 成功時success, エラー時failed
         """
         logger.info("VideoSearch start.")
 
@@ -307,6 +310,9 @@ class ProcessMylistSearchClear(ProcessBase):
             "強調表示を解除::-MR-"
             マイリスト右クリックで「強調表示を解除」が選択された場合
             現在表示中のマイリストの表示をもとに戻す
+
+        Returns:
+            Result: 成功時success, エラー時failed
         """
         logger.info("MylistSearchClear start.")
 
@@ -327,6 +333,9 @@ class ProcessVideoSearchClear(ProcessBase):
             "強調表示を解除::-TR-"
             動画テーブル右クリックで「強調表示を解除」が選択された場合
             現在表示中の動画テーブルの表示をもとに戻す
+
+        Returns:
+            Result: 成功時success, エラー時failed
         """
         logger.info("VideoSearchClear start.")
 
@@ -338,7 +347,7 @@ class ProcessVideoSearchClear(ProcessBase):
         update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info("VideoSearchClear success.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":
