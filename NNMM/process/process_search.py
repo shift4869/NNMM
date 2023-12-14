@@ -313,7 +313,7 @@ class ProcessMylistSearchClear(ProcessBase):
         update_mylist_pane(self.window, self.mylist_db)
 
         logger.info("MylistSearchClear success.")
-        return
+        return Result.success
 
 
 class ProcessVideoSearchClear(ProcessBase):
