@@ -20,13 +20,16 @@ class ProcessMylistSearch(ProcessBase):
             "検索（マイリスト）::-MR-"
             マイリスト右クリックで「検索（マイリスト）」が選択された場合
             入力されたマイリスト名を持つマイリストをハイライト表示する
+
+        Returns:
+            Result: 成功時success, エラー時failed
         """
         logger.info("MylistSearch start.")
 
         pattern = popup_get_text("マイリスト名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("MylistSearch is canceled or target word is null.")
-            return
+            return Result.failed
 
         logger.info(f"search word -> {pattern}.")
 
@@ -37,7 +40,7 @@ class ProcessMylistSearch(ProcessBase):
 
         # マイリスト画面表示更新
         NEW_MARK = "*:"
-        list_data = self.window["-LIST-"].Values
+        # list_data = self.window["-LIST-"].Values
         m_list = self.mylist_db.select()
         include_new_index_list = []
         match_index_list = []
@@ -75,7 +78,7 @@ class ProcessMylistSearch(ProcessBase):
             self.window["-INPUT2-"].update(value="該当なし")
 
         logger.info("MylistSearch success.")
-        return
+        return Result.success
 
 
 class ProcessMylistSearchFromVideo(ProcessBase):
@@ -92,6 +95,9 @@ class ProcessMylistSearchFromVideo(ProcessBase):
 
         Todo:
             動画テーブルを表示させて動画レコードまでハイライトする
+
+        Returns:
+            Result: 成功時success, エラー時failed
         """
         logger.info("MylistSearchFromVideo start.")
 
