@@ -40,7 +40,6 @@ class ProcessMylistSearch(ProcessBase):
 
         # マイリスト画面表示更新
         NEW_MARK = "*:"
-        # list_data = self.window["-LIST-"].Values
         m_list = self.mylist_db.select()
         include_new_index_list = []
         match_index_list = []
@@ -104,7 +103,7 @@ class ProcessMylistSearchFromVideo(ProcessBase):
         pattern = popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("MylistSearchFromVideo is canceled or target word is null.")
-            return
+            return Result.failed
 
         logger.info(f"search word -> {pattern}.")
 
@@ -115,7 +114,6 @@ class ProcessMylistSearchFromVideo(ProcessBase):
 
         # マイリスト画面表示更新
         NEW_MARK = "*:"
-        list_data = self.window["-LIST-"].Values
         m_list = self.mylist_db.select()
         include_new_index_list = []
         match_index_list = []
@@ -160,7 +158,7 @@ class ProcessMylistSearchFromVideo(ProcessBase):
             self.window["-INPUT2-"].update(value="該当なし")
 
         logger.info("MylistSearchFromVideo success.")
-        return
+        return Result.success
 
 
 class ProcessMylistSearchFromMylistURL(ProcessBase):
