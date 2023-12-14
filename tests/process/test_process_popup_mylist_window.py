@@ -211,7 +211,12 @@ class TestPopupMylistWindow(unittest.TestCase):
         Params = namedtuple("Params", ["has_record_flag", "valid_record_flag", "s_check_interval", "s_is_include_new", "result_func"])
         params_list = [
             Params(True, True, "15分", True, self._make_expect_window_layout),
+            Params(True, True, "15分", False, self._make_expect_window_layout),
             Params(False, True, "15分", True, None),
+            Params(True, False, "15分", True, None),
+            Params(True, True, "invalid分", True, None),
+            Params(True, True, "-1分", True, None),
+            Params(True, True, "15", True, None),
         ]
         for params in params_list:
             pre_run(params.has_record_flag, params.valid_record_flag, params.s_check_interval, params.s_is_include_new)

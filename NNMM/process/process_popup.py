@@ -267,25 +267,20 @@ class PopupVideoWindow(PopupWindowBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def init(self) -> int:
+    def init(self) -> Result:
         """初期化
 
         Returns:
-            int: 成功時0、エラー時-1
+            Result: 成功時success, エラー時failed
         """
         # 親windowからの情報を取得する
         window = self.window
         values = self.values
 
-        # 引数設定チェック
-        if window is None or values is None:
-            logger.error("MylistInfo popup window Init failed, argument error.")
-            return -1
-
         # テーブルの行が選択されていなかったら何もしない
         if not values["-TABLE-"]:
             logger.info("Table row is not selected.")
-            return -1
+            return Result.failed
 
         # 選択されたテーブル行番号
         row = int(values["-TABLE-"][0])
@@ -301,16 +296,16 @@ class PopupVideoWindow(PopupWindowBase):
 
         if records == [] or len(records) != 1:
             logger.error("Selected row is invalid.")
-            return -1
+            return Result.failed
 
         self.record = records[0]
 
         # 子ウィンドウの初期値
         self.title = "動画情報"
         self.size = (580, 400)
-        return 0
+        return Result.success
 
-    def make_window_layout(self) -> list[list[sg.Frame]]:
+    def make_window_layout(self) -> list[list[sg.Frame]] | None:
         """画面のレイアウトを作成する
 
         Notes:
