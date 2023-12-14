@@ -1,39 +1,39 @@
-"""ProcessShowMylistInfoAll のテスト
-"""
 import sys
 import unittest
+from collections import namedtuple
 from contextlib import ExitStack
 
+import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_show_mylist_info_all import ProcessShowMylistInfoAll
+from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 
 class TestProcessShowMylistInfoAll(unittest.TestCase):
-
     def setUp(self):
-        pass
+        self.process_info = MagicMock(spec=ProcessInfo)
+        self.process_info.name = "-TEST_PROCESS-"
+        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.values = MagicMock(spec=dict)
+        self.process_info.mylist_db = MagicMock(spec=MylistDBController)
+        self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    def tearDown(self):
-        pass
-
-    def MakeMylistInfoDB(self):
-        """mylist_info_db.select()で取得される動画情報データセット
-        """
+    def _make_mylist_info_db(self) -> list[dict]:
         NUM = 5
         res = []
-
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
-                           "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
         table_cols = ["no", "video_id", "title", "username", "status",
                       "uploaded_at", "registered_at", "video_url", "mylist_url"]
         n = 0
         for k in range(NUM):
-            table_rows = [[n, f"sm{k+1}000000{i+1}", f"動画タイトル{k+1}_{i+1}", f"投稿者{k+1}", "",
-                           f"2022-02-01 0{k+1}:00:0{i+1}",
-                           f"2022-02-01 0{k+1}:01:0{i+1}",
-                           f"https://www.nicovideo.jp/watch/sm{k+1}000000{i+1}",
-                           f"https://www.nicovideo.jp/user/1000000{k+1}/video"] for i in range(NUM)]
+            table_rows = [[n, f"sm{k + 1}000000{i + 1}", f"動画タイトル{k + 1}_{i + 1}", f"投稿者{k + 1}", "",
+                           f"2022-02-01 0{k + 1}:00:0{i + 1}",
+                           f"2022-02-01 0{k + 1}:01:0{i + 1}",
+                           f"https://www.nicovideo.jp/watch/sm{k + 1}000000{i + 1}",
+                           f"https://www.nicovideo.jp/user/1000000{k + 1}/video"] for i in range(NUM)]
             n = n + 1
 
             for rows in table_rows:
@@ -43,75 +43,92 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
                 res.append(d)
         return res
 
-    def ReturnMW(self):
-        def ReturnWindow():
-            r_wt = MagicMock()
-            r_wt.get_indexes = lambda: [1]
-            return r_wt
-
-        expect_window_dict = {
-            "-LIST-": ReturnWindow(),
-            "-TABLE-": MagicMock(),
-            "-INPUT1-": MagicMock()
-        }
-
-        r = MagicMock()
-        mockwindow = MagicMock()
-        mockwindow.__getitem__.side_effect = expect_window_dict.__getitem__
-        mockwindow.__iter__.side_effect = expect_window_dict.__iter__
-        mockwindow.__contains__.side_effect = expect_window_dict.__contains__
-        type(r).window = mockwindow
-
-        r.mylist_info_db.select = self.MakeMylistInfoDB
-        return r
-
-    def test_PSMIArun(self):
-        """ProcessShowMylistInfoAllのrunをテストする
-        """
+    def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.process_show_mylist_info_all.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.process_show_mylist_info_all.logger.error"))
 
-            psmia = ProcessShowMylistInfoAll()
+            instance = ProcessShowMylistInfoAll(self.process_info)
 
-            # 正常系
-            mockmw = self.ReturnMW()
-            actual = psmia.run(mockmw)
-            self.assertEqual(0, actual)
+            def pre_run(s_index, not_empty_records):
+                instance.window.reset_mock()
+                if s_index >= 0:
+                    instance.window.__getitem__.return_value.get_indexes.side_effect = lambda: [s_index]
+                else:
+                    instance.window.__getitem__.return_value.get_indexes.side_effect = lambda: []
 
-            # 実行後呼び出し確認
-            index = 1
-            mc = mockmw.window["-LIST-"].mock_calls
-            self.assertEqual(1, len(mc))
-            self.assertEqual(call.update(set_to_index=index), mc[0])
-            mockmw.window["-LIST-"].reset_mock()
+                video_info_list = self._make_mylist_info_db()
+                instance.mylist_info_db.reset_mock()
+                if not_empty_records:
+                    instance.mylist_info_db.select.side_effect = lambda: video_info_list
+                else:
+                    instance.mylist_info_db.select.side_effect = lambda: []
 
-            NUM = 100
-            m_list = self.MakeMylistInfoDB()
-            records = sorted(m_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]
-            def_data = []
-            for i, r in enumerate(records):
-                a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["registered_at"], r["video_url"], r["mylist_url"]]
-                def_data.append(a)
-            mc = mockmw.window["-TABLE-"].mock_calls
-            self.assertEqual(3, len(mc))
-            self.assertEqual(call.update(values=def_data), mc[0])
-            self.assertEqual(call.update(select_rows=[0]), mc[1])
-            self.assertEqual(call.update(row_colors=[(0, "", "")]), mc[2])
-            mockmw.window["-TABLE-"].reset_mock()
+            def post_run(s_index, not_empty_records):
+                expect_window_call = []
+                index = 0
+                if s_index >= 0:
+                    expect_window_call.extend([
+                        call.__getitem__("-LIST-"),
+                        call.__getitem__().get_indexes(),
+                        call.__getitem__("-LIST-"),
+                        call.__getitem__().get_indexes(),
+                    ])
+                    index = s_index
+                else:
+                    expect_window_call.extend([
+                        call.__getitem__("-LIST-"),
+                        call.__getitem__().get_indexes(),
+                    ])
 
-            mc = mockmw.window["-INPUT1-"].mock_calls
-            self.assertEqual(1, len(mc))
-            self.assertEqual(call.update(value=""), mc[0])
-            mockmw.window["-INPUT1-"].reset_mock()
+                expect_window_call.extend([
+                    call.__getitem__("-INPUT1-"),
+                    call.__getitem__().update(value=""),
+                    call.__getitem__("-LIST-"),
+                    call.__getitem__().update(set_to_index=index),
+                ])
+                if not_empty_records:
+                    NUM = 100
+                    video_info_list = self._make_mylist_info_db()
+                    records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]
+                    def_data = []
+                    for i, r in enumerate(records):
+                        a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["registered_at"], r["video_url"], r["mylist_url"]]
+                        def_data.append(a)
+                    expect_window_call.extend([
+                        call.__getitem__("-TABLE-"),
+                        call.__getitem__().update(values=def_data),
+                        call.__getitem__("-TABLE-"),
+                        call.__getitem__().update(select_rows=[0]),
+                    ])
+                else:
+                    def_data = []
+                    expect_window_call.extend([
+                        call.__getitem__("-TABLE-"),
+                        call.__getitem__().update(values=def_data),
+                    ])
+                expect_window_call.extend([
+                    call.__getitem__("-TABLE-"),
+                    call.__getitem__().update(row_colors=[(0, "", "")]),
+                ])
+                self.assertEqual(expect_window_call, instance.window.mock_calls)
 
-            # 異常系
-            # 引数エラー
-            mockmw = self.ReturnMW()
-            del mockmw.window
-            del type(mockmw).window
-            actual = psmia.run(mockmw)
-            self.assertEqual(-1, actual)
+                self.assertEqual([
+                    call.select()
+                ], instance.mylist_info_db.mock_calls)
+
+            Params = namedtuple("Params", ["index", "not_empty_records", "result"])
+            params_list = [
+                Params(0, True, Result.success),
+                Params(1, True, Result.success),
+                Params(-1, True, Result.success),
+                Params(0, False, Result.success),
+            ]
+            for params in params_list:
+                pre_run(params.index, params.not_empty_records)
+                actual = instance.run()
+                expect = params.result
+                self.assertIs(expect, actual)
+                post_run(params.index, params.not_empty_records)
 
 
 if __name__ == "__main__":

@@ -40,9 +40,9 @@ class ProcessNotWatched(ProcessBase):
             selected = def_data[row]
             res = self.mylist_info_db.update_status(selected[1], selected[8], "未視聴")
             if res == 0:
-                logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "non-watched".')
+                logger.info(f'{selected[1]} ({i + 1}/{all_num}) -> marked "non-watched".')
             else:
-                logger.info(f"{selected[1]} ({i+1}/{all_num}) -> failed.")
+                logger.info(f"{selected[1]} ({i + 1}/{all_num}) -> failed.")
 
             # テーブル更新
             def_data[row][4] = "未視聴"
