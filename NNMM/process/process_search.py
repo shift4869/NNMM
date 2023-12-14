@@ -172,13 +172,16 @@ class ProcessMylistSearchFromMylistURL(ProcessBase):
             "検索（URL）::-MR-"
             マイリスト右クリックで「検索（URL）」が選択された場合
             入力されたURLをマイリストURLとして持つマイリストをハイライト表示する
+
+        Returns:
+            Result: 成功時success, エラー時failed
         """
         logger.info("MylistSearchFromMylistURL start.")
 
         search_mylist_url = popup_get_text("マイリストURL入力（完全一致）")
         if search_mylist_url is None or search_mylist_url == "":
             logger.info("MylistSearchFromMylistURL is canceled or target word is null.")
-            return
+            return Result.failed
 
         logger.info(f"search word -> {search_mylist_url}.")
 
@@ -231,7 +234,7 @@ class ProcessMylistSearchFromMylistURL(ProcessBase):
             self.window["-INPUT2-"].update(value="該当なし")
 
         logger.info("MylistSearchFromMylistURL success.")
-        return
+        return Result.success
 
 
 class ProcessVideoSearch(ProcessBase):
