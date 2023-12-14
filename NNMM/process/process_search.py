@@ -255,7 +255,7 @@ class ProcessVideoSearch(ProcessBase):
         pattern = popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
             logger.info("VideoSearch is canceled or target word is null.")
-            return
+            return Result.failed
 
         logger.info(f"search word -> {pattern}.")
 
@@ -265,7 +265,6 @@ class ProcessVideoSearch(ProcessBase):
             index = min([int(v) for v in self.values["-TABLE-"]])
 
         # マイリスト内の動画情報を探索
-        # records = self.mylist_info_db.select_from_mylist_url(mylist_url)
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
         table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
         records = self.window["-TABLE-"].Values  # 現在のtableの全リスト
@@ -276,8 +275,6 @@ class ProcessVideoSearch(ProcessBase):
                 index = i  # 更新後にスクロールするインデックスを更新
 
         # 検索でヒットした項目の背景色とテキスト色を変更する
-        # for i in match_index_list:
-            # self.window["-TABLE-"].Widget.itemconfig(i, fg="black", bg="light goldenrod")
         self.window["-TABLE-"].update(row_colors=[(i, "black", "light goldenrod") for i in match_index_list])
 
         # indexをセットしてスクロール
@@ -296,7 +293,7 @@ class ProcessVideoSearch(ProcessBase):
             self.window["-INPUT2-"].update(value="該当なし")
 
         logger.info("VideoSearch success.")
-        return
+        return Result.success
 
 
 class ProcessMylistSearchClear(ProcessBase):
