@@ -79,14 +79,12 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
                          daemon=True).start()
 
         logger.info(f"{self.L_KIND} update thread start success.")
-        return
+        return Result.success
 
     def update_mylist_info_thread(self) -> None:
         """マイリスト情報を更新する（マルチスレッド前提）
 
-        Notes:
-            それぞれのマイリストごとに初回ロードか確認し、
-            簡易版かレンダリングかどちらで更新するかを保持する
+        Returns: None
         """
         logger.info(f"{self.L_KIND} update thread start.")
 
@@ -121,23 +119,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         logger.info(f"{self.L_KIND} update thread done.")
         return
 
-    def get_mylist_info_worker(self, mylist_url: str, all_index_num: int) -> list[dict] | None:
-        result = None
-        try:
-            result = asyncio.run(VideoInfoRssFetcher.fetch_videoinfo(mylist_url))
-        except Exception as e:
-            pass
-
-        with self.lock:
-            self.done_count = self.done_count + 1
-
-        # 左下テキストボックスにプログレス表示
-        p_str = f"取得中({self.done_count}/{all_index_num})"
-        self.window["-INPUT2-"].update(value=p_str)
-        logger.info(mylist_url + f" : getting done ... ({self.done_count}/{all_index_num}).")
-        return result
-
-    def get_mylist_info_execute(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
+    def get_mylist_info_execute(self, m_list: list[Mylist]) -> list[tuple[str, list[MylistInfo]]]:
         result_buf = []
         all_index_num = len(m_list)
         with ThreadPoolExecutor(max_workers=8, thread_name_prefix="ap_thread") as executor:
@@ -151,17 +133,32 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
             result_buf = [(f[0], f[1].result()) for f in futures]
         return result_buf
 
+    def get_mylist_info_worker(self, mylist_url: str, all_index_num: int) -> list[dict] | None:
+        result = None
+        try:
+            result = asyncio.run(VideoInfoRssFetcher.fetch_videoinfo(mylist_url))
+        except Exception as e:
+            pass
+
+        with self.lock:
+            self.done_count = self.done_count + 1
+
+        p_str = f"取得中({self.done_count}/{all_index_num})"
+        self.window["-INPUT2-"].update(value=p_str)
+        logger.info(mylist_url + f" : getting done ... ({self.done_count}/{all_index_num}).")
+        return result
+
     def update_mylist_info_execute(self,
                                    m_list: list[Mylist],
                                    prev_video_lists: list[list[MylistInfo]],
-                                   now_video_lists: list[list[MylistInfo]]) -> list[int]:
+                                   now_video_lists: list[tuple[str, list[MylistInfo]]]) -> list[int]:
         """それぞれのマイリスト情報を更新する
 
         Args:
             m_list (list[Mylist]): マイリストレコードオブジェクトのリスト
                                    mylist_db.select系の返り値
             prev_video_lists (list[list[MylistInfo]]): それぞれのマイリストに含まれる動画情報のリストのリスト
-            now_video_lists (list[list[MylistInfo]]): それぞれのマイリストについて取得した動画情報のリストのリスト
+            now_video_lists (list[tuple[str, list[MylistInfo]]]): それぞれのマイリストについて取得した動画情報のリストのリスト
 
         Returns:
             list[int]: それぞれのマイリストについて動画情報を更新した際の結果のリスト
@@ -170,32 +167,24 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         """
         result_buf = []
 
-        # リストの大きさが一致しない場合はエラー
         if len(m_list) != len(prev_video_lists):
             return []
 
-        # ワーカースレッドを作成
         with ThreadPoolExecutor(max_workers=8, thread_name_prefix="np_thread") as executor:
             futures = []
-
-            # 引数のマイリストレコードとprev_video_listをワーカーに渡す
             for m, prev_video_list in zip(m_list, prev_video_lists):
-                # ワーカー起動
                 future = executor.submit(
                     self.update_mylist_info_worker,
                     m, prev_video_list, now_video_lists
                 )
                 futures.append((m.get("url"), future))
-
-            # 結果を取得する（futureパターン）
             result_buf = [(f[0], f[1].result()) for f in futures]
-        # 結果を返す
         return result_buf
 
     def update_mylist_info_worker(self,
                                   m_record: Mylist,
                                   prev_video_list: list[MylistInfo],
-                                  now_video_lists: list[list[MylistInfo]]) -> int:
+                                  now_video_lists: list[tuple[str, list[MylistInfo]]]) -> int:
         """動画情報を更新するワーカー
 
         Note:
@@ -205,7 +194,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         Args:
             m_record (Mylist): マイリストレコードオブジェクト
             prev_video_list (list[MylistInfo]): マイリストに含まれる動画情報のリスト
-            now_video_lists (list[list[MylistInfo]]): それぞれのマイリストについて取得した動画情報のリストのリスト
+            now_video_lists (list[tuple[str, list[MylistInfo]]]): それぞれのマイリストについて取得した動画情報のリストのリスト
 
         Returns:
             int: 更新成功時0, 取得レコード0件なら1, エラー時-1
