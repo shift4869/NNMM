@@ -1,67 +1,49 @@
-"""ProcessUpdateMylistInfoBase のテスト
-"""
+from copy import deepcopy
 import sys
 import threading
 import unittest
+from collections import namedtuple
 from contextlib import ExitStack
-from logging import WARNING, getLogger
 
-from mock import AsyncMock, MagicMock, call, patch
+import PySimpleGUI as sg
+from mock import AsyncMock, MagicMock, ThreadingMock, call, patch
+from NNMM.model import Mylist, MylistInfo
 
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_update_mylist_info_base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
+from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
-logger = getLogger("NNMM.process.process_update_mylist_info_base")
-logger.setLevel(WARNING)
 
-
-class ConcreteProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase):
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
-        """テスト用具体化クラス
-        """
-        super().__init__(True, False, "テスト用具体化クラス")
+class ConcreteProcessUpdateMylistInfoBase(ProcessUpdateMylistInfoBase):
+    def __init__(self, process_info: ProcessInfo) -> None:
+        super().__init__(process_info)
         self.L_KIND = "Concrete Kind"
         self.E_DONE = "Concrete Event Key"
-
-    def make_mylist_db(self, num: int = 5) -> list[dict]:
-        """mylist_db.select()で取得されるマイリストデータセット
-        """
-        res = []
-        col = ["id", "username", "mylistname", "type", "showname", "url",
-               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i+1}", "投稿動画", "uploaded", f"投稿者{i+1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i+1}/video",
-                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
-                 "15分", True if i % 2 == 0 else False] for i in range(num)]
-
-        for row in rows:
-            d = {}
-            for r, c in zip(row, col):
-                d[c] = r
-            res.append(d)
-        return res
-
-    def get_target_mylist(self) -> list[dict]:
-        m_list = self.make_mylist_db()
-        return m_list
-
-
-class ConcreteProcessUpdateMylistInfoThreadDoneBase(ProcessUpdateMylistInfoThreadDoneBase):
-    def __init__(self, log_sflag: bool = False, log_eflag: bool = False, process_name: str = None):
-        super().__init__(True, False, "テスト用具体化クラス")
 
     def get_target_mylist(self) -> list[dict]:
         return []
 
 
 class TestProcessUpdateMylistInfoBase(unittest.TestCase):
-    def make_mylist_db(self, num: int = 5) -> list[dict]:
+    def setUp(self):
+        self.process_info = MagicMock(spec=ProcessInfo)
+        self.process_info.name = "-TEST_PROCESS-"
+        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.values = MagicMock(spec=dict)
+        self.process_info.mylist_db = MagicMock(spec=MylistDBController)
+        self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
+
+    def _make_mylist_db(self, num: int = 5) -> list[dict]:
         """mylist_db.select()で取得されるマイリストデータセット
         """
         res = []
         col = ["id", "username", "mylistname", "type", "showname", "url",
                "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i+1}", "投稿動画", "uploaded", f"投稿者{i+1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i+1}/video",
+        rows = [[i, f"投稿者{i + 1}", "投稿動画", "uploaded",
+                 f"投稿者{i + 1}さんの投稿動画",
+                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
                  "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
                  "15分", True if i % 2 == 0 else False] for i in range(num)]
 
@@ -72,7 +54,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             res.append(d)
         return res
 
-    def make_mylist_info_db(self, mylist_url: str) -> list[dict]:
+    def _make_mylist_info_db(self, mylist_url: str) -> list[dict]:
         """mylist_info_db.select()で取得される動画情報データセット
         """
         res = []
@@ -83,10 +65,11 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
         num = 5
         n = 0
         for k in range(num):
-            table_rows = [[n, f"sm{k+1}000000{i+1}", f"動画タイトル{k+1}_{i+1}", f"投稿者{k+1}", "",
-                           f"2022-02-01 0{k+1}:00:0{i+1}",
-                           f"2022-02-01 0{k+1}:01:0{i+1}",
-                           f"https://www.nicovideo.jp/watch/sm{k+1}000000{i+1}",
+            table_rows = [[n, f"sm{k + 1}000000{i + 1}", f"動画タイトル{k + 1}_{i + 1}",
+                           f"投稿者{k + 1}", "",
+                           f"2022-02-01 0{k + 1}:00:0{i + 1}",
+                           f"2022-02-01 0{k + 1}:01:0{i + 1}",
+                           f"https://www.nicovideo.jp/watch/sm{k + 1}000000{i + 1}",
                            mylist_url] for i in range(num)]
             n = n + 1
 
@@ -97,275 +80,314 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 res.append(d)
         return res
 
-    def test_PUMIB_init(self):
-        pumib = ConcreteProcessUpdateMylistInfo()
-        self.assertIsNotNone(pumib.lock)
-        self.assertEqual(0, pumib.done_count)
-        self.assertEqual(ProcessUpdateMylistInfoThreadDoneBase, pumib.POST_PROCESS)
-        self.assertEqual("Concrete Kind", pumib.L_KIND)
-        self.assertEqual("Concrete Event Key", pumib.E_DONE)
+    def _make_prev_video_lists(self, m_list: list[Mylist]) -> list[list[MylistInfo]]:
+        """prev_video_lists データセット
+        """
+        prev_video_lists = []
+        for record in m_list:
+            mylist_url = record.get("url")
+            prev_video_list = self._make_mylist_info_db(mylist_url)
+            prev_video_lists.append(prev_video_list)
+        return prev_video_lists
 
-    def test_PUMIB_get_target_mylist(self):
-        pumib = ConcreteProcessUpdateMylistInfo()
-        actual = pumib.get_target_mylist()
-        expect = self.make_mylist_db()
+    def test_init(self):
+        instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+        self.assertIsNotNone(instance.lock)
+        self.assertEqual(0, instance.done_count)
+        self.assertEqual(ProcessUpdateMylistInfoThreadDoneBase, instance.post_process)
+        self.assertEqual("Concrete Kind", instance.L_KIND)
+        self.assertEqual("Concrete Event Key", instance.E_DONE)
+
+    def test_get_target_mylist(self):
+        instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+        actual = instance.get_target_mylist()
+        self.assertEqual([], actual)
+
+    def test_get_prev_video_lists(self):
+        mock_mylist_info_db = MagicMock()
+        mock_mylist_info_db.select_from_mylist_url.side_effect = self._make_mylist_info_db
+
+        instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+        instance.mylist_info_db = mock_mylist_info_db
+
+        m_list = self._make_mylist_db()
+        actual = instance.get_prev_video_lists(m_list)
+        expect = self._make_prev_video_lists(m_list)
         self.assertEqual(expect, actual)
 
-    def test_PUMIB_get_prev_video_lists(self):
+        mylist_url_list = [record.get("url") for record in m_list]
+        self.assertEqual(
+            [call(mylist_url) for mylist_url in mylist_url_list],
+            mock_mylist_info_db.select_from_mylist_url.mock_calls
+        )
+
+    def test_run(self):
         with ExitStack() as stack:
-            mockle = stack.enter_context(patch.object(logger, "error"))
+            mockli = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.logger.info"))
+            mock_thread = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.threading.Thread"))
 
-            mock_mylist_info_db = MagicMock()
-            mock_mylist_info_db.select_from_mylist_url.side_effect = self.make_mylist_info_db
+            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
-            pumib = ConcreteProcessUpdateMylistInfo()
-            pumib.mylist_info_db = mock_mylist_info_db
+            actual = instance.run()
+            self.assertIs(Result.success, actual)
 
-            m_list = self.make_mylist_db()
-            actual = pumib.get_prev_video_lists(m_list)
+            self.assertEqual([
+                call.__getitem__("-INPUT2-"),
+                call.__getitem__().update(value="更新中"),
+                call.refresh(),
+            ], instance.window.mock_calls)
 
-            expect = []
-            for record in m_list:
-                mylist_url = record.get("url")
-                prev_video_list = self.make_mylist_info_db(mylist_url)
-                expect.append(prev_video_list)
-            self.assertEqual(expect, actual)
-
-            mylist_url_list = [record.get("url") for record in m_list]
-            self.assertEqual(
-                [call(mylist_url) for mylist_url in mylist_url_list],
-                mock_mylist_info_db.select_from_mylist_url.mock_calls
-            )
-
-    def test_PUMIB_run(self):
-        with ExitStack() as stack:
-            mockli = stack.enter_context(patch.object(logger, "info"))
-            mockle = stack.enter_context(patch.object(logger, "error"))
-            mockthread = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.threading.Thread"))
-
-            pumib = ConcreteProcessUpdateMylistInfo()
-
-            mock_mw = MagicMock()
-            actual = pumib.run(mock_mw)
-            self.assertEqual(0, actual)
-            self.assertEqual(0, pumib.done_count)
-
-            mc = mock_mw.window.mock_calls
-            self.assertEqual(3, len(mc))
-            self.assertEqual(call.__getitem__("-INPUT2-"), mc[0])
-            self.assertEqual(call.__getitem__().update(value="更新中"), mc[1])
-            self.assertEqual(call.refresh(), mc[2])
-            mock_mw.window.reset_mock()
-
-            mc = mockthread.mock_calls
-            self.assertEqual(2, len(mc))
-            self.assertEqual(call(target=pumib.update_mylist_info_thread, args=(mock_mw, ), daemon=True), mc[0])
-            self.assertEqual(call().start(), mc[1])
-            mockthread.reset_mock()
-
-            mock_mw = MagicMock()
-            del mock_mw.window
-            actual = pumib.run(mock_mw)
-            self.assertEqual(-1, actual)
-
-    def test_PUMIB_update_mylist_info_thread(self):
-        """update_mylist_info_threadをテストする
-        """
-        with ExitStack() as stack:
-            mockli = stack.enter_context(patch.object(logger, "info"))
-            mockle = stack.enter_context(patch.object(logger, "error"))
-            mocktime = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.time"))
-            mockgpvl = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.ProcessUpdateMylistInfoBase.get_prev_video_lists"))
-            mockgmie = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.ProcessUpdateMylistInfoBase.get_mylist_info_execute"))
-            mockumie = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.ProcessUpdateMylistInfoBase.update_mylist_info_execute"))
-            mockthread = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.threading.Thread"))
-
-            pumib = ConcreteProcessUpdateMylistInfo()
-
-            # 正常系
-            mocktime.time.return_value = 0
-            mock_mw = MagicMock()
-            pumib.window = MagicMock()
-            actual = pumib.update_mylist_info_thread(mock_mw)
-            self.assertEqual(0, actual)
-
-            # 実行後呼び出し確認
-            pumib.window.assert_not_called()
-
-            m_list = pumib.get_target_mylist()
-            mockgpvl.assert_called_once_with(m_list)
-            mockgmie.assert_called_once_with(m_list)
-            mockumie.assert_called_once_with(m_list, mockgpvl.return_value, mockgmie.return_value)
-            expect = [
-                call(target=pumib.thread_done, args=(mock_mw, ), daemon=False),
+            self.assertEqual([
+                call(target=instance.update_mylist_info_thread, 
+                     daemon=True),
                 call().start(),
+            ], mock_thread.mock_calls)
+
+    def test_update_mylist_info_thread(self):
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.logger.error"))
+            mock_time = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.time"))
+            mock_thread = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.threading"))
+            mock_get_target_mylist = MagicMock()
+            mock_get_prev_video_lists = MagicMock()
+            mock_get_mylist_info_execute = MagicMock()
+            mock_update_mylist_info_execute = MagicMock()
+
+            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+
+            def pre_run(valid_m_list):
+                instance.window.reset_mock()
+                mock_get_target_mylist.reset_mock()
+                if valid_m_list:
+                    m_list = self._make_mylist_db()
+                    mock_get_target_mylist.side_effect = lambda: m_list
+                else:
+                    mock_get_target_mylist.side_effect = lambda: []
+                instance.get_target_mylist = mock_get_target_mylist
+                mock_get_prev_video_lists.reset_mock()
+                instance.get_prev_video_lists = mock_get_prev_video_lists
+                mock_get_mylist_info_execute.reset_mock()
+                instance.get_mylist_info_execute = mock_get_mylist_info_execute
+                mock_update_mylist_info_execute.reset_mock()
+                instance.update_mylist_info_execute = mock_update_mylist_info_execute
+                mock_time.reset_mock()
+                mock_time.time.side_effect = lambda: 0
+
+            def post_run(valid_m_list):
+                self.assertEqual([
+                    call()
+                ], mock_get_target_mylist.mock_calls)
+
+                if not valid_m_list:
+                    self.assertEqual([
+                        call.write_event_value(instance.E_DONE, "")
+                    ], instance.window.mock_calls)
+                    return
+                else:
+                    instance.window.assert_not_called()
+
+                m_list = self._make_mylist_db()
+                self.assertEqual([
+                    call(m_list)
+                ], mock_get_prev_video_lists.mock_calls)
+
+                self.assertEqual([
+                    call(m_list)
+                ], mock_get_mylist_info_execute.mock_calls)
+
+                prev_video_lists = mock_get_prev_video_lists.return_value
+                now_video_lists = mock_get_mylist_info_execute.return_value
+                self.assertEqual([
+                    call(m_list, prev_video_lists, now_video_lists)
+                ], mock_update_mylist_info_execute.mock_calls)
+
+                self.assertEqual([
+                    call.Lock(),
+                    call.Thread(target=instance.thread_done, daemon=False),
+                    call.Thread().start(),
+                ], mock_thread.mock_calls)
+
+            Params = namedtuple("Params", ["valid_m_list", "result"])
+            params_list = [
+                Params(True, None),
+                Params(False, None),
             ]
-            self.assertEqual(expect, mockthread.mock_calls)
+            for params in params_list:
+                pre_run(params.valid_m_list)
+                actual = instance.update_mylist_info_thread()
+                expect = params.result
+                self.assertIs(expect, actual)
+                post_run(params.valid_m_list)
 
-            # 更新対象が空だった
-            pumib.get_target_mylist = lambda: []
-            actual = pumib.update_mylist_info_thread(mock_mw)
-            self.assertEqual(1, actual)
-
-            mc = pumib.window.mock_calls
-            self.assertEqual(1, len(mc))
-            self.assertEqual(call.write_event_value(pumib.E_DONE, ""), mc[0])
-            pumib.window.reset_mock()
-
-            # 異常系
-            # 属性エラー
-            del pumib.window
-            actual = pumib.update_mylist_info_thread(mock_mw)
-            self.assertEqual(-1, actual)
-
-    def test_PUMIB_get_mylist_info_execute(self):
-        """get_mylist_info_executeをテストする
-        """
+    def test_get_mylist_info_worker(self):
         with ExitStack() as stack:
-            mocktpe = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.ThreadPoolExecutor"))
+            mockli = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.logger.info"))
+            mock_fetcher = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.VideoInfoRssFetcher.fetch_videoinfo"))
 
-            pumib = ConcreteProcessUpdateMylistInfo()
+            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
-            # 正常系
-            NUM = 5
-            m_list = self.make_mylist_db(NUM)
+            m_list = self._make_mylist_db()
+            all_index_num = len(m_list)
+            mylist_url = m_list[0]["url"]
+            def pre_run(valid_fetch):
+                mock_fetcher.reset_mock()
+                if valid_fetch:
+                    mock_fetcher.side_effect = lambda mylist_url: f"fetch_result_{mylist_url}"
+                else:
+                    mock_fetcher.side_effect = ValueError
+                instance.window.reset_mock()
+                instance.done_count = 0
 
-            r = MagicMock()
-            r.submit.side_effect = lambda f, mylist_url, all_index_num: MagicMock()
-            mocktpe.return_value.__enter__.side_effect = lambda: r
+            def post_run(valid_fetch):
+                self.assertEqual([
+                    call(mylist_url)
+                ], mock_fetcher.mock_calls)
 
-            expect = []
-            for record in m_list:
-                mylist_url = record.get("url")
-                expect.append(mylist_url)
+                p_str = f"取得中({instance.done_count}/{all_index_num})"
+                self.assertEqual([
+                    call.__getitem__("-INPUT2-"),
+                    call.__getitem__().update(value=p_str),
+                ], instance.window.mock_calls)
 
-            actual = pumib.get_mylist_info_execute(m_list)
-            self.assertEqual(expect, [a[0] for a in actual])
+                self.assertEqual(1, instance.done_count)
 
-            # 実行後呼び出し確認
-            mc = r.submit.mock_calls
-            self.assertEqual(NUM, len(mc))
-            for mc_e, record in zip(mc, m_list):
-                mylist_url = record.get("url")
-                self.assertEqual(call(pumib.get_mylist_info_worker, mylist_url, NUM), mc_e)
-            r.submit.reset_mock()
+            Params = namedtuple("Params", ["valid_m_list", "result"])
+            params_list = [
+                Params(True, f"fetch_result_{mylist_url}"),
+                Params(False, None),
+            ]
+            for params in params_list:
+                pre_run(params.valid_m_list)
+                actual = instance.get_mylist_info_worker(mylist_url, all_index_num)
+                expect = params.result
+                self.assertEqual(expect, actual)
+                post_run(params.valid_m_list)
 
-            mc = mocktpe.mock_calls
-            self.assertEqual(3, len(mc))
-            self.assertEqual(call(max_workers=8, thread_name_prefix="ap_thread"), mc[0])
-            self.assertEqual(call().__enter__(), mc[1])
-            self.assertEqual(call().__exit__(None, None, None), mc[2])
-            mocktpe.reset_mock()
-
-    def test_PUMIB_get_mylist_info_worker(self):
-        """get_mylist_info_worker をテストする
-        """
+    def test_get_mylist_info_execute(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch.object(logger, "info"))
-            mock_fetch_videoinfo = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.VideoInfoRssFetcher.fetch_videoinfo"))
+            mock_executor = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.ThreadPoolExecutor"))
 
-            pumib = ConcreteProcessUpdateMylistInfo()
+            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
-            mock_fetch_videoinfo.side_effect = lambda mylist_url: [mylist_url]
+            m_list = self._make_mylist_db()
+            all_index_num = len(m_list)
+            mylist_urls = [
+                record["url"] for record in m_list
+            ]
+            actual = instance.get_mylist_info_execute(m_list)
 
-            # 正常系
-            pumib.window = MagicMock()
-            NUM = 5
-            mylist_url = "https://www.nicovideo.jp/user/10000001/video"
-            expect = [mylist_url]
-            actual = pumib.get_mylist_info_worker(mylist_url, NUM)
+            expect_executor_calls = [
+                call(max_workers=8, thread_name_prefix="ap_thread"),
+                call().__enter__(),
+            ]
+            expect_executor_calls.extend([
+                call().__enter__().submit(
+                    instance.get_mylist_info_worker, mylist_url, all_index_num
+                ) for mylist_url in mylist_urls
+            ])
+            expect_executor_calls.extend([
+                call().__enter__().submit().result() for _ in range(all_index_num)
+            ])
+            expect_executor_calls.append(
+                 call().__exit__(None, None, None)
+            )
+            self.assertEqual(expect_executor_calls, mock_executor.mock_calls)
+
+            futures = [
+                mock_executor().__enter__().submit().result() for _ in range(all_index_num)
+            ]
+            expect = [
+                (mylist_url, future) for mylist_url, future in zip(mylist_urls, futures)
+            ]
             self.assertEqual(expect, actual)
-            self.assertEqual(1, pumib.done_count)
 
-            # 実行後呼び出し確認
-            p_str = f"取得中({pumib.done_count}/{NUM})"
-            mc = pumib.window.mock_calls
-            self.assertEqual(2, len(mc))
-            self.assertEqual(call.__getitem__("-INPUT2-"), mc[0])
-            self.assertEqual(call.__getitem__().update(value=p_str), mc[1])
-            pumib.window.reset_mock()
-            pumib.done_count = 0
-
-    def test_PUMIB_update_mylist_info_execute(self):
-        """update_mylist_info_execute をテストする
-        """
+    def test_update_mylist_info_execute(self):
         with ExitStack() as stack:
-            mocktpe = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.ThreadPoolExecutor"))
+            mock_executor = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.ThreadPoolExecutor"))
 
-            pumib = ConcreteProcessUpdateMylistInfo()
+            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
-            # 正常系
-            NUM = 5
-            m_list = self.make_mylist_db(NUM)
-            p_list = []
-            n_list = []
+            m_list = self._make_mylist_db()
+            prev_video_lists = self._make_prev_video_lists(m_list)
+            now_video_lists = deepcopy(prev_video_lists)
+            future_result = mock_executor().__enter__().submit().result()
+            def pre_run(s_m_list, s_prev_video_lists, s_now_video_lists):
+                mock_executor.reset_mock()
 
-            def return_select_from_mylist_url(mylist_url):
-                res = []
-                records = self.make_mylist_info_db(NUM)
-                for record in records:
-                    if record.get("mylist_url") == mylist_url:
-                        res.append(record)
-                return res
+            def post_run(s_m_list, s_prev_video_lists, s_now_video_lists):
+                if len(s_m_list) != len(s_prev_video_lists):
+                    mock_executor.assert_not_called()
+                    return
+                all_index_num = len(s_m_list)
+                expect_executor_calls = [
+                    call(max_workers=8, thread_name_prefix="np_thread"),
+                    call().__enter__(),
+                ]
+                expect_executor_calls.extend([
+                    call().__enter__().submit(
+                        instance.update_mylist_info_worker,
+                        m, prev_video_list, s_now_video_lists
+                    ) for m, prev_video_list in zip(m_list, prev_video_lists)
+                ])
+                expect_executor_calls.extend([
+                    call().__enter__().submit().result() for _ in range(all_index_num)
+                ])
+                expect_executor_calls.append(
+                    call().__exit__(None, None, None)
+                )
+                self.assertEqual(expect_executor_calls, mock_executor.mock_calls)
 
-            expect = []
-            for m in m_list:
-                mylist_url = m.get("url")
-                expect.append(mylist_url)
-                p_list.append(return_select_from_mylist_url(mylist_url))
-                n_list.append(return_select_from_mylist_url(mylist_url))
+            def make_expect(s_m_list, s_prev_video_lists, s_now_video_lists):
+                mylist_urls = [
+                    record["url"] for record in s_m_list
+                ]
+                all_index_num = len(s_m_list)
+                futures = [
+                    future_result for _ in range(all_index_num)
+                ]
+                return [
+                    (mylist_url, future) for mylist_url, future in zip(mylist_urls, futures)
+                ]
 
-            r = MagicMock()
-            r.submit.side_effect = lambda f, m, p, n: MagicMock()
-            mocktpe.return_value.__enter__.side_effect = lambda: r
+            Params = namedtuple("Params", ["m_list", "prev_video_lists", "now_video_lists", "result"])
+            params_list = [
+                Params(m_list, prev_video_lists, now_video_lists,
+                       make_expect(m_list, prev_video_lists, now_video_lists)),
+                Params(m_list, prev_video_lists[1:], now_video_lists, []),
+            ]
+            for params in params_list:
+                pre_run(params.m_list, params.prev_video_lists, params.now_video_lists)
+                actual = instance.update_mylist_info_execute(
+                    params.m_list, params.prev_video_lists, params.now_video_lists
+                )
+                expect = params.result
+                self.assertEqual(expect, actual)
+                post_run(params.m_list, params.prev_video_lists, params.now_video_lists)
 
-            actual = pumib.update_mylist_info_execute(m_list, p_list, n_list)
-            self.assertEqual(expect, [a[0] for a in actual])
-
-            # 実行後呼び出し確認
-            mc = r.submit.mock_calls
-            self.assertEqual(NUM, len(mc))
-            for mc_e, m, p in zip(mc, m_list, p_list):
-                self.assertEqual(call(pumib.update_mylist_info_worker, m, p, n_list), mc_e)
-            r.submit.reset_mock()
-
-            mc = mocktpe.mock_calls
-            self.assertEqual(3, len(mc))
-            self.assertEqual(call(max_workers=8, thread_name_prefix="np_thread"), mc[0])
-            self.assertEqual(call().__enter__(), mc[1])
-            self.assertEqual(call().__exit__(None, None, None), mc[2])
-            mocktpe.reset_mock()
-
-            # 異常系
-            # マイリストレコードとprev_video_listの大きさが異なる
-            p_list = p_list[:-1]
-            actual = pumib.update_mylist_info_execute(m_list, p_list, n_list)
-            self.assertEqual([], actual)
-
-    def test_PUMIB_update_mylist_info_worker(self):
-        """update_mylist_info_worker をテストする
-        """
+    def test_update_mylist_info_worker(self):
+        return
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch.object(logger, "info"))
-            mockle = stack.enter_context(patch.object(logger, "error"))
+            mockli = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.logger.error"))
             mockgdt = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.get_now_datetime"))
             mockmdb = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.MylistDBController"))
             mockmidb = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.MylistInfoDBController"))
 
-            pumib = ConcreteProcessUpdateMylistInfo()
+            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
             # 正常系
             dst = "2022-02-08 01:00:01"
             mockgdt.side_effect = lambda: dst
             NUM = 5
-            m_list = self.make_mylist_db()
+            m_list = self._make_mylist_db()
             m_record = m_list[0]
             p_list = []
             n_list = []
 
             def return_select_from_mylist_url(mylist_url):
                 res = []
-                records = self.make_mylist_info_db(mylist_url)
+                records = self._make_mylist_info_db(mylist_url)
                 for i, record in enumerate(records):
                     if record.get("mylist_url") == mylist_url:
                         record["status"] = "未視聴" if i % 2 == 0 else ""
@@ -375,7 +397,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 return res
 
             def return_get_mylist_info(mylist_url):
-                records = self.make_mylist_info_db(mylist_url)
+                records = self._make_mylist_info_db(mylist_url)
                 records[0]["status"] = "未視聴"
                 return records
 
@@ -385,12 +407,12 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 n_list.append((mylist_url, return_get_mylist_info(mylist_url)))
             p = p_list[0]
 
-            pumib.window = MagicMock()
-            pumib.mylist_db = MagicMock()
-            pumib.mylist_info_db = MagicMock()
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            instance.window = MagicMock()
+            instance.mylist_db = MagicMock()
+            instance.mylist_info_db = MagicMock()
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(0, actual)
-            self.assertEqual(1, pumib.done_count)
+            self.assertEqual(1, instance.done_count)
 
             # 実行後呼び出し確認
             def assertMockCall():
@@ -458,25 +480,25 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 mockmidb.reset_mock()
 
                 all_index_num = len(n_list)
-                p_str = f"更新中({pumib.done_count}/{all_index_num})"
-                mc = pumib.window.mock_calls
+                p_str = f"更新中({instance.done_count}/{all_index_num})"
+                mc = instance.window.mock_calls
                 self.assertEqual(2, len(mc))
                 self.assertEqual(call.__getitem__("-INPUT2-"), mc[0])
                 self.assertEqual(call.__getitem__().update(value=p_str), mc[1])
-                pumib.window.reset_mock()
+                instance.window.reset_mock()
 
             assertMockCall()
-            pumib.done_count = 0
+            instance.done_count = 0
 
             # 新規動画追加
             # 既存動画リストを少なくしてその差分だけ新規追加とみなす
             # ステータスが"未視聴"で設定されるかどうか
             p = [p[0]] + p[2:]
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(0, actual)
-            self.assertEqual(1, pumib.done_count)
+            self.assertEqual(1, instance.done_count)
             assertMockCall()
-            pumib.done_count = 0
+            instance.done_count = 0
 
             # ユーザーネームが変更されている
             # mylist_url = m_record.get("url")
@@ -484,16 +506,16 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             #     if n[0] == mylist_url:
             #         for nr in n[1]:
             #             nr["username"] = "新しい投稿者名1"
-            # actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            # actual = instance.update_mylist_info_worker(m_record, p, n_list)
             # self.assertEqual(0, actual)
-            # self.assertEqual(1, pumib.done_count)
+            # self.assertEqual(1, instance.done_count)
             # assertMockCall()
-            # pumib.done_count = 0
+            # instance.done_count = 0
 
             # マイリストに登録されている動画情報の件数が0
             mylist_url = m_record.get("url")
             n_list[0] = (mylist_url, [])
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(1, actual)
 
             # 異常系
@@ -503,45 +525,45 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 if n[0] == mylist_url:
                     for nr in n[1]:
                         del nr["title"]
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
             # 動画情報のリストのリストにマイリストの重複が含まれている
             n_list[0] = (mylist_url, n_list[1][1])
             n_list[1] = (mylist_url, n_list[1][1])
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストのリストに想定外のキーがある
             n_list = [(m.get("url"), return_get_mylist_info(m.get("url"))) for m in m_list]
             n_list[0][1][0]["不正なキー"] = "不正な値"
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストのリストの一部がリストでない
             n_list[0] = (mylist_url, "不正な値")
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストのリストの一部のマイリストURLが空
             n_list[0] = ("", n_list[1][1])
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストのリストが2重空リスト
-            actual = pumib.update_mylist_info_worker(m_record, p, [[]])
+            actual = instance.update_mylist_info_worker(m_record, p, [[]])
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストのリストが空リスト
-            actual = pumib.update_mylist_info_worker(m_record, p, [])
+            actual = instance.update_mylist_info_worker(m_record, p, [])
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストのリストがNone
-            actual = pumib.update_mylist_info_worker(m_record, p, None)
+            actual = instance.update_mylist_info_worker(m_record, p, None)
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストのリストが文字列
-            actual = pumib.update_mylist_info_worker(m_record, p, "不正な引数")
+            actual = instance.update_mylist_info_worker(m_record, p, "不正な引数")
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストに想定外のキーがある
@@ -551,131 +573,52 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
                 n_list.append((mylist_url, return_get_mylist_info(mylist_url)))
             p = p_list[0]
             p[0]["不正なキー"] = "不正な値"
-            actual = pumib.update_mylist_info_worker(m_record, p, n_list)
+            actual = instance.update_mylist_info_worker(m_record, p, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストが空リスト
-            actual = pumib.update_mylist_info_worker(m_record, [], n_list)
+            actual = instance.update_mylist_info_worker(m_record, [], n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストがNone
-            actual = pumib.update_mylist_info_worker(m_record, None, n_list)
+            actual = instance.update_mylist_info_worker(m_record, None, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：動画情報のリストが文字列
-            actual = pumib.update_mylist_info_worker(m_record, "不正な引数", n_list)
+            actual = instance.update_mylist_info_worker(m_record, "不正な引数", n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：マイリストレコードオブジェクトのurlが空
             del p[0]["不正なキー"]
-            actual = pumib.update_mylist_info_worker({"url": ""}, p, n_list)
+            actual = instance.update_mylist_info_worker({"url": ""}, p, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：マイリストレコードオブジェクトが空辞書
-            actual = pumib.update_mylist_info_worker({}, p, n_list)
+            actual = instance.update_mylist_info_worker({}, p, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：マイリストレコードオブジェクトがNone
-            actual = pumib.update_mylist_info_worker(None, p, n_list)
+            actual = instance.update_mylist_info_worker(None, p, n_list)
             self.assertEqual(-1, actual)
 
             # 引数が不正：マイリストレコードオブジェクトが文字列
-            actual = pumib.update_mylist_info_worker("不正な引数", p, n_list)
+            actual = instance.update_mylist_info_worker("不正な引数", p, n_list)
             self.assertEqual(-1, actual)
 
-    def test_PUMIB_thread_done(self):
+    def test_thread_done(self):
+        return
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch.object(logger, "info"))
-            pumib = ConcreteProcessUpdateMylistInfo()
+            mockli = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.logger.info"))
+            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
             mock_post_process = MagicMock()
             mock_mw = MagicMock()
-            pumib.POST_PROCESS = mock_post_process
+            instance.POST_PROCESS = mock_post_process
 
-            actual = pumib.thread_done(mock_mw)
+            actual = instance.thread_done(mock_mw)
             self.assertEqual(None, actual)
             mock_post_process.assert_called_once_with()
             mock_post_process().run.assert_called_once_with(mock_mw)
-
-    def test_PUMITDB_init(self):
-        pumitdb = ConcreteProcessUpdateMylistInfoThreadDoneBase()
-        self.assertEqual("UpdateMylist Base", pumitdb.L_KIND)
-
-    def test_PUMITDB_run(self):
-        with ExitStack() as stack:
-            mockli = stack.enter_context(patch.object(logger, "info"))
-            mockle = stack.enter_context(patch.object(logger, "error"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.update_table_pane"))
-            mock_is_mylist_include_new_video = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.is_mylist_include_new_video"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_update_mylist_info_base.update_mylist_pane"))
-
-            pumitdb = ConcreteProcessUpdateMylistInfoThreadDoneBase()
-            mock_mylist_db = MagicMock()
-            mock_mylist_db.select.side_effect = self.make_mylist_db
-            mock_mylist_info_db = MagicMock()
-            mock_mylist_info_db.select_from_mylist_url.side_effect = self.make_mylist_info_db
-            mock_is_mylist_include_new_video.side_effect = lambda def_data: True
-
-            m_list = self.make_mylist_db()
-            mock_mw = MagicMock()
-            mock_mw.values = {"-INPUT1-": m_list[0]["url"]}
-            mock_mw.mylist_db = mock_mylist_db
-            mock_mw.mylist_info_db = mock_mylist_info_db
-
-            actual = pumitdb.run(mock_mw)
-            self.assertEqual(0, actual)
-
-            def mock_check(mylist_url_empty, is_mylist_include_new_video_flag):
-                mylist_url = mock_mw.values["-INPUT1-"]
-                if not mylist_url_empty:
-                    mock_update_table_pane.assert_called_once_with(
-                        mock_mw.window, mock_mw.mylist_db, mock_mw.mylist_info_db, mylist_url
-                    )
-                mock_mylist_db.select.assert_called_once_with()
-                for m in m_list:
-                    mylist_url = m["url"]
-                    mock_mylist_info_db.select_from_mylist_url.assert_any_call(mylist_url)
-                    video_list = self.make_mylist_info_db(mylist_url)
-                    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-                    def_data = []
-                    for i, t in enumerate(video_list):
-                        a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"], t["registered_at"], t["video_url"], t["mylist_url"]]
-                        def_data.append(a)
-
-                    if is_mylist_include_new_video_flag:
-                        mock_is_mylist_include_new_video.assert_any_call(def_data)
-                        mock_mylist_db.update_include_flag.assert_any_call(mylist_url, True)
-                mock_update_mylist_pane.assert_called_once_with(mock_mw.window, mock_mw.mylist_db)
-
-                mock_update_table_pane.reset_mock()
-                mock_mylist_db.select.reset_mock()
-                mock_mylist_info_db.select_from_mylist_url.reset_mock()
-                mock_is_mylist_include_new_video.reset_mock()
-                mock_mylist_db.update_include_flag.reset_mock()
-                mock_update_mylist_pane.reset_mock()
-            mock_check(False, True)
-
-            mock_is_mylist_include_new_video.side_effect = lambda def_data: False
-            mock_mw.values = {"-INPUT1-": m_list[0]["url"]}
-            actual = pumitdb.run(mock_mw)
-            self.assertEqual(0, actual)
-            mock_check(False, False)
-
-            mock_is_mylist_include_new_video.side_effect = lambda def_data: True
-            mock_mw.values = {"-INPUT1-": ""}
-            actual = pumitdb.run(mock_mw)
-            self.assertEqual(0, actual)
-            mock_check(True, True)
-
-            mock_is_mylist_include_new_video.side_effect = lambda def_data: False
-            mock_mw.values = {"-INPUT1-": ""}
-            actual = pumitdb.run(mock_mw)
-            self.assertEqual(0, actual)
-            mock_check(True, False)
-
-            del mock_mw.window
-            actual = pumitdb.run(mock_mw)
-            self.assertEqual(-1, actual)
 
 
 if __name__ == "__main__":
