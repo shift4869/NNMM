@@ -18,6 +18,9 @@ class ProcessShowMylistInfo(ProcessBase):
         Notes:
             "-LIST-+DOUBLE CLICK+"
             リストボックスの項目がダブルクリックされた場合（単一）
+
+        Returns:
+            Result: 成功時success, エラー時failed
         """
         logger.info("ShowMylistInfo start.")
 

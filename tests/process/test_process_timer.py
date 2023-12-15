@@ -1,105 +1,160 @@
-"""Timer のテスト
-"""
 import sys
 import unittest
+from collections import namedtuple
 from contextlib import ExitStack
-from logging import WARNING, getLogger
 
 import freezegun
-from mock import MagicMock, patch
+import PySimpleGUI as sg
+from mock import MagicMock, call, patch
 
-from NNMM.timer import ProcessTimer
-
-logger = getLogger("NNMM.timer")
-logger.setLevel(WARNING)
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
+from NNMM.process.process_timer import ProcessTimer
+from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 
 class TestTimer(unittest.TestCase):
-    def test_TimerInit(self):
-        """タイマーの初期化後の状態をテストする
-        """
-        pt = ProcessTimer()
-        self.assertIsNone(pt.timer_thread)
-        self.assertIsNone(pt.window)
-        self.assertIsNone(pt.values)
+    def setUp(self):
+        self.process_info = MagicMock(spec=ProcessInfo)
+        self.process_info.name = "-TEST_PROCESS-"
+        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.values = MagicMock(spec=dict)
+        self.process_info.mylist_db = MagicMock(spec=MylistDBController)
+        self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    def test_Timerrun(self):
-        """タイマーの実行時の処理をテストする
-        """
+    def test_init(self):
+        instance = ProcessTimer(self.process_info)
+        self.assertIsNone(instance.timer_thread)
+
+    def test_run(self):
         with ExitStack() as stack:
             f_now = "2021-11-23 01:00:00"
             mockfg = stack.enter_context(freezegun.freeze_time(f_now))
-            mockli = stack.enter_context(patch.object(logger, "info"))
-            mockle = stack.enter_context(patch.object(logger, "error"))
-            mockcpg = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.get_config"))
-            mocktr = stack.enter_context(patch("threading.Timer"))
+            mockli = stack.enter_context(patch("NNMM.process.process_timer.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.process_timer.logger.error"))
+            mock_config = stack.enter_context(patch("NNMM.process.process_timer.ProcessConfigBase.get_config"))
+            mock_threading_timer = stack.enter_context(patch("NNMM.process.process_timer.threading.Timer"))
+            mock_timer_thread = MagicMock()
 
-            pt = ProcessTimer()
+            instance = ProcessTimer(self.process_info)
 
-            mockcpg.side_effect = lambda: {"general": {"auto_reload": "15分毎"}}
+            def pre_run(is_use_auto_reload, interval_num, skip_kind, is_cancel):
+                mock_config.reset_mock()
+                if is_use_auto_reload:
+                    if isinstance(interval_num, int):
+                        config_dict = {"auto_reload": f"{interval_num}分毎"}
+                    else:
+                        config_dict = {"auto_reload": "invalid_interval_num"}
+                else:
+                    config_dict = {"auto_reload": "(使用しない)"}
+                mock_config.return_value.__getitem__.side_effect = lambda key: config_dict
 
-            def mockThread(s, interval, function, *args, **kwargs):
-                r = MagicMock()
-                type(r).setDaemon = lambda s, f: f
-                type(r).start = lambda s: 0
-                type(r).cancel = lambda s: 0
-                return r
+                instance.window.reset_mock()
+                instance.values.reset_mock()
+                if skip_kind == "-FIRST_SET-":
+                    instance.window.__getitem__.return_value.get.side_effect = lambda: ""
+                    instance.values.get.side_effect = lambda key: "-FIRST_SET-"
+                elif skip_kind == "-NOW_PROCESSING-":
+                    instance.window.__getitem__.return_value.get.side_effect = lambda: "更新中"
+                    instance.values.get.side_effect = lambda key: ""
+                else:
+                    instance.window.__getitem__.return_value.get.side_effect = lambda: ""
+                    instance.values.get.side_effect = lambda key: ""
 
-            mocktr.side_effect = mockThread
+                mock_timer_thread.reset_mock()
+                if is_cancel:
+                    instance.timer_thread = mock_timer_thread
+                else:
+                    instance.timer_thread = None
+                mock_threading_timer.reset_mock()
 
-            def getmock(value):
-                r = MagicMock()
-                type(r).get = lambda s: value
-                return r
+            def post_run(is_use_auto_reload, interval_num, skip_kind, is_cancel):
+                self.assertEqual([
+                    call(),
+                    call().__getitem__("general")
+                ], mock_config.mock_calls)
 
-            expect_values_dict = {
-                "-TIMER_SET-": "",
-            }
-            expect_window_dict = {
-                "-INPUT2-": "",
-            }
-            for k, v in expect_window_dict.items():
-                expect_window_dict[k] = getmock(v)
+                if is_use_auto_reload:
+                    if not isinstance(interval_num, int) or interval_num < 0:
+                        instance.window.assert_not_called()
+                        instance.values.assert_not_called()
+                        mock_timer_thread.assert_not_called()
+                        mock_threading_timer.assert_not_called()
+                        return
+                else:
+                    if is_cancel:
+                        self.assertEqual([
+                            call.__bool__(),
+                            call.cancel(),
+                        ], mock_timer_thread.mock_calls)
+                    else:
+                        mock_timer_thread.assert_not_called()
+                    instance.window.assert_not_called()
+                    instance.values.assert_not_called()
+                    mock_timer_thread.assert_not_called()
+                    mock_threading_timer.assert_not_called()
+                    return
 
-            mockwm = MagicMock()
-            mockwin = MagicMock()
-            type(mockwin).write_event_value = lambda s, k, v: f"{k}_{v}"
-            mockwin.__getitem__.side_effect = expect_window_dict.__getitem__
-            mockwin.__iter__.side_effect = expect_window_dict.__iter__
-            mockwin.__contains__.side_effect = expect_window_dict.__contains__
-            type(mockwm).window = mockwin
-            type(mockwm).values = expect_values_dict
+                expect_window_call = [
+                    call.__getitem__("-INPUT2-"),
+                    call.__getitem__().get()
+                ]
+                expect_values_call = [
+                    call.get("-TIMER_SET-")
+                ]
+                if skip_kind == "-FIRST_SET-":
+                    expect_values_call.append(
+                        call.__setitem__("-TIMER_SET-", "")
+                    )
+                elif skip_kind == "-NOW_PROCESSING-":
+                    expect_values_call.append(
+                        call.__setitem__("-TIMER_SET-", "")
+                    )
+                else:
+                    expect_window_call.append(
+                        call.write_event_value("-PARTIAL_UPDATE-", "")
+                    )
 
-            # イベント起動想定
-            actual = pt.run(mockwm)
-            self.assertEqual(0, actual)
+                self.assertEqual(expect_window_call, instance.window.mock_calls)
+                self.assertEqual(expect_values_call, instance.values.mock_calls)
 
-            # 既に更新中のためスキップ想定
-            expect_window_dict["-INPUT2-"] = getmock("更新中")
-            actual = pt.run(mockwm)
-            self.assertEqual(1, actual)
+                if is_cancel:
+                    self.assertEqual([
+                        call.__bool__(),
+                        call.cancel(),
+                    ], mock_timer_thread.mock_calls)
+                else:
+                    mock_timer_thread.assert_not_called()
 
-            # 初回起動のためスキップ想定
-            expect_values_dict["-TIMER_SET-"] = "-FIRST_SET-"
-            actual = pt.run(mockwm)
-            self.assertEqual(1, actual)
+                self.assertEqual([
+                    call(interval_num * 60, instance.run),
+                    call().setDaemon(True),
+                    call().start()
+                ], mock_threading_timer.mock_calls)
 
-            # オートリロードしない設定
-            mockcpg.side_effect = lambda: {"general": {"auto_reload": "(使用しない)"}}
-            actual = pt.run(mockwm)
-            self.assertEqual(2, actual)
-
-            # オートリロード間隔の指定が不正
-            mockcpg.side_effect = lambda: {"general": {"auto_reload": "不正な時間指定"}}
-            actual = pt.run(mockwm)
-            self.assertEqual(-1, actual)
-
-            # 引数エラー
-            del mockwm.window
-            del type(mockwm).window
-            actual = pt.run(mockwm)
-            self.assertEqual(-1, actual)
-
+            Params = namedtuple("Params", ["is_use_auto_reload", "interval_num", "skip_kind", "is_cancel", "result"])
+            params_list = [
+                Params(True, 15, "", True, Result.success),
+                Params(True, 15, "-FIRST_SET-", True, Result.success),
+                Params(True, 15, "-NOW_PROCESSING-", True, Result.success),
+                Params(True, 15, "", False, Result.success),
+                Params(True, 15, "-FIRST_SET-", False, Result.success),
+                Params(True, 15, "-NOW_PROCESSING-", False, Result.success),
+                Params(True, -1, "", True, Result.failed),
+                Params(True, "invalid_interval_num", "", True, Result.failed),
+                Params(False, 15, "", True, Result.failed),
+                Params(False, 15, "", False, Result.failed),
+            ]
+            for params in params_list:
+                pre_run(params.is_use_auto_reload, params.interval_num,
+                        params.skip_kind, params.is_cancel)
+                actual = instance.run()
+                expect = params.result
+                self.assertIs(expect, actual)
+                post_run(params.is_use_auto_reload, params.interval_num,
+                         params.skip_kind, params.is_cancel)
+        pass
 
 if __name__ == "__main__":
     if sys.argv:

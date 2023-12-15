@@ -18,6 +18,9 @@ class ProcessNotWatched(ProcessBase):
         Notes:
             "未視聴にする::-TR-"
             テーブル右クリックで「未視聴にする」が選択された場合
+
+        Returns:
+            Result: 成功時success, エラー時failed
         """
         logger.info("NotWatched start.")
 
