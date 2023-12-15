@@ -11,7 +11,7 @@ logger.setLevel(INFO)
 class ProcessUpdateAllMylistInfo(ProcessUpdateMylistInfoBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
-        self.POST_PROCESS = ProcessUpdateAllMylistInfoThreadDone
+        self.post_process = ProcessUpdateAllMylistInfoThreadDone
         self.L_KIND = "All mylist"
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
 

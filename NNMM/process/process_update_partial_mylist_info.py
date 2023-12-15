@@ -20,7 +20,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
         """
         super().__init__(process_info)
 
-        self.POST_PROCESS = ProcessUpdatePartialMylistInfoThreadDone
+        self.post_process = ProcessUpdatePartialMylistInfoThreadDone
         self.L_KIND = "Partial mylist"
         self.E_DONE = "-PARTIAL_UPDATE_THREAD_DONE-"
 

@@ -1,95 +1,44 @@
-"""ProcessUpdateAllMylistInfo のテスト
-"""
 import sys
 import unittest
-from contextlib import ExitStack
 
-from mock import MagicMock, patch
+import PySimpleGUI as sg
+from mock import MagicMock
 
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_update_all_mylist_info import ProcessUpdateAllMylistInfo, ProcessUpdateAllMylistInfoThreadDone
+from NNMM.process.value_objects.process_info import ProcessInfo
 
 
 class TestProcessUpdateAllMylistInfo(unittest.TestCase):
-
     def setUp(self):
-        pass
+        self.process_info = MagicMock(spec=ProcessInfo)
+        self.process_info.name = "-TEST_PROCESS-"
+        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.values = MagicMock(spec=dict)
+        self.process_info.mylist_db = MagicMock(spec=MylistDBController)
+        self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    def tearDown(self):
-        pass
+    def test_init(self):
+        instance = ProcessUpdateAllMylistInfo(self.process_info)
+        self.assertEqual(self.process_info, instance.process_info)
+        self.assertEqual(ProcessUpdateAllMylistInfoThreadDone, instance.post_process)
+        self.assertEqual("All mylist", instance.L_KIND)
+        self.assertEqual("-ALL_UPDATE_THREAD_DONE-", instance.E_DONE)
 
-    def MakeMylistDB(self, num: int = 5) -> list[dict]:
-        """mylist_db.select()で取得されるマイリストデータセット
-        """
-        res = []
-        col = ["id", "username", "mylistname", "type", "showname", "url",
-               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i+1}", "投稿動画", "uploaded", f"投稿者{i+1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i+1}/video",
-                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
-                 "15分", True if i % 2 == 0 else False] for i in range(num)]
+    def test_get_target_mylist(self):
+        instance = ProcessUpdateAllMylistInfo(self.process_info)
 
-        for row in rows:
-            d = {}
-            for r, c in zip(row, col):
-                d[c] = r
-            res.append(d)
-        return res
+        expect = "mylist_record"
+        instance.mylist_db.select.side_effect = lambda: expect
+        actual = instance.get_target_mylist()
+        self.assertEqual(expect, actual)
+        instance.mylist_db.select.assert_called_once_with()
 
-    def MakeMylistInfoDB(self, num: int = 5) -> list[dict]:
-        """mylist_info_db.select()で取得される動画情報データセット
-        """
-        res = []
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
-                           "投稿日時", "動画URL", "所属マイリストURL"]
-        table_cols = ["no", "video_id", "title", "username", "status",
-                      "uploaded_at", "video_url", "mylist_url"]
-        n = 0
-        for k in range(num):
-            table_rows = [[n, f"sm{k+1}000000{i+1}", f"動画タイトル{k+1}_{i+1}", f"投稿者{k+1}", "",
-                           f"2022-02-01 0{k+1}:00:0{i+1}",
-                           f"https://www.nicovideo.jp/watch/sm{k+1}000000{i+1}",
-                           f"https://www.nicovideo.jp/user/1000000{k+1}/video"] for i in range(num)]
-            n = n + 1
-
-            for rows in table_rows:
-                d = {}
-                for r, c in zip(rows, table_cols):
-                    d[c] = r
-                res.append(d)
-        return res
-
-    def test_GetTargetMylist(self):
-        """GetTargetMylistをテストする
-        """
-        with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_update_all_mylist_info.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.process_update_all_mylist_info.logger.error"))
-
-            puami = ProcessUpdateAllMylistInfo()
-
-            # 正常系
-            expect = ["TargetMylist list"]
-            r = MagicMock()
-            r.select = lambda: expect
-            puami.mylist_db = r
-            actual = puami.get_target_mylist()
-            self.assertEqual(expect, actual)
-
-            # 異常系
-            # 属性エラー
-            del puami.mylist_db
-            actual = puami.get_target_mylist()
-            self.assertEqual([], actual)
-
-    def test_PUAMITDInit(self):
-        """ProcessUpdateAllMylistInfoThreadDone の初期状態をテストする
-        """
-        with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_update_all_mylist_info.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.process_update_all_mylist_info.logger.error"))
-
-            puami_td = ProcessUpdateAllMylistInfoThreadDone()
-            self.assertEqual("All mylist", puami_td.L_KIND)
+    def test_thread_done_init(self):
+        instance = ProcessUpdateAllMylistInfoThreadDone(self.process_info)
+        self.assertEqual(self.process_info, instance.process_info)
+        self.assertEqual("All mylist", instance.L_KIND)
 
 
 if __name__ == "__main__":

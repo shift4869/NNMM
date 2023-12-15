@@ -35,7 +35,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
 
         self.lock = threading.Lock()
         self.done_count = 0
-        self.POST_PROCESS = ProcessUpdateMylistInfoThreadDoneBase
+        self.post_process = ProcessUpdateMylistInfoThreadDoneBase
         self.L_KIND = "UpdateMylist Base"
         self.E_DONE = ""
 
@@ -340,7 +340,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
 
         process_info = self.process_info
         process_info.name = "-UPDATE_THREAD_DONE-"
-        pb = self.POST_PROCESS(process_info)
+        pb = self.post_process(process_info)
         pb.run()
 
         logger.info(f"{self.L_KIND} update post process done.")
