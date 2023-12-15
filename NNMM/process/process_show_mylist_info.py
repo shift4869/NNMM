@@ -39,7 +39,7 @@ class ProcessShowMylistInfo(ProcessBase):
 
         logger.info(f"{mylist_url} -> mylist info shown.")
         logger.info("ShowMylistInfo success.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":
