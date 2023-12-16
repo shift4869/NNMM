@@ -22,15 +22,12 @@ class ProcessWatchedAllMylist(ProcessBase):
         logger.info(f"WatchedAllMylist start.")
 
         m_list = self.mylist_db.select()
+        # マイリストの新着フラグがTrueのもののみ対象とする
         records = [m for m in m_list if m["is_include_new"]]
 
         all_num = len(records)
         for i, record in enumerate(records):
             mylist_url = record.get("url")
-
-            # マイリストの新着フラグがFalseなら何もしない
-            if not record.get("is_include_new"):
-                continue
 
             # マイリスト情報内の視聴済フラグを更新
             self.mylist_info_db.update_status_in_mylist(mylist_url, "")
@@ -41,23 +38,21 @@ class ProcessWatchedAllMylist(ProcessBase):
 
         # 右上のテキストボックスからマイリストURLを取得
         mylist_url = self.window["-INPUT1-"].get()
-        # 空白の場合
         if mylist_url == "":
             # 現在表示しているテーブルの表示をすべて視聴済にする
             def_data = self.window["-TABLE-"].Values  # 現在のtableの全リスト
 
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
+            STATUS_INDEX = 4
             for i, record in enumerate(def_data):
-                table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
-                def_data[i][4] = ""
+                def_data[i][STATUS_INDEX] = ""
             self.window["-TABLE-"].update(values=def_data)
 
-        # マイリスト画面表示更新
         update_mylist_pane(self.window, self.mylist_db)
-        # テーブル画面表示更新
         update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
 
         logger.info(f"WatchedAllMylist success.")
-        return
+        return Result.success
    
 
 if __name__ == "__main__":
