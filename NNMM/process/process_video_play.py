@@ -29,7 +29,7 @@ class ProcessVideoPlay(ProcessBase):
         # テーブルの行が選択されていなかったら何もしない
         if not self.values["-TABLE-"]:
             logger.info("VideoPlay failed, Table row is not selected.")
-            return
+            return Result.failed
 
         # 選択されたテーブル行数
         row = int(self.values["-TABLE-"][0])
@@ -56,7 +56,7 @@ class ProcessVideoPlay(ProcessBase):
             sg.popup_ok("ブラウザパスが不正です。設定タブから設定してください。")
             logger.info(f"{cmd} -> invalid browser path.")
             logger.info(f"{video_url} -> video page open failed.")
-            return
+            return Result.failed
 
         # 視聴済にする
         table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
@@ -68,7 +68,7 @@ class ProcessVideoPlay(ProcessBase):
             pb.run()
 
         logger.info(f"VideoPlay success.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":
