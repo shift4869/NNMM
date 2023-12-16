@@ -133,7 +133,7 @@ class TestProcessCreateMylist(unittest.TestCase):
 
             mock_make_layout.return_value = "make_layout_response"
             mock_get_now_datetime.return_value = "mock_get_now_datetime_response"
-            def pre_run(s_mylist_url,s_url_type, s_prev_mylist,
+            def pre_run(s_mylist_url, s_url_type, s_prev_mylist,
                         get_config_value, s_username, s_mylistname, window_button_value):
                 mock_popup_get_text.reset_mock()
                 mock_popup_get_text.return_value = s_mylist_url
@@ -159,7 +159,7 @@ class TestProcessCreateMylist(unittest.TestCase):
                     "-USERNAME-": s_username,
                     "-MYLISTNAME-": s_mylistname,
                 }
-                mock_read.read = lambda :(window_button_value, values)
+                mock_read.read = lambda: (window_button_value, values)
                 mock_window.return_value = mock_read
 
             def post_run(s_mylist_url, s_url_type, s_prev_mylist,

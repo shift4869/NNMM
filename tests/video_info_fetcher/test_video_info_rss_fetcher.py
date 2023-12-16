@@ -12,7 +12,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from mock import AsyncMock, MagicMock, patch
 
-from NNMM import gui_function
+from NNMM import util
 from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
@@ -387,7 +387,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         return mock
 
     def _make_expect_result(self, url):
-        url_type = gui_function.get_mylist_type(url)
+        url_type = util.get_mylist_type(url)
         mylist_url = url
 
         mylist_info = self._get_mylist_info_set(mylist_url)

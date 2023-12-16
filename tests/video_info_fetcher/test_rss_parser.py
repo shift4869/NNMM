@@ -3,6 +3,7 @@ import re
 import sys
 import unittest
 from datetime import datetime
+import warnings
 
 import xmltodict
 
@@ -25,6 +26,9 @@ from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class TestRSSParser(unittest.TestCase):
+    def setUp(self) -> None:
+        warnings.simplefilter("ignore", ResourceWarning)
+
     def _get_url_set(self) -> list[str]:
         """urlセットを返す
         """
@@ -306,6 +310,7 @@ class TestRSSParser(unittest.TestCase):
 
             actual = loop.run_until_complete(rp.parse())
             self.assertEqual(expect, actual)
+        loop.close()
 
 
 if __name__ == "__main__":
