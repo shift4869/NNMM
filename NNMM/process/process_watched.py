@@ -27,7 +27,7 @@ class ProcessWatched(ProcessBase):
         # 行が選択されていないなら何もしない
         if not self.values["-TABLE-"]:
             logger.error("Watched failed, no record selected.")
-            return
+            return Result.failed
 
         # 選択された行（複数可）についてすべて処理する
         all_num = len(self.values["-TABLE-"])
@@ -40,9 +40,9 @@ class ProcessWatched(ProcessBase):
             selected = def_data[row]
             res = self.mylist_info_db.update_status(selected[1], selected[8], "")
             if res == 0:
-                logger.info(f'{selected[1]} ({i+1}/{all_num}) -> marked "watched".')
+                logger.info(f'{selected[1]} ({i + 1}/{all_num}) -> marked "watched".')
             else:
-                logger.info(f"{selected[1]} ({i+1}/{all_num}) -> failed.")
+                logger.info(f"{selected[1]} ({i + 1}/{all_num}) -> failed.")
 
             # テーブル更新
             def_data[row][4] = ""
@@ -66,7 +66,7 @@ class ProcessWatched(ProcessBase):
         update_mylist_pane(self.window, self.mylist_db)
 
         logger.info("Watched success.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":
