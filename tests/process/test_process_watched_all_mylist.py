@@ -78,8 +78,6 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
         return res
 
     def test_run(self):
-        """ProcessWatchedAllMylist のrunをテストする
-        """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.process_watched_all_mylist.logger.info"))
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_watched_all_mylist.update_mylist_pane"))

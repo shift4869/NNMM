@@ -24,7 +24,7 @@ class ProcessWatchedMylist(ProcessBase):
         # マイリストが選択されていない場合は何もしない
         if not self.values["-LIST-"]:
             logger.error("WatchedMylist failed, no mylist selected.")
-            return
+            return Result.failed
 
         v = self.values["-LIST-"][0]  # 選択値
 
@@ -37,7 +37,7 @@ class ProcessWatchedMylist(ProcessBase):
         # マイリストの新着フラグがFalseなら何もしない
         if not record.get("is_include_new"):
             logger.error('WatchedMylist success, selected mylist is already "watched".')
-            return
+            return Result.failed
 
         # マイリスト情報内の視聴済フラグを更新
         self.mylist_info_db.update_status_in_mylist(mylist_url, "")
@@ -46,13 +46,11 @@ class ProcessWatchedMylist(ProcessBase):
 
         logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
 
-        # マイリスト画面表示更新
         update_mylist_pane(self.window, self.mylist_db)
-        # テーブル画面表示更新
-        update_table_pane(self.window, self.mylist_db, self.mylist_info_db)
+        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, "")
 
         logger.info(f"WatchedMylist success.")
-        return
+        return Result.success
     
 
 if __name__ == "__main__":

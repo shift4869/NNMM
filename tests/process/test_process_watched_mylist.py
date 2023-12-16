@@ -1,32 +1,34 @@
 import sys
 import unittest
+from collections import namedtuple
 from contextlib import ExitStack
-from logging import WARNING, getLogger
+from copy import deepcopy
 
+import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.process_watched_mylist import ProcessWatchedMylist
-
-logger = getLogger("NNMM.process.process_watched_mylist")
-logger.setLevel(WARNING)
+from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.util import Result
 
 
 class TestProcessWatchedMylist(unittest.TestCase):
-
     def setUp(self):
-        pass
+        self.process_info = MagicMock(spec=ProcessInfo)
+        self.process_info.name = "-TEST_PROCESS-"
+        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.values = MagicMock(spec=dict)
+        self.process_info.mylist_db = MagicMock(spec=MylistDBController)
+        self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    def tearDown(self):
-        pass
-
-    def MakeMylistDB(self, num: int = 5) -> list[dict]:
-        """mylist_db.select()で取得されるマイリストデータセット
-        """
+    def _make_mylist_db(self, num: int = 5) -> list[dict]:
         res = []
         col = ["id", "username", "mylistname", "type", "showname", "url",
                "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i+1}", "投稿動画", "uploaded", f"投稿者{i+1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i+1}/video",
+        rows = [[i, f"投稿者{i + 1}", "投稿動画", "uploaded", f"投稿者{i + 1}さんの投稿動画",
+                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
                  "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
                  "15分", i % 2 == 0] for i in range(num)]
 
@@ -37,92 +39,91 @@ class TestProcessWatchedMylist(unittest.TestCase):
             res.append(d)
         return res
 
-    def ReturnMW(self):
-        m_list = self.MakeMylistDB()
-        showname = m_list[0]["showname"]
-
-        r = MagicMock()
-
-        expect_values_dict = {
-            "-LIST-": [showname]
-        }
-
-        mockvalues = MagicMock()
-        mockvalues.__getitem__.side_effect = expect_values_dict.__getitem__
-        mockvalues.__iter__.side_effect = expect_values_dict.__iter__
-        mockvalues.__contains__.side_effect = expect_values_dict.__contains__
-        r.values = mockvalues
-
-        def Returnselect_from_showname(v):
-            return [m for m in m_list if m["showname"] == v]
-
-        r.mylist_db.select_from_showname.side_effect = Returnselect_from_showname
-        return r
-
-    def test_PVPrun(self):
-        """ProcessWatchedMylist のrunをテストする
-        """
+    def test_run(self):
         with ExitStack() as stack:
-            mockle = stack.enter_context(patch.object(logger, "error"))
-            mockums = stack.enter_context(patch("NNMM.process.process_watched_mylist.update_mylist_pane"))
-            mockuts = stack.enter_context(patch("NNMM.process.process_watched_mylist.update_table_pane"))
+            mockli = stack.enter_context(patch("NNMM.process.process_watched_mylist.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.process_watched_mylist.logger.error"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_watched_mylist.update_mylist_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.process_watched_mylist.update_table_pane"))
 
-            pwm = ProcessWatchedMylist()
+            instance = ProcessWatchedMylist(self.process_info)
 
-            # 正常系
-            mockmw = self.ReturnMW()
-            actual = pwm.run(mockmw)
-            self.assertEqual(0, actual)
+            m_list = self._make_mylist_db()
+            mylist_url = m_list[0]["url"]
+            def pre_run(s_values, is_include_new):
+                instance.values.reset_mock()
+                if not s_values:
+                    instance.values.__getitem__.side_effect = lambda key: ""
+                else:
+                    instance.values.__getitem__.side_effect = lambda key: [s_values]
 
-            # 実行後呼び出し確認
-            def assertMockCall():
-                m_list = self.MakeMylistDB()
-                showname = m_list[0]["showname"]
-                mylist_url = m_list[0]["url"]
+                s_m_list = deepcopy(m_list)
+                s_m_list[0]["is_include_new"] = is_include_new
+                instance.mylist_db.reset_mock()
+                instance.mylist_db.select_from_showname.side_effect = lambda showname: s_m_list
 
-                mc = mockmw.mock_calls
-                self.assertEqual(5, len(mc))
-                self.assertEqual(call.values.__getitem__("-LIST-"), mc[0])
-                self.assertEqual(call.values.__getitem__("-LIST-"), mc[1])
-                self.assertEqual(call.mylist_db.select_from_showname(showname), mc[2])
-                self.assertEqual(call.mylist_info_db.update_status_in_mylist(mylist_url, ""), mc[3])
-                self.assertEqual(call.mylist_db.update_include_flag(mylist_url, False), mc[4])
-                mockmw.reset_mock()
+                instance.mylist_info_db.reset_mock()
+                mock_update_mylist_pane.reset_mock()
+                mock_update_table_pane.reset_mock()
 
-                mockums.assert_called_once_with(mockmw.window, mockmw.mylist_db)
-                mockums.reset_mock()
-                mockuts.assert_called_once_with(mockmw.window, mockmw.mylist_db, mockmw.mylist_info_db)
-                mockuts.reset_mock()
+            def post_run(s_values, is_include_new):
+                if not s_values:
+                    self.assertEqual([
+                        call.__getitem__("-LIST-")
+                    ], instance.values.mock_calls)
+                    instance.mylist_db.assert_not_called()
+                    instance.mylist_info_db.assert_not_called()
+                    mock_update_mylist_pane.assert_not_called()
+                    mock_update_table_pane.assert_not_called()
+                    return
+                else:
+                    self.assertEqual([
+                        call.__getitem__("-LIST-"),
+                        call.__getitem__("-LIST-"),
+                    ], instance.values.mock_calls)
 
-            assertMockCall()
+                NEW_MARK = "*:"
+                if s_values[:2] == NEW_MARK:
+                    s_values = s_values[2:]
+                if is_include_new:
+                    self.assertEqual([
+                        call.select_from_showname(s_values),
+                        call.update_include_flag(mylist_url, False)
+                    ], instance.mylist_db.mock_calls)
+                else:
+                    self.assertEqual([
+                        call.select_from_showname(s_values)
+                    ], instance.mylist_db.mock_calls)
+                    instance.mylist_info_db.assert_not_called()
+                    mock_update_mylist_pane.assert_not_called()
+                    mock_update_table_pane.assert_not_called()
+                    return
 
-            # マイリストに新着フラグあり
-            NEW_MARK = "*:"
-            mockmw = self.ReturnMW()
-            mockmw.values["-LIST-"][0] = NEW_MARK + mockmw.values["-LIST-"][0]
-            mockmw.reset_mock()
-            actual = pwm.run(mockmw)
-            self.assertEqual(0, actual)
-            assertMockCall()
+                self.assertEqual([
+                    call.update_status_in_mylist(mylist_url, "")
+                ], instance.mylist_info_db.mock_calls)
 
-            # 異常系
-            # マイリストが選択されていない
-            mockmw = self.ReturnMW()
-            expect_values_dict = {
-                "-LIST-": []
-            }
-            mockvalues = MagicMock()
-            mockvalues.__getitem__.side_effect = expect_values_dict.__getitem__
-            mockvalues.__iter__.side_effect = expect_values_dict.__iter__
-            mockvalues.__contains__.side_effect = expect_values_dict.__contains__
-            mockmw.values = mockvalues
-            actual = pwm.run(mockmw)
-            self.assertEqual(-1, actual)
+                mock_update_mylist_pane.assert_called_once_with(
+                    instance.window, instance.mylist_db
+                )
 
-            # 引数エラー
-            del mockmw.values
-            actual = pwm.run(mockmw)
-            self.assertEqual(-1, actual)
+                mock_update_table_pane.assert_called_once_with(
+                    instance.window, instance.mylist_db, instance.mylist_info_db, ""
+                )
+
+            Params = namedtuple("Params", ["s_values", "is_include_new", "result"])
+            params_list = [
+                Params("showname_1", True, Result.success),
+                Params("*:showname_1", True, Result.success),
+                Params("showname_1", False, Result.failed),
+                Params("", True, Result.failed),
+            ]
+            for params in params_list:
+                pre_run(*params[:-1])
+                actual = instance.run()
+                expect = params.result
+                self.assertIs(expect, actual)
+                post_run(*params[:-1])
 
 
 if __name__ == "__main__":
