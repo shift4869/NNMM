@@ -8,9 +8,9 @@ import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
 from NNMM.main_window import MainWindow
-from NNMM.process import process_config, process_create_mylist, process_delete_mylist, process_move_down, process_move_up, process_not_watched, process_popup, process_search, process_show_mylist_info, process_show_mylist_info_all
-from NNMM.process import process_timer, process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
-from NNMM.process.process_base import ProcessBase
+from NNMM.process import config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, update_all_mylist_info, update_mylist_info, update_partial_mylist_info, video_play, watched
+from NNMM.process import watched_all_mylist, watched_mylist
+from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -21,8 +21,8 @@ TEST_DB_PATH = ":memory:"
 
 # テスト用具体化ProcessBase
 class ConcreteProcessBase(ProcessBase):
-    def __init__(self, process_info: ProcessInfo) -> None:
-        super().__init__(process_info)
+    def __init__(self, info: ProcessInfo) -> None:
+        super().__init__(info)
 
     def run(self) -> Result:
         return Result.success
@@ -30,8 +30,8 @@ class ConcreteProcessBase(ProcessBase):
 
 # テスト用具体化ProcessBase(エラー想定)
 class ConcreteErrorProcessBase(ProcessBase):
-    def __init__(self, process_info: ProcessInfo) -> None:
-        super().__init__(process_info)
+    def __init__(self, info: ProcessInfo) -> None:
+        super().__init__(info)
 
     def run(self) -> Result:
         raise Exception
@@ -44,7 +44,7 @@ class TestWindowMain(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
             mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.process_config.ProcessConfigBase.set_config"))
+            mockcps = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.set_config"))
             mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
@@ -122,41 +122,41 @@ class TestWindowMain(unittest.TestCase):
             mockump.reset_mock()
 
             # イベントと処理の辞書
-            expect_process_dict = {
-                "ブラウザで開く::-TR-": process_video_play.ProcessVideoPlay,
-                "視聴済にする::-TR-": process_watched.ProcessWatched,
-                "未視聴にする::-TR-": process_not_watched.ProcessNotWatched,
-                "検索（動画名）::-TR-": process_search.ProcessVideoSearch,
-                "強調表示を解除::-TR-": process_search.ProcessVideoSearchClear,
-                "情報表示::-TR-": process_popup.PopupVideoWindow,
-                "全動画表示::-MR-": process_show_mylist_info_all.ProcessShowMylistInfoAll,
-                "視聴済にする（選択）::-MR-": process_watched_mylist.ProcessWatchedMylist,
-                "視聴済にする（全て）::-MR-": process_watched_all_mylist.ProcessWatchedAllMylist,
-                "上に移動::-MR-": process_move_up.ProcessMoveUp,
-                "下に移動::-MR-": process_move_down.ProcessMoveDown,
-                "マイリスト追加::-MR-": process_create_mylist.ProcessCreateMylist,
-                "マイリスト削除::-MR-": process_delete_mylist.ProcessDeleteMylist,
-                "検索（マイリスト名）::-MR-": process_search.ProcessMylistSearch,
-                "検索（動画名）::-MR-": process_search.ProcessMylistSearchFromVideo,
-                "検索（URL）::-MR-": process_search.ProcessMylistSearchFromMylistURL,
-                "強調表示を解除::-MR-": process_search.ProcessMylistSearchClear,
-                "情報表示::-MR-": process_popup.PopupMylistWindow,
-                "-LIST-+DOUBLE CLICK+": process_show_mylist_info.ProcessShowMylistInfo,
-                "-CREATE-": process_create_mylist.ProcessCreateMylist,
-                "-CREATE_THREAD_DONE-": process_create_mylist.ProcessCreateMylistThreadDone,
-                "-DELETE-": process_delete_mylist.ProcessDeleteMylist,
-                "-UPDATE-": process_update_mylist_info.ProcessUpdateMylistInfo,
-                "-UPDATE_THREAD_DONE-": process_update_mylist_info.ProcessUpdateMylistInfoThreadDone,
-                "-ALL_UPDATE-": process_update_all_mylist_info.ProcessUpdateAllMylistInfo,
-                "-ALL_UPDATE_THREAD_DONE-": process_update_all_mylist_info.ProcessUpdateAllMylistInfoThreadDone,
-                "-PARTIAL_UPDATE-": process_update_partial_mylist_info.ProcessUpdatePartialMylistInfo,
-                "-PARTIAL_UPDATE_THREAD_DONE-": process_update_partial_mylist_info.ProcessUpdatePartialMylistInfoThreadDone,
-                "-C_CONFIG_SAVE-": process_config.ProcessConfigSave,
-                "-C_MYLIST_SAVE-": process_config.ProcessMylistSaveCSV,
-                "-C_MYLIST_LOAD-": process_config.ProcessMylistLoadCSV,
-                "-TIMER_SET-": process_timer.ProcessTimer,
+            expect_dict = {
+                "ブラウザで開く::-TR-": video_play.ProcessVideoPlay,
+                "視聴済にする::-TR-": watched.ProcessWatched,
+                "未視聴にする::-TR-": not_watched.ProcessNotWatched,
+                "検索（動画名）::-TR-": search.ProcessVideoSearch,
+                "強調表示を解除::-TR-": search.ProcessVideoSearchClear,
+                "情報表示::-TR-": popup.PopupVideoWindow,
+                "全動画表示::-MR-": show_mylist_info_all.ProcessShowMylistInfoAll,
+                "視聴済にする（選択）::-MR-": watched_mylist.ProcessWatchedMylist,
+                "視聴済にする（全て）::-MR-": watched_all_mylist.ProcessWatchedAllMylist,
+                "上に移動::-MR-": move_up.ProcessMoveUp,
+                "下に移動::-MR-": move_down.ProcessMoveDown,
+                "マイリスト追加::-MR-": create_mylist.ProcessCreateMylist,
+                "マイリスト削除::-MR-": delete_mylist.ProcessDeleteMylist,
+                "検索（マイリスト名）::-MR-": search.ProcessMylistSearch,
+                "検索（動画名）::-MR-": search.ProcessMylistSearchFromVideo,
+                "検索（URL）::-MR-": search.ProcessMylistSearchFromMylistURL,
+                "強調表示を解除::-MR-": search.ProcessMylistSearchClear,
+                "情報表示::-MR-": popup.PopupMylistWindow,
+                "-LIST-+DOUBLE CLICK+": show_mylist_info.ProcessShowMylistInfo,
+                "-CREATE-": create_mylist.ProcessCreateMylist,
+                "-CREATE_THREAD_DONE-": create_mylist.ProcessCreateMylistThreadDone,
+                "-DELETE-": delete_mylist.ProcessDeleteMylist,
+                "-UPDATE-": update_mylist_info.ProcessUpdateMylistInfo,
+                "-UPDATE_THREAD_DONE-": update_mylist_info.ProcessUpdateMylistInfoThreadDone,
+                "-ALL_UPDATE-": update_all_mylist_info.ProcessUpdateAllMylistInfo,
+                "-ALL_UPDATE_THREAD_DONE-": update_all_mylist_info.ProcessUpdateAllMylistInfoThreadDone,
+                "-PARTIAL_UPDATE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfo,
+                "-PARTIAL_UPDATE_THREAD_DONE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfoThreadDone,
+                "-C_CONFIG_SAVE-": config.ProcessConfigSave,
+                "-C_MYLIST_SAVE-": config.ProcessMylistSaveCSV,
+                "-C_MYLIST_LOAD-": config.ProcessMylistLoadCSV,
+                "-TIMER_SET-": timer.ProcessTimer,
             }
-            self.assertEqual(expect_process_dict, mw.process_dict)
+            self.assertEqual(expect_dict, mw.dict)
         pass
 
     def test_make_layout(self):
@@ -164,13 +164,13 @@ class TestWindowMain(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.process_config.ProcessConfigBase.set_config"))
-            mockcpg = stack.enter_context(patch("NNMM.main_window.process_config.ProcessConfigBase.get_config"))
+            mockcps = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.set_config"))
+            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.get_config"))
             mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
             mockump = stack.enter_context(patch("NNMM.main_window.update_mylist_pane"))
-            mockcmgcl = stack.enter_context(patch("NNMM.main_window.process_config.ProcessConfigBase.make_layout"))
+            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.make_layout"))
 
             # sg.Outputだけは標準エラー等に干渉するためdummyに置き換える
             mockop = stack.enter_context(patch("NNMM.main_window.sg.Output"))
@@ -331,15 +331,15 @@ class TestWindowMain(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
             mockle = stack.enter_context(patch("NNMM.main_window.logger.error"))
             mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.process_config.ProcessConfigBase.set_config"))
-            mockcpg = stack.enter_context(patch("NNMM.main_window.process_config.ProcessConfigBase.get_config"))
+            mockcps = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.set_config"))
+            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.get_config"))
             mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
             mockump = stack.enter_context(patch("NNMM.main_window.update_mylist_pane"))
-            mockcmgcl = stack.enter_context(patch("NNMM.main_window.process_config.ProcessConfigBase.make_layout"))
-            mockcmpcl = stack.enter_context(patch("NNMM.main_window.process_config.ProcessConfigLoad"))
+            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.make_layout"))
+            mockcmpcl = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigLoad"))
             mockpi = stack.enter_context(patch("NNMM.main_window.ProcessInfo.create"))
 
             def r_mock_window(title, layout, icon, size, finalize, resizable):
@@ -360,9 +360,9 @@ class TestWindowMain(unittest.TestCase):
 
             # 実行
             mw = MainWindow()
-            mw.process_dict["-DO_TEST-"] = ConcreteProcessBase
-            mw.process_dict["-NONE_TEST-"] = lambda: None
-            mw.process_dict["-ERROR_TEST-"] = ConcreteErrorProcessBase
+            mw.dict["-DO_TEST-"] = ConcreteProcessBase
+            mw.dict["-NONE_TEST-"] = lambda: None
+            mw.dict["-ERROR_TEST-"] = ConcreteErrorProcessBase
             actual = mw.run()
             self.assertEqual(None, actual)
 

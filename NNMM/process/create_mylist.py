@@ -5,8 +5,8 @@ from typing import Literal
 
 import PySimpleGUI as sg
 
-from NNMM.process import process_config
-from NNMM.process.process_base import ProcessBase
+from NNMM.process import config as process_config
+from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result, get_mylist_type, get_now_datetime, popup_get_text, update_mylist_pane, update_table_pane
 

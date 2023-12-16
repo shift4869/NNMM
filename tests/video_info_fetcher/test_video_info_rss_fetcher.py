@@ -34,7 +34,6 @@ RSS_PATH = "./tests/rss/"
 
 
 class TestVideoInfoRssFetcher(unittest.TestCase):
-
     def setUp(self):
         # requestsのResourceWarning抑制
         warnings.simplefilter("ignore", ResourceWarning)
@@ -466,7 +465,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         """_fetch_videoinfo_from_rss のテスト
         """
         with ExitStack() as stack:
-            mockcpb = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.get_config", self._make_config_mock))
+            mockcpb = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.get_config", self._make_config_mock))
             mockses = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._get_session_response"))
             mocksoup = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._analysis_rss"))
             mockhapi = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._get_videoinfo_from_api"))
@@ -503,7 +502,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             # config取得に失敗
             # 二重にパッチを当てても想定どおりの挙動をしてくれる
             # withの間だけconfigを返す関数を無効化する
-            with patch("NNMM.process.process_config.ProcessConfigBase.get_config", lambda: None):
+            with patch("NNMM.process.config.ProcessConfigBase.get_config", lambda: None):
                 with self.assertRaises(ValueError):
                     mockses = self._make_session_response_mock(mockses, 200)
                     url = urls[0]

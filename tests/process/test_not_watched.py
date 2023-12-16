@@ -9,7 +9,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_not_watched import ProcessNotWatched
+from NNMM.process.not_watched import ProcessNotWatched
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -25,10 +25,10 @@ class TestProcessNotWatched(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_not_watched.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.process_not_watched.logger.error"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.process_not_watched.update_table_pane"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_not_watched.update_mylist_pane"))
+            mockli = stack.enter_context(patch("NNMM.process.not_watched.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.not_watched.logger.error"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.not_watched.update_table_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.not_watched.update_mylist_pane"))
             mock_update_status = MagicMock()
             mock_window = MagicMock()
 

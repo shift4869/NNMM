@@ -8,7 +8,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_show_mylist_info_all import ProcessShowMylistInfoAll
+from NNMM.process.show_mylist_info_all import ProcessShowMylistInfoAll
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -45,7 +45,7 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_show_mylist_info_all.logger.info"))
+            mockli = stack.enter_context(patch("NNMM.process.show_mylist_info_all.logger.info"))
 
             instance = ProcessShowMylistInfoAll(self.process_info)
 

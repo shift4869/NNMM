@@ -3,8 +3,8 @@ import threading
 from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
-from NNMM.process.process_base import ProcessBase
-from NNMM.process.process_config import ProcessConfigBase
+from NNMM.process.base import ProcessBase
+from NNMM.process.config import ProcessConfigBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 

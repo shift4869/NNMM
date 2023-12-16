@@ -8,7 +8,7 @@ from mock import MagicMock, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_config import ProcessMylistSaveCSV
+from NNMM.process.config import ProcessMylistSaveCSV
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -30,9 +30,9 @@ class TestProcessMylistSaveCSV(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockpgf = stack.enter_context(patch("NNMM.process.process_config.sg.popup_get_file"))
-            mocksml = stack.enter_context(patch("NNMM.process.process_config.save_mylist"))
-            mockpu = stack.enter_context(patch("NNMM.process.process_config.sg.popup"))
+            mockpgf = stack.enter_context(patch("NNMM.process.config.sg.popup_get_file"))
+            mocksml = stack.enter_context(patch("NNMM.process.config.save_mylist"))
+            mockpu = stack.enter_context(patch("NNMM.process.config.sg.popup"))
 
             TEST_RESULT_PATH = "./tests/result.csv"
             mockpgf.side_effect = [TEST_RESULT_PATH, None, TEST_RESULT_PATH]

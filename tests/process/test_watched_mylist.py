@@ -9,8 +9,8 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_watched_mylist import ProcessWatchedMylist
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.watched_mylist import ProcessWatchedMylist
 from NNMM.util import Result
 
 
@@ -41,10 +41,10 @@ class TestProcessWatchedMylist(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_watched_mylist.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.process_watched_mylist.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_watched_mylist.update_mylist_pane"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.process_watched_mylist.update_table_pane"))
+            mockli = stack.enter_context(patch("NNMM.process.watched_mylist.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.watched_mylist.logger.error"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_mylist.update_mylist_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_mylist.update_table_pane"))
 
             instance = ProcessWatchedMylist(self.process_info)
 

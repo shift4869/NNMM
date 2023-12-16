@@ -9,7 +9,7 @@ from mock import MagicMock, mock_open, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_config import ProcessConfigSave
+from NNMM.process.config import ProcessConfigSave
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -31,11 +31,11 @@ class TestProcessConfigSave(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockcp = stack.enter_context(patch("NNMM.process.process_config.configparser.ConfigParser"))
-            mockfp = stack.enter_context(patch("NNMM.process.process_config.Path.open", mock_open()))
-            mocksc = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.set_config"))
-            mockmc = stack.enter_context(patch("NNMM.process.process_config.MylistDBController"))
-            mockmbc = stack.enter_context(patch("NNMM.process.process_config.MylistInfoDBController"))
+            mockcp = stack.enter_context(patch("NNMM.process.config.configparser.ConfigParser"))
+            mockfp = stack.enter_context(patch("NNMM.process.config.Path.open", mock_open()))
+            mocksc = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.set_config"))
+            mockmc = stack.enter_context(patch("NNMM.process.config.MylistDBController"))
+            mockmbc = stack.enter_context(patch("NNMM.process.config.MylistInfoDBController"))
 
             mockread = MagicMock()
             TEST_PREV_SAVE_PATH = "./tests/p_test.db"

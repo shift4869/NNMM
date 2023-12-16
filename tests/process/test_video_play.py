@@ -10,8 +10,8 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_video_play import ProcessVideoPlay
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.video_play import ProcessVideoPlay
 from NNMM.util import Result
 
 
@@ -109,11 +109,11 @@ class TestProcessVideoPlay(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_video_play.logger.info"))
-            mock_config = stack.enter_context(patch("NNMM.process.process_video_play.process_config.ProcessConfigBase.get_config"))
-            mock_execute = stack.enter_context(patch("NNMM.process.process_video_play.sg.execute_command_subprocess"))
-            mock_popup = stack.enter_context(patch("NNMM.process.process_video_play.sg.popup_ok"))
-            mock_watched = stack.enter_context(patch("NNMM.process.process_video_play.ProcessWatched"))
+            mockli = stack.enter_context(patch("NNMM.process.video_play.logger.info"))
+            mock_config = stack.enter_context(patch("NNMM.process.video_play.process_config.ProcessConfigBase.get_config"))
+            mock_execute = stack.enter_context(patch("NNMM.process.video_play.sg.execute_command_subprocess"))
+            mock_popup = stack.enter_context(patch("NNMM.process.video_play.sg.popup_ok"))
+            mock_watched = stack.enter_context(patch("NNMM.process.video_play.ProcessWatched"))
 
             instance = ProcessVideoPlay(self.process_info)
 

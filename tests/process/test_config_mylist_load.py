@@ -8,7 +8,7 @@ from mock import MagicMock, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_config import ProcessMylistLoadCSV
+from NNMM.process.config import ProcessMylistLoadCSV
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -30,10 +30,10 @@ class TestProcessMylistLoadCSV(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockpgf = stack.enter_context(patch("NNMM.process.process_config.sg.popup_get_file"))
-            mockpu = stack.enter_context(patch("NNMM.process.process_config.sg.popup"))
-            mocklml = stack.enter_context(patch("NNMM.process.process_config.load_mylist"))
-            mockums = stack.enter_context(patch("NNMM.process.process_config.update_mylist_pane"))
+            mockpgf = stack.enter_context(patch("NNMM.process.config.sg.popup_get_file"))
+            mockpu = stack.enter_context(patch("NNMM.process.config.sg.popup"))
+            mocklml = stack.enter_context(patch("NNMM.process.config.load_mylist"))
+            mockums = stack.enter_context(patch("NNMM.process.config.update_mylist_pane"))
 
             TEST_INPUT_PATH = "./tests/input.csv"
             mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH, TEST_INPUT_PATH]

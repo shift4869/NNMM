@@ -7,7 +7,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_move_up import ProcessMoveUp
+from NNMM.process.move_up import ProcessMoveUp
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -23,9 +23,9 @@ class TestProcessMoveUp(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_move_up.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.process_move_up.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_move_up.update_mylist_pane"))
+            mockli = stack.enter_context(patch("NNMM.process.move_up.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.move_up.logger.error"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.move_up.update_mylist_pane"))
             mock_window = MagicMock()
 
             instance = ProcessMoveUp(self.process_info)

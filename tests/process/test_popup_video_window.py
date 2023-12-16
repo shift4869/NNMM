@@ -9,7 +9,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_popup import PopupVideoWindow
+from NNMM.process.popup import PopupVideoWindow
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -102,8 +102,8 @@ class TestPopupVideoWindow(unittest.TestCase):
 
     def test_init(self):
         with ExitStack() as stack:
-            mock_logger_info = stack.enter_context(patch("NNMM.process.process_popup.logger.info"))
-            mock_logger_error = stack.enter_context(patch("NNMM.process.process_popup.logger.error"))
+            mock_logger_info = stack.enter_context(patch("NNMM.process.popup.logger.info"))
+            mock_logger_error = stack.enter_context(patch("NNMM.process.popup.logger.error"))
             mock_values = MagicMock()
             mock_window = MagicMock()
             mock_mylist_info_db = MagicMock()

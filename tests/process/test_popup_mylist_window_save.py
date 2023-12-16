@@ -8,7 +8,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_popup import PopupMylistWindowSave
+from NNMM.process.popup import PopupMylistWindowSave
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result, interval_translate
 
@@ -40,8 +40,8 @@ class TestPopupMylistWindowSave(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger_info = stack.enter_context(patch("NNMM.process.process_popup.logger.info"))
-            mock_logger_error = stack.enter_context(patch("NNMM.process.process_popup.logger.error"))
+            mock_logger_info = stack.enter_context(patch("NNMM.process.popup.logger.info"))
+            mock_logger_error = stack.enter_context(patch("NNMM.process.popup.logger.error"))
             mock_window = MagicMock()
             mock_mylist_db = MagicMock()
 

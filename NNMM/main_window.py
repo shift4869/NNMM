@@ -8,8 +8,8 @@ import PySimpleGUI as sg
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process import process_base, process_config, process_create_mylist, process_delete_mylist, process_move_down, process_move_up, process_not_watched, process_popup, process_search, process_show_mylist_info, process_show_mylist_info_all
-from NNMM.process import process_timer, process_update_all_mylist_info, process_update_mylist_info, process_update_partial_mylist_info, process_video_play, process_watched, process_watched_all_mylist, process_watched_mylist
+from NNMM.process import base, config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, update_all_mylist_info, update_mylist_info, update_partial_mylist_info, video_play, watched
+from NNMM.process import watched_all_mylist, watched_mylist
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result, update_mylist_pane
 
@@ -24,7 +24,7 @@ class MainWindow():
         """メインウィンドウクラスのコンストラクタ
         """
         # 設定値初期化
-        self.config = process_config.ProcessConfigBase.set_config()
+        self.config = config.ProcessConfigBase.set_config()
 
         # DB操作コンポーネント設定
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
@@ -67,39 +67,39 @@ class MainWindow():
         self.window.write_event_value("-TIMER_SET-", "-FIRST_SET-")
 
         # イベントと処理の辞書
-        self.process_dict = {
-            "ブラウザで開く::-TR-": process_video_play.ProcessVideoPlay,
-            "視聴済にする::-TR-": process_watched.ProcessWatched,
-            "未視聴にする::-TR-": process_not_watched.ProcessNotWatched,
-            "検索（動画名）::-TR-": process_search.ProcessVideoSearch,
-            "強調表示を解除::-TR-": process_search.ProcessVideoSearchClear,
-            "情報表示::-TR-": process_popup.PopupVideoWindow,
-            "全動画表示::-MR-": process_show_mylist_info_all.ProcessShowMylistInfoAll,
-            "視聴済にする（選択）::-MR-": process_watched_mylist.ProcessWatchedMylist,
-            "視聴済にする（全て）::-MR-": process_watched_all_mylist.ProcessWatchedAllMylist,
-            "上に移動::-MR-": process_move_up.ProcessMoveUp,
-            "下に移動::-MR-": process_move_down.ProcessMoveDown,
-            "マイリスト追加::-MR-": process_create_mylist.ProcessCreateMylist,
-            "マイリスト削除::-MR-": process_delete_mylist.ProcessDeleteMylist,
-            "検索（マイリスト名）::-MR-": process_search.ProcessMylistSearch,
-            "検索（動画名）::-MR-": process_search.ProcessMylistSearchFromVideo,
-            "検索（URL）::-MR-": process_search.ProcessMylistSearchFromMylistURL,
-            "強調表示を解除::-MR-": process_search.ProcessMylistSearchClear,
-            "情報表示::-MR-": process_popup.PopupMylistWindow,
-            "-LIST-+DOUBLE CLICK+": process_show_mylist_info.ProcessShowMylistInfo,
-            "-CREATE-": process_create_mylist.ProcessCreateMylist,
-            "-CREATE_THREAD_DONE-": process_create_mylist.ProcessCreateMylistThreadDone,
-            "-DELETE-": process_delete_mylist.ProcessDeleteMylist,
-            "-UPDATE-": process_update_mylist_info.ProcessUpdateMylistInfo,
-            "-UPDATE_THREAD_DONE-": process_update_mylist_info.ProcessUpdateMylistInfoThreadDone,
-            "-ALL_UPDATE-": process_update_all_mylist_info.ProcessUpdateAllMylistInfo,
-            "-ALL_UPDATE_THREAD_DONE-": process_update_all_mylist_info.ProcessUpdateAllMylistInfoThreadDone,
-            "-PARTIAL_UPDATE-": process_update_partial_mylist_info.ProcessUpdatePartialMylistInfo,
-            "-PARTIAL_UPDATE_THREAD_DONE-": process_update_partial_mylist_info.ProcessUpdatePartialMylistInfoThreadDone,
-            "-C_CONFIG_SAVE-": process_config.ProcessConfigSave,
-            "-C_MYLIST_SAVE-": process_config.ProcessMylistSaveCSV,
-            "-C_MYLIST_LOAD-": process_config.ProcessMylistLoadCSV,
-            "-TIMER_SET-": process_timer.ProcessTimer,
+        self.dict = {
+            "ブラウザで開く::-TR-": video_play.ProcessVideoPlay,
+            "視聴済にする::-TR-": watched.ProcessWatched,
+            "未視聴にする::-TR-": not_watched.ProcessNotWatched,
+            "検索（動画名）::-TR-": search.ProcessVideoSearch,
+            "強調表示を解除::-TR-": search.ProcessVideoSearchClear,
+            "情報表示::-TR-": popup.PopupVideoWindow,
+            "全動画表示::-MR-": show_mylist_info_all.ProcessShowMylistInfoAll,
+            "視聴済にする（選択）::-MR-": watched_mylist.ProcessWatchedMylist,
+            "視聴済にする（全て）::-MR-": watched_all_mylist.ProcessWatchedAllMylist,
+            "上に移動::-MR-": move_up.ProcessMoveUp,
+            "下に移動::-MR-": move_down.ProcessMoveDown,
+            "マイリスト追加::-MR-": create_mylist.ProcessCreateMylist,
+            "マイリスト削除::-MR-": delete_mylist.ProcessDeleteMylist,
+            "検索（マイリスト名）::-MR-": search.ProcessMylistSearch,
+            "検索（動画名）::-MR-": search.ProcessMylistSearchFromVideo,
+            "検索（URL）::-MR-": search.ProcessMylistSearchFromMylistURL,
+            "強調表示を解除::-MR-": search.ProcessMylistSearchClear,
+            "情報表示::-MR-": popup.PopupMylistWindow,
+            "-LIST-+DOUBLE CLICK+": show_mylist_info.ProcessShowMylistInfo,
+            "-CREATE-": create_mylist.ProcessCreateMylist,
+            "-CREATE_THREAD_DONE-": create_mylist.ProcessCreateMylistThreadDone,
+            "-DELETE-": delete_mylist.ProcessDeleteMylist,
+            "-UPDATE-": update_mylist_info.ProcessUpdateMylistInfo,
+            "-UPDATE_THREAD_DONE-": update_mylist_info.ProcessUpdateMylistInfoThreadDone,
+            "-ALL_UPDATE-": update_all_mylist_info.ProcessUpdateAllMylistInfo,
+            "-ALL_UPDATE_THREAD_DONE-": update_all_mylist_info.ProcessUpdateAllMylistInfoThreadDone,
+            "-PARTIAL_UPDATE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfo,
+            "-PARTIAL_UPDATE_THREAD_DONE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfoThreadDone,
+            "-C_CONFIG_SAVE-": config.ProcessConfigSave,
+            "-C_MYLIST_SAVE-": config.ProcessMylistSaveCSV,
+            "-C_MYLIST_LOAD-": config.ProcessMylistLoadCSV,
+            "-TIMER_SET-": timer.ProcessTimer,
         }
 
         logger.info("window setup done.")
@@ -185,7 +185,7 @@ class MainWindow():
                 [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
             ], size=(1370, 1000))
         ]]
-        cf_layout = process_config.ProcessConfigBase.make_layout()
+        cf_layout = config.ProcessConfigBase.make_layout()
         lf_layout = [[
             sg.Frame("ログ", [
                 [sg.Column([[
@@ -216,12 +216,12 @@ class MainWindow():
                 break
 
             # イベント処理
-            if self.process_dict.get(event):
+            if self.dict.get(event):
                 self.values = values
-                process_info = ProcessInfo.create(event, self)
+                info = ProcessInfo.create(event, self)
 
                 try:
-                    pb: process_base.ProcessBase = self.process_dict.get(event)(process_info)
+                    pb: base.ProcessBase = self.dict.get(event)(info)
 
                     if pb is None or not hasattr(pb, "run"):
                         continue
@@ -237,8 +237,8 @@ class MainWindow():
                 if select_tab == "設定":
                     # 設定タブを開いたときの処理
                     self.values = values
-                    process_info = ProcessInfo.create(event, self)
-                    pb = process_config.ProcessConfigLoad(process_info)
+                    info = ProcessInfo.create(event, self)
+                    pb = config.ProcessConfigLoad(info)
                     pb.run()
 
         # ウィンドウ終了処理

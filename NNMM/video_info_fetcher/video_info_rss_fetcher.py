@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from logging import INFO, getLogger
 from pathlib import Path
 
-from NNMM.process import process_config
+from NNMM.process import config as process_config
 from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo

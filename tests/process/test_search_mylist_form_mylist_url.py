@@ -9,7 +9,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_search import ProcessMylistSearchFromMylistURL
+from NNMM.process.search import ProcessMylistSearchFromMylistURL
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -42,8 +42,8 @@ class TestProcessMylistSearchFromMylistURL(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_search.logger.info"))
-            mock_popup_get_text = stack.enter_context(patch("NNMM.process.process_search.popup_get_text"))
+            mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
+            mock_popup_get_text = stack.enter_context(patch("NNMM.process.search.popup_get_text"))
             mock_window = MagicMock()
             mock_mylist_db = MagicMock()
 

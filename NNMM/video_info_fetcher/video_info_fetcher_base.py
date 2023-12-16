@@ -169,7 +169,7 @@ class VideoInfoFetcherBase(ABC):
 
 
 if __name__ == "__main__":
-    from NNMM.process import process_config
+    from NNMM.process import config as process_config
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     for name in logging.root.manager.loggerDict:
         getLogger(name).disabled = True

@@ -7,7 +7,7 @@ from mock import MagicMock, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_config import ProcessConfigLoad
+from NNMM.process.config import ProcessConfigLoad
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -29,8 +29,8 @@ class TestProcessConfigLoad(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mocksc = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.set_config"))
-            mockgc = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.get_config"))
+            mocksc = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.set_config"))
+            mockgc = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.get_config"))
 
             expect_dict = {
                 "general": {

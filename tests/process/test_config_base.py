@@ -7,7 +7,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_config import ProcessConfigBase
+from NNMM.process.config import ProcessConfigBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -90,7 +90,7 @@ class TestProcessConfigBase(unittest.TestCase):
 
     def test_get_config(self):
         with ExitStack() as stack:
-            mock_set_config = stack.enter_context(patch("NNMM.process.process_config.ProcessConfigBase.set_config"))
+            mock_set_config = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.set_config"))
 
             # 初回取得
             ProcessConfigBase.config = None
@@ -108,9 +108,9 @@ class TestProcessConfigBase(unittest.TestCase):
 
     def test_set_config(self):
         with ExitStack() as stack:
-            mock_configparser = stack.enter_context(patch("NNMM.process.process_config.configparser.ConfigParser"))
+            mock_configparser = stack.enter_context(patch("NNMM.process.config.configparser.ConfigParser"))
             mock_config = MagicMock()
-            mock_configparser.side_effect = lambda :mock_config
+            mock_configparser.side_effect = lambda: mock_config
 
             actual = ProcessConfigBase.set_config()
             self.assertEqual(mock_config, actual)

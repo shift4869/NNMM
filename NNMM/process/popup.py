@@ -4,7 +4,7 @@ from logging import INFO, getLogger
 import PySimpleGUI as sg
 
 from NNMM.model import Mylist, MylistInfo
-from NNMM.process.process_base import ProcessBase
+from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result, interval_translate
 

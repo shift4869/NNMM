@@ -7,7 +7,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_delete_mylist import ProcessDeleteMylist
+from NNMM.process.delete_mylist import ProcessDeleteMylist
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -23,10 +23,10 @@ class TestProcessDeleteMylist(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_delete_mylist.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.process_delete_mylist.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_delete_mylist.update_mylist_pane"))
-            mock_popup_ok_cancel = stack.enter_context(patch("NNMM.process.process_delete_mylist.sg.popup_ok_cancel"))
+            mockli = stack.enter_context(patch("NNMM.process.delete_mylist.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.delete_mylist.logger.error"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.delete_mylist.update_mylist_pane"))
+            mock_popup_ok_cancel = stack.enter_context(patch("NNMM.process.delete_mylist.sg.popup_ok_cancel"))
             mock_mylist_db = MagicMock()
 
             instance = ProcessDeleteMylist(self.process_info)

@@ -9,8 +9,8 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.process_watched import ProcessWatched
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.watched import ProcessWatched
 from NNMM.util import Result
 
 
@@ -108,11 +108,11 @@ class TestProcessWatched(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.process_watched.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.process_watched.logger.error"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.process_watched.update_table_pane"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.process_watched.update_mylist_pane"))
-            mock_include_new_video = stack.enter_context(patch("NNMM.process.process_watched.is_mylist_include_new_video"))
+            mockli = stack.enter_context(patch("NNMM.process.watched.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.watched.logger.error"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched.update_table_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched.update_mylist_pane"))
+            mock_include_new_video = stack.enter_context(patch("NNMM.process.watched.is_mylist_include_new_video"))
             mock_window = MagicMock()
 
             instance = ProcessWatched(self.process_info)
