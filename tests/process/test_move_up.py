@@ -25,7 +25,7 @@ class TestMoveUp(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.move_up.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.move_up.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.move_up.update_mylist_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.update_mylist_pane"))
             mock_window = MagicMock()
 
             instance = MoveUp(self.process_info)
@@ -108,9 +108,7 @@ class TestMoveUp(unittest.TestCase):
                     call.swap_id(s_src_index, s_dst_index),
                 ], instance.mylist_db.mock_calls)
 
-                mock_update_mylist_pane.assert_called_once_with(
-                    instance.window, instance.mylist_db
-                )
+                mock_update_mylist_pane.assert_called_once_with()
 
             params_list = [
                 (1, 1, "showname_1", "showname_2", Result.success),

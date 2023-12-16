@@ -43,8 +43,8 @@ class TestWatchedMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.watched_mylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.watched_mylist.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_mylist.update_mylist_pane"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_mylist.update_table_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_mylist.ProcessBase.update_mylist_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_mylist.ProcessBase.update_table_pane"))
 
             instance = WatchedMylist(self.process_info)
 
@@ -103,13 +103,8 @@ class TestWatchedMylist(unittest.TestCase):
                     call.update_status_in_mylist(mylist_url, "")
                 ], instance.mylist_info_db.mock_calls)
 
-                mock_update_mylist_pane.assert_called_once_with(
-                    instance.window, instance.mylist_db
-                )
-
-                mock_update_table_pane.assert_called_once_with(
-                    instance.window, instance.mylist_db, instance.mylist_info_db, ""
-                )
+                mock_update_mylist_pane.assert_called_once_with()
+                mock_update_table_pane.assert_called_once_with("")
 
             Params = namedtuple("Params", ["s_values", "is_include_new", "result"])
             params_list = [

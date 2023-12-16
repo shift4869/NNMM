@@ -169,11 +169,11 @@ class CreateMylistThreadDone(ProcessBase):
             -CREATE-の処理が終わった後の処理
         """
         # マイリスト画面表示更新
-        update_mylist_pane(self.window, self.mylist_db)
+        self.update_mylist_pane()
 
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]
-        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        self.update_table_pane(mylist_url)
 
         logger.info("Create mylist success.")
         return

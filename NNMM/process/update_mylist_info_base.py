@@ -356,7 +356,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase):
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]
         if mylist_url != "":
-            update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+            self.update_table_pane(mylist_url)
 
         # マイリストの新着表示を表示するかどうか判定する
         m_list = self.mylist_db.select()
@@ -376,7 +376,7 @@ class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase):
                 self.mylist_db.update_include_flag(mylist_url, True)
 
         # マイリスト画面表示更新
-        update_mylist_pane(self.window, self.mylist_db)
+        self.update_mylist_pane()
 
         logger.info(f"{self.L_KIND} update success.")
         return

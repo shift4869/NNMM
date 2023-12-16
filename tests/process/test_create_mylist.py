@@ -270,20 +270,18 @@ class TestCreateMylist(unittest.TestCase):
     def test_CreateMylistThreadDone_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.create_mylist.logger.info"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.create_mylist.update_mylist_pane"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.create_mylist.update_table_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.create_mylist.ProcessBase.update_mylist_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.create_mylist.ProcessBase.update_table_pane"))
 
             instance = CreateMylistThreadDone(self.process_info)
 
             actual = instance.run()
             self.assertIsNone(actual)
 
-            mock_update_mylist_pane.assert_called_once_with(instance.window, instance.mylist_db)
+            mock_update_mylist_pane.assert_called_once_with()
             mock_update_mylist_pane.reset_mock()
 
-            mock_update_table_pane.assert_called_once_with(
-                instance.window, instance.mylist_db, instance.mylist_info_db, instance.values["-INPUT1-"]
-            )
+            mock_update_table_pane.assert_called_once_with(instance.values["-INPUT1-"])
             mock_update_table_pane.reset_mock()
         pass
 

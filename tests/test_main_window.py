@@ -49,7 +49,7 @@ class TestWindowMain(unittest.TestCase):
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockump = stack.enter_context(patch("NNMM.main_window.update_mylist_pane"))
+            mockump = stack.enter_context(patch("NNMM.main_window.MainWindow.update_mylist_pane"))
 
             mockmmwl.return_value = [["dummy layout"]]
 
@@ -116,9 +116,7 @@ class TestWindowMain(unittest.TestCase):
             self.assertEqual({"disable_existing_loggers": False}, lcfccal[0][1])
             mocklcfc.reset_mock()
 
-            umscal = mockump.call_args_list
-            self.assertEqual(len(umscal), 1)
-            self.assertEqual((r_mock, mockmdbc()), umscal[0][0])
+            mockump.assert_called_once_with()
             mockump.reset_mock()
 
             # イベントと処理の辞書
@@ -169,7 +167,7 @@ class TestWindowMain(unittest.TestCase):
             mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockump = stack.enter_context(patch("NNMM.main_window.update_mylist_pane"))
+            mockump = stack.enter_context(patch("NNMM.main_window.MainWindow.update_mylist_pane"))
             mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.make_layout"))
 
             # sg.Outputだけは標準エラー等に干渉するためdummyに置き換える
@@ -337,7 +335,7 @@ class TestWindowMain(unittest.TestCase):
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockump = stack.enter_context(patch("NNMM.main_window.update_mylist_pane"))
+            mockump = stack.enter_context(patch("NNMM.main_window.MainWindow.update_mylist_pane"))
             mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.make_layout"))
             mockcmpcl = stack.enter_context(patch("NNMM.main_window.config.ConfigLoad"))
             mockpi = stack.enter_context(patch("NNMM.main_window.ProcessInfo.create"))
@@ -364,7 +362,7 @@ class TestWindowMain(unittest.TestCase):
             mw.dict["-NONE_TEST-"] = lambda: None
             mw.dict["-ERROR_TEST-"] = ConcreteErrorProcessBase
             actual = mw.run()
-            self.assertEqual(None, actual)
+            self.assertIs(Result.success, actual)
 
             ICON_PATH = "./image/icon.png"
             icon_binary = None

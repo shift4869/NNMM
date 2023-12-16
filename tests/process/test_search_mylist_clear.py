@@ -24,11 +24,11 @@ class TestMylistSearchClear(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.search.update_mylist_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.search.ProcessBase.update_mylist_pane"))
             instance = MylistSearchClear(self.process_info)
             actual = instance.run()
             self.assertIs(Result.success, actual)
-            mock_update_mylist_pane.assert_called_once_with(instance.window, instance.mylist_db)
+            mock_update_mylist_pane.assert_called_once_with()
 
 
 if __name__ == "__main__":

@@ -48,8 +48,8 @@ class WatchedAllMylist(ProcessBase):
                 def_data[i][STATUS_INDEX] = ""
             self.window["-TABLE-"].update(values=def_data)
 
-        update_mylist_pane(self.window, self.mylist_db)
-        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        self.update_mylist_pane()
+        self.update_table_pane(mylist_url)
 
         logger.info(f"WatchedAllMylist success.")
         return Result.success

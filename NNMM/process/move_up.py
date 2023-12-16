@@ -46,7 +46,7 @@ class MoveUp(ProcessBase):
         self.mylist_db.swap_id(src_record["id"], dst_record["id"])
 
         # テーブル更新
-        update_mylist_pane(self.window, self.mylist_db)
+        self.update_mylist_pane()
         self.window["-LIST-"].update(set_to_index=dst_index)
 
         logger.info(f"{src_v} -> index move up from {src_index} to {dst_index}.")

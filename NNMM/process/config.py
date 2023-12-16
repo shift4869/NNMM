@@ -123,7 +123,7 @@ class MylistLoadCSV(ConfigBase):
 
         res = load_mylist(self.mylist_db, str(sd_path))
 
-        update_mylist_pane(self.window, self.mylist_db)
+        self.update_mylist_pane()
 
         # 結果通知
         if res == 0:

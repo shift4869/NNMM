@@ -80,8 +80,8 @@ class TestWatchedAllMylist(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.watched_all_mylist.logger.info"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.update_mylist_pane"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.update_table_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.update_mylist_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.update_table_pane"))
 
             instance = WatchedAllMylist(self.process_info)
 
@@ -138,13 +138,8 @@ class TestWatchedAllMylist(unittest.TestCase):
                     ])
                 self.assertEqual(expect_window_calls, instance.window.mock_calls)
 
-                mock_update_mylist_pane.assert_called_once_with(
-                    instance.window, instance.mylist_db
-                )
-
-                mock_update_table_pane.assert_called_once_with(
-                    instance.window, instance.mylist_db, instance.mylist_info_db, s_mylist_url
-                )
+                mock_update_mylist_pane.assert_called_once_with()
+                mock_update_table_pane.assert_called_once_with(s_mylist_url)
 
             Params = namedtuple("Params", ["is_mylist_url_empty", "result"])
             params_list = [

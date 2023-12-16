@@ -59,11 +59,11 @@ class Watched(ProcessBase):
 
         # テーブルの表示を更新する
         mylist_url = self.values["-INPUT1-"]
-        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        self.update_table_pane(mylist_url)
         self.window["-TABLE-"].update(select_rows=[row])
 
         # マイリスト画面表示更新
-        update_mylist_pane(self.window, self.mylist_db)
+        self.update_mylist_pane()
 
         logger.info("Watched success.")
         return Result.success

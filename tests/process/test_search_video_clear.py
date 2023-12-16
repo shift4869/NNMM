@@ -24,7 +24,7 @@ class TestVideoSearchClear(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.search.update_table_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.search.ProcessBase.update_table_pane"))
             
             instance = VideoSearchClear(self.process_info)
             mylist_url = "mylist_url_1"
@@ -32,9 +32,7 @@ class TestVideoSearchClear(unittest.TestCase):
 
             actual = instance.run()
             self.assertIs(Result.success, actual)
-            mock_update_table_pane.assert_called_once_with(
-                instance.window, instance.mylist_db, instance.mylist_info_db, mylist_url
-            )
+            mock_update_table_pane.assert_called_once_with(mylist_url)
 
 
 if __name__ == "__main__":

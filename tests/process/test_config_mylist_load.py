@@ -33,7 +33,7 @@ class TestMylistLoadCSV(unittest.TestCase):
             mockpgf = stack.enter_context(patch("NNMM.process.config.sg.popup_get_file"))
             mockpu = stack.enter_context(patch("NNMM.process.config.sg.popup"))
             mocklml = stack.enter_context(patch("NNMM.process.config.load_mylist"))
-            mockums = stack.enter_context(patch("NNMM.process.config.update_mylist_pane"))
+            mockums = stack.enter_context(patch("NNMM.process.config.ProcessBase.update_mylist_pane"))
 
             TEST_INPUT_PATH = "./tests/input.csv"
             mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH, TEST_INPUT_PATH]
@@ -79,7 +79,7 @@ class TestMylistLoadCSV(unittest.TestCase):
             # mockums[{n回目の呼び出し}][args=0]
             umscal = mockums.call_args_list
             self.assertEqual(len(umscal), 1)
-            self.assertEqual((self.process_info.window, self.process_info.mylist_db), umscal[0][0])
+            self.assertEqual((), umscal[0][0])
             mockums.reset_mock()
 
             # 異常系

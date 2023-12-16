@@ -25,7 +25,7 @@ class TestMoveDown(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.move_down.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.move_down.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.move_down.update_mylist_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.move_down.ProcessBase.update_mylist_pane"))
             mock_window = MagicMock()
 
             instance = MoveDown(self.process_info)
@@ -111,9 +111,7 @@ class TestMoveDown(unittest.TestCase):
                     call.swap_id(s_src_index, s_dst_index),
                 ], instance.mylist_db.mock_calls)
 
-                mock_update_mylist_pane.assert_called_once_with(
-                    instance.window, instance.mylist_db
-                )
+                mock_update_mylist_pane.assert_called_once_with()
 
             params_list = [
                 (0, 1, "showname_1", "showname_2", Result.success),

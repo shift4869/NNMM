@@ -316,7 +316,7 @@ class MylistSearchClear(ProcessBase):
         """
         logger.info("MylistSearchClear start.")
 
-        update_mylist_pane(self.window, self.mylist_db)
+        self.update_mylist_pane()
 
         logger.info("MylistSearchClear success.")
         return Result.success
@@ -344,7 +344,7 @@ class VideoSearchClear(ProcessBase):
         # 「動画をすべて表示」している場合は空文字列になる可能性がある
         # update_table_paneはmylist_urlが空文字列でも処理が可能
         mylist_url = self.window["-INPUT1-"].get()
-        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, mylist_url)
+        self.update_table_pane(mylist_url)
 
         logger.info("VideoSearchClear success.")
         return Result.success

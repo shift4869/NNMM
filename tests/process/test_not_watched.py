@@ -27,8 +27,8 @@ class TestNotWatched(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.not_watched.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.not_watched.logger.error"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.not_watched.update_table_pane"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.not_watched.update_mylist_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.not_watched.ProcessBase.update_table_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.not_watched.ProcessBase.update_mylist_pane"))
             mock_update_status = MagicMock()
             mock_window = MagicMock()
 
@@ -101,16 +101,11 @@ class TestNotWatched(unittest.TestCase):
 
                 mylist_url = s_def_data[0][8]
                 self.assertEqual([
-                    call(
-                        instance.window,
-                        instance.mylist_db,
-                        instance.mylist_info_db,
-                        mylist_url
-                    )
+                    call(mylist_url)
                 ], mock_update_table_pane.mock_calls)
 
                 self.assertEqual([
-                    call(instance.window, instance.mylist_db)
+                    call()
                 ], mock_update_mylist_pane.mock_calls)
 
             Params = namedtuple("Params", ["value", "update_status", "result"])

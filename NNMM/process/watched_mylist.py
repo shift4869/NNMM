@@ -46,8 +46,8 @@ class WatchedMylist(ProcessBase):
 
         logger.info(f'{mylist_url} -> all include videos status are marked "watched".')
 
-        update_mylist_pane(self.window, self.mylist_db)
-        update_table_pane(self.window, self.mylist_db, self.mylist_info_db, "")
+        self.update_mylist_pane()
+        self.update_table_pane("")
 
         logger.info(f"WatchedMylist success.")
         return Result.success

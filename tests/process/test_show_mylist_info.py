@@ -42,7 +42,7 @@ class TestProcessShowMylistInfo(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.show_mylist_info.logger.info"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.show_mylist_info.update_table_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.show_mylist_info.ProcessBase.update_table_pane"))
 
             instance = ProcessShowMylistInfo(self.process_info)
 
@@ -77,7 +77,7 @@ class TestProcessShowMylistInfo(unittest.TestCase):
                 ], instance.window.mock_calls)
 
                 self.assertEqual([
-                    call(instance.window, instance.mylist_db, instance.mylist_info_db, mylist_url)
+                    call(mylist_url)
                 ], mock_update_table_pane.mock_calls)
 
             Params = namedtuple("Params", ["is_include_new", "result"])

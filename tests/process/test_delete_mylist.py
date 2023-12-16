@@ -25,7 +25,7 @@ class TestDeleteMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.delete_mylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.delete_mylist.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.delete_mylist.update_mylist_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.update_mylist_pane"))
             mock_popup_ok_cancel = stack.enter_context(patch("NNMM.process.delete_mylist.sg.popup_ok_cancel"))
             mock_mylist_db = MagicMock()
 
@@ -121,7 +121,7 @@ class TestDeleteMylist(unittest.TestCase):
 
                 instance.mylist_info_db.delete_in_mylist.assert_called_once_with(mylist_url_s)
                 instance.mylist_db.delete_from_mylist_url.assert_called_once_with(mylist_url_s)
-                mock_update_mylist_pane.assert_called_once_with(instance.window, instance.mylist_db)
+                mock_update_mylist_pane.assert_called_once_with()
 
                 self.assertEqual([
                     call.__getitem__("-TABLE-"),

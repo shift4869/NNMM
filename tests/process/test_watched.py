@@ -110,8 +110,8 @@ class TestWatched(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.watched.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.watched.logger.error"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched.update_table_pane"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched.update_mylist_pane"))
+            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched.ProcessBase.update_table_pane"))
+            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched.ProcessBase.update_mylist_pane"))
             mock_include_new_video = stack.enter_context(patch("NNMM.process.watched.is_mylist_include_new_video"))
             mock_window = MagicMock()
 
@@ -198,14 +198,8 @@ class TestWatched(unittest.TestCase):
                     call.__getitem__("-TABLE-"),
                     call.__getitem__("-TABLE-")
                 ], instance.window.mock_calls)
-
-                mock_update_table_pane.assert_called_once_with(
-                    instance.window, instance.mylist_db, instance.mylist_info_db, s_mylist_url
-                )
-
-                mock_update_mylist_pane.assert_called_once_with(
-                    instance.window, instance.mylist_db
-                )
+                mock_update_table_pane.assert_called_once_with(s_mylist_url)
+                mock_update_mylist_pane.assert_called_once_with()
 
             Params = namedtuple("Params", ["s_value", "s_status", "is_include_new", "result"])
             params_list = [

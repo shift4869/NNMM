@@ -51,7 +51,6 @@ def find_values(obj: Any,
         raise ValueError(f"Value of key='{key}' are multiple found.")
     return result[0]
 
-
 def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> int:
     """MylistDBの内容をcsvファイルに書き出す
 
@@ -74,7 +73,6 @@ def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> int:
             param_list = [str(r.get(s)) for s in mylist_cols]
             fout.write(",".join(param_list) + "\n")
     return 0
-
 
 def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
     """書き出したcsvファイルからMylistDBへレコードを反映させる
@@ -118,7 +116,6 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
                          r["created_at"], r["updated_at"], r["checked_at"], r["check_interval"], r["is_include_new"])
     return 0
 
-
 def get_mylist_type(url: str) -> str:
     """マイリストのタイプを返す
 
@@ -138,7 +135,6 @@ def get_mylist_type(url: str) -> str:
         return "mylist"
     return ""
 
-
 def get_now_datetime() -> str:
     """タイムスタンプを返す
 
@@ -149,7 +145,6 @@ def get_now_datetime() -> str:
     dst_df = "%Y-%m-%d %H:%M:%S"
     dst = datetime.now().strftime(dst_df)
     return dst
-
 
 def is_mylist_include_new_video(table_list: list[list]) -> bool | KeyError:
     """現在のテーブルリスト内に状況が未視聴のものが一つでも含まれているかを返す
@@ -178,7 +173,6 @@ def is_mylist_include_new_video(table_list: list[list]) -> bool | KeyError:
 
     # 一つでも未視聴のものがあればTrue, そうでないならFalse
     return any([v[STATUS_INDEX] == "未視聴" for v in table_list])
-
 
 def interval_translate(interval_str: str) -> int:
     """インターバルを解釈する関数
@@ -214,7 +208,6 @@ def interval_translate(interval_str: str) -> int:
         return int(re.findall(pattern, interval_str)[0]) * 60 * 24 * 31  # 月は正確ではない28,29,30,31
     return -1
 
-
 def popup_get_text(message, title=None, default_text='', password_char='', size=(None, None), button_color=None,
                    background_color=None, text_color=None, icon=None, font=None, no_titlebar=False,
                    grab_anywhere=False, keep_on_top=None, location=(None, None), relative_location=(None, None), image=None, modal=True):
@@ -241,7 +234,6 @@ def popup_get_text(message, title=None, default_text='', password_char='', size=
     else:
         path = values["-INPUT-"]
         return path
-
 
 def update_mylist_pane(window: sg.Window, mylist_db: MylistDBController) -> int:
     """マイリストペインの表示を更新する
@@ -282,7 +274,6 @@ def update_mylist_pane(window: sg.Window, mylist_db: MylistDBController) -> int:
     window["-LIST-"].Widget.see(index)
     window["-LIST-"].update(set_to_index=index)
     return 0
-
 
 def update_table_pane(window: sg.Window, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController, mylist_url: str = "") -> int:
     """テーブルリストペインの表示を更新する

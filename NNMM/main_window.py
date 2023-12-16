@@ -11,7 +11,7 @@ from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process import base, config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, update_all_mylist_info, update_mylist_info, update_partial_mylist_info, video_play, watched
 from NNMM.process import watched_all_mylist, watched_mylist
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result, update_mylist_pane
+from NNMM.util import Result
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -57,7 +57,7 @@ class MainWindow():
 
         # マイリスト一覧初期化
         # DBからマイリスト一覧を取得する
-        update_mylist_pane(self.window, self.mylist_db)
+        self.update_mylist_pane()
 
         # テーブル初期化
         def_data = [[]]
@@ -203,6 +203,35 @@ class MainWindow():
 
         return layout
 
+    def update_mylist_pane(self) -> Result:
+        """マイリストペインの初期表示
+
+        Returns:
+            Result: 成功時success
+        """
+        index = 0
+
+        # マイリスト画面表示更新
+        NEW_MARK = "*:"
+        list_data = self.window["-LIST-"].Values
+        m_list = self.mylist_db.select()
+        include_new_index_list = []
+        for i, m in enumerate(m_list):
+            if m["is_include_new"]:
+                m["showname"] = NEW_MARK + m["showname"]
+                include_new_index_list.append(i)
+        list_data = [m["showname"] for m in m_list]
+        self.window["-LIST-"].update(values=list_data)
+
+        # 新着マイリストの背景色とテキスト色を変更する
+        for i in include_new_index_list:
+            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
+
+        # indexをセットしてスクロール
+        self.window["-LIST-"].Widget.see(index)
+        self.window["-LIST-"].update(set_to_index=index)
+        return Result.success
+
     def run(self) -> Result:
         """メインイベントループ
         """
@@ -243,7 +272,7 @@ class MainWindow():
 
         # ウィンドウ終了処理
         self.window.close()
-        return
+        return Result.success
 
 
 if __name__ == "__main__":
