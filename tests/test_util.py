@@ -12,7 +12,7 @@ from mock import mock_open, patch
 
 from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
-from NNMM.util import Result, find_values, get_mylist_type, get_now_datetime, interval_translate, is_mylist_include_new_video, load_mylist, popup_get_text, save_mylist
+from NNMM.util import MylistType, Result, find_values, get_mylist_type, get_now_datetime, interval_translate, is_mylist_include_new_video, load_mylist, popup_get_text, save_mylist
 
 TEST_DB_PATH = ":memory:"
 CSV_PATH = "./tests/result.csv"
@@ -341,30 +341,30 @@ class TestUtil(unittest.TestCase):
         # 投稿動画ページのURL
         url = "https://www.nicovideo.jp/user/11111111/video"
         actual = get_mylist_type(url)
-        expect = "uploaded"
+        expect = MylistType.uploaded
         self.assertEqual(expect, actual)
 
         # マイリストURL
         url = "https://www.nicovideo.jp/user/11111111/mylist/00000011"
         actual = get_mylist_type(url)
-        expect = "mylist"
+        expect = MylistType.mylist
         self.assertEqual(expect, actual)
 
         # 異常系
         # マイリストのURLだがリダイレクト元のURL
         url = "https://www.nicovideo.jp/mylist/00000011"
         actual = get_mylist_type(url)
-        self.assertEqual("", actual)
+        self.assertEqual(None, actual)
 
         # 全く関係ないURL
         url = "https://www.google.co.jp/"
         actual = get_mylist_type(url)
-        self.assertEqual("", actual)
+        self.assertEqual(None, actual)
 
         # ニコニコの別サービスのURL
         url = "https://seiga.nicovideo.jp/seiga/im11111111"
         actual = get_mylist_type(url)
-        self.assertEqual("", actual)
+        self.assertEqual(None, actual)
 
     def test_get_now_datetime(self):
         """タイムスタンプを返す機能のテスト

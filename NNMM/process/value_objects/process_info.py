@@ -39,7 +39,7 @@ class ProcessInfo():
         return f"ProcessInfo({name_str}, {window_str}, {values_str}, {mylist_db_str}, {mylist_info_db_str})"
 
     @classmethod
-    def create(self, process_name: str, main_window: "MainWindow") -> Self:
+    def create(cls, process_name: str, main_window: "MainWindow") -> Self:
         # if not isinstance(main_window, MainWindow):
         #     raise ValueError("main_window must be MainWindow.")
         if not hasattr(main_window, "window"):

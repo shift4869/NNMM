@@ -10,7 +10,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.create_mylist import CreateMylist, CreateMylistThreadDone
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result, get_mylist_type
+from NNMM.util import MylistType, Result, get_mylist_type
 
 
 class TestCreateMylist(unittest.TestCase):
@@ -139,10 +139,10 @@ class TestCreateMylist(unittest.TestCase):
                 mock_popup_get_text.return_value = s_mylist_url
 
                 mock_get_mylist_type.reset_mock()
-                if s_url_type in ["uploaded", "mylist"]:
+                if isinstance(s_url_type, MylistType):
                     mock_get_mylist_type.side_effect = get_mylist_type
                 else:
-                    mock_get_mylist_type.side_effect = lambda mylist_url: ""
+                    mock_get_mylist_type.side_effect = lambda mylist_url: None
 
                 mock_select_from_url.reset_mock()
                 mock_select_from_url.side_effect = lambda mylist_url: s_prev_mylist
@@ -220,12 +220,12 @@ class TestCreateMylist(unittest.TestCase):
                 mylistname = ""
                 showname = ""
                 is_include_new = False
-                if url_type == "uploaded":
+                if url_type == MylistType.uploaded:
                     username = s_username
                     mylistname = "投稿動画"
                     showname = f"{username}さんの投稿動画"
                     is_include_new = False
-                elif url_type == "mylist":
+                elif url_type == MylistType.mylist:
                     username = s_username
                     mylistname = s_mylistname
                     showname = f"「{mylistname}」-{username}さんのマイリスト"

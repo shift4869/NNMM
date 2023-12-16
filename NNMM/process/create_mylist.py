@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 from NNMM.process import config as process_config
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result, get_mylist_type, get_now_datetime, popup_get_text
+from NNMM.util import MylistType, Result, get_mylist_type, get_now_datetime, popup_get_text
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -75,7 +75,7 @@ class CreateMylist(ProcessBase):
 
         # 入力されたurlが対応したタイプでない場合何もしない
         url_type = get_mylist_type(mylist_url)
-        if url_type == "":
+        if not url_type:
             sg.popup("入力されたURLには対応していません\n新規追加処理を終了します", title="")
             logger.info(f"Create mylist failed, '{mylist_url}' is invalid url.")
             return Result.failed
@@ -112,7 +112,7 @@ class CreateMylist(ProcessBase):
         showname = ""
         is_include_new = False
 
-        layout = self.make_layout(url_type, mylist_url, window_title)
+        layout = self.make_layout(url_type.value, mylist_url, window_title)
         window = sg.Window(title=window_title, layout=layout, auto_size_text=True, finalize=True)
         window["-USERNAME-"].set_focus(True)
         button, values = window.read()
@@ -122,12 +122,12 @@ class CreateMylist(ProcessBase):
             logger.info("Create mylist canceled.")
             return Result.failed
         else:
-            if url_type == "uploaded":
+            if url_type == MylistType.uploaded:
                 username = values["-USERNAME-"]
                 mylistname = "投稿動画"
                 showname = f"{username}さんの投稿動画"
                 is_include_new = False
-            elif url_type == "mylist":
+            elif url_type == MylistType.mylist:
                 username = values["-USERNAME-"]
                 mylistname = values["-MYLISTNAME-"]
                 showname = f"「{mylistname}」-{username}さんのマイリスト"

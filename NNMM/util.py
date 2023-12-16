@@ -15,6 +15,11 @@ class Result(enum.Enum):
     failed = enum.auto()
 
 
+class MylistType(enum.Enum):
+    uploaded = "uploaded"
+    mylist = "mylist"
+
+
 def find_values(obj: Any,
                 key: str,
                 is_predict_one: bool = False,
@@ -115,24 +120,24 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
                          r["created_at"], r["updated_at"], r["checked_at"], r["check_interval"], r["is_include_new"])
     return 0
 
-def get_mylist_type(url: str) -> str:
+def get_mylist_type(url: str) -> MylistType | None:
     """マイリストのタイプを返す
 
     Args:
         url (str): 判定対象URL
 
     Returns:
-        str: マイリストのタイプ 以下のタイプのいずれでもない場合、空文字列を返す
-             "uploaded": 投稿動画
-             "mylist": 通常のマイリスト
+        MylistType: マイリストのタイプ 以下のタイプのいずれでもない場合、Noneを返す
+                    "uploaded": 投稿動画
+                    "mylist": 通常のマイリスト
     """
     pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
     if re.search(pattern, url):
-        return "uploaded"
+        return MylistType.uploaded
     pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
     if re.search(pattern, url):
-        return "mylist"
-    return ""
+        return MylistType.mylist
+    return None
 
 def get_now_datetime() -> str:
     """タイムスタンプを返す

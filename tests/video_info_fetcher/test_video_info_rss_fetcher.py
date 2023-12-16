@@ -398,11 +398,11 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
         username_list = [video_info["username"] for video_info in video_info_list]
 
-        if url_type == "uploaded":
+        if url_type == util.MylistType.uploaded:
             username = mylist_info[2]
             showname = f"{username}さんの投稿動画"
             myshowname = "投稿動画"
-        elif url_type == "mylist":
+        elif url_type == util.MylistType.mylist:
             username = mylist_info[2]
             myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
             showname = f"「{myshowname}」-{username}さんのマイリスト"
