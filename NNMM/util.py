@@ -8,7 +8,6 @@ import PySimpleGUI as sg
 
 from NNMM.model import Mylist
 from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
 
 
 class Result(enum.Enum):
@@ -234,100 +233,6 @@ def popup_get_text(message, title=None, default_text='', password_char='', size=
     else:
         path = values["-INPUT-"]
         return path
-
-def update_mylist_pane(window: sg.Window, mylist_db: MylistDBController) -> int:
-    """マイリストペインの表示を更新する
-
-    Args:
-        window (sg.Window): pysimpleguiのwindowオブジェクト
-        mylist_db (MylistDBController): マイリストDBコントローラー
-
-    Returns:
-        int: 成功時0
-    """
-    # 現在選択中のマイリストがある場合そのindexを保存
-    index = 0
-    if window["-LIST-"].get_indexes():
-        index = window["-LIST-"].get_indexes()[0]
-
-    # マイリスト画面表示更新
-    NEW_MARK = "*:"
-    list_data = window["-LIST-"].Values
-    m_list = mylist_db.select()
-    include_new_index_list = []
-    for i, m in enumerate(m_list):
-        if m["is_include_new"]:
-            m["showname"] = NEW_MARK + m["showname"]
-            include_new_index_list.append(i)
-    list_data = [m["showname"] for m in m_list]
-    window["-LIST-"].update(values=list_data)
-
-    # 新着マイリストの背景色とテキスト色を変更する
-    # update(values=list_data)で更新されるとデフォルトに戻る？
-    # 強調したいindexのみ適用すればそれ以外はデフォルトになる
-    for i in include_new_index_list:
-        window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
-
-    # indexをセットしてスクロール
-    # scroll_to_indexは強制的にindexを一番上に表示するのでWidget.seeを使用
-    # window["-LIST-"].update(scroll_to_index=index)
-    window["-LIST-"].Widget.see(index)
-    window["-LIST-"].update(set_to_index=index)
-    return 0
-
-def update_table_pane(window: sg.Window, mylist_db: MylistDBController, mylist_info_db: MylistInfoDBController, mylist_url: str = "") -> int:
-    """テーブルリストペインの表示を更新する
-
-    Args:
-        window (sg.Window): pysimpleguiのwindowオブジェクト
-        mylist_db (MylistDBController): マイリストDBコントローラー
-        mylist_info_db (MylistInfoDBController): 動画情報DBコントローラー
-        mylist_url (str): 表示対象マイリスト
-
-    Returns:
-        int: 成功時0, エラー時-1
-    """
-    # 表示対象マイリストが空白の場合は
-    # 右上のテキストボックスに表示されている現在のマイリストURLを設定する(window["-INPUT1-"])
-    if mylist_url == "":
-        mylist_url = window["-INPUT1-"].get()
-
-    index = 0
-    def_data = []
-    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-    if mylist_url == "":
-        # 引数も右上のテキストボックスも空白の場合
-        # 現在表示しているテーブルの表示をリフレッシュする処理のみ行う
-        def_data = window["-TABLE-"].Values  # 現在のtableの全リスト
-
-        # 現在選択中のマイリストがある場合そのindexを保存
-        index = 0
-        if window["-LIST-"].get_indexes():
-            index = window["-LIST-"].get_indexes()[0]
-    else:
-        # 現在のマイリストURLからlistboxのindexを求める
-        m_list = mylist_db.select()
-        mylist_url_list = [m["url"] for m in m_list]
-        for i, url in enumerate(mylist_url_list):
-            if mylist_url == url:
-                index = i
-                break
-
-        # 現在のマイリストURLからテーブル情報を求める
-        records = mylist_info_db.select_from_mylist_url(mylist_url)
-        for i, m in enumerate(records):
-            a = [i + 1, m["video_id"], m["title"], m["username"], m["status"], m["uploaded_at"], m["registered_at"], m["video_url"], m["mylist_url"]]
-            def_data.append(a)
-
-    # 画面更新
-    # window["-LIST-"].update(set_to_index=index)
-    window["-LIST-"].Widget.see(index)
-    window["-TABLE-"].update(values=def_data)
-    if len(def_data) > 0:
-        window["-TABLE-"].update(select_rows=[0])
-    # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き
-    window["-TABLE-"].update(row_colors=[(0, "", "")])
-    return 0
 
 
 if __name__ == "__main__":
