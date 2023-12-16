@@ -9,12 +9,12 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.search import ProcessMylistSearchFromVideo
+from NNMM.process.search import MylistSearchFromVideo
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 
-class TestProcessMylistSearchFromVideo(unittest.TestCase):
+class TestMylistSearchFromVideo(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -75,7 +75,7 @@ class TestProcessMylistSearchFromVideo(unittest.TestCase):
             mock_mylist_db = MagicMock()
             mock_mylist_info_db = MagicMock()
 
-            instance = ProcessMylistSearchFromVideo(self.process_info)
+            instance = MylistSearchFromVideo(self.process_info)
 
             def pre_run(pattern, get_indexes, is_include_new, is_hit):
                 mock_popup_get_text.reset_mock()

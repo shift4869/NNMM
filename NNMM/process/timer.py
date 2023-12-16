@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
 from NNMM.process.base import ProcessBase
-from NNMM.process.config import ProcessConfigBase
+from NNMM.process.config import ConfigBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -12,7 +12,7 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessTimer(ProcessBase):
+class Timer(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
         self.timer_thread = None
@@ -28,7 +28,7 @@ class ProcessTimer(ProcessBase):
             Result: 成功時success, エラー時failed
         """
         # オートリロード設定を取得する
-        config = ProcessConfigBase.get_config()
+        config = ConfigBase.get_config()
         i_str = config["general"].get("auto_reload", "")
         if i_str == "(使用しない)" or i_str == "":
             # オートリロード間隔が設定されていないならばスキップ

@@ -7,14 +7,14 @@ from mock import MagicMock, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.config import ProcessConfigLoad
+from NNMM.process.config import ConfigLoad
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
 
-class TestProcessConfigLoad(unittest.TestCase):
+class TestConfigLoad(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -24,13 +24,13 @@ class TestProcessConfigLoad(unittest.TestCase):
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def test_init(self):
-        process_mylist_load = ProcessConfigLoad(self.process_info)
+        process_mylist_load = ConfigLoad(self.process_info)
         self.assertEqual(self.process_info, process_mylist_load.process_info)
 
     def test_run(self):
         with ExitStack() as stack:
-            mocksc = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.set_config"))
-            mockgc = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.get_config"))
+            mocksc = stack.enter_context(patch("NNMM.process.config.ConfigBase.set_config"))
+            mockgc = stack.enter_context(patch("NNMM.process.config.ConfigBase.get_config"))
 
             expect_dict = {
                 "general": {
@@ -57,7 +57,7 @@ class TestProcessConfigLoad(unittest.TestCase):
             }
 
             self.process_info.window = mock_dict
-            process_config_load = ProcessConfigLoad(self.process_info)
+            process_config_load = ConfigLoad(self.process_info)
             actual = process_config_load.run()
             self.assertIs(Result.success, actual)
 

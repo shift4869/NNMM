@@ -7,12 +7,12 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.move_down import ProcessMoveDown
+from NNMM.process.move_down import MoveDown
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 
-class TestProcessMoveDown(unittest.TestCase):
+class TestMoveDown(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -28,7 +28,7 @@ class TestProcessMoveDown(unittest.TestCase):
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.move_down.update_mylist_pane"))
             mock_window = MagicMock()
 
-            instance = ProcessMoveDown(self.process_info)
+            instance = MoveDown(self.process_info)
             def pre_run(s_src_index, s_max_index, s_src_v, s_dst_v):
                 instance.values.reset_mock()
                 if s_src_v == "":

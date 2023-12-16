@@ -6,14 +6,14 @@ import PySimpleGUI as sg
 from NNMM.process import config as process_config
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.watched import ProcessWatched
+from NNMM.process.watched import Watched
 from NNMM.util import Result
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessVideoPlay(ProcessBase):
+class VideoPlay(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -43,7 +43,7 @@ class ProcessVideoPlay(ProcessBase):
         record = records[0]
         video_url = record.get("video_url")
 
-        config = process_config.ProcessConfigBase.get_config()
+        config = process_config.ConfigBase.get_config()
         cmd = config["general"].get("browser_path", "")
         if cmd != "" and Path(cmd).is_file():
             # ブラウザに動画urlを渡す
@@ -64,7 +64,7 @@ class ProcessVideoPlay(ProcessBase):
         # 状況を更新
         if def_data[row][STATUS_INDEX] != "":
             # 視聴済にする
-            pb = ProcessWatched()
+            pb = Watched()
             pb.run()
 
         logger.info(f"VideoPlay success.")

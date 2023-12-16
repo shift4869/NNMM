@@ -8,7 +8,7 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessMoveDown(ProcessBase):
+class MoveDown(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 

@@ -9,12 +9,12 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.not_watched import ProcessNotWatched
+from NNMM.process.not_watched import NotWatched
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 
-class TestProcessNotWatched(unittest.TestCase):
+class TestNotWatched(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -43,7 +43,7 @@ class TestProcessNotWatched(unittest.TestCase):
                 "https://www.nicovideo.jp/watch/sm12346578",
                 "https://www.nicovideo.jp/user/11111111/video"
             ]]
-            instance = ProcessNotWatched(self.process_info)
+            instance = NotWatched(self.process_info)
             def pre_run(s_value, s_update_status):
                 s_def_data = deepcopy(def_data)
                 mock_window.reset_mock()

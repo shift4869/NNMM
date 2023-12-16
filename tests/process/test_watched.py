@@ -10,11 +10,11 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.watched import ProcessWatched
+from NNMM.process.watched import Watched
 from NNMM.util import Result
 
 
-class TestProcessWatched(unittest.TestCase):
+class TestWatched(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -115,7 +115,7 @@ class TestProcessWatched(unittest.TestCase):
             mock_include_new_video = stack.enter_context(patch("NNMM.process.watched.is_mylist_include_new_video"))
             mock_window = MagicMock()
 
-            instance = ProcessWatched(self.process_info)
+            instance = Watched(self.process_info)
 
             m_list = self._make_mylist_db()
             mylist_url = m_list[0]["url"]

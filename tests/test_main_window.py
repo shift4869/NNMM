@@ -44,7 +44,7 @@ class TestWindowMain(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
             mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.set_config"))
+            mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
             mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
@@ -123,38 +123,38 @@ class TestWindowMain(unittest.TestCase):
 
             # イベントと処理の辞書
             expect_dict = {
-                "ブラウザで開く::-TR-": video_play.ProcessVideoPlay,
-                "視聴済にする::-TR-": watched.ProcessWatched,
-                "未視聴にする::-TR-": not_watched.ProcessNotWatched,
-                "検索（動画名）::-TR-": search.ProcessVideoSearch,
-                "強調表示を解除::-TR-": search.ProcessVideoSearchClear,
+                "ブラウザで開く::-TR-": video_play.VideoPlay,
+                "視聴済にする::-TR-": watched.Watched,
+                "未視聴にする::-TR-": not_watched.NotWatched,
+                "検索（動画名）::-TR-": search.VideoSearch,
+                "強調表示を解除::-TR-": search.VideoSearchClear,
                 "情報表示::-TR-": popup.PopupVideoWindow,
                 "全動画表示::-MR-": show_mylist_info_all.ProcessShowMylistInfoAll,
-                "視聴済にする（選択）::-MR-": watched_mylist.ProcessWatchedMylist,
-                "視聴済にする（全て）::-MR-": watched_all_mylist.ProcessWatchedAllMylist,
-                "上に移動::-MR-": move_up.ProcessMoveUp,
-                "下に移動::-MR-": move_down.ProcessMoveDown,
-                "マイリスト追加::-MR-": create_mylist.ProcessCreateMylist,
-                "マイリスト削除::-MR-": delete_mylist.ProcessDeleteMylist,
-                "検索（マイリスト名）::-MR-": search.ProcessMylistSearch,
-                "検索（動画名）::-MR-": search.ProcessMylistSearchFromVideo,
-                "検索（URL）::-MR-": search.ProcessMylistSearchFromMylistURL,
-                "強調表示を解除::-MR-": search.ProcessMylistSearchClear,
+                "視聴済にする（選択）::-MR-": watched_mylist.WatchedMylist,
+                "視聴済にする（全て）::-MR-": watched_all_mylist.WatchedAllMylist,
+                "上に移動::-MR-": move_up.MoveUp,
+                "下に移動::-MR-": move_down.MoveDown,
+                "マイリスト追加::-MR-": create_mylist.CreateMylist,
+                "マイリスト削除::-MR-": delete_mylist.DeleteMylist,
+                "検索（マイリスト名）::-MR-": search.MylistSearch,
+                "検索（動画名）::-MR-": search.MylistSearchFromVideo,
+                "検索（URL）::-MR-": search.MylistSearchFromMylistURL,
+                "強調表示を解除::-MR-": search.MylistSearchClear,
                 "情報表示::-MR-": popup.PopupMylistWindow,
                 "-LIST-+DOUBLE CLICK+": show_mylist_info.ProcessShowMylistInfo,
-                "-CREATE-": create_mylist.ProcessCreateMylist,
-                "-CREATE_THREAD_DONE-": create_mylist.ProcessCreateMylistThreadDone,
-                "-DELETE-": delete_mylist.ProcessDeleteMylist,
+                "-CREATE-": create_mylist.CreateMylist,
+                "-CREATE_THREAD_DONE-": create_mylist.CreateMylistThreadDone,
+                "-DELETE-": delete_mylist.DeleteMylist,
                 "-UPDATE-": update_mylist_info.ProcessUpdateMylistInfo,
                 "-UPDATE_THREAD_DONE-": update_mylist_info.ProcessUpdateMylistInfoThreadDone,
                 "-ALL_UPDATE-": update_all_mylist_info.ProcessUpdateAllMylistInfo,
                 "-ALL_UPDATE_THREAD_DONE-": update_all_mylist_info.ProcessUpdateAllMylistInfoThreadDone,
                 "-PARTIAL_UPDATE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfo,
                 "-PARTIAL_UPDATE_THREAD_DONE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfoThreadDone,
-                "-C_CONFIG_SAVE-": config.ProcessConfigSave,
-                "-C_MYLIST_SAVE-": config.ProcessMylistSaveCSV,
-                "-C_MYLIST_LOAD-": config.ProcessMylistLoadCSV,
-                "-TIMER_SET-": timer.ProcessTimer,
+                "-C_CONFIG_SAVE-": config.ConfigSave,
+                "-C_MYLIST_SAVE-": config.MylistSaveCSV,
+                "-C_MYLIST_LOAD-": config.MylistLoadCSV,
+                "-TIMER_SET-": timer.Timer,
             }
             self.assertEqual(expect_dict, mw.dict)
         pass
@@ -164,13 +164,13 @@ class TestWindowMain(unittest.TestCase):
         """
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.set_config"))
-            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.get_config"))
+            mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
+            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.get_config"))
             mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
             mockump = stack.enter_context(patch("NNMM.main_window.update_mylist_pane"))
-            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.make_layout"))
+            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.make_layout"))
 
             # sg.Outputだけは標準エラー等に干渉するためdummyに置き換える
             mockop = stack.enter_context(patch("NNMM.main_window.sg.Output"))
@@ -331,15 +331,15 @@ class TestWindowMain(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
             mockle = stack.enter_context(patch("NNMM.main_window.logger.error"))
             mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.set_config"))
-            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.get_config"))
+            mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
+            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.get_config"))
             mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
             mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
             mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
             mockump = stack.enter_context(patch("NNMM.main_window.update_mylist_pane"))
-            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigBase.make_layout"))
-            mockcmpcl = stack.enter_context(patch("NNMM.main_window.config.ProcessConfigLoad"))
+            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.make_layout"))
+            mockcmpcl = stack.enter_context(patch("NNMM.main_window.config.ConfigLoad"))
             mockpi = stack.enter_context(patch("NNMM.main_window.ProcessInfo.create"))
 
             def r_mock_window(title, layout, icon, size, finalize, resizable):

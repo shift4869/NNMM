@@ -14,7 +14,7 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessCreateMylist(ProcessBase):
+class CreateMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -93,7 +93,7 @@ class ProcessCreateMylist(ProcessBase):
 
         # オートリロード間隔を取得する
         check_interval = ""
-        config = process_config.ProcessConfigBase.get_config()
+        config = process_config.ConfigBase.get_config()
         i_str = config["general"].get("auto_reload", "")
         try:
             if i_str == "(使用しない)" or i_str == "":
@@ -157,7 +157,7 @@ class ProcessCreateMylist(ProcessBase):
         return Result.success
 
 
-class ProcessCreateMylistThreadDone(ProcessBase):
+class CreateMylistThreadDone(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 

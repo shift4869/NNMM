@@ -7,14 +7,14 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.config import ProcessConfigBase
+from NNMM.process.config import ConfigBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
 
-class ConcreteProcessConfigBase(ProcessConfigBase):
+class ConcreteConfigBase(ConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -22,9 +22,9 @@ class ConcreteProcessConfigBase(ProcessConfigBase):
         return Result.success
 
 
-class TestProcessConfigBase(unittest.TestCase):
+class TestConfigBase(unittest.TestCase):
     def setUp(self):
-        ProcessConfigBase.config = None
+        ConfigBase.config = None
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=sg.Window)
@@ -33,11 +33,11 @@ class TestProcessConfigBase(unittest.TestCase):
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def test_init(self):
-        process_config_base = ConcreteProcessConfigBase(self.process_info)
+        process_config_base = ConcreteConfigBase(self.process_info)
 
         self.assertEqual(self.process_info, process_config_base.process_info)
-        self.assertEqual(CONFIG_FILE_PATH, ProcessConfigBase.CONFIG_FILE_PATH)
-        self.assertEqual(None, ProcessConfigBase.config)
+        self.assertEqual(CONFIG_FILE_PATH, ConfigBase.CONFIG_FILE_PATH)
+        self.assertEqual(None, ConfigBase.config)
 
     def test_make_layout(self):
         def expect_config_layout() -> sg.Frame:
@@ -73,7 +73,7 @@ class TestProcessConfigBase(unittest.TestCase):
             return layout
 
         expect = expect_config_layout()
-        actual = ProcessConfigBase.make_layout()
+        actual = ConfigBase.make_layout()
 
         self.assertEqual(type(expect), type(actual))
         self.assertEqual(len(expect), len(actual))
@@ -90,18 +90,18 @@ class TestProcessConfigBase(unittest.TestCase):
 
     def test_get_config(self):
         with ExitStack() as stack:
-            mock_set_config = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.set_config"))
+            mock_set_config = stack.enter_context(patch("NNMM.process.config.ConfigBase.set_config"))
 
             # 初回取得
-            ProcessConfigBase.config = None
-            actual = ProcessConfigBase.get_config()
+            ConfigBase.config = None
+            actual = ConfigBase.get_config()
             self.assertEqual(None, actual)
             mock_set_config.assert_called_once()
             mock_set_config.reset_mock()
 
             # 2回目
-            ProcessConfigBase.config = "loaded config"
-            actual = ProcessConfigBase.get_config()
+            ConfigBase.config = "loaded config"
+            actual = ConfigBase.get_config()
             self.assertEqual("loaded config", actual)
             mock_set_config.assert_not_called()
             mock_set_config.reset_mock()
@@ -112,7 +112,7 @@ class TestProcessConfigBase(unittest.TestCase):
             mock_config = MagicMock()
             mock_configparser.side_effect = lambda: mock_config
 
-            actual = ProcessConfigBase.set_config()
+            actual = ConfigBase.set_config()
             self.assertEqual(mock_config, actual)
 
             self.assertEqual(
@@ -121,7 +121,7 @@ class TestProcessConfigBase(unittest.TestCase):
             )
 
         # 実際に取得してiniファイルの構造を調べる
-        actual = ProcessConfigBase.set_config()
+        actual = ConfigBase.set_config()
         self.assertTrue("general" in actual)
         self.assertTrue("browser_path" in actual["general"])
         self.assertTrue("auto_reload" in actual["general"])

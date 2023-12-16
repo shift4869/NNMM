@@ -11,7 +11,7 @@ from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result, load_mylist, save_mylist, update_mylist_pane
 
 
-class ProcessConfigBase(ProcessBase):
+class ConfigBase(ProcessBase):
     """コンフィグ機能のベースクラス
 
     派生クラスと外部から使用されるクラス変数とクラスメソッドを定義する
@@ -73,7 +73,7 @@ class ProcessConfigBase(ProcessBase):
             ConfigParser: クラス変数config
         """
         if not cls.config:
-            ProcessConfigBase.set_config()
+            ConfigBase.set_config()
         return cls.config
 
     @classmethod
@@ -91,7 +91,7 @@ class ProcessConfigBase(ProcessBase):
         return cls.config
 
 
-class ProcessMylistLoadCSV(ProcessConfigBase):
+class MylistLoadCSV(ConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -134,7 +134,7 @@ class ProcessMylistLoadCSV(ProcessConfigBase):
             return Result.failed
 
 
-class ProcessMylistSaveCSV(ProcessConfigBase):
+class MylistSaveCSV(ConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -171,7 +171,7 @@ class ProcessMylistSaveCSV(ProcessConfigBase):
             return Result.failed
 
 
-class ProcessConfigLoad(ProcessConfigBase):
+class ConfigLoad(ConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -182,8 +182,8 @@ class ProcessConfigLoad(ProcessConfigBase):
             "-TAB_CHANGED-" -> select_tab == "設定"
             config.iniをロードして現在の設定値をレイアウトに表示する
         """
-        ProcessConfigBase.set_config()
-        c = ProcessConfigBase.get_config()
+        ConfigBase.set_config()
+        c = ConfigBase.get_config()
         window = self.window
 
         # General
@@ -199,7 +199,7 @@ class ProcessConfigLoad(ProcessConfigBase):
         return Result.success
 
 
-class ProcessConfigSave(ProcessConfigBase):
+class ConfigSave(ConfigBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -211,7 +211,7 @@ class ProcessConfigSave(ProcessConfigBase):
             GUIで設定された値をconfig.iniに保存する
         """
         c = configparser.ConfigParser()
-        c.read(ProcessConfigBase.CONFIG_FILE_PATH, encoding="utf-8")
+        c.read(ConfigBase.CONFIG_FILE_PATH, encoding="utf-8")
         window = self.window
 
         # General
@@ -247,9 +247,9 @@ class ProcessConfigSave(ProcessConfigBase):
             c["db"]["save_path"] = window["-C_DB_PATH-"].get()
 
         # ファイルを保存する
-        with Path(ProcessConfigBase.CONFIG_FILE_PATH).open("w", encoding="utf-8") as fout:
+        with Path(ConfigBase.CONFIG_FILE_PATH).open("w", encoding="utf-8") as fout:
             c.write(fout)
-        ProcessConfigBase.set_config()
+        ConfigBase.set_config()
         return Result.success
 
 

@@ -7,12 +7,12 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.delete_mylist import ProcessDeleteMylist
+from NNMM.process.delete_mylist import DeleteMylist
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 
-class TestProcessDeleteMylist(unittest.TestCase):
+class TestDeleteMylist(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -29,7 +29,7 @@ class TestProcessDeleteMylist(unittest.TestCase):
             mock_popup_ok_cancel = stack.enter_context(patch("NNMM.process.delete_mylist.sg.popup_ok_cancel"))
             mock_mylist_db = MagicMock()
 
-            instance = ProcessDeleteMylist(self.process_info)
+            instance = DeleteMylist(self.process_info)
 
             # 正常系
             showname_s = "sample_mylist_showname"

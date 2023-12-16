@@ -24,7 +24,7 @@ class MainWindow():
         """メインウィンドウクラスのコンストラクタ
         """
         # 設定値初期化
-        self.config = config.ProcessConfigBase.set_config()
+        self.config = config.ConfigBase.set_config()
 
         # DB操作コンポーネント設定
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
@@ -68,38 +68,38 @@ class MainWindow():
 
         # イベントと処理の辞書
         self.dict = {
-            "ブラウザで開く::-TR-": video_play.ProcessVideoPlay,
-            "視聴済にする::-TR-": watched.ProcessWatched,
-            "未視聴にする::-TR-": not_watched.ProcessNotWatched,
-            "検索（動画名）::-TR-": search.ProcessVideoSearch,
-            "強調表示を解除::-TR-": search.ProcessVideoSearchClear,
+            "ブラウザで開く::-TR-": video_play.VideoPlay,
+            "視聴済にする::-TR-": watched.Watched,
+            "未視聴にする::-TR-": not_watched.NotWatched,
+            "検索（動画名）::-TR-": search.VideoSearch,
+            "強調表示を解除::-TR-": search.VideoSearchClear,
             "情報表示::-TR-": popup.PopupVideoWindow,
             "全動画表示::-MR-": show_mylist_info_all.ProcessShowMylistInfoAll,
-            "視聴済にする（選択）::-MR-": watched_mylist.ProcessWatchedMylist,
-            "視聴済にする（全て）::-MR-": watched_all_mylist.ProcessWatchedAllMylist,
-            "上に移動::-MR-": move_up.ProcessMoveUp,
-            "下に移動::-MR-": move_down.ProcessMoveDown,
-            "マイリスト追加::-MR-": create_mylist.ProcessCreateMylist,
-            "マイリスト削除::-MR-": delete_mylist.ProcessDeleteMylist,
-            "検索（マイリスト名）::-MR-": search.ProcessMylistSearch,
-            "検索（動画名）::-MR-": search.ProcessMylistSearchFromVideo,
-            "検索（URL）::-MR-": search.ProcessMylistSearchFromMylistURL,
-            "強調表示を解除::-MR-": search.ProcessMylistSearchClear,
+            "視聴済にする（選択）::-MR-": watched_mylist.WatchedMylist,
+            "視聴済にする（全て）::-MR-": watched_all_mylist.WatchedAllMylist,
+            "上に移動::-MR-": move_up.MoveUp,
+            "下に移動::-MR-": move_down.MoveDown,
+            "マイリスト追加::-MR-": create_mylist.CreateMylist,
+            "マイリスト削除::-MR-": delete_mylist.DeleteMylist,
+            "検索（マイリスト名）::-MR-": search.MylistSearch,
+            "検索（動画名）::-MR-": search.MylistSearchFromVideo,
+            "検索（URL）::-MR-": search.MylistSearchFromMylistURL,
+            "強調表示を解除::-MR-": search.MylistSearchClear,
             "情報表示::-MR-": popup.PopupMylistWindow,
             "-LIST-+DOUBLE CLICK+": show_mylist_info.ProcessShowMylistInfo,
-            "-CREATE-": create_mylist.ProcessCreateMylist,
-            "-CREATE_THREAD_DONE-": create_mylist.ProcessCreateMylistThreadDone,
-            "-DELETE-": delete_mylist.ProcessDeleteMylist,
+            "-CREATE-": create_mylist.CreateMylist,
+            "-CREATE_THREAD_DONE-": create_mylist.CreateMylistThreadDone,
+            "-DELETE-": delete_mylist.DeleteMylist,
             "-UPDATE-": update_mylist_info.ProcessUpdateMylistInfo,
             "-UPDATE_THREAD_DONE-": update_mylist_info.ProcessUpdateMylistInfoThreadDone,
             "-ALL_UPDATE-": update_all_mylist_info.ProcessUpdateAllMylistInfo,
             "-ALL_UPDATE_THREAD_DONE-": update_all_mylist_info.ProcessUpdateAllMylistInfoThreadDone,
             "-PARTIAL_UPDATE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfo,
             "-PARTIAL_UPDATE_THREAD_DONE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfoThreadDone,
-            "-C_CONFIG_SAVE-": config.ProcessConfigSave,
-            "-C_MYLIST_SAVE-": config.ProcessMylistSaveCSV,
-            "-C_MYLIST_LOAD-": config.ProcessMylistLoadCSV,
-            "-TIMER_SET-": timer.ProcessTimer,
+            "-C_CONFIG_SAVE-": config.ConfigSave,
+            "-C_MYLIST_SAVE-": config.MylistSaveCSV,
+            "-C_MYLIST_LOAD-": config.MylistLoadCSV,
+            "-TIMER_SET-": timer.Timer,
         }
 
         logger.info("window setup done.")
@@ -185,7 +185,7 @@ class MainWindow():
                 [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
             ], size=(1370, 1000))
         ]]
-        cf_layout = config.ProcessConfigBase.make_layout()
+        cf_layout = config.ConfigBase.make_layout()
         lf_layout = [[
             sg.Frame("ログ", [
                 [sg.Column([[
@@ -238,7 +238,7 @@ class MainWindow():
                     # 設定タブを開いたときの処理
                     self.values = values
                     info = ProcessInfo.create(event, self)
-                    pb = config.ProcessConfigLoad(info)
+                    pb = config.ConfigLoad(info)
                     pb.run()
 
         # ウィンドウ終了処理

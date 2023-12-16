@@ -7,12 +7,12 @@ from mock import MagicMock, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.search import ProcessVideoSearchClear
+from NNMM.process.search import VideoSearchClear
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 
-class TestProcessVideoSearchClear(unittest.TestCase):
+class TestVideoSearchClear(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -26,7 +26,7 @@ class TestProcessVideoSearchClear(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.search.update_table_pane"))
             
-            instance = ProcessVideoSearchClear(self.process_info)
+            instance = VideoSearchClear(self.process_info)
             mylist_url = "mylist_url_1"
             instance.window.__getitem__.return_value.get = lambda: mylist_url
 

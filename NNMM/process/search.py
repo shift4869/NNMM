@@ -9,7 +9,7 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessMylistSearch(ProcessBase):
+class MylistSearch(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -80,7 +80,7 @@ class ProcessMylistSearch(ProcessBase):
         return Result.success
 
 
-class ProcessMylistSearchFromVideo(ProcessBase):
+class MylistSearchFromVideo(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -161,7 +161,7 @@ class ProcessMylistSearchFromVideo(ProcessBase):
         return Result.success
 
 
-class ProcessMylistSearchFromMylistURL(ProcessBase):
+class MylistSearchFromMylistURL(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -237,7 +237,7 @@ class ProcessMylistSearchFromMylistURL(ProcessBase):
         return Result.success
 
 
-class ProcessVideoSearch(ProcessBase):
+class VideoSearch(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -299,7 +299,7 @@ class ProcessVideoSearch(ProcessBase):
         return Result.success
 
 
-class ProcessMylistSearchClear(ProcessBase):
+class MylistSearchClear(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -322,7 +322,7 @@ class ProcessMylistSearchClear(ProcessBase):
         return Result.success
 
 
-class ProcessVideoSearchClear(ProcessBase):
+class VideoSearchClear(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 

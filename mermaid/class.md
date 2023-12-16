@@ -14,20 +14,20 @@ classDiagram
 
     class ProcessBase{
         ：以下はすべてProcessBaseを継承する
-        class ProcessCreateMylist
-        class ProcessDeleteMylist
-        class ProcessDownload
-        class ProcessMoveDown
-        class ProcessMoveUp
-        class ProcessNotWatched
-        class ProcessSearch
+        class CreateMylist
+        class DeleteMylist
+        class Download
+        class MoveDown
+        class MoveUp
+        class NotWatched
+        class Search
         class ProcessShowMylistInfo
         class ProcessShowMylistInfoAll
-        class ProcessVideoPlay
-        class ProcessWatched
-        class ProcessWatchedAllMylist
-        class ProcessWatchedMylist
-        class ProcessTimer
+        class VideoPlay
+        class Watched
+        class WatchedAllMylist
+        class WatchedMylist
+        class Timer
     }
 
     class ProcessUpdateMylistInfoBase{
@@ -44,12 +44,12 @@ classDiagram
         class PopupVideoWindow
     }
 
-    class ProcessConfigBase{
-        ：以下はすべてProcessConfigBaseを継承する
-        class ProcessMylistLoadCSV
-        class ProcessMylistSaveCSV
-        class ProcessConfigLoad
-        class ProcessConfigSave
+    class ConfigBase{
+        ：以下はすべてConfigBaseを継承する
+        class MylistLoadCSV
+        class MylistSaveCSV
+        class ConfigLoad
+        class ConfigSave
     }
 
     MainWindow o-- DBControllerBase
@@ -64,5 +64,5 @@ classDiagram
 
     ProcessBase <|-- ProcessUpdateMylistInfoBase
     ProcessBase <|-- PopupWindowBase
-    ProcessBase <|-- ProcessConfigBase
+    ProcessBase <|-- ConfigBase
 ```

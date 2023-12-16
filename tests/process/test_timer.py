@@ -9,7 +9,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.timer import ProcessTimer
+from NNMM.process.timer import Timer
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -24,7 +24,7 @@ class TestTimer(unittest.TestCase):
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def test_init(self):
-        instance = ProcessTimer(self.process_info)
+        instance = Timer(self.process_info)
         self.assertIsNone(instance.timer_thread)
 
     def test_run(self):
@@ -33,11 +33,11 @@ class TestTimer(unittest.TestCase):
             mockfg = stack.enter_context(freezegun.freeze_time(f_now))
             mockli = stack.enter_context(patch("NNMM.process.timer.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.timer.logger.error"))
-            mock_config = stack.enter_context(patch("NNMM.process.timer.ProcessConfigBase.get_config"))
+            mock_config = stack.enter_context(patch("NNMM.process.timer.ConfigBase.get_config"))
             mock_threading_timer = stack.enter_context(patch("NNMM.process.timer.threading.Timer"))
             mock_timer_thread = MagicMock()
 
-            instance = ProcessTimer(self.process_info)
+            instance = Timer(self.process_info)
 
             def pre_run(is_use_auto_reload, interval_num, skip_kind, is_cancel):
                 mock_config.reset_mock()

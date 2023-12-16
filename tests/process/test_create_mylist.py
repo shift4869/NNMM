@@ -8,12 +8,12 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.create_mylist import ProcessCreateMylist, ProcessCreateMylistThreadDone
+from NNMM.process.create_mylist import CreateMylist, CreateMylistThreadDone
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result, get_mylist_type
 
 
-class TestProcessCreateMylist(unittest.TestCase):
+class TestCreateMylist(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -44,12 +44,12 @@ class TestProcessCreateMylist(unittest.TestCase):
         res = mylist_info.get(mylist_url, ("", "", ""))
         return res
 
-    def test_ProcessCreateMylist_init(self):
-        instance = ProcessCreateMylist(self.process_info)
+    def test_CreateMylist_init(self):
+        instance = CreateMylist(self.process_info)
         self.assertEqual(self.process_info, instance.process_info)
 
-    def test_ProcessCreateMylist_make_layout(self):
-        instance = ProcessCreateMylist(self.process_info)
+    def test_CreateMylist_make_layout(self):
+        instance = CreateMylist(self.process_info)
         def make_layout(s_url_type, s_mylist_url, s_window_title):
             horizontal_line = "-" * 132
             csize = (20, 1)
@@ -117,19 +117,19 @@ class TestProcessCreateMylist(unittest.TestCase):
             expect = make_layout(params[0], params[1], params[2])
             self.assertEqual(0, check_layout(expect, actual))
 
-    def test_ProcessCreateMylist_run(self):
+    def test_CreateMylist_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.create_mylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.create_mylist.logger.error"))
             mockpu = stack.enter_context(patch("NNMM.process.create_mylist.sg.popup"))
-            mock_get_config = stack.enter_context(patch("NNMM.process.create_mylist.process_config.ProcessConfigBase.get_config"))
+            mock_get_config = stack.enter_context(patch("NNMM.process.create_mylist.process_config.ConfigBase.get_config"))
             mock_get_mylist_type = stack.enter_context(patch("NNMM.process.create_mylist.get_mylist_type"))
             mock_get_now_datetime = stack.enter_context(patch("NNMM.process.create_mylist.get_now_datetime"))
             mock_popup_get_text = stack.enter_context(patch("NNMM.process.create_mylist.popup_get_text"))
             mock_window = stack.enter_context(patch("NNMM.process.create_mylist.sg.Window"))
-            mock_make_layout = stack.enter_context(patch("NNMM.process.create_mylist.ProcessCreateMylist.make_layout"))
+            mock_make_layout = stack.enter_context(patch("NNMM.process.create_mylist.CreateMylist.make_layout"))
             mock_select_from_url = MagicMock()
-            instance = ProcessCreateMylist(self.process_info)
+            instance = CreateMylist(self.process_info)
 
             mock_make_layout.return_value = "make_layout_response"
             mock_get_now_datetime.return_value = "mock_get_now_datetime_response"
@@ -263,17 +263,17 @@ class TestProcessCreateMylist(unittest.TestCase):
                     post_run(params[0], params[1], params[2], params[3], params[4], params[5], params[6])
         pass
 
-    def test_ProcessCreateMylistThreadDone_init(self):
-        instance = ProcessCreateMylistThreadDone(self.process_info)
+    def test_CreateMylistThreadDone_init(self):
+        instance = CreateMylistThreadDone(self.process_info)
         self.assertEqual(self.process_info, instance.process_info)
 
-    def test_ProcessCreateMylistThreadDone_run(self):
+    def test_CreateMylistThreadDone_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.create_mylist.logger.info"))
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.create_mylist.update_mylist_pane"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.create_mylist.update_table_pane"))
 
-            instance = ProcessCreateMylistThreadDone(self.process_info)
+            instance = CreateMylistThreadDone(self.process_info)
 
             actual = instance.run()
             self.assertIsNone(actual)

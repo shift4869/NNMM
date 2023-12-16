@@ -10,11 +10,11 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.watched_all_mylist import ProcessWatchedAllMylist
+from NNMM.process.watched_all_mylist import WatchedAllMylist
 from NNMM.util import Result
 
 
-class TestProcessWatchedAllMylist(unittest.TestCase):
+class TestWatchedAllMylist(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -83,7 +83,7 @@ class TestProcessWatchedAllMylist(unittest.TestCase):
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.update_mylist_pane"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.update_table_pane"))
 
-            instance = ProcessWatchedAllMylist(self.process_info)
+            instance = WatchedAllMylist(self.process_info)
 
             m_list = self._make_mylist_db()
             mylist_url = m_list[0]["url"]

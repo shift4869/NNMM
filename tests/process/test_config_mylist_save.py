@@ -8,14 +8,14 @@ from mock import MagicMock, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.config import ProcessMylistSaveCSV
+from NNMM.process.config import MylistSaveCSV
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
 
-class TestProcessMylistSaveCSV(unittest.TestCase):
+class TestMylistSaveCSV(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -25,7 +25,7 @@ class TestProcessMylistSaveCSV(unittest.TestCase):
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def test_init(self):
-        process_mylist_save = ProcessMylistSaveCSV(self.process_info)
+        process_mylist_save = MylistSaveCSV(self.process_info)
         self.assertEqual(self.process_info, process_mylist_save.process_info)
 
     def test_run(self):
@@ -39,7 +39,7 @@ class TestProcessMylistSaveCSV(unittest.TestCase):
             mocksml.side_effect = [0, -1]
 
             self.process_info.mylist_db.return_value = "mylist_db"
-            process_mylist_save = ProcessMylistSaveCSV(self.process_info)
+            process_mylist_save = MylistSaveCSV(self.process_info)
 
             # 正常系
             # 実行

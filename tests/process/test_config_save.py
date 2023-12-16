@@ -9,14 +9,14 @@ from mock import MagicMock, mock_open, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.config import ProcessConfigSave
+from NNMM.process.config import ConfigSave
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
 
-class TestProcessConfigSave(unittest.TestCase):
+class TestConfigSave(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -26,14 +26,14 @@ class TestProcessConfigSave(unittest.TestCase):
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def test_init(self):
-        process_mylist_save = ProcessConfigSave(self.process_info)
+        process_mylist_save = ConfigSave(self.process_info)
         self.assertEqual(self.process_info, process_mylist_save.process_info)
 
     def test_run(self):
         with ExitStack() as stack:
             mockcp = stack.enter_context(patch("NNMM.process.config.configparser.ConfigParser"))
             mockfp = stack.enter_context(patch("NNMM.process.config.Path.open", mock_open()))
-            mocksc = stack.enter_context(patch("NNMM.process.config.ProcessConfigBase.set_config"))
+            mocksc = stack.enter_context(patch("NNMM.process.config.ConfigBase.set_config"))
             mockmc = stack.enter_context(patch("NNMM.process.config.MylistDBController"))
             mockmbc = stack.enter_context(patch("NNMM.process.config.MylistInfoDBController"))
 
@@ -95,7 +95,7 @@ class TestProcessConfigSave(unittest.TestCase):
             Path(TEST_PREV_SAVE_PATH).touch()
 
             # 実行
-            process_mylist_save = ProcessConfigSave(self.process_info)
+            process_mylist_save = ConfigSave(self.process_info)
             actual = process_mylist_save.run()
             self.assertIs(Result.success, actual)
 
