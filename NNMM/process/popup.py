@@ -90,23 +90,18 @@ class PopupMylistWindow(PopupWindowBase):
         Returns:
             Result: 成功時success, エラー時failed
         """
-        # 親windowからの情報を取得する
-        values = self.values.get("-LIST-")
-
-        # 選択されたマイリストのShownameを取得する
-        if values and len(values) > 0:
-            values = values[0]
-        else:
+        # 選択されたマイリスト情報を取得する
+        selected_mylist_row = self.get_selected_mylist_row()
+        if not selected_mylist_row:
             logger.error("Mylist popup window Init failed, mylist is not selected.")
             return Result.failed
 
+        # 選択されたマイリストのShownameを取得する
         # 新着表示のマークがある場合は削除する
-        NEW_MARK = "*:"
-        if values[:2] == NEW_MARK:
-            values = values[2:]
+        showname = selected_mylist_row.without_new_mark_name()
 
         # 選択されたマイリストのマイリストレコードオブジェクトを取得する
-        record = self.mylist_db.select_from_showname(values)
+        record = self.mylist_db.select_from_showname(showname)
         if record and len(record) == 1:
             record = record[0]
         else:
@@ -258,7 +253,8 @@ class PopupMylistWindowSave(ProcessBase):
             return Result.failed
 
         # マイリスト情報更新
-        self.mylist_db.upsert(id_index, username, mylistname, typename, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)
+        self.mylist_db.upsert(id_index, username, mylistname, typename, showname, url,
+                              created_at, updated_at, checked_at, check_interval, is_include_new)
         logger.info("マイリスト情報Saved")
         return Result.success
 
@@ -273,25 +269,18 @@ class PopupVideoWindow(PopupWindowBase):
         Returns:
             Result: 成功時success, エラー時failed
         """
-        # 親windowからの情報を取得する
-        window = self.window
-        values = self.values
-
         # テーブルの行が選択されていなかったら何もしない
-        if not values["-TABLE-"]:
+        selected_table_row_index_list = self.get_selected_table_row_index_list()
+        if not selected_table_row_index_list:
             logger.info("Table row is not selected.")
             return Result.failed
 
-        # 選択されたテーブル行番号
-        row = int(values["-TABLE-"][0])
-        # 現在のテーブルの全リスト
-        def_data = window["-TABLE-"].Values
         # 選択されたテーブル行
-        selected = def_data[row]
+        selected_table_row = self.get_selected_table_row_list()[0]
 
         # 動画情報を取得する
-        video_id = selected[1]
-        mylist_url = selected[8]
+        video_id = selected_table_row.video_id.id
+        mylist_url = selected_table_row.mylist_url.non_query_url
         records = self.mylist_info_db.select_from_id_url(video_id, mylist_url)
 
         if records == [] or len(records) != 1:

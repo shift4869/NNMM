@@ -9,6 +9,7 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.popup import PopupMylistWindow, PopupMylistWindowSave
+from NNMM.process.value_objects.mylist_row import SelectedMylistRow
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -118,8 +119,7 @@ class TestPopupMylistWindow(unittest.TestCase):
     def test_init(self):
         with ExitStack() as stack:
             mock_logger_error = stack.enter_context(patch("NNMM.process.popup.logger.error"))
-            mock_values = MagicMock()
-            mock_mylist_db = MagicMock()
+            mock_selected_mylist_row = stack.enter_context(patch("NNMM.process.popup.ProcessBase.get_selected_mylist_row"))
 
             instance = PopupMylistWindow(self.process_info)
 
@@ -129,22 +129,25 @@ class TestPopupMylistWindow(unittest.TestCase):
                 instance.size = None
                 instance.process_dict = None
 
-                mock_values.reset_mock()
-                mock_values.get.side_effect = lambda key: s_value
-                instance.values = mock_values
+                mock_selected_mylist_row.reset_mock()
+                if s_value:
+                    def f(): return SelectedMylistRow.create(s_value)
+                    mock_selected_mylist_row.side_effect = f
+                else:
+                    def f(): return None
+                    mock_selected_mylist_row.side_effect = f
 
-                mock_mylist_db.reset_mock()
-                mock_mylist_db.select_from_showname.side_effect = lambda showname: s_record
-                instance.mylist_db = mock_mylist_db
+                instance.mylist_db.reset_mock()
+                instance.mylist_db.select_from_showname.side_effect = lambda showname: s_record
 
             def post_run(s_value, s_record):
                 self.assertEqual([
-                    call.get("-LIST-")
-                ], mock_values.mock_calls)
+                    call()
+                ], mock_selected_mylist_row.mock_calls)
                 if s_value and len(s_value) > 0:
-                    s_value = s_value[0]
+                    pass
                 else:
-                    mock_mylist_db.assert_not_called()
+                    instance.mylist_db.assert_not_called()
                     self.assertIsNone(instance.record)
                     self.assertIsNone(instance.title)
                     self.assertIsNone(instance.size)
@@ -157,7 +160,7 @@ class TestPopupMylistWindow(unittest.TestCase):
 
                 self.assertEqual([
                     call.select_from_showname(s_value)
-                ], mock_mylist_db.mock_calls)
+                ], instance.mylist_db.mock_calls)
                 if s_record and len(s_record) == 1:
                     s_record = s_record[0]
                 else:
@@ -175,11 +178,12 @@ class TestPopupMylistWindow(unittest.TestCase):
                 }, instance.process_dict)
 
             Params = namedtuple("Params", ["value", "record", "result"])
+            showname_1 = "投稿者1さんの投稿動画"
             params_list = [
-                Params(["showname_1"], ["record_1"], Result.success),
-                Params(["*:showname_1"], ["record_1"], Result.success),
+                Params(showname_1, ["record_1"], Result.success),
+                Params("*:" + showname_1, ["record_1"], Result.success),
                 Params(None, ["record_1"], Result.failed),
-                Params(["showname_1"], None, Result.failed),
+                Params(showname_1, None, Result.failed),
             ]
             for params in params_list:
                 pre_run(params.value, params.record)

@@ -63,7 +63,6 @@ class NotWatched(ProcessBase):
             self.mylist_db.update_include_flag(mylist_url, True)
 
         # テーブル更新を反映させる
-        # self.window["-TABLE-"].update(values=def_data)
         self.window["-TABLE-"].update(values=table_row_list.to_table_data())
 
         # テーブルの表示を更新する

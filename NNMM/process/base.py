@@ -39,6 +39,11 @@ class ProcessBase(ABC):
         raise NotImplementedError
 
     def get_selected_mylist_row_index(self) -> SelectedMylistRowIndex | None:
+        """self.window["-LIST-"].get_indexes()[0] から SelectedMylistRowIndex を取得
+
+        Returns:
+            SelectedMylistRowIndex | None: 選択マイリストインデックス
+        """
         try:
             return SelectedMylistRowIndex(
                 int(self.window["-LIST-"].get_indexes()[0])
@@ -47,6 +52,11 @@ class ProcessBase(ABC):
             return None
 
     def get_selected_mylist_row(self) -> SelectedMylistRow | None:
+        """self.values["-LIST-"] から SelectedMylistRow を取得
+
+        Returns:
+            SelectedMylistRow | None: 選択マイリスト行
+        """
         try:
             selected_mylist_row = list(self.values["-LIST-"])
             if not selected_mylist_row:
@@ -58,6 +68,11 @@ class ProcessBase(ABC):
             return None
 
     def get_all_mylist_row(self) -> MylistRowList | None:
+        """self.window["-LIST-"].Values から MylistRowList を取得
+
+        Returns:
+            MylistRowList | None: すべてのマイリストを含むリスト
+        """
         try:
             return MylistRowList.create(
                 self.window["-LIST-"].Values
@@ -66,6 +81,11 @@ class ProcessBase(ABC):
             return None
 
     def get_selected_table_row_index_list(self) -> SelectedTableRowIndexList | None:
+        """self.values["-TABLE-"] から SelectedTableRowIndexList を取得
+
+        Returns:
+            SelectedTableRowIndexList | None: 選択テーブル行インデックスリスト
+        """
         try:
             return SelectedTableRowIndexList.create(
                 self.values["-TABLE-"]
@@ -101,6 +121,11 @@ class ProcessBase(ABC):
             return None
 
     def get_all_table_row(self) -> TableRowList | None:
+        """self.window["-TABLE-"].Values から TableRowList を取得
+
+        Returns:
+            TableRowList | None: すべてのテーブル行を含むリスト
+        """
         try:
             return TableRowList.create(
                 self.window["-TABLE-"].Values
@@ -109,12 +134,22 @@ class ProcessBase(ABC):
             return None
 
     def get_upper_textbox(self) -> UpperTextbox:
+        """self.window["-INPUT1-"].get() から UpperTextbox を取得
+
+        Returns:
+            UpperTextbox: 上部テキストボックス
+        """
         try:
             return UpperTextbox(self.window["-INPUT1-"].get())
         except Exception:
             return None
 
     def get_bottom_textbox(self) -> BottomTextbox:
+        """self.window["-INPUT2-"].get() から BottomTextbox を取得
+
+        Returns:
+            UpperTextbox: 下部テキストボックス
+        """
         try:
             return BottomTextbox(self.window["-INPUT2-"].get())
         except Exception:
