@@ -8,6 +8,8 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.move_up import MoveUp
+from NNMM.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
+from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -26,30 +28,36 @@ class TestMoveUp(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.move_up.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.move_up.logger.error"))
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.update_mylist_pane"))
-            mock_window = MagicMock()
+            mock_selected_mylist_row = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.get_selected_mylist_row"))
+            mock_selected_mylist_row_index = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.get_selected_mylist_row_index"))
+            mock_all_mylist_row = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.get_all_mylist_row"))
 
             instance = MoveUp(self.process_info)
             def pre_run(s_src_index, s_max_index, s_src_v, s_dst_v):
-                instance.values.reset_mock()
+                mock_selected_mylist_row.reset_mock()
                 if s_src_v == "":
-                    instance.values.__getitem__.side_effect = lambda key: []
+                    def f(): return None
+                    mock_selected_mylist_row.side_effect = f
                 else:
-                    instance.values.__getitem__.side_effect = lambda key: [s_src_v]
+                    def f(): return SelectedMylistRow.create(s_src_v)
+                    mock_selected_mylist_row.side_effect = f
 
-                instance.window.reset_mock()
-                mock_window.reset_mock()
+                mock_selected_mylist_row_index.reset_mock()
                 if s_src_index == -1:
                     s_src_index = s_max_index
-                    mock_window.get_indexes.side_effect = lambda: 0
+                    mock_selected_mylist_row_index.side_effect = lambda: 0
                 else:
-                    mock_window.get_indexes.side_effect = lambda: [s_src_index]
-                s_dst_index = s_src_index - 1
-                list_data = {
-                    s_src_index: s_src_v,
-                    s_dst_index: s_dst_v,
-                }
-                mock_window.Values = list_data
-                instance.window.__getitem__.side_effect = lambda key: mock_window
+                    def f(): return SelectedMylistRowIndex(s_src_index)
+                    mock_selected_mylist_row_index.side_effect = lambda: s_src_index
+
+                if s_src_v != "":
+                    s_dst_index = s_src_index - 1
+                    list_data = {
+                        s_src_index: MylistRow.create(s_src_v),
+                        s_dst_index: MylistRow.create(s_dst_v),
+                    }
+                    mock_all_mylist_row.reset_mock()
+                    mock_all_mylist_row.side_effect = lambda: list_data
 
                 instance.mylist_db.reset_mock()
                 def return_record(showname):
@@ -61,24 +69,23 @@ class TestMoveUp(unittest.TestCase):
                 instance.mylist_db.select_from_showname.side_effect = return_record
                 instance.mylist_db.swap_id.reset_mock()
                 mock_update_mylist_pane.reset_mock()
+                instance.window.reset_mock()
 
             def post_run(s_src_index, s_max_index, s_src_v, s_dst_v):
                 if s_src_v == "":
                     self.assertEqual([
-                        call("-LIST-"),
-                    ], instance.values.__getitem__.mock_calls)
-                    mock_window.assert_not_called()
+                        call(),
+                    ], mock_selected_mylist_row.mock_calls)
+                    mock_selected_mylist_row_index.assert_not_called()
                     instance.mylist_db.assert_not_called()
                     mock_update_mylist_pane.assert_not_called()
                     return
                 else:
                     self.assertEqual([
-                        call("-LIST-"),
-                        call("-LIST-"),
-                    ], instance.values.__getitem__.mock_calls)
+                        call(),
+                    ], mock_selected_mylist_row.mock_calls)
 
                 if s_src_index == 0:
-                    mock_window.assert_not_called()
                     instance.mylist_db.assert_not_called()
                     mock_update_mylist_pane.assert_not_called()
                     return
@@ -86,17 +93,12 @@ class TestMoveUp(unittest.TestCase):
                 if s_src_index == -1:
                     s_src_index = s_max_index
                     s_dst_index = s_src_index - 1
-                    self.assertEqual([
-                        call.get_indexes(),
-                        call.update(set_to_index=s_dst_index),
-                    ], mock_window.mock_calls)
                 else:
                     s_dst_index = s_src_index - 1
-                    self.assertEqual([
-                        call.get_indexes(),
-                        call.get_indexes(),
-                        call.update(set_to_index=s_dst_index),
-                    ], mock_window.mock_calls)
+                self.assertEqual([
+                    call.__getitem__("-LIST-"),
+                    call.__getitem__().update(set_to_index=s_dst_index),
+                ], instance.window.mock_calls)
 
                 if s_src_v.startswith("*:"):
                     s_src_v = s_src_v[2:]
@@ -110,13 +112,15 @@ class TestMoveUp(unittest.TestCase):
 
                 mock_update_mylist_pane.assert_called_once_with()
 
+            showname_1 = "投稿者1さんの投稿動画"
+            showname_2 = "投稿者2さんの投稿動画"
             params_list = [
-                (1, 1, "showname_1", "showname_2", Result.success),
-                (1, 1, "*:showname_1", "showname_2", Result.success),
-                (1, 1, "showname_1", "*:showname_2", Result.success),
-                (1, 1, "*:showname_1", "*:showname_2", Result.success),
-                (0, 1, "showname_1", "showname_2", Result.failed),
-                (1, 1, "", "showname_2", Result.failed),
+                (1, 1, showname_1, showname_2, Result.success),
+                (1, 1, "*:" + showname_1, showname_2, Result.success),
+                (1, 1, showname_1, "*:" + showname_2, Result.success),
+                (1, 1, "*:" + showname_1, "*:" + showname_2, Result.success),
+                (0, 1, showname_1, showname_2, Result.failed),
+                (1, 1, "", showname_2, Result.failed),
             ]
             for params in params_list:
                 pre_run(params[0], params[1], params[2], params[3])

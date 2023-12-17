@@ -19,33 +19,30 @@ class MoveUp(ProcessBase):
             "上に移動::-MR-"
             マイリスト右クリックで「上に移動」が選択された場合
         """
-        if not self.values["-LIST-"]:
+        selected_mylist_row = self.get_selected_mylist_row()
+        if not selected_mylist_row:
             logger.error("MoveUp failed, no mylist selected.")
             return Result.failed
 
         src_index = 0
-        if self.window["-LIST-"].get_indexes():
-            src_index = self.window["-LIST-"].get_indexes()[0]
-        src_v = self.values["-LIST-"][0]  # ダブルクリックされたlistboxの選択値
-        list_data = self.window["-LIST-"].Values  # 現在のtableの全リスト
+        selected_mylist_row_index = self.get_selected_mylist_row_index()
+        if selected_mylist_row_index:
+            src_index = int(selected_mylist_row_index)
+        src_v = selected_mylist_row.without_new_mark_name()
+        list_data = self.get_all_mylist_row()
 
         if src_index == 0:
             logger.info(f"{src_v} -> index is 0 , can't move up.")
             return Result.failed
 
-        if src_v[:2] == "*:":
-            src_v = src_v[2:]
         src_record = self.mylist_db.select_from_showname(src_v)[0]
 
         dst_index = src_index - 1
-        dst_v = list_data[dst_index]
-        if dst_v[:2] == "*:":
-            dst_v = dst_v[2:]
+        dst_v = list_data[dst_index].without_new_mark_name()
         dst_record = self.mylist_db.select_from_showname(dst_v)[0]
 
         self.mylist_db.swap_id(src_record["id"], dst_record["id"])
 
-        # テーブル更新
         self.update_mylist_pane()
         self.window["-LIST-"].update(set_to_index=dst_index)
 
