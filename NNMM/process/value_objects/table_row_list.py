@@ -57,6 +57,10 @@ class TableRowList():
         return cls([TableRow.create(row) for row in table_row_list])
 
 
+class SelectedTableRowList(TableRowList):
+    pass
+
+
 if __name__ == "__main__":
     NUM = 5
     row_list = [[

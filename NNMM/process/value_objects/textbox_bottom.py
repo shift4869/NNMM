@@ -32,7 +32,7 @@ class BottomTextbox():
         Args:
             input_text (str): 
                 下部のテキストボックスに入力されている文字列
-                主に window["-INPUT2-"] を受け取る
+                主に window["-INPUT2-"].get() を受け取る
 
         Returns:
             Self: BottomTextbox インスタンス

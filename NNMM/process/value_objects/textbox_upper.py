@@ -32,7 +32,7 @@ class UpperTextbox():
         Args:
             input_text (str): 
                 上部のテキストボックスに入力されている文字列
-                主に values["-INPUT1-"] を受け取る
+                主に window["-INPUT1-"].get() を受け取る
 
         Returns:
             Self: UpperTextbox インスタンス

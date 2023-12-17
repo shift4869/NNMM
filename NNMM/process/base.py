@@ -4,11 +4,13 @@ import PySimpleGUI as sg
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.value_objects.mylist_row import MylistRow
+from NNMM.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
 from NNMM.process.value_objects.mylist_row_index_list import SelectedMylistRowIndexList
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.process.value_objects.table_row import TableRowTuple
-from NNMM.process.value_objects.table_row_list import TableRowList
+from NNMM.process.value_objects.table_row_index_list import SelectedTableRowIndexList
+from NNMM.process.value_objects.table_row_list import SelectedTableRowList, TableRowList
+from NNMM.process.value_objects.textbox_bottom import BottomTextbox
 from NNMM.process.value_objects.textbox_upper import UpperTextbox
 from NNMM.util import Result
 
@@ -34,6 +36,77 @@ class ProcessBase(ABC):
     @abstractmethod
     def run(self) -> Result:
         raise NotImplementedError
+
+    def get_selected_mylist_row_index_list(self) -> SelectedMylistRowIndexList | None:
+        try:
+            return SelectedMylistRowIndexList.create(
+                self.window["-LIST-"].get_indexes()
+            )
+        except Exception:
+            return None
+
+    def get_selected_mylist_row(self) -> SelectedMylistRow | None:
+        try:
+            return SelectedMylistRow.create(
+                self.values["-LIST-"]
+            )
+        except Exception:
+            return None
+
+    def get_selected_table_row_index_list(self) -> SelectedTableRowIndexList | None:
+        try:
+            return SelectedTableRowIndexList.create(
+                self.values["-TABLE-"]
+            )
+        except Exception:
+            return None
+
+    def get_selected_table_row_list(self) -> SelectedTableRowList | None:
+        """選択されているテーブル行を取得する
+
+            直接とれない？ため
+            「全テーブル行のうち、選択されているインデックスのもの」を返す
+            複数選択される場合を考慮するため返り値は SelectedTableRowList.
+
+        Returns:
+            SelectedTableRowList | None: 選択されているテーブル行
+        """
+        try:
+            table_row_list = []
+            selected_table_row_list = []
+
+            all_table_row = self.get_all_table_row()
+            selected_table_row_index_list = self.get_selected_table_row_index_list()
+
+            selected_index_list = selected_table_row_index_list.to_int_list()
+            for table_row in all_table_row:
+                if table_row.row_number - 1 in selected_index_list:
+                    table_row_list.append(table_row.to_row())
+
+            selected_table_row_list = SelectedTableRowList.create(table_row_list)
+            return selected_table_row_list
+        except Exception:
+            return None
+
+    def get_all_table_row(self) -> TableRowList | None:
+        try:
+            return TableRowList.create(
+                self.window["-TABLE-"].Values
+            )
+        except Exception:
+            return None
+
+    def get_upper_textbox(self) -> UpperTextbox:
+        try:
+            return UpperTextbox(self.window["-INPUT1-"].get())
+        except Exception:
+            return None
+
+    def get_bottom_textbox(self) -> BottomTextbox:
+        try:
+            return BottomTextbox(self.window["-INPUT2-"].get())
+        except Exception:
+            return None
 
     def update_mylist_pane(self) -> Result:
         """マイリストペインの表示を更新する
