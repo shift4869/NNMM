@@ -37,7 +37,7 @@ class TableRowIndexList():
 
         Args:
             table_row_index_list: (list[int]):
-                "テーブル行インデックスを表す数値リストのリスト
+                テーブル行インデックスを表す数値リストのリスト
                 主に画面の values["-TABLE-"] を受け取る
                 空リストは許容する
 

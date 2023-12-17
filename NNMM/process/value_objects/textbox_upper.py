@@ -10,7 +10,7 @@ class UpperTextbox():
         """空文字列は許容する
         """
         if not isinstance(self._text, str):
-            raise ValueError("textbox must be int.")
+            raise ValueError("textbox must be str.")
 
     def __str__(self) -> str:
         return self._text

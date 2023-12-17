@@ -213,7 +213,6 @@ class MainWindow():
 
         # マイリスト画面表示更新
         NEW_MARK = "*:"
-        list_data = self.window["-LIST-"].Values
         m_list = self.mylist_db.select()
         include_new_index_list = []
         for i, m in enumerate(m_list):
