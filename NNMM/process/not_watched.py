@@ -2,6 +2,10 @@ from logging import INFO, getLogger
 
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.table_row import Status
+from NNMM.process.value_objects.table_row_index_list import SelectedTableRowIndexList, TableRowIndexList
+from NNMM.process.value_objects.table_row_list import TableRowList
+from NNMM.process.value_objects.textbox_upper import UpperTextbox
 from NNMM.util import Result
 
 logger = getLogger(__name__)
@@ -25,43 +29,47 @@ class NotWatched(ProcessBase):
         logger.info("NotWatched start.")
 
         # 現在のtableの全リスト
-        def_data = self.window["-TABLE-"].Values
+        table_row_list: TableRowList = self.get_all_table_row()
 
         # 行が選択されていないなら何もしない
-        if not self.values["-TABLE-"]:
+        selected_table_row_index_list: SelectedTableRowIndexList = self.get_selected_table_row_index_list()
+        if not selected_table_row_index_list:
             logger.error("NotWatched failed, no record selected.")
             return Result.failed
 
         # 選択された行（複数可）についてすべて処理する
-        all_num = len(self.values["-TABLE-"])
-        row = 0
-        for i, v in enumerate(self.values["-TABLE-"]):
-            row = int(v)
+        all_num = len(selected_table_row_index_list)
+        row_index = 0
+        for i, table_row_index in enumerate(selected_table_row_index_list):
+            row_index = int(table_row_index)
 
             # マイリスト情報ステータスDB更新
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
-            selected = def_data[row]
-            res = self.mylist_info_db.update_status(selected[1], selected[8], "未視聴")
+            selected_row = table_row_list[row_index]
+            video_id = selected_row.video_id.id
+            mylist_url = selected_row.mylist_url.non_query_url
+            res = self.mylist_info_db.update_status(video_id, mylist_url, "未視聴")
             if res == 0:
-                logger.info(f'{selected[1]} ({i + 1}/{all_num}) -> marked "non-watched".')
+                logger.info(f'{video_id} ({i + 1}/{all_num}) -> marked "non-watched".')
             else:
-                logger.info(f"{selected[1]} ({i + 1}/{all_num}) -> failed.")
+                logger.info(f"{video_id} ({i + 1}/{all_num}) -> failed.")
 
             # テーブル更新
-            def_data[row][4] = "未視聴"
+            updated_row = selected_row.replace_from_typed_value(status=Status.not_watched)
+            table_row_list[row_index] = updated_row
 
             # 未視聴になったことでマイリストの新着表示を表示する
             # 未視聴にしたので必ず新着あり扱いになる
             # マイリストDB新着フラグ更新
-            self.mylist_db.update_include_flag(selected[8], True)
+            self.mylist_db.update_include_flag(mylist_url, True)
 
         # テーブル更新を反映させる
-        self.window["-TABLE-"].update(values=def_data)
+        # self.window["-TABLE-"].update(values=def_data)
+        self.window["-TABLE-"].update(values=table_row_list.to_table_data())
 
         # テーブルの表示を更新する
-        mylist_url = self.values["-INPUT1-"]
+        mylist_url = UpperTextbox(self.values["-INPUT1-"]).to_str()
         self.update_table_pane(mylist_url)
-        self.window["-TABLE-"].update(select_rows=[row])
+        self.window["-TABLE-"].update(select_rows=[row_index])
 
         # マイリスト画面表示更新
         self.update_mylist_pane()

@@ -9,6 +9,7 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.show_mylist_info import ShowMylistInfo
+from NNMM.process.value_objects.mylist_row import SelectedMylistRow
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -43,6 +44,7 @@ class TestShowMylistInfo(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.show_mylist_info.logger.info"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.show_mylist_info.ProcessBase.update_table_pane"))
+            mock_selected_mylist_row = stack.enter_context(patch("NNMM.process.show_mylist_info.ProcessBase.get_selected_mylist_row"))
 
             instance = ShowMylistInfo(self.process_info)
 
@@ -52,8 +54,9 @@ class TestShowMylistInfo(unittest.TestCase):
                 if is_include_new:
                     NEW_MARK = "*:"
                     s_showname = NEW_MARK + s_showname
-                instance.values.reset_mock()
-                instance.values.__getitem__.side_effect = lambda key: [s_showname]
+                mock_selected_mylist_row.reset_mock()
+                def f(): return SelectedMylistRow.create(s_showname)
+                mock_selected_mylist_row.side_effect = f
                 instance.mylist_db.reset_mock()
                 instance.mylist_db.select_from_showname.side_effect = lambda showname: [m_list[0]]
                 instance.window.reset_mock()
@@ -61,8 +64,8 @@ class TestShowMylistInfo(unittest.TestCase):
 
             def post_run(is_include_new):
                 self.assertEqual([
-                    call.__getitem__("-LIST-")
-                ], instance.values.mock_calls)
+                    call()
+                ], mock_selected_mylist_row.mock_calls)
 
                 m_list = self._make_mylist_db()
                 s_showname = m_list[0]["showname"]

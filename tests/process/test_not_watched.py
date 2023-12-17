@@ -83,8 +83,6 @@ class TestNotWatched(unittest.TestCase):
                 else:
                     self.assertEqual([
                         call("-TABLE-"),
-                        call("-TABLE-"),
-                        call("-TABLE-"),
                         call("-INPUT1-"),
                     ], instance.values.__getitem__.mock_calls)
 

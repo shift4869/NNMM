@@ -2,6 +2,7 @@ from logging import INFO, getLogger
 
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.mylist_row import SelectedMylistRow
 from NNMM.util import Result
 
 logger = getLogger(__name__)
@@ -25,17 +26,17 @@ class ShowMylistInfo(ProcessBase):
         logger.info("ShowMylistInfo start.")
 
         # ダブルクリックされたリストボックスの選択値を取得
-        v = self.values["-LIST-"][0]
+        selected_mylist = self.get_selected_mylist_row()
 
         # 新着表示のマークがある場合は削除する
-        NEW_MARK = "*:"
-        if v[:2] == NEW_MARK:
-            v = v[2:]
+        showname = selected_mylist.without_new_mark_name()
 
         # 対象マイリストをmylist_dbにshownameで問い合わせ
-        record = self.mylist_db.select_from_showname(v)[0]
+        record = self.mylist_db.select_from_showname(showname)[0]
+
+        # 対象マイリストのアドレスをテキストボックスに表示
         mylist_url = record.get("url")
-        self.window["-INPUT1-"].update(value=mylist_url)  # 対象マイリストのアドレスをテキストボックスに表示
+        self.window["-INPUT1-"].update(value=mylist_url)
 
         # テーブル更新
         self.update_table_pane(mylist_url)

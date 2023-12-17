@@ -5,7 +5,8 @@ import PySimpleGUI as sg
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
-from NNMM.process.value_objects.mylist_row_index_list import SelectedMylistRowIndexList
+from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
+from NNMM.process.value_objects.mylist_row_list import MylistRowList
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.process.value_objects.table_row import TableRowTuple
 from NNMM.process.value_objects.table_row_index_list import SelectedTableRowIndexList
@@ -37,18 +38,29 @@ class ProcessBase(ABC):
     def run(self) -> Result:
         raise NotImplementedError
 
-    def get_selected_mylist_row_index_list(self) -> SelectedMylistRowIndexList | None:
+    def get_selected_mylist_row_index(self) -> SelectedMylistRowIndex | None:
         try:
-            return SelectedMylistRowIndexList.create(
-                self.window["-LIST-"].get_indexes()
+            return SelectedMylistRowIndex(
+                int(self.window["-LIST-"].get_indexes()[0])
             )
         except Exception:
             return None
 
     def get_selected_mylist_row(self) -> SelectedMylistRow | None:
         try:
+            selected_mylist_row = list(self.values["-LIST-"])
+            if not selected_mylist_row:
+                return None
             return SelectedMylistRow.create(
-                self.values["-LIST-"]
+                self.values["-LIST-"][0]
+            )
+        except Exception:
+            return None
+
+    def get_all_mylist_row(self) -> MylistRowList | None:
+        try:
+            return MylistRowList.create(
+                self.window["-LIST-"].Values
             )
         except Exception:
             return None
@@ -116,9 +128,9 @@ class ProcessBase(ABC):
         """
         # 現在選択中のマイリストがある場合そのindexを保存
         index = 0
-        selected_index_list = SelectedMylistRowIndexList.create(self.window["-LIST-"].get_indexes())
-        if selected_index_list:
-            index = int(selected_index_list[0])
+        selected_index = self.get_selected_mylist_row_index()
+        if selected_index:
+            index = int(selected_index)
 
         # マイリスト画面表示更新
         # NEW_MARK = "*:"
@@ -126,7 +138,7 @@ class ProcessBase(ABC):
         include_new_index_list = []
         for i, m in enumerate(m_list):
             if m["is_include_new"]:
-                mylist_row = MylistRow.create([m["showname"]])
+                mylist_row = MylistRow.create(m["showname"])
                 m["showname"] = mylist_row.with_new_mark_name()
                 include_new_index_list.append(i)
         list_data = [m["showname"] for m in m_list]
@@ -170,9 +182,9 @@ class ProcessBase(ABC):
             def_data = TableRowList.create(self.window["-TABLE-"].Values)
 
             # 現在選択中のマイリストがある場合そのindexを保存
-            selected_index_list = SelectedMylistRowIndexList.create(list(self.window["-LIST-"].get_indexes()))
-            if selected_index_list:
-                index = int(selected_index_list[0])
+            selected_index = self.get_selected_mylist_row_index()
+            if selected_index:
+                index = int(selected_index)
         else:
             # 現在のマイリストURLからlistboxのindexを求める
             m_list = self.mylist_db.select()

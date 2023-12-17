@@ -130,7 +130,7 @@ class TestProcessBase(unittest.TestCase):
                 m_list = []
             for _, m in enumerate(m_list):
                 if m["is_include_new"]:
-                    mylist_row = MylistRow.create([m["showname"]])
+                    mylist_row = MylistRow.create(m["showname"])
                     m["showname"] = mylist_row.with_new_mark_name()
             list_data = [m["showname"] for m in m_list]
             expect_window_call.extend([

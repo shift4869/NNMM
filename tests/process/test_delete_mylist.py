@@ -61,11 +61,11 @@ class TestDeleteMylist(unittest.TestCase):
                 mock_get_upper_textbox.reset_mock()
                 mock_get_bottom_textbox.reset_mock()
                 if values_kind == "-LIST-":
-                    def f(): return SelectedMylistRow.create([showname_s])
+                    def f(): return SelectedMylistRow.create(showname_s)
                     mock_get_selected_mylist_row.side_effect = f
                     mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
                 elif values_kind == "-LIST_NEW_MARK-":
-                    def f(): return SelectedMylistRow.create(["*:" + showname_s])
+                    def f(): return SelectedMylistRow.create("*:" + showname_s)
                     mock_get_selected_mylist_row.side_effect = f
                     mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
                 elif values_kind == "-INPUT1-":
