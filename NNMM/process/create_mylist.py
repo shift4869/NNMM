@@ -172,11 +172,11 @@ class CreateMylistThreadDone(ProcessBase):
         self.update_mylist_pane()
 
         # テーブルの表示を更新する
-        mylist_url = self.values["-INPUT1-"]
+        mylist_url = self.get_upper_textbox().to_str()
         self.update_table_pane(mylist_url)
 
         logger.info("Create mylist success.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":

@@ -29,19 +29,18 @@ class DeleteMylist(ProcessBase):
         mylist_url = ""
         prev_mylist = {}
         try:
-            if "-LIST-" in self.values and len(self.values["-LIST-"]) > 0:
+            selected_mylist_row = self.get_selected_mylist_row()
+            if selected_mylist_row:
                 # (1)マイリストlistboxの選択値（右クリック時などほとんどの場合）
-                v = self.values["-LIST-"][0]
-                if v[:2] == "*:":
-                    v = v[2:]
-                record = self.mylist_db.select_from_showname(v)[0]
+                showname = selected_mylist_row.without_new_mark_name()
+                record = self.mylist_db.select_from_showname(showname)[0]
                 mylist_url = record.get("url", "")
-            elif self.values.get("-INPUT1-", "") != "":
+            elif textbox := self.get_upper_textbox():
                 # (2)右上のテキストボックス
-                mylist_url = self.values.get("-INPUT1-", "")
-            elif self.values.get("-INPUT2-", "") != "":
+                mylist_url = textbox.to_str()
+            elif textbox := self.get_bottom_textbox():
                 # (3)左下のテキストボックス
-                mylist_url = self.values.get("-INPUT2-", "")
+                mylist_url = textbox.to_str()
 
             # 既存マイリストに存在していない場合何もしない
             prev_mylist = self.mylist_db.select_from_url(mylist_url)[0]

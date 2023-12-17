@@ -8,7 +8,10 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.delete_mylist import DeleteMylist
+from NNMM.process.value_objects.mylist_row import SelectedMylistRow
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.textbox_bottom import BottomTextbox
+from NNMM.process.value_objects.textbox_upper import UpperTextbox
 from NNMM.util import Result
 
 
@@ -26,13 +29,16 @@ class TestDeleteMylist(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.delete_mylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.delete_mylist.logger.error"))
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.update_mylist_pane"))
+            mock_get_selected_mylist_row = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.get_selected_mylist_row"))
+            mock_get_upper_textbox = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.get_upper_textbox"))
+            mock_get_bottom_textbox = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.get_bottom_textbox"))
             mock_popup_ok_cancel = stack.enter_context(patch("NNMM.process.delete_mylist.sg.popup_ok_cancel"))
             mock_mylist_db = MagicMock()
 
             instance = DeleteMylist(self.process_info)
 
             # 正常系
-            showname_s = "sample_mylist_showname"
+            showname_s = "投稿者1さんの投稿動画"
             mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
 
             def return_select_from_showname(showname):
@@ -49,25 +55,28 @@ class TestDeleteMylist(unittest.TestCase):
                 return [showname_dict.get(mylist_url, {})]
 
             def pre_run(values_kind, s_prev_mylist, s_popup_ok_cancel):
+                instance.window.reset_mock()
                 mock_mylist_db.select_from_showname.reset_mock()
+                mock_get_selected_mylist_row.reset_mock()
+                mock_get_upper_textbox.reset_mock()
+                mock_get_bottom_textbox.reset_mock()
                 if values_kind == "-LIST-":
-                    instance.values = {
-                        "-LIST-": [showname_s]
-                    }
+                    def f(): return SelectedMylistRow.create([showname_s])
+                    mock_get_selected_mylist_row.side_effect = f
                     mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
                 elif values_kind == "-LIST_NEW_MARK-":
-                    instance.values = {
-                        "-LIST-": ["*:" + showname_s]
-                    }
+                    def f(): return SelectedMylistRow.create(["*:" + showname_s])
+                    mock_get_selected_mylist_row.side_effect = f
                     mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
                 elif values_kind == "-INPUT1-":
-                    instance.values = {
-                        "-INPUT1-": mylist_url_s
-                    }
+                    def f(): return UpperTextbox(mylist_url_s)
+                    mock_get_upper_textbox.side_effect = f
+                    mock_get_selected_mylist_row.side_effect = lambda: 0
                 elif values_kind == "-INPUT2-":
-                    instance.values = {
-                        "-INPUT2-": mylist_url_s
-                    }
+                    def f(): return BottomTextbox(mylist_url_s)
+                    mock_get_bottom_textbox.side_effect = f
+                    mock_get_selected_mylist_row.side_effect = lambda: 0
+                    mock_get_upper_textbox.side_effect = lambda: 0
 
                 mock_mylist_db.select_from_url.reset_mock()
                 if s_prev_mylist == "":
@@ -86,13 +95,21 @@ class TestDeleteMylist(unittest.TestCase):
                     mock_popup_ok_cancel.return_value = "Cancel"
 
                 instance.mylist_info_db.delete_in_mylist = MagicMock()
-                instance.window.reset_mock()
                 mock_update_mylist_pane.reset_mock()
 
             def post_run(values_kind, s_prev_mylist, s_popup_ok_cancel):
+                mock_get_selected_mylist_row.assert_called_once_with()
                 if values_kind in ["-LIST-", "-LIST_NEW_MARK-"]:
                     instance.mylist_db.select_from_showname.assert_called_once_with(showname_s)
-                else:
+                    mock_get_upper_textbox.assert_not_called()
+                    mock_get_bottom_textbox.assert_not_called()
+                elif values_kind == "-INPUT1-":
+                    mock_get_upper_textbox.assert_called_once_with()
+                    mock_get_bottom_textbox.assert_not_called()
+                    instance.mylist_db.select_from_showname.assert_not_called()
+                elif values_kind == "-INPUT2-":
+                    mock_get_upper_textbox.assert_called_once_with()
+                    mock_get_bottom_textbox.assert_called_once_with()
                     instance.mylist_db.select_from_showname.assert_not_called()
 
                 instance.mylist_db.select_from_url.assert_called_once_with(mylist_url_s)

@@ -272,16 +272,19 @@ class TestCreateMylist(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.create_mylist.logger.info"))
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.create_mylist.ProcessBase.update_mylist_pane"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.create_mylist.ProcessBase.update_table_pane"))
+            mock_get_upper_textbox = stack.enter_context(patch("NNMM.process.create_mylist.ProcessBase.get_upper_textbox"))
 
             instance = CreateMylistThreadDone(self.process_info)
 
             actual = instance.run()
-            self.assertIsNone(actual)
+            self.assertIs(Result.success, actual)
 
             mock_update_mylist_pane.assert_called_once_with()
             mock_update_mylist_pane.reset_mock()
 
-            mock_update_table_pane.assert_called_once_with(instance.values["-INPUT1-"])
+            mock_update_table_pane.assert_called_once_with(
+                mock_get_upper_textbox().to_str()
+            )
             mock_update_table_pane.reset_mock()
         pass
 
