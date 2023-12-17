@@ -21,8 +21,8 @@ classDiagram
         class MoveUp
         class NotWatched
         class Search
-        class ProcessShowMylistInfo
-        class ProcessShowMylistInfoAll
+        class ShowMylistInfo
+        class ShowMylistInfoAll
         class VideoPlay
         class Watched
         class WatchedAllMylist

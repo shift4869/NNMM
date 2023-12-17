@@ -8,12 +8,12 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.show_mylist_info import ProcessShowMylistInfo
+from NNMM.process.show_mylist_info import ShowMylistInfo
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 
-class TestProcessShowMylistInfo(unittest.TestCase):
+class TestShowMylistInfo(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -44,7 +44,7 @@ class TestProcessShowMylistInfo(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.show_mylist_info.logger.info"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.show_mylist_info.ProcessBase.update_table_pane"))
 
-            instance = ProcessShowMylistInfo(self.process_info)
+            instance = ShowMylistInfo(self.process_info)
 
             def pre_run(is_include_new):
                 m_list = self._make_mylist_db()

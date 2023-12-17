@@ -118,3 +118,9 @@ class ProcessBase(ABC):
         # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き
         self.window["-TABLE-"].update(row_colors=[(0, "", "")])
         return Result.success
+
+
+if __name__ == "__main__":
+    from NNMM import main_window
+    mw = main_window.MainWindow()
+    mw.run()

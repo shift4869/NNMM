@@ -8,12 +8,12 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.show_mylist_info_all import ProcessShowMylistInfoAll
+from NNMM.process.show_mylist_info_all import ShowMylistInfoAll
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 
-class TestProcessShowMylistInfoAll(unittest.TestCase):
+class TestShowMylistInfoAll(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -47,7 +47,7 @@ class TestProcessShowMylistInfoAll(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.show_mylist_info_all.logger.info"))
 
-            instance = ProcessShowMylistInfoAll(self.process_info)
+            instance = ShowMylistInfoAll(self.process_info)
 
             def pre_run(s_index, not_empty_records):
                 instance.window.reset_mock()
