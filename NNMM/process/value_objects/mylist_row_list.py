@@ -33,7 +33,7 @@ class MylistRowList():
         return [row.name for row in self._list]
 
     @classmethod
-    def create(cls, mylist_row_list: list[list[str]]) -> Self:
+    def create(cls, mylist_row_list: list[str]) -> Self:
         """テーブル行リストインスタンスを作成する
 
         Args:

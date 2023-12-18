@@ -6,6 +6,7 @@ import PySimpleGUI as sg
 from NNMM.process import config as process_config
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.table_row import Status
 from NNMM.process.watched import Watched
 from NNMM.util import Result
 
@@ -27,19 +28,19 @@ class VideoPlay(ProcessBase):
         logger.info(f"VideoPlay start.")
 
         # テーブルの行が選択されていなかったら何もしない
-        if not self.values["-TABLE-"]:
+        selected_table_row_index_list = self.get_selected_table_row_index_list()
+        if not selected_table_row_index_list:
             logger.info("VideoPlay failed, Table row is not selected.")
             return Result.failed
 
-        # 選択されたテーブル行数
-        row = int(self.values["-TABLE-"][0])
-        # 現在のテーブルの全リスト
-        def_data = self.window["-TABLE-"].Values
         # 選択されたテーブル行
-        selected = def_data[row]
+        selected_table_row_list = self.get_selected_table_row_list()
+        selected_table_row = selected_table_row_list[0]
 
         # 動画URLを取得
-        records = self.mylist_info_db.select_from_video_id(selected[1])
+        records = self.mylist_info_db.select_from_video_id(
+            selected_table_row.video_id.id
+        )
         record = records[0]
         video_url = record.get("video_url")
 
@@ -58,13 +59,10 @@ class VideoPlay(ProcessBase):
             logger.info(f"{video_url} -> video page open failed.")
             return Result.failed
 
-        # 視聴済にする
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-        STATUS_INDEX = 4
         # 状況を更新
-        if def_data[row][STATUS_INDEX] != "":
+        if selected_table_row.status != Status.watched:
             # 視聴済にする
-            pb = Watched()
+            pb = Watched(self.process_info)
             pb.run()
 
         logger.info(f"VideoPlay success.")

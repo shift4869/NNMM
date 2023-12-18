@@ -11,6 +11,8 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.table_row_index_list import SelectedTableRowIndexList
+from NNMM.process.value_objects.table_row_list import SelectedTableRowList
 from NNMM.process.video_play import VideoPlay
 from NNMM.util import Result
 
@@ -114,6 +116,8 @@ class TestVideoPlay(unittest.TestCase):
             mock_execute = stack.enter_context(patch("NNMM.process.video_play.sg.execute_command_subprocess"))
             mock_popup = stack.enter_context(patch("NNMM.process.video_play.sg.popup_ok"))
             mock_watched = stack.enter_context(patch("NNMM.process.video_play.Watched"))
+            mock_selected_table_row_index_list = stack.enter_context(patch("NNMM.process.video_play.ProcessBase.get_selected_table_row_index_list"))
+            mock_selected_table_row_list = stack.enter_context(patch("NNMM.process.video_play.ProcessBase.get_selected_table_row_list"))
 
             instance = VideoPlay(self.process_info)
 
@@ -126,14 +130,25 @@ class TestVideoPlay(unittest.TestCase):
             def pre_run(s_values, is_cmd, is_watched):
                 dummy_path.touch()
                 s_def_data = deepcopy(def_data)
-                instance.values.reset_mock()
+                mock_selected_table_row_index_list.reset_mock()
                 if isinstance(s_values, int):
-                    instance.values.__getitem__.side_effect = lambda key: [s_values]
+                    def f(): return SelectedTableRowIndexList.create([s_values])
+                    mock_selected_table_row_index_list.side_effect = f
                 else:
-                    instance.values.__getitem__.side_effect = lambda key: []
+                    def f(): return SelectedTableRowIndexList.create([])
+                    mock_selected_table_row_index_list.side_effect = f
 
-                instance.window.reset_mock()
-                instance.window.__getitem__.return_value.Values = s_def_data
+                mock_selected_table_row_list.reset_mock()
+                COLS_LENGTH = 9
+                s_def_data = [[i + 1] + r[1:COLS_LENGTH] for i, r in enumerate(s_def_data)]
+                if isinstance(s_values, int):
+                    STATUS_INDEX = 4
+                    if is_watched:
+                        s_def_data[s_values][STATUS_INDEX] = "未視聴"
+                    else:
+                        s_def_data[s_values][STATUS_INDEX] = ""
+                    def f(): return SelectedTableRowList.create(s_def_data)
+                    mock_selected_table_row_list.side_effect = f
 
                 instance.mylist_info_db.reset_mock()
                 def f(video_id): return self._get_mylist_info_from_video_id(s_def_data, video_id)
@@ -151,26 +166,13 @@ class TestVideoPlay(unittest.TestCase):
                 mock_popup.reset_mock()
                 mock_watched.reset_mock()
 
-                if isinstance(s_values, int):
-                    if is_watched:
-                        STATUS_INDEX = 4
-                        s_def_data[s_values][STATUS_INDEX] = "未視聴"
-                    else:
-                        STATUS_INDEX = 4
-                        s_def_data[s_values][STATUS_INDEX] = ""
-
             def post_run(s_values, is_cmd, is_watched):
                 dummy_path.unlink(missing_ok=True)
-                if isinstance(s_values, int):
-                    self.assertEqual([
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__("-TABLE-"),
-                    ], instance.values.mock_calls)
-                else:
-                    self.assertEqual([
-                        call.__getitem__("-TABLE-"),
-                    ], instance.values.mock_calls)
-                    instance.window.assert_not_called()
+                self.assertEqual([
+                    call()
+                ], mock_selected_table_row_index_list.mock_calls)
+                if not isinstance(s_values, int):
+                    mock_selected_table_row_list.assert_not_called()
                     instance.mylist_info_db.assert_not_called()
                     mock_config.assert_not_called()
                     mock_execute.assert_not_called()
@@ -179,8 +181,8 @@ class TestVideoPlay(unittest.TestCase):
                     return
 
                 self.assertEqual([
-                    call.__getitem__("-TABLE-"),
-                ], instance.window.mock_calls)
+                    call(),
+                ], mock_selected_table_row_list.mock_calls)
 
                 s_def_data = deepcopy(def_data)
                 video_id = s_def_data[s_values][1]
@@ -209,7 +211,7 @@ class TestVideoPlay(unittest.TestCase):
 
                 if is_watched:
                     self.assertEqual([
-                        call(),
+                        call(instance.process_info),
                         call().run()
                     ], mock_watched.mock_calls)
                 else:

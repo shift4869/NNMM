@@ -22,6 +22,10 @@ class MylistRowIndex():
         return self._index
 
 
+class SelectedMylistRowIndex(MylistRowIndex):
+    pass
+
+
 if __name__ == "__main__":
     row_index = 1
     mylist_row_index = MylistRowIndex(row_index)

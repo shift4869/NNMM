@@ -10,7 +10,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 
 
-@dataclass
+@dataclass(frozen=True)
 class ProcessInfo():
     name: str
     window: sg.Window
