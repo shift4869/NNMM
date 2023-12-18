@@ -10,6 +10,7 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.search import MylistSearchFromMylistURL
+from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -44,7 +45,7 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
             mock_popup_get_text = stack.enter_context(patch("NNMM.process.search.popup_get_text"))
-            mock_window = MagicMock()
+            mock_selected_mylist_row_index = stack.enter_context(patch("NNMM.process.search.ProcessBase.get_selected_mylist_row_index"))
             mock_mylist_db = MagicMock()
 
             instance = MylistSearchFromMylistURL(self.process_info)
@@ -53,13 +54,13 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
                 mock_popup_get_text.reset_mock()
                 mock_popup_get_text.side_effect = lambda message: search_mylist_url
 
-                mock_window.reset_mock()
+                mock_selected_mylist_row_index.reset_mock()
                 if get_indexes >= 0:
-                    mock_window.get_indexes.side_effect = lambda: [get_indexes]
+                    def f(): return SelectedMylistRowIndex(get_indexes)
+                    mock_selected_mylist_row_index.side_effect = f
                 else:
-                    mock_window.get_indexes.side_effect = lambda: []
+                    mock_selected_mylist_row_index.side_effect = lambda: None
                 instance.window.reset_mock()
-                instance.window.__getitem__.side_effect = lambda key: mock_window
 
                 m_list = self._make_mylist_db()
                 if is_include_new:
@@ -78,15 +79,16 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
 
                 if search_mylist_url is None or search_mylist_url == "":
                     instance.window.assert_not_called()
-                    mock_window.assert_not_called()
+                    mock_selected_mylist_row_index.assert_not_called()
                     mock_mylist_db.assert_not_called()
                     return
 
-                index = get_indexes
-                expect_calls = [call.get_indexes()]
-                if get_indexes >= 0:
-                    expect_calls.append(call.get_indexes())
+                self.assertEqual([
+                    call()
+                ], mock_selected_mylist_row_index.mock_calls)
 
+                index = get_indexes
+                expect_calls = []
                 m_list = self._make_mylist_db()
                 if is_include_new:
                     m_list = [m | {"is_include_new": True} for m in m_list]
@@ -103,26 +105,37 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
                         match_index_list.append(i)
                         index = i
                 list_data = [m["showname"] for m in m_list]
-                expect_calls.append(call.update(values=list_data))
+                expect_calls.extend([
+                    call.__getitem__("-LIST-"),
+                    call.__getitem__().update(values=list_data),
+                ])
                 for i in include_new_index_list:
-                    expect_calls.append(
-                        call.Widget.itemconfig(i, fg="black", bg="light pink")
-                    )
+                    expect_calls.extend([
+                        call.__getitem__("-LIST-"),
+                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light pink")
+                    ])
                 for i in match_index_list:
-                    expect_calls.append(
-                        call.Widget.itemconfig(i, fg="black", bg="light goldenrod")
-                    )
-                expect_calls.append(call.Widget.see(index))
-                expect_calls.append(call.update(set_to_index=index))
+                    expect_calls.extend([
+                        call.__getitem__("-LIST-"),
+                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light goldenrod")
+                    ])
+                expect_calls.extend([
+                    call.__getitem__("-LIST-"),
+                    call.__getitem__().Widget.see(index),
+                    call.__getitem__("-LIST-"),
+                    call.__getitem__().update(set_to_index=index),
+                ])
                 if len(match_index_list) > 0:
-                    expect_calls.append(
-                        call.update(value=f"{len(match_index_list)}件ヒット！")
-                    )
+                    expect_calls.extend([
+                        call.__getitem__("-INPUT2-"),
+                        call.__getitem__().update(value=f"{len(match_index_list)}件ヒット！")
+                    ])
                 else:
-                    expect_calls.append(
-                        call.update(value="該当なし")
-                    )
-                self.assertEqual(expect_calls, mock_window.mock_calls)
+                    expect_calls.extend([
+                        call.__getitem__("-INPUT2-"),
+                        call.__getitem__().update(value="該当なし")
+                    ])
+                self.assertEqual(expect_calls, instance.window.mock_calls)
 
                 self.assertEqual([
                     call.select()

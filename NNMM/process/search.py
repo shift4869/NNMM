@@ -2,6 +2,7 @@ import re
 from logging import INFO, getLogger
 
 from NNMM.process.base import ProcessBase
+from NNMM.process.value_objects.mylist_row import MylistRow
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result, popup_get_text
 
@@ -34,18 +35,19 @@ class MylistSearch(ProcessBase):
         logger.info(f"search word -> {pattern}.")
 
         # 現在マイリストが選択中の場合indexを保存
+        selected_mylist_row_index = self.get_selected_mylist_row_index()
         index = 0
-        if self.window["-LIST-"].get_indexes():
-            index = self.window["-LIST-"].get_indexes()[0]
+        if selected_mylist_row_index:
+            index = int(selected_mylist_row_index)
 
         # マイリスト画面表示更新
-        NEW_MARK = "*:"
         m_list = self.mylist_db.select()
         include_new_index_list = []
         match_index_list = []
         for i, m in enumerate(m_list):
             if m["is_include_new"]:
-                m["showname"] = NEW_MARK + m["showname"]
+                mylist_row = MylistRow.create(m["showname"])
+                m["showname"] = mylist_row.with_new_mark_name()
                 include_new_index_list.append(i)
             if re.findall(pattern, m["showname"]):
                 match_index_list.append(i)
@@ -108,19 +110,20 @@ class MylistSearchFromVideo(ProcessBase):
         logger.info(f"search word -> {pattern}.")
 
         # 現在マイリストが選択中の場合indexを保存
+        selected_mylist_row_index = self.get_selected_mylist_row_index()
         index = 0
-        if self.window["-LIST-"].get_indexes():
-            index = self.window["-LIST-"].get_indexes()[0]
+        if selected_mylist_row_index:
+            index = int(selected_mylist_row_index)
 
         # マイリスト画面表示更新
-        NEW_MARK = "*:"
         m_list = self.mylist_db.select()
         include_new_index_list = []
         match_index_list = []
         for i, m in enumerate(m_list):
             # 新着マイリストチェック
             if m["is_include_new"]:
-                m["showname"] = NEW_MARK + m["showname"]
+                mylist_row = MylistRow.create(m["showname"])
+                m["showname"] = mylist_row.with_new_mark_name()
                 include_new_index_list.append(i)
 
             # マイリスト内の動画情報を探索
@@ -186,20 +189,20 @@ class MylistSearchFromMylistURL(ProcessBase):
         logger.info(f"search word -> {search_mylist_url}.")
 
         # 現在マイリストが選択中の場合indexを保存
+        selected_mylist_row_index = self.get_selected_mylist_row_index()
         index = 0
-        if self.window["-LIST-"].get_indexes():
-            index = self.window["-LIST-"].get_indexes()[0]
+        if selected_mylist_row_index:
+            index = int(selected_mylist_row_index)
 
         # マイリスト画面表示更新
-        NEW_MARK = "*:"
-        list_data = self.window["-LIST-"].Values
         m_list = self.mylist_db.select()
         include_new_index_list = []
         match_index_list = []
         for i, m in enumerate(m_list):
             # 新着マイリストチェック
             if m["is_include_new"]:
-                m["showname"] = NEW_MARK + m["showname"]
+                mylist_row = MylistRow.create(m["showname"])
+                m["showname"] = mylist_row.with_new_mark_name()
                 include_new_index_list.append(i)
 
             # マイリスト内の動画情報を探索
@@ -263,22 +266,23 @@ class VideoSearch(ProcessBase):
         logger.info(f"search word -> {pattern}.")
 
         # 現在動画テーブルが選択中の場合indexを保存
+        selected_table_row_index_list = self.get_selected_table_row_index_list()
         index = 0
-        if self.values["-TABLE-"]:
-            index = min([int(v) for v in self.values["-TABLE-"]])
+        if selected_table_row_index_list:
+            index = min([int(v) for v in selected_table_row_index_list.to_int_list()])
 
         # マイリスト内の動画情報を探索
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
-        records = self.window["-TABLE-"].Values  # 現在のtableの全リスト
+        records = self.get_all_table_row()
         match_index_list = []
         for i, r in enumerate(records):
-            if re.findall(pattern, r[2]):
+            if re.findall(pattern, r.title.name):
                 match_index_list.append(i)
                 index = i  # 更新後にスクロールするインデックスを更新
 
         # 検索でヒットした項目の背景色とテキスト色を変更する
-        self.window["-TABLE-"].update(row_colors=[(i, "black", "light goldenrod") for i in match_index_list])
+        self.window["-TABLE-"].update(
+            row_colors=[(i, "black", "light goldenrod") for i in match_index_list]
+        )
 
         # indexをセットしてスクロール
         self.window["-TABLE-"].Widget.see(index + 1)
@@ -343,7 +347,7 @@ class VideoSearchClear(ProcessBase):
         # 右上のテキストボックスから取得する
         # 「動画をすべて表示」している場合は空文字列になる可能性がある
         # update_table_paneはmylist_urlが空文字列でも処理が可能
-        mylist_url = self.window["-INPUT1-"].get()
+        mylist_url = self.get_upper_textbox().to_str()
         self.update_table_pane(mylist_url)
 
         logger.info("VideoSearchClear success.")

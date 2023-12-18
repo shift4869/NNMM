@@ -25,7 +25,7 @@ class TestVideoSearchClear(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.search.ProcessBase.update_table_pane"))
-            
+
             instance = VideoSearchClear(self.process_info)
             mylist_url = "mylist_url_1"
             instance.window.__getitem__.return_value.get = lambda: mylist_url
