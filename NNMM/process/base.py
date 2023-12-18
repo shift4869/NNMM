@@ -41,6 +41,8 @@ class ProcessBase(ABC):
     def get_selected_mylist_row_index(self) -> SelectedMylistRowIndex | None:
         """self.window["-LIST-"].get_indexes()[0] から SelectedMylistRowIndex を取得
 
+        マイリストの選択は単数想定
+
         Returns:
             SelectedMylistRowIndex | None: 選択マイリストインデックス
         """
@@ -53,6 +55,8 @@ class ProcessBase(ABC):
 
     def get_selected_mylist_row(self) -> SelectedMylistRow | None:
         """self.values["-LIST-"] から SelectedMylistRow を取得
+
+        マイリストの選択は単数想定
 
         Returns:
             SelectedMylistRow | None: 選択マイリスト行
@@ -82,6 +86,8 @@ class ProcessBase(ABC):
 
     def get_selected_table_row_index_list(self) -> SelectedTableRowIndexList | None:
         """self.values["-TABLE-"] から SelectedTableRowIndexList を取得
+
+        テーブルの選択は複数想定
 
         Returns:
             SelectedTableRowIndexList | None: 選択テーブル行インデックスリスト

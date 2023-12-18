@@ -28,14 +28,14 @@ class NotWatched(ProcessBase):
         """
         logger.info("NotWatched start.")
 
-        # 現在のtableの全リスト
-        table_row_list: TableRowList = self.get_all_table_row()
-
         # 行が選択されていないなら何もしない
         selected_table_row_index_list: SelectedTableRowIndexList = self.get_selected_table_row_index_list()
         if not selected_table_row_index_list:
             logger.error("NotWatched failed, no record selected.")
             return Result.failed
+
+        # 現在のtableの全リスト
+        table_row_list: TableRowList = self.get_all_table_row()
 
         # 選択された行（複数可）についてすべて処理する
         all_num = len(selected_table_row_index_list)
@@ -66,7 +66,7 @@ class NotWatched(ProcessBase):
         self.window["-TABLE-"].update(values=table_row_list.to_table_data())
 
         # テーブルの表示を更新する
-        mylist_url = UpperTextbox(self.values["-INPUT1-"]).to_str()
+        mylist_url = self.get_upper_textbox().to_str()
         self.update_table_pane(mylist_url)
         self.window["-TABLE-"].update(select_rows=[row_index])
 
