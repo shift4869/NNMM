@@ -11,6 +11,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.timer import Timer
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.textbox_bottom import BottomTextbox
 from NNMM.util import Result
 
 
@@ -27,6 +28,19 @@ class TestTimer(unittest.TestCase):
         instance = Timer(self.process_info)
         self.assertIsNone(instance.timer_thread)
 
+    def test_timer_cancel(self):
+        instance = Timer(self.process_info)
+
+        instance.timer_thread = MagicMock()
+        actual = instance._timer_cancel()
+        self.assertIsNone(actual)
+        self.assertIsNone(instance.timer_thread)
+
+        instance.timer_thread = None
+        actual = instance._timer_cancel()
+        self.assertIsNone(actual)
+        self.assertIsNone(instance.timer_thread)
+
     def test_run(self):
         with ExitStack() as stack:
             f_now = "2021-11-23 01:00:00"
@@ -35,6 +49,8 @@ class TestTimer(unittest.TestCase):
             mockle = stack.enter_context(patch("NNMM.process.timer.logger.error"))
             mock_config = stack.enter_context(patch("NNMM.process.timer.ConfigBase.get_config"))
             mock_threading_timer = stack.enter_context(patch("NNMM.process.timer.threading.Timer"))
+            mock_timer_cancel = stack.enter_context(patch("NNMM.process.timer.Timer._timer_cancel"))
+            mock_bottom_textbox = stack.enter_context(patch("NNMM.process.timer.ProcessBase.get_bottom_textbox"))
             mock_timer_thread = MagicMock()
 
             instance = Timer(self.process_info)
@@ -52,14 +68,18 @@ class TestTimer(unittest.TestCase):
 
                 instance.window.reset_mock()
                 instance.values.reset_mock()
+                mock_bottom_textbox.reset_mock()
                 if skip_kind == "-FIRST_SET-":
-                    instance.window.__getitem__.return_value.get.side_effect = lambda: ""
+                    def f(): return BottomTextbox.create("")
+                    mock_bottom_textbox.side_effect = f
                     instance.values.get.side_effect = lambda key: "-FIRST_SET-"
                 elif skip_kind == "-NOW_PROCESSING-":
-                    instance.window.__getitem__.return_value.get.side_effect = lambda: "更新中"
+                    def f(): return BottomTextbox.create("更新中")
+                    mock_bottom_textbox.side_effect = f
                     instance.values.get.side_effect = lambda key: ""
                 else:
-                    instance.window.__getitem__.return_value.get.side_effect = lambda: ""
+                    def f(): return BottomTextbox.create("")
+                    mock_bottom_textbox.side_effect = f
                     instance.values.get.side_effect = lambda key: ""
 
                 mock_timer_thread.reset_mock()
@@ -68,6 +88,7 @@ class TestTimer(unittest.TestCase):
                 else:
                     instance.timer_thread = None
                 mock_threading_timer.reset_mock()
+                mock_timer_cancel.reset_mock()
 
             def post_run(is_use_auto_reload, interval_num, skip_kind, is_cancel):
                 self.assertEqual([
@@ -81,25 +102,24 @@ class TestTimer(unittest.TestCase):
                         instance.values.assert_not_called()
                         mock_timer_thread.assert_not_called()
                         mock_threading_timer.assert_not_called()
+                        mock_bottom_textbox.assert_not_called()
                         return
                 else:
-                    if is_cancel:
-                        self.assertEqual([
-                            call.__bool__(),
-                            call.cancel(),
-                        ], mock_timer_thread.mock_calls)
-                    else:
-                        mock_timer_thread.assert_not_called()
+                    mock_timer_cancel.assert_called_once_with()
+
+                    mock_timer_thread.assert_not_called()
                     instance.window.assert_not_called()
                     instance.values.assert_not_called()
                     mock_timer_thread.assert_not_called()
                     mock_threading_timer.assert_not_called()
+                    mock_bottom_textbox.assert_not_called()
                     return
 
-                expect_window_call = [
-                    call.__getitem__("-INPUT2-"),
-                    call.__getitem__().get()
-                ]
+                self.assertEqual([
+                    call(),
+                ], mock_bottom_textbox.mock_calls)
+
+                expect_window_call = []
                 expect_values_call = [
                     call.get("-TIMER_SET-")
                 ]
@@ -119,13 +139,7 @@ class TestTimer(unittest.TestCase):
                 self.assertEqual(expect_window_call, instance.window.mock_calls)
                 self.assertEqual(expect_values_call, instance.values.mock_calls)
 
-                if is_cancel:
-                    self.assertEqual([
-                        call.__bool__(),
-                        call.cancel(),
-                    ], mock_timer_thread.mock_calls)
-                else:
-                    mock_timer_thread.assert_not_called()
+                mock_timer_cancel.assert_called_once_with()
 
                 self.assertEqual([
                     call(interval_num * 60, instance.run),

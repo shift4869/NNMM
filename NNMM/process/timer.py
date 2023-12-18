@@ -17,6 +17,13 @@ class Timer(ProcessBase):
         super().__init__(process_info)
         self.timer_thread = None
 
+    def _timer_cancel(self) -> None:
+        """現在タイマー待機中のものがあればキャンセルする
+        """
+        if self.timer_thread:
+            self.timer_thread.cancel()
+            self.timer_thread = None
+
     def run(self) -> Result:
         """タイマー実行時の処理
 
@@ -33,9 +40,7 @@ class Timer(ProcessBase):
         if i_str == "(使用しない)" or i_str == "":
             # オートリロード間隔が設定されていないならばスキップ
             # 現在タイマー待機中のものがあればキャンセルする
-            if self.timer_thread:
-                self.timer_thread.cancel()
-                self.timer_thread = None
+            self._timer_cancel()
             return Result.failed
 
         # オートリロード間隔を取得する
@@ -49,7 +54,7 @@ class Timer(ProcessBase):
 
         # 更新処理スキップ判定
         pattern = r"^.*(取得中|更新中).*$"
-        v = self.window["-INPUT2-"].get()
+        v = self.get_bottom_textbox().to_str()
         if self.values.get("-TIMER_SET-") == "-FIRST_SET-":
             # 初回起動ならスキップ
             self.values["-TIMER_SET-"] = ""
@@ -60,18 +65,16 @@ class Timer(ProcessBase):
             logger.info("-ALL_UPDATE- running now ... skip this auto-reload cycle.")
         else:
             # 更新処理起動
-            logger.info("Auto-reload start.")
             # すべて更新ボタンが押された場合の処理を起動する
             # self.window.write_event_value("-ALL_UPDATE-", "")
             # 一部更新ボタンが押された場合の処理を起動する
             self.window.write_event_value("-PARTIAL_UPDATE-", "")
+            logger.info("Auto-reload start.")
 
         # 現在タイマー待機中のものがあればキャンセルする
-        if self.timer_thread:
-            self.timer_thread.cancel()
-            self.timer_thread = None
+        self._timer_cancel()
 
-        # タイマーをセットして次回起動をセット
+        # 次回起動タイマーをセット
         s_interval = interval * 60  # [min] -> [sec]
         self.timer_thread = threading.Timer(s_interval, self.run)
         self.timer_thread.setDaemon(True)
