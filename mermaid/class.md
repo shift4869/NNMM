@@ -30,11 +30,11 @@ classDiagram
         class Timer
     }
 
-    class ProcessUpdateMylistInfoBase{
-        ：以下はすべてProcessUpdateMylistInfoBaseを継承する
-        class ProcessUpdateAllMylistInfo
-        class ProcessUpdateMylistInfo
-        class ProcessUpdatePartialMylistInfo
+    class Base{
+        ：以下はすべてBaseを継承する
+        class All
+        class Single
+        class Partial
     }
 
     class PopupWindowBase{
@@ -62,7 +62,7 @@ classDiagram
     Mylist -- MylistDBController
     MylistInfo -- MylistInfoDBController
 
-    ProcessBase <|-- ProcessUpdateMylistInfoBase
+    ProcessBase <|-- Base
     ProcessBase <|-- PopupWindowBase
     ProcessBase <|-- ConfigBase
 ```

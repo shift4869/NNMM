@@ -4,10 +4,10 @@ from contextlib import ExitStack
 
 from mock import MagicMock, call, patch
 
-from NNMM.process.update_mylist.single import ProcessUpdateMylistInfo, ProcessUpdateMylistInfoThreadDone
+from NNMM.process.update_mylist.single import Single, SingleThreadDone
 
 
-class TestProcessUpdateMylistInfo(unittest.TestCase):
+class TestSingle(unittest.TestCase):
     def MakeMylistDB(self, num: int = 5) -> list[dict]:
         """mylist_db.select()で取得されるマイリストデータセット
         """
@@ -51,14 +51,14 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
         return [r for r in res if r["mylist_url"] == mylist_url]
 
     def test_PUMIInit(self):
-        """ProcessUpdateMylistInfo の初期状態をテストする
+        """Single の初期状態をテストする
         """
         return
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.error"))
 
-            pumi = ProcessUpdateMylistInfo()
+            pumi = Single()
 
             self.assertEqual("Mylist", pumi.L_KIND)
             self.assertEqual("-UPDATE_THREAD_DONE-", pumi.E_DONE)
@@ -71,7 +71,7 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.error"))
 
-            pumi = ProcessUpdateMylistInfo()
+            pumi = Single()
 
             # 正常系
             m_list = self.MakeMylistDB()
@@ -127,14 +127,14 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
             self.assertEqual([], actual)
 
     def test_PUPMITDInit(self):
-        """ProcessUpdateMylistInfoThreadDone の初期状態をテストする
+        """SingleThreadDone の初期状態をテストする
         """
         return
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.error"))
 
-            pumitd = ProcessUpdateMylistInfoThreadDone()
+            pumitd = SingleThreadDone()
             self.assertEqual("Mylist", pumitd.L_KIND)
 
 

@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessUpdateMylistInfoBase(ProcessBase):
+class Base(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         """マイリストのマイリスト情報を更新するクラスのベース
 
@@ -35,7 +35,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
 
         self.lock = threading.Lock()
         self.done_count = 0
-        self.post_process = ProcessUpdateMylistInfoThreadDoneBase
+        self.post_process = ThreadDoneBase
         self.L_KIND = "UpdateMylist Base"
         self.E_DONE = ""
 
@@ -335,7 +335,7 @@ class ProcessUpdateMylistInfoBase(ProcessBase):
         logger.info(f"{self.L_KIND} update post process done.")
 
 
-class ProcessUpdateMylistInfoThreadDoneBase(ProcessBase):
+class ThreadDoneBase(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         """マイリストのマイリスト情報を更新するクラスのベース
 

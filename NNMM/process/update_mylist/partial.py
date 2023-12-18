@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
 from NNMM.model import Mylist
-from NNMM.process.update_mylist.base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
+from NNMM.process.update_mylist.base import Base, ThreadDoneBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import interval_translate
 
@@ -10,7 +10,7 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
+class Partial(Base):
     def __init__(self, process_info: ProcessInfo) -> None:
         """一部（複数の）マイリストのマイリスト情報を更新するクラス
 
@@ -20,7 +20,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
         """
         super().__init__(process_info)
 
-        self.post_process = ProcessUpdatePartialMylistInfoThreadDone
+        self.post_process = PartialThreadDone
         self.L_KIND = "Partial mylist"
         self.E_DONE = "-PARTIAL_UPDATE_THREAD_DONE-"
 
@@ -28,7 +28,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
         """更新対象のマイリストを返す
 
         Notes:
-            ProcessUpdatePartialMylistInfoにおいては対象は複数のマイリストとなる
+            Partialにおいては対象は複数のマイリストとなる
             前回更新確認時からインターバル分だけ経過しているもののみ更新対象とする
 
         Returns:
@@ -71,7 +71,7 @@ class ProcessUpdatePartialMylistInfo(ProcessUpdateMylistInfoBase):
         return result
 
 
-class ProcessUpdatePartialMylistInfoThreadDone(ProcessUpdateMylistInfoThreadDoneBase):
+class PartialThreadDone(ThreadDoneBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
         self.L_KIND = "Partial mylist"

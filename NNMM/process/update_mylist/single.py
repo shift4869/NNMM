@@ -1,21 +1,21 @@
 from logging import INFO, getLogger
 
 from NNMM.model import Mylist
-from NNMM.process.update_mylist.base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
+from NNMM.process.update_mylist.base import Base, ThreadDoneBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class ProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase):
+class Single(Base):
     def __init__(self, process_info: ProcessInfo) -> None:
         """マイリスト情報を更新する
 
         Notes:
             "-UPDATE-"
             右上の更新ボタンが押された場合
-            ProcessUpdateMylistInfoは現在表示されている単一のマイリストについて動画情報を更新する
+            Singleは現在表示されている単一のマイリストについて動画情報を更新する
         """
         super().__init__(process_info)
 
@@ -28,7 +28,7 @@ class ProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase):
         """更新対象のマイリストを返す
 
         Notes:
-            ProcessUpdateMylistInfoにおいては対象は単一のマイリストとなる
+            Singleにおいては対象は単一のマイリストとなる
 
         Returns:
             list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
@@ -41,7 +41,7 @@ class ProcessUpdateMylistInfo(ProcessUpdateMylistInfoBase):
         return m_list
 
 
-class ProcessUpdateMylistInfoThreadDone(ProcessUpdateMylistInfoThreadDoneBase):
+class SingleThreadDone(ThreadDoneBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
         self.L_KIND = "Mylist"

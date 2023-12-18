@@ -8,9 +8,9 @@ import PySimpleGUI as sg
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process import base, config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, update_all_mylist_info, update_mylist_info, update_partial_mylist_info, video_play, watched
-from NNMM.process import watched_all_mylist, watched_mylist
+from NNMM.process import base, config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, video_play, watched, watched_all_mylist, watched_mylist
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.update_mylist import every, single, partial
 from NNMM.util import Result
 
 logger = getLogger(__name__)
@@ -90,12 +90,12 @@ class MainWindow():
             "-CREATE-": create_mylist.CreateMylist,
             "-CREATE_THREAD_DONE-": create_mylist.CreateMylistThreadDone,
             "-DELETE-": delete_mylist.DeleteMylist,
-            "-UPDATE-": update_mylist_info.ProcessUpdateMylistInfo,
-            "-UPDATE_THREAD_DONE-": update_mylist_info.ProcessUpdateMylistInfoThreadDone,
-            "-ALL_UPDATE-": update_all_mylist_info.ProcessUpdateAllMylistInfo,
-            "-ALL_UPDATE_THREAD_DONE-": update_all_mylist_info.ProcessUpdateAllMylistInfoThreadDone,
-            "-PARTIAL_UPDATE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfo,
-            "-PARTIAL_UPDATE_THREAD_DONE-": update_partial_mylist_info.ProcessUpdatePartialMylistInfoThreadDone,
+            "-UPDATE-": single.Single,
+            "-UPDATE_THREAD_DONE-": single.SingleThreadDone,
+            "-ALL_UPDATE-": every.Every,
+            "-ALL_UPDATE_THREAD_DONE-": every.EveryThreadDone,
+            "-PARTIAL_UPDATE-": partial.Partial,
+            "-PARTIAL_UPDATE_THREAD_DONE-": partial.PartialThreadDone,
             "-C_CONFIG_SAVE-": config.ConfigSave,
             "-C_MYLIST_SAVE-": config.MylistSaveCSV,
             "-C_MYLIST_LOAD-": config.MylistLoadCSV,

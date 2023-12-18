@@ -11,12 +11,12 @@ from mock import AsyncMock, MagicMock, ThreadingMock, call, patch
 from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist.base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
+from NNMM.process.update_mylist.base import Base, ThreadDoneBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
 
-class ConcreteProcessUpdateMylistInfoBase(ProcessUpdateMylistInfoBase):
+class ConcreteBase(Base):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
         self.L_KIND = "Concrete Kind"
@@ -26,7 +26,7 @@ class ConcreteProcessUpdateMylistInfoBase(ProcessUpdateMylistInfoBase):
         return []
 
 
-class TestProcessUpdateMylistInfoBase(unittest.TestCase):
+class TestBase(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -91,15 +91,15 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
         return prev_video_lists
 
     def test_init(self):
-        instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+        instance = ConcreteBase(self.process_info)
         self.assertIsNotNone(instance.lock)
         self.assertEqual(0, instance.done_count)
-        self.assertEqual(ProcessUpdateMylistInfoThreadDoneBase, instance.post_process)
+        self.assertEqual(ThreadDoneBase, instance.post_process)
         self.assertEqual("Concrete Kind", instance.L_KIND)
         self.assertEqual("Concrete Event Key", instance.E_DONE)
 
     def test_get_target_mylist(self):
-        instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+        instance = ConcreteBase(self.process_info)
         actual = instance.get_target_mylist()
         self.assertEqual([], actual)
 
@@ -107,7 +107,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
         mock_mylist_info_db = MagicMock()
         mock_mylist_info_db.select_from_mylist_url.side_effect = self._make_mylist_info_db
 
-        instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+        instance = ConcreteBase(self.process_info)
         instance.mylist_info_db = mock_mylist_info_db
 
         m_list = self._make_mylist_db()
@@ -126,7 +126,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
             mock_thread = stack.enter_context(patch("NNMM.process.update_mylist.base.threading.Thread"))
 
-            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+            instance = ConcreteBase(self.process_info)
 
             actual = instance.run()
             self.assertIs(Result.success, actual)
@@ -154,7 +154,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             mock_get_mylist_info_execute = MagicMock()
             mock_update_mylist_info_execute = MagicMock()
 
-            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+            instance = ConcreteBase(self.process_info)
 
             def pre_run(valid_m_list):
                 instance.window.reset_mock()
@@ -225,7 +225,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
             mock_fetcher = stack.enter_context(patch("NNMM.process.update_mylist.base.VideoInfoRssFetcher.fetch_videoinfo"))
 
-            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+            instance = ConcreteBase(self.process_info)
 
             m_list = self._make_mylist_db()
             all_index_num = len(m_list)
@@ -268,7 +268,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
         with ExitStack() as stack:
             mock_executor = stack.enter_context(patch("NNMM.process.update_mylist.base.ThreadPoolExecutor"))
 
-            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+            instance = ConcreteBase(self.process_info)
 
             m_list = self._make_mylist_db()
             all_index_num = len(m_list)
@@ -306,7 +306,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
         with ExitStack() as stack:
             mock_executor = stack.enter_context(patch("NNMM.process.update_mylist.base.ThreadPoolExecutor"))
 
-            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+            instance = ConcreteBase(self.process_info)
 
             m_list = self._make_mylist_db()
             prev_video_lists = self._make_prev_video_lists(m_list)
@@ -374,7 +374,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
             mockmdb = stack.enter_context(patch("NNMM.process.update_mylist.base.MylistDBController"))
             mockmidb = stack.enter_context(patch("NNMM.process.update_mylist.base.MylistInfoDBController"))
 
-            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+            instance = ConcreteBase(self.process_info)
 
             # 正常系
             dst = "2022-02-08 01:00:01"
@@ -609,7 +609,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
         return
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
-            instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
+            instance = ConcreteBase(self.process_info)
 
             mock_post_process = MagicMock()
             mock_mw = MagicMock()
