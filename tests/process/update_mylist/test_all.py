@@ -6,7 +6,7 @@ from mock import MagicMock
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_all_mylist_info import ProcessUpdateAllMylistInfo, ProcessUpdateAllMylistInfoThreadDone
+from NNMM.process.update_mylist.all import ProcessUpdateAllMylistInfo, ProcessUpdateAllMylistInfoThreadDone
 from NNMM.process.value_objects.process_info import ProcessInfo
 
 

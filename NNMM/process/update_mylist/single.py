@@ -1,7 +1,7 @@
 from logging import INFO, getLogger
 
 from NNMM.model import Mylist
-from NNMM.process.update_mylist_info_base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
+from NNMM.process.update_mylist.base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 
 logger = getLogger(__name__)

@@ -4,7 +4,7 @@ from contextlib import ExitStack
 
 from mock import MagicMock, call, patch
 
-from NNMM.process.update_mylist_info import ProcessUpdateMylistInfo, ProcessUpdateMylistInfoThreadDone
+from NNMM.process.update_mylist.single import ProcessUpdateMylistInfo, ProcessUpdateMylistInfoThreadDone
 
 
 class TestProcessUpdateMylistInfo(unittest.TestCase):
@@ -55,8 +55,8 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
         """
         return
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.update_mylist_info.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.update_mylist_info.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.error"))
 
             pumi = ProcessUpdateMylistInfo()
 
@@ -68,8 +68,8 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
         """
         return
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.update_mylist_info.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.update_mylist_info.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.error"))
 
             pumi = ProcessUpdateMylistInfo()
 
@@ -131,8 +131,8 @@ class TestProcessUpdateMylistInfo(unittest.TestCase):
         """
         return
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.update_mylist_info.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.update_mylist_info.logger.error"))
+            mockli = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.update_mylist.single.logger.error"))
 
             pumitd = ProcessUpdateMylistInfoThreadDone()
             self.assertEqual("Mylist", pumitd.L_KIND)

@@ -11,7 +11,7 @@ from mock import AsyncMock, MagicMock, ThreadingMock, call, patch
 from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist_info_base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
+from NNMM.process.update_mylist.base import ProcessUpdateMylistInfoBase, ProcessUpdateMylistInfoThreadDoneBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -123,8 +123,8 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.update_mylist_info_base.logger.info"))
-            mock_thread = stack.enter_context(patch("NNMM.process.update_mylist_info_base.threading.Thread"))
+            mockli = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
+            mock_thread = stack.enter_context(patch("NNMM.process.update_mylist.base.threading.Thread"))
 
             instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
@@ -145,10 +145,10 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
 
     def test_update_mylist_info_thread(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.update_mylist_info_base.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.update_mylist_info_base.logger.error"))
-            mock_time = stack.enter_context(patch("NNMM.process.update_mylist_info_base.time"))
-            mock_thread = stack.enter_context(patch("NNMM.process.update_mylist_info_base.threading"))
+            mockli = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.error"))
+            mock_time = stack.enter_context(patch("NNMM.process.update_mylist.base.time"))
+            mock_thread = stack.enter_context(patch("NNMM.process.update_mylist.base.threading"))
             mock_get_target_mylist = MagicMock()
             mock_get_prev_video_lists = MagicMock()
             mock_get_mylist_info_execute = MagicMock()
@@ -222,8 +222,8 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
 
     def test_get_mylist_info_worker(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.update_mylist_info_base.logger.info"))
-            mock_fetcher = stack.enter_context(patch("NNMM.process.update_mylist_info_base.VideoInfoRssFetcher.fetch_videoinfo"))
+            mockli = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
+            mock_fetcher = stack.enter_context(patch("NNMM.process.update_mylist.base.VideoInfoRssFetcher.fetch_videoinfo"))
 
             instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
@@ -266,7 +266,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
 
     def test_get_mylist_info_execute(self):
         with ExitStack() as stack:
-            mock_executor = stack.enter_context(patch("NNMM.process.update_mylist_info_base.ThreadPoolExecutor"))
+            mock_executor = stack.enter_context(patch("NNMM.process.update_mylist.base.ThreadPoolExecutor"))
 
             instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
@@ -304,7 +304,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
 
     def test_update_mylist_info_execute(self):
         with ExitStack() as stack:
-            mock_executor = stack.enter_context(patch("NNMM.process.update_mylist_info_base.ThreadPoolExecutor"))
+            mock_executor = stack.enter_context(patch("NNMM.process.update_mylist.base.ThreadPoolExecutor"))
 
             instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
@@ -368,11 +368,11 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
     def test_update_mylist_info_worker(self):
         return
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.update_mylist_info_base.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.update_mylist_info_base.logger.error"))
-            mockgdt = stack.enter_context(patch("NNMM.process.update_mylist_info_base.get_now_datetime"))
-            mockmdb = stack.enter_context(patch("NNMM.process.update_mylist_info_base.MylistDBController"))
-            mockmidb = stack.enter_context(patch("NNMM.process.update_mylist_info_base.MylistInfoDBController"))
+            mockli = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
+            mockle = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.error"))
+            mockgdt = stack.enter_context(patch("NNMM.process.update_mylist.base.get_now_datetime"))
+            mockmdb = stack.enter_context(patch("NNMM.process.update_mylist.base.MylistDBController"))
+            mockmidb = stack.enter_context(patch("NNMM.process.update_mylist.base.MylistInfoDBController"))
 
             instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
@@ -608,7 +608,7 @@ class TestProcessUpdateMylistInfoBase(unittest.TestCase):
     def test_thread_done(self):
         return
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.update_mylist_info_base.logger.info"))
+            mockli = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
             instance = ConcreteProcessUpdateMylistInfoBase(self.process_info)
 
             mock_post_process = MagicMock()
