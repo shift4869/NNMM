@@ -2,6 +2,7 @@ from logging import INFO, getLogger
 
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.table_row import Status
 from NNMM.util import Result
 
 logger = getLogger(__name__)
@@ -37,16 +38,13 @@ class WatchedAllMylist(ProcessBase):
             logger.info(f'{mylist_url} -> all include videos status are marked "watched" ... ({i + 1}/{all_num}).')
 
         # 右上のテキストボックスからマイリストURLを取得
-        mylist_url = self.window["-INPUT1-"].get()
+        mylist_url = self.get_upper_textbox().to_str()
         if mylist_url == "":
             # 現在表示しているテーブルの表示をすべて視聴済にする
-            def_data = self.window["-TABLE-"].Values  # 現在のtableの全リスト
-
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
-            STATUS_INDEX = 4
+            def_data = self.get_all_table_row()
             for i, record in enumerate(def_data):
-                def_data[i][STATUS_INDEX] = ""
-            self.window["-TABLE-"].update(values=def_data)
+                def_data[i] = def_data[i].replace_from_typed_value(status=Status.watched)
+            self.window["-TABLE-"].update(values=def_data.to_table_data())
 
         self.update_mylist_pane()
         self.update_table_pane(mylist_url)

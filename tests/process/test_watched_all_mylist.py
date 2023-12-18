@@ -10,6 +10,9 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.table_row import Status
+from NNMM.process.value_objects.table_row_list import TableRowList
+from NNMM.process.value_objects.textbox_upper import UpperTextbox
 from NNMM.process.watched_all_mylist import WatchedAllMylist
 from NNMM.util import Result
 
@@ -71,8 +74,6 @@ class TestWatchedAllMylist(unittest.TestCase):
                     video_url,
                     mylist_url,
                     created_at,
-                    showname,
-                    mylistname,
                 ]
                 res.append(table_rows)
         return res
@@ -82,6 +83,8 @@ class TestWatchedAllMylist(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.watched_all_mylist.logger.info"))
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.update_mylist_pane"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.update_table_pane"))
+            mock_upper_textbox = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.get_upper_textbox"))
+            mock_all_table_row = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.get_all_table_row"))
 
             instance = WatchedAllMylist(self.process_info)
 
@@ -95,15 +98,21 @@ class TestWatchedAllMylist(unittest.TestCase):
                 instance.mylist_db.select.side_effect = self._make_mylist_db
 
                 instance.mylist_info_db.reset_mock()
-
                 instance.window.reset_mock()
+
+                mock_upper_textbox.reset_mock()
                 if is_mylist_url_empty:
-                    def f(): return ""
-                    instance.window.__getitem__.return_value.get.side_effect = f
+                    def f(): return UpperTextbox.create("")
+                    mock_upper_textbox.side_effect = f
                 else:
-                    def f(): return mylist_url
-                    instance.window.__getitem__.return_value.get.side_effect = f
-                instance.window.__getitem__.return_value.Values = s_def_data
+                    def f(): return UpperTextbox.create(mylist_url)
+                    mock_upper_textbox.side_effect = f
+
+                mock_all_table_row.reset_mock()
+                s_def_data = [[i + 1] + r[1:-1] for i, r in enumerate(s_def_data)]
+                def f(): return TableRowList.create(s_def_data)
+                mock_all_table_row.side_effect = f
+
                 mock_update_mylist_pane.reset_mock()
                 mock_update_table_pane.reset_mock()
 
@@ -120,21 +129,20 @@ class TestWatchedAllMylist(unittest.TestCase):
                     call.update_status_in_mylist(s_mylist_url, "") for s_mylist_url in mylist_url_list
                 ], instance.mylist_info_db.mock_calls)
 
-                expect_window_calls = [
-                    call.__getitem__("-INPUT1-"),
-                    call.__getitem__().get(),
-                ]
+                expect_window_calls = []
                 s_mylist_url = mylist_url
                 if is_mylist_url_empty:
                     s_mylist_url = ""
                     s_def_data = deepcopy(def_data)
-                    STATUS_INDEX = 4
+                    s_def_data = [[i + 1] + r[1:-1] for i, r in enumerate(s_def_data)]
+                    s_def_data = TableRowList.create(s_def_data)
                     for i, _ in enumerate(s_def_data):
-                        s_def_data[i][STATUS_INDEX] = ""
+                        s_def_data[i] = s_def_data[i].replace_from_typed_value(
+                            status=Status.watched
+                        )
                     expect_window_calls.extend([
                         call.__getitem__("-TABLE-"),
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(values=s_def_data)
+                        call.__getitem__().update(values=s_def_data.to_table_data())
                     ])
                 self.assertEqual(expect_window_calls, instance.window.mock_calls)
 
