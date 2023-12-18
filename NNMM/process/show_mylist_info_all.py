@@ -2,6 +2,7 @@ from logging import INFO, getLogger
 
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.table_row_list import TableRowList
 from NNMM.util import Result
 
 logger = getLogger(__name__)
@@ -30,20 +31,20 @@ class ShowMylistInfoAll(ProcessBase):
         logger.info("ShowMylistInfoAll start.")
 
         # 現在選択中のマイリストがある場合そのindexを保存
+        selected_mylist_row_index = self.get_selected_mylist_row_index()
         index = 0
-        if self.window["-LIST-"].get_indexes():
-            index = self.window["-LIST-"].get_indexes()[0]
+        if selected_mylist_row_index:
+            index = int(selected_mylist_row_index)
 
         # 全動画情報を取得
         NUM = 100
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url"]
         video_info_list = self.mylist_info_db.select()  # DB内にある全ての動画情報を取得
         records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]  # 最大100要素までのスライス
-        def_data = []
+        table_row_list = []
         for i, r in enumerate(records):
             a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["registered_at"], r["video_url"], r["mylist_url"]]
-            def_data.append(a)
+            table_row_list.append(a)
+        def_data = TableRowList.create(table_row_list)
 
         # 右上のマイリストURLは空白にする
         self.window["-INPUT1-"].update(value="")
@@ -51,7 +52,7 @@ class ShowMylistInfoAll(ProcessBase):
         # テーブル更新
         # update_table_paneはリフレッシュには使えるが初回は別に設定が必要なため使用できない
         self.window["-LIST-"].update(set_to_index=index)
-        self.window["-TABLE-"].update(values=def_data)
+        self.window["-TABLE-"].update(values=def_data.to_table_data())
         if len(def_data) > 0:
             self.window["-TABLE-"].update(select_rows=[0])
         # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き

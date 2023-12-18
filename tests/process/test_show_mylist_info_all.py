@@ -9,7 +9,9 @@ from mock import MagicMock, call, patch
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.show_mylist_info_all import ShowMylistInfoAll
+from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
 from NNMM.process.value_objects.process_info import ProcessInfo
+from NNMM.process.value_objects.table_row_list import TableRowList
 from NNMM.util import Result
 
 
@@ -46,15 +48,17 @@ class TestShowMylistInfoAll(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.show_mylist_info_all.logger.info"))
+            mock_selected_mylist_row_index = stack.enter_context(patch("NNMM.process.show_mylist_info_all.ProcessBase.get_selected_mylist_row_index"))
 
             instance = ShowMylistInfoAll(self.process_info)
 
             def pre_run(s_index, not_empty_records):
-                instance.window.reset_mock()
+                mock_selected_mylist_row_index.reset_mock()
                 if s_index >= 0:
-                    instance.window.__getitem__.return_value.get_indexes.side_effect = lambda: [s_index]
+                    def f(): return SelectedMylistRowIndex(s_index)
+                    mock_selected_mylist_row_index.side_effect = f
                 else:
-                    instance.window.__getitem__.return_value.get_indexes.side_effect = lambda: []
+                    mock_selected_mylist_row_index.side_effect = lambda: None
 
                 video_info_list = self._make_mylist_info_db()
                 instance.mylist_info_db.reset_mock()
@@ -62,23 +66,13 @@ class TestShowMylistInfoAll(unittest.TestCase):
                     instance.mylist_info_db.select.side_effect = lambda: video_info_list
                 else:
                     instance.mylist_info_db.select.side_effect = lambda: []
+                instance.window.reset_mock()
 
             def post_run(s_index, not_empty_records):
                 expect_window_call = []
                 index = 0
                 if s_index >= 0:
-                    expect_window_call.extend([
-                        call.__getitem__("-LIST-"),
-                        call.__getitem__().get_indexes(),
-                        call.__getitem__("-LIST-"),
-                        call.__getitem__().get_indexes(),
-                    ])
                     index = s_index
-                else:
-                    expect_window_call.extend([
-                        call.__getitem__("-LIST-"),
-                        call.__getitem__().get_indexes(),
-                    ])
 
                 expect_window_call.extend([
                     call.__getitem__("-INPUT1-"),
@@ -90,21 +84,22 @@ class TestShowMylistInfoAll(unittest.TestCase):
                     NUM = 100
                     video_info_list = self._make_mylist_info_db()
                     records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]
-                    def_data = []
+                    table_row_list = []
                     for i, r in enumerate(records):
                         a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["registered_at"], r["video_url"], r["mylist_url"]]
-                        def_data.append(a)
+                        table_row_list.append(a)
+                    def_data = TableRowList.create(table_row_list)
                     expect_window_call.extend([
                         call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(values=def_data),
+                        call.__getitem__().update(values=def_data.to_table_data()),
                         call.__getitem__("-TABLE-"),
                         call.__getitem__().update(select_rows=[0]),
                     ])
                 else:
-                    def_data = []
+                    def_data = TableRowList.create([])
                     expect_window_call.extend([
                         call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(values=def_data),
+                        call.__getitem__().update(values=def_data.to_table_data()),
                     ])
                 expect_window_call.extend([
                     call.__getitem__("-TABLE-"),
