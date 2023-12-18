@@ -9,6 +9,7 @@ from mock import MagicMock, call, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
+from NNMM.process.value_objects.mylist_row import SelectedMylistRow
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.process.watched_mylist import WatchedMylist
 from NNMM.util import Result
@@ -43,6 +44,7 @@ class TestWatchedMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.watched_mylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.watched_mylist.logger.error"))
+            mock_selected_mylist_row = stack.enter_context(patch("NNMM.process.watched_mylist.ProcessBase.get_selected_mylist_row"))
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_mylist.ProcessBase.update_mylist_pane"))
             mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_mylist.ProcessBase.update_table_pane"))
 
@@ -51,11 +53,13 @@ class TestWatchedMylist(unittest.TestCase):
             m_list = self._make_mylist_db()
             mylist_url = m_list[0]["url"]
             def pre_run(s_values, is_include_new):
-                instance.values.reset_mock()
-                if not s_values:
-                    instance.values.__getitem__.side_effect = lambda key: ""
+                mock_selected_mylist_row.reset_mock()
+                if s_values:
+                    def f(): return SelectedMylistRow.create(s_values)
+                    mock_selected_mylist_row.side_effect = f
                 else:
-                    instance.values.__getitem__.side_effect = lambda key: [s_values]
+                    def f(): return None
+                    mock_selected_mylist_row.side_effect = f
 
                 s_m_list = deepcopy(m_list)
                 s_m_list[0]["is_include_new"] = is_include_new
@@ -67,20 +71,15 @@ class TestWatchedMylist(unittest.TestCase):
                 mock_update_table_pane.reset_mock()
 
             def post_run(s_values, is_include_new):
+                self.assertEqual([
+                    call()
+                ], mock_selected_mylist_row.mock_calls)
                 if not s_values:
-                    self.assertEqual([
-                        call.__getitem__("-LIST-")
-                    ], instance.values.mock_calls)
                     instance.mylist_db.assert_not_called()
                     instance.mylist_info_db.assert_not_called()
                     mock_update_mylist_pane.assert_not_called()
                     mock_update_table_pane.assert_not_called()
                     return
-                else:
-                    self.assertEqual([
-                        call.__getitem__("-LIST-"),
-                        call.__getitem__("-LIST-"),
-                    ], instance.values.mock_calls)
 
                 NEW_MARK = "*:"
                 if s_values[:2] == NEW_MARK:
@@ -107,10 +106,11 @@ class TestWatchedMylist(unittest.TestCase):
                 mock_update_table_pane.assert_called_once_with("")
 
             Params = namedtuple("Params", ["s_values", "is_include_new", "result"])
+            showname_1 = "投稿者1さんの投稿動画"
             params_list = [
-                Params("showname_1", True, Result.success),
-                Params("*:showname_1", True, Result.success),
-                Params("showname_1", False, Result.failed),
+                Params(showname_1, True, Result.success),
+                Params("*:" + showname_1, True, Result.success),
+                Params(showname_1, False, Result.failed),
                 Params("", True, Result.failed),
             ]
             for params in params_list:

@@ -22,21 +22,18 @@ class WatchedMylist(ProcessBase):
         logger.info(f"WatchedAllMylist start.")
 
         # マイリストが選択されていない場合は何もしない
-        if not self.values["-LIST-"]:
+        selected_mylist_row = self.get_selected_mylist_row()
+        if not selected_mylist_row:
             logger.error("WatchedMylist failed, no mylist selected.")
             return Result.failed
 
-        v = self.values["-LIST-"][0]  # 選択値
-
-        NEW_MARK = "*:"
-        if v[:2] == NEW_MARK:
-            v = v[2:]
-        record = self.mylist_db.select_from_showname(v)[0]
+        showname = selected_mylist_row.without_new_mark_name()
+        record = self.mylist_db.select_from_showname(showname)[0]
         mylist_url = record.get("url")
 
         # マイリストの新着フラグがFalseなら何もしない
         if not record.get("is_include_new"):
-            logger.error('WatchedMylist success, selected mylist is already "watched".')
+            logger.error(f'{mylist_url} -> selected mylist is already "watched".')
             return Result.failed
 
         # マイリスト情報内の視聴済フラグを更新
