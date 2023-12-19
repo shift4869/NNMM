@@ -59,6 +59,9 @@ class FetchedVideoInfo():
         self._is_valid()
         object.__setattr__(self, "result_dict", self._make_result_dict())
 
+    def __len__(self) -> int:
+        return self.no.__len__()
+
     def _is_valid(self) -> bool | TypeError | ValueError:
         """バリデーション
 

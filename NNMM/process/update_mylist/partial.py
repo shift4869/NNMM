@@ -24,7 +24,7 @@ class Partial(Base):
         self.L_KIND = "Partial mylist"
         self.E_DONE = "-PARTIAL_UPDATE_THREAD_DONE-"
 
-    def get_target_mylist(self) -> list[Mylist]:
+    def get_target_mylist(self) -> list[dict]:
         """更新対象のマイリストを返す
 
         Notes:
@@ -32,7 +32,7 @@ class Partial(Base):
             前回更新確認時からインターバル分だけ経過しているもののみ更新対象とする
 
         Returns:
-            list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
+            list[dict]: 更新対象のマイリストのリスト、エラー時空リスト
         """
         result = []
         m_list = self.mylist_db.select()

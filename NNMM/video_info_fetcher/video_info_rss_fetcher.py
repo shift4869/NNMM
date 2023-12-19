@@ -43,7 +43,7 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             raise ValueError("rss analysis failed.")
         return res
 
-    async def _fetch_videoinfo_from_rss(self) -> list[dict]:
+    async def _fetch_videoinfo_from_rss(self) -> FetchedVideoInfo:
         """投稿動画/マイリストページアドレスから掲載されている動画の情報を取得する
 
         Notes:
@@ -101,7 +101,8 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
 
         # 結合
         video_d = FetchedVideoInfo.merge(rss_d, api_d)
-        return video_d.result
+        # return video_d.result
+        return video_d
 
     async def _fetch_videoinfo(self) -> list[dict]:
         return await self._fetch_videoinfo_from_rss()

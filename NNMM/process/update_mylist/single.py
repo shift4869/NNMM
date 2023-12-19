@@ -24,16 +24,16 @@ class Single(Base):
         # イベントキー
         self.E_DONE = "-UPDATE_THREAD_DONE-"
 
-    def get_target_mylist(self) -> list[Mylist]:
+    def get_target_mylist(self) -> list[dict]:
         """更新対象のマイリストを返す
 
         Notes:
             Singleにおいては対象は単一のマイリストとなる
 
         Returns:
-            list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
+            list[dict]: 更新対象のマイリストのリスト、エラー時空リスト
         """
-        mylist_url = self.values["-INPUT1-"]
+        mylist_url = self.get_upper_textbox().to_str()
         if mylist_url == "":
             return []
 

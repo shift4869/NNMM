@@ -12,6 +12,7 @@ import httpx
 import xmltodict
 
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
+from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
 from NNMM.video_info_fetcher.value_objects.title import Title
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
@@ -157,7 +158,7 @@ class VideoInfoFetcherBase(ABC):
         return []
 
     @classmethod
-    async def fetch_videoinfo(cls, url: str) -> list[dict]:
+    async def fetch_videoinfo(cls, url: str) -> FetchedVideoInfo:
         res = []
         try:
             fetcher = cls(url)

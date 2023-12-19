@@ -15,14 +15,14 @@ class Every(Base):
         self.L_KIND = "Every mylist"
         self.E_DONE = "-ALL_UPDATE_THREAD_DONE-"
 
-    def get_target_mylist(self) -> list[Mylist]:
+    def get_target_mylist(self) -> list[dict]:
         """更新対象のマイリストを返す
 
         Note:
             Everyにおいては対象はすべてのマイリストとなる
 
         Returns:
-            list[Mylist]: 更新対象のマイリストのリスト、エラー時空リスト
+            list[dict]: 更新対象のマイリストのリスト、エラー時空リスト
         """
         m_list = self.mylist_db.select()
         return m_list
