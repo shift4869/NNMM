@@ -36,7 +36,7 @@ class BottomTextbox():
 
         Returns:
             Self: BottomTextbox インスタンス
-        """        
+        """
         return cls(input_text)
 
 

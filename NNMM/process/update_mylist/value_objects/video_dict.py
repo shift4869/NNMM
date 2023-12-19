@@ -15,6 +15,14 @@ class VideoDict():
         self.is_valid()
 
     def is_valid(self) -> bool:
+        """受け取った dict が MylistInfo の属性をキーとして含むかを調べる
+
+        Raises:
+            ValueError: dict のキーが MylistInfo の属性と一致しなかった場合
+
+        Returns:
+            bool: dict のキーと MylistInfo の属性が一致した場合True
+        """
         valid_key = MylistInfo.__table__.c.keys()
         instance_key = list(self._dict.keys())
         if instance_key != valid_key:
@@ -23,24 +31,6 @@ class VideoDict():
 
     def __getitem__(self, item) -> Any:
         return self._dict.__getitem__(item)
-
-    def __setitem__(self, key, value) -> None:
-        return self._dict.__setitem__(key, value)
-
-    @property
-    def video(self) -> MylistInfo:
-        return MylistInfo(
-            self._dict["id"],
-            self._dict["video_id"],
-            self._dict["title"],
-            self._dict["username"],
-            self._dict["status"],
-            self._dict["uploaded_at"],
-            self._dict["registered_at"],
-            self._dict["video_url"],
-            self._dict["mylist_url"],
-            self._dict["created_at"],
-        )
 
     def to_typed_video(self) -> TypedVideo:
         return TypedVideo(
@@ -58,6 +48,14 @@ class VideoDict():
 
     @classmethod
     def create(cls, video_dict: dict) -> Self:
+        """MylistInfo を表す dict のクラスを作成する
+
+        Args:
+            video_dict (dict): MylistInfo を表す dict のリスト
+
+        Returns:
+            Self: VideoDict インスタンス
+        """
         return cls(video_dict)
 
 

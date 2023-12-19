@@ -5,12 +5,14 @@ from NNMM.model import Mylist
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.update_mylist.value_objects.mylist_dict_list import MylistDictList
 from NNMM.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
-from NNMM.process.update_mylist.value_objects.typed_mylist_list import TypedMylistList
-from NNMM.process.update_mylist.value_objects.typed_video_list import TypedVideoList
 
 
 @dataclass(frozen=False)
 class MylistWithVideoList():
+    """複数のマイリストと、それぞれのマイリストが保持する動画情報をそれぞれ取得して紐づける
+
+    MylistWithVideo の List を表す
+    """    
     _list: list[MylistWithVideo]
 
     def __post_init__(self) -> None:
@@ -30,6 +32,18 @@ class MylistWithVideoList():
 
     @classmethod
     def create(cls, mylist_list: list[dict] | list[Mylist], mylist_info_db: MylistInfoDBController) -> Self:
+        """複数のマイリストと、それぞれのマイリストが保持する動画情報をそれぞれ取得して紐づける
+
+        Args:
+            mylist_list (list[dict] | list[Mylist]): マイリストorマイリストを表す辞書 のリスト
+            mylist_info_db (MylistInfoDBController): MylistInfo 取得用DBコントローラ
+
+        Raises:
+            ValueError: 引数の型が不正な場合
+
+        Returns:
+            Self: MylistWithVideoList インスタンス
+        """
         if not isinstance(mylist_list, list):
             raise ValueError("mylist_list must be list.")
         is_all_mylist_info = all([isinstance(mylist_info, Mylist) for mylist_info in mylist_list])
@@ -38,11 +52,9 @@ class MylistWithVideoList():
             raise ValueError("all mylist_list element must be Mylist or dict.")
 
         if is_all_mylist_info:
-            records_list: list[dict] = []
-            for mylist in mylist_list:
-                record = mylist.to_dict()
-                records_list.append(record)
-            mylist_list: list[dict] = records_list
+            # mylist_list が list[Mylist] で渡ってきた場合
+            # list[dict] に揃えて扱う
+            mylist_list: list[dict] = [mylist.to_dict() for mylist in mylist_list]
 
         mylist_dict_list = MylistDictList.create(mylist_list)
         typed_mylist_list = mylist_dict_list.to_typed_mylist_list()
@@ -50,17 +62,6 @@ class MylistWithVideoList():
         return cls([
             MylistWithVideo.create(typed_mylist, mylist_info_db)
             for typed_mylist in typed_mylist_list
-        ])
-
-    @classmethod
-    def create_from_mylist_and_video(cls, typed_mylist_list: TypedMylistList, typed_video_list: TypedVideoList) -> Self:
-        if not isinstance(typed_mylist_list, TypedMylistList):
-            raise ValueError("typed_mylist_list must be TypedMylistList.")
-        if not isinstance(typed_video_list, TypedVideoList):
-            raise ValueError("typed_video_list must be TypedVideoList.")
-        return cls([
-            MylistWithVideo.create_from_mylist_and_video(typed_mylist, typed_video)
-            for typed_mylist, typed_video in zip(typed_mylist_list, typed_video_list, strict=True)
         ])
 
 

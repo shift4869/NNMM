@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from typing import Any, Iterator, Self
+from typing import Iterator, Self
 
-from NNMM.model import Mylist
 from NNMM.process.update_mylist.value_objects.mylist_dict import MylistDict
 from NNMM.process.update_mylist.value_objects.typed_mylist_list import TypedMylistList
 
@@ -32,6 +31,15 @@ class MylistDictList():
 
     @classmethod
     def create(cls, mylist_dict_list: list[dict]) -> Self:
+        """Mylist を表す dict のリストクラスを作成する
+
+        Args:
+            mylist_dict_list (list[dict]): Mylist を表す dict のリスト
+                                           mylist_db.select() 系の返り値を想定
+
+        Returns:
+            Self: MylistDictList インスタンス
+        """
         return cls([
             MylistDict.create(mylist_dict) for mylist_dict in mylist_dict_list
         ])

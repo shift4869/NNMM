@@ -32,6 +32,16 @@ class VideoDictList():
 
     @classmethod
     def create(cls, video_dict_list: list[dict]) -> Self:
+        """MylistInfo を表す dict のリストクラスを作成する
+
+        Args:
+            video_dict_list (list[dict]):
+                MylistInfo を表す dict のリスト
+                mylist_info_db.select_from_mylist_url() 系の返り値を想定
+
+        Returns:
+            Self: VideoDictList インスタンス
+        """
         return cls([
             VideoDict.create(video_dict) for video_dict in video_dict_list
         ])

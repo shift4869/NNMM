@@ -36,7 +36,7 @@ class UpperTextbox():
 
         Returns:
             Self: UpperTextbox インスタンス
-        """        
+        """
         return cls(input_text)
 
 
