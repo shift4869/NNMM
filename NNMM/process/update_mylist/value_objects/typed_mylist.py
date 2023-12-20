@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 
 from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
-from NNMM.process.update_mylist.value_objects.checked_interval import CheckInterval
+from NNMM.process.update_mylist.value_objects.check_interval import CheckInterval
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
 from NNMM.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
 from NNMM.process.update_mylist.value_objects.mylist_url import MylistURL

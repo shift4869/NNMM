@@ -27,7 +27,7 @@ class CheckInterval():
     def interval_str(self) -> str:
         return f"{self._amount}{self._unit}"
 
-    def get_min_amount(self) -> int:
+    def get_minute_amount(self) -> int:
         """インターバルを分[min]を表す数値として解釈して返す
 
         Returns:
@@ -126,6 +126,6 @@ if __name__ == "__main__":
             check_interval = CheckInterval.create(interval_str)
             print(check_interval)
             print(check_interval.interval_str)
-            print(check_interval.get_min_amount())
+            print(check_interval.get_minute_amount())
         except ValueError as e:
             print(e.args[0])
