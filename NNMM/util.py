@@ -155,11 +155,11 @@ def get_now_datetime() -> str:
     dst = datetime.now().strftime(dst_df)
     return dst
 
-def is_mylist_include_new_video(table_list: list[list]) -> bool | KeyError:
+def is_mylist_include_new_video(table_list: list[list[str]]) -> bool | KeyError:
     """現在のテーブルリスト内に状況が未視聴のものが一つでも含まれているかを返す
 
     Args:
-        table_list (list[list]): テーブルリスト
+        table_list (list[list[str]]): テーブルリスト
 
     Returns:
         bool: 一つでも未視聴のものがあればTrue, そうでないならFalse

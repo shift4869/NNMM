@@ -1,21 +1,16 @@
-import asyncio
 import threading
 import time
 from abc import abstractmethod
-from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
-from NNMM.model import Mylist, MylistInfo
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.base import ProcessBase
 from NNMM.process.update_mylist.database_updater import DatabaseUpdater
 from NNMM.process.update_mylist.fetcher import Fetcher
+from NNMM.process.update_mylist.value_objects.mylist_dict_list import MylistDictList
 from NNMM.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
-from NNMM.process.value_objects.mylist_row_list import MylistRowList
+from NNMM.process.update_mylist.value_objects.video_dict_list import VideoDictList
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result, get_now_datetime, is_mylist_include_new_video
-from NNMM.video_info_fetcher.video_info_rss_fetcher import VideoInfoRssFetcher
+from NNMM.util import Result, is_mylist_include_new_video
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -144,15 +139,17 @@ class ThreadDoneBase(ProcessBase):
 
         # マイリストの新着表示を表示するかどうか判定する
         m_list = self.mylist_db.select()
-        mylist_row_list = MylistRowList.create()
-        for m in m_list:
-            mylist_url = m.get("url")
-            video_list = self.mylist_info_db.select_from_mylist_url(mylist_url)
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        mylist_dict_list = MylistDictList.create(m_list)
+        typed_mylist_list = mylist_dict_list.to_typed_mylist_list()
+        for typed_mylist in typed_mylist_list:
+            mylist_url = typed_mylist.url.non_query_url
+
+            records = self.mylist_info_db.select_from_mylist_url(mylist_url)
+            video_dict_list = VideoDictList.create(records)
+            typed_video_list = video_dict_list.to_typed_video_list()
             def_data = []
-            for i, t in enumerate(video_list):
-                a = [i + 1, t["video_id"], t["title"], t["username"], t["status"], t["uploaded_at"], t["registered_at"], t["video_url"], t["mylist_url"]]
-                def_data.append(a)
+            for typed_video in typed_video_list:
+                def_data.append(list(typed_video.to_dict().values()))
 
             # 左のマイリストlistboxの表示を更新する
             # 一つでも未視聴の動画が含まれる場合はマイリストに進捗マークを追加する
