@@ -21,8 +21,8 @@ class MylistDictList():
     def __len__(self) -> int:
         return self._list.__len__()
 
-    def __getitem__(self, item) -> MylistDict:
-        return self._list.__getitem__(item)
+    def __getitem__(self, index) -> MylistDict:
+        return self._list.__getitem__(index)
 
     def to_typed_mylist_list(self) -> TypedMylistList:
         return TypedMylistList.create([
