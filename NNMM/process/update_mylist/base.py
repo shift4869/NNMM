@@ -12,6 +12,7 @@ from NNMM.process.base import ProcessBase
 from NNMM.process.update_mylist.database_updater import DatabaseUpdater
 from NNMM.process.update_mylist.fetcher import Fetcher
 from NNMM.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
+from NNMM.process.value_objects.mylist_row_list import MylistRowList
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result, get_now_datetime, is_mylist_include_new_video
 from NNMM.video_info_fetcher.video_info_rss_fetcher import VideoInfoRssFetcher
@@ -137,12 +138,13 @@ class ThreadDoneBase(ProcessBase):
         self.window["-INPUT2-"].update(value="更新完了！")
 
         # テーブルの表示を更新する
-        mylist_url = self.values["-INPUT1-"]
+        mylist_url = self.get_upper_textbox().to_str()
         if mylist_url != "":
             self.update_table_pane(mylist_url)
 
         # マイリストの新着表示を表示するかどうか判定する
         m_list = self.mylist_db.select()
+        mylist_row_list = MylistRowList.create()
         for m in m_list:
             mylist_url = m.get("url")
             video_list = self.mylist_info_db.select_from_mylist_url(mylist_url)

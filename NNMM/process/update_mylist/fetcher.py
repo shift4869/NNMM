@@ -39,7 +39,7 @@ class Fetcher(ExecutorBase):
             for mylist_with_video in self.mylist_with_video_list:
                 mylist = mylist_with_video.mylist
                 video_list = mylist_with_video.video_list
-                mylist_url = mylist.url
+                mylist_url = mylist.url.non_query_url
                 future = executor.submit(
                     self.execute_worker, mylist_url, all_index_num
                 )

@@ -25,6 +25,9 @@ class TypedVideoList():
     def __getitem__(self, item) -> TypedVideo:
         return self._list.__getitem__(item)
 
+    def __setitem__(self, key, value) -> None:
+        return self._list.__setitem__(key, value)
+
     @classmethod
     def create(cls, typed_video_list: list[TypedVideo]) -> Self:
         return cls(typed_video_list)

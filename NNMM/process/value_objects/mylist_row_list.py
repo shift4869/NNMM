@@ -34,12 +34,12 @@ class MylistRowList():
 
     @classmethod
     def create(cls, mylist_row_list: list[str]) -> Self:
-        """テーブル行リストインスタンスを作成する
+        """マイリスト行リストインスタンスを作成する
 
         Args:
-            mylist_row_list (list[list[str]]):
-                テーブル行を表す文字列リストのリスト
-                主に画面の window["-TABLE-"].Values を受け取る
+            mylist_row_list (list[str]]):
+                マイリスト行を表す文字列リストのリスト
+                主に画面の window["-LIST-"].Values を受け取る
                 空リストは許容する
 
         Raises:

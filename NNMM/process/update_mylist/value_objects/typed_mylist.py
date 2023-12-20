@@ -28,7 +28,7 @@ class TypedMylist():
     check_interval: CheckInterval
     is_include_new: IncludeNewStatus
 
-    def __post_init__(self) -> Self:
+    def __post_init__(self) -> None:
         if not isinstance(self.id, MylistRowIndex):
             raise ValueError("id must be MylistRowIndex.")
         if not isinstance(self.username, Username):

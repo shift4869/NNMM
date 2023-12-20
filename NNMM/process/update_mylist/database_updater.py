@@ -68,25 +68,20 @@ class DatabaseUpdater(ExecutorBase):
         prev_video_list: TypedVideoList = video_list
         fetched_info_dict_list = fetched_info._make_result_dict()
         now_video_list = TypedVideoList.create([
-            TypedVideo(
-                fetched_info_dict["no"],
-                fetched_info_dict["video_id"],
-                fetched_info_dict["title"],
-                fetched_info_dict["username"],
-                fetched_info_dict["status"],
-                fetched_info_dict["uploaded_at"],
-                fetched_info_dict["registered_at"],
-                fetched_info_dict["video_url"],
-                fetched_info_dict["mylist_url"],
-                dst
-            ) for fetched_info_dict in fetched_info_dict_list
+            TypedVideo.create(
+                fetched_info_dict | {
+                    "id": fetched_info_dict["no"],
+                    "created_at": dst
+                }
+            )
+            for fetched_info_dict in fetched_info_dict_list
         ])
 
         # 更新前の動画idリストの設定
-        prev_videoid_list = [v.video_id for v in prev_video_list]
+        prev_videoid_list = [v.video_id.id for v in prev_video_list]
 
         # 更新後の動画idリストの設定
-        now_videoid_list = [v.video_id for v in now_video_list]
+        now_videoid_list = [v.video_id.id for v in now_video_list]
 
         # 状況ステータスを調べる
         status_check_list = []
@@ -94,16 +89,16 @@ class DatabaseUpdater(ExecutorBase):
         for n in now_videoid_list:
             if n in prev_videoid_list:
                 # 以前から保持していた動画が取得された場合->ステータスも保持する
-                s = [p.status for p in prev_video_list if p.video_id == n]
+                s = [p.status for p in prev_video_list if p.video_id.id == n]
                 status_check_list.append(s[0])
             else:
                 # 新規に動画が追加された場合->"未視聴"に設定
-                status_check_list.append("未視聴")
+                status_check_list.append(Status.not_watched)
                 add_new_video_flag = True
 
         # 状況ステータス設定
         for index, status in enumerate(status_check_list):
-            now_video_list[index].status = status
+            now_video_list[index] = now_video_list[index].replace_from_typed_value(status=status)
 
         # THINK::マイリスト作成者名が変わっていた場合に更新する方法
         # usernameが変更されていた場合
@@ -125,17 +120,7 @@ class DatabaseUpdater(ExecutorBase):
         records = []
         try:
             for m in now_video_list:
-                r = {
-                    "video_id": m.video_id,
-                    "title": m.title,
-                    "username": m.username,
-                    "status": m.status,
-                    "uploaded_at": m.uploaded_at,
-                    "registered_at": m.registered_at,
-                    "video_url": m.video_url,
-                    "mylist_url": m.mylist_url,
-                    "created_at": m.created_at,
-                }
+                r = m.to_dict()
                 if not (set(r.keys()) <= set(MylistInfo.__table__.c.keys())):
                     raise KeyError
                 records.append(r)

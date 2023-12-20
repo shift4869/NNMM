@@ -33,18 +33,7 @@ class VideoDict():
         return self._dict.__getitem__(item)
 
     def to_typed_video(self) -> TypedVideo:
-        return TypedVideo(
-            self._dict["id"],
-            self._dict["video_id"],
-            self._dict["title"],
-            self._dict["username"],
-            self._dict["status"],
-            self._dict["uploaded_at"],
-            self._dict["registered_at"],
-            self._dict["video_url"],
-            self._dict["mylist_url"],
-            self._dict["created_at"],
-        )
+        return TypedVideo.create(self._dict)
 
     @classmethod
     def create(cls, video_dict: dict) -> Self:
