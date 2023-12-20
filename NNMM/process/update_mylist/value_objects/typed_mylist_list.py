@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Iterator, Self
 
-from NNMM.model import Mylist
 from NNMM.process.update_mylist.value_objects.typed_mylist import TypedMylist
 
 

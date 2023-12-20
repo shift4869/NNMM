@@ -47,7 +47,7 @@ class MylistWithVideo():
         if not isinstance(mylist_info_db, MylistInfoDBController):
             raise ValueError("mylist_info_db must be MylistInfoDBController.")
 
-        mylist_url = typed_mylist.url
+        mylist_url = typed_mylist.url.non_query_url
         video_dict_list = VideoDictList.create(
             mylist_info_db.select_from_mylist_url(mylist_url)
         )

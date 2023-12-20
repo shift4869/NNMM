@@ -20,6 +20,11 @@ class MylistType(enum.Enum):
     mylist = "mylist"
 
 
+class IncludeNewStatus(enum.Enum):
+    yes = True
+    no = False
+
+
 def find_values(obj: Any,
                 key: str,
                 is_predict_one: bool = False,

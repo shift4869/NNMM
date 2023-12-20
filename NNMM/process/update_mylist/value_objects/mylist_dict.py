@@ -33,19 +33,7 @@ class MylistDict():
         return self._dict.__getitem__(item)
 
     def to_typed_mylist(self) -> TypedMylist:
-        return TypedMylist(
-            self._dict["id"],
-            self._dict["username"],
-            self._dict["mylistname"],
-            self._dict["type"],
-            self._dict["showname"],
-            self._dict["url"],
-            self._dict["created_at"],
-            self._dict["updated_at"],
-            self._dict["checked_at"],
-            self._dict["check_interval"],
-            self._dict["is_include_new"]
-        )
+        return TypedMylist.create(self._dict)
 
     @classmethod
     def create(cls, mylist_dict: dict) -> Self:

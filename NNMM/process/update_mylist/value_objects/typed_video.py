@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from NNMM.model import MylistInfo
-
 
 @dataclass(frozen=False)
 class TypedVideo():

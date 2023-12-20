@@ -57,7 +57,7 @@ class DatabaseUpdater(ExecutorBase):
         fetched_info: FetchedVideoInfo | None = argv[2]
         all_index_num: int = argv[3]
 
-        mylist_url = mylist.url
+        mylist_url = mylist.url.non_query_url
         if not fetched_info:
             # 新規マイリスト取得でレンダリングが失敗した場合など
             logger.info(mylist_url + f" : no records ... ({self.done_count}/{all_index_num}).")
@@ -146,13 +146,11 @@ class DatabaseUpdater(ExecutorBase):
 
         # マイリストの更新確認日時更新
         # 新しい動画情報が追加されたかに関わらずchecked_atを更新する
-        dst = get_now_datetime()
         mylist_db.update_checked_at(mylist_url, dst)
 
         # マイリストの更新日時更新
         # 新しい動画情報が追加されたときにupdated_atを更新する
         if add_new_video_flag:
-            dst = get_now_datetime()
             mylist_db.update_updated_at(mylist_url, dst)
 
         # プログレス表示
