@@ -16,6 +16,7 @@ from NNMM import util
 from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
+from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
@@ -385,7 +386,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         mock.side_effect = return_api
         return mock
 
-    def _make_expect_result(self, url):
+    def _make_expect_result(self, url) -> FetchedVideoInfo:
         url_type = util.get_mylist_type(url)
         mylist_url = url
 
@@ -482,7 +483,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
                 actual = loop.run_until_complete(virf._fetch_videoinfo_from_rss())
                 expect = self._make_expect_result(url)
-                self.assertEqual(expect, actual)
+                self.assertEqual(expect, actual.result)
 
             # 異常系
             # session.getが常に失敗
