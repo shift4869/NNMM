@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Myshowname():
+class Myshowname:
     """マイリスト名
 
     Notes:
@@ -17,6 +17,7 @@ class Myshowname():
     Returns:
         Myshowname: マイリスト名
     """
+
     _name: str  # マイリスト名 「まとめマイリスト」
 
     def __post_init__(self) -> None:
@@ -32,8 +33,7 @@ class Myshowname():
 
     @property
     def name(self) -> str:
-        """保持しているマイリスト名を返す
-        """
+        """保持しているマイリスト名を返す"""
         return self._name
 
 
