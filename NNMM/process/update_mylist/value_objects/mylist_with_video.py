@@ -8,9 +8,9 @@ from NNMM.process.update_mylist.value_objects.video_dict_list import VideoDictLi
 
 
 @dataclass(frozen=False)
-class MylistWithVideo():
-    """マイリストと、そのマイリストが保持する動画情報を紐づけたクラス
-    """
+class MylistWithVideo:
+    """マイリストと、そのマイリストが保持する動画情報を紐づけたクラス"""
+
     _typed_mylist: TypedMylist
     _video_list: TypedVideoList
 
@@ -48,12 +48,10 @@ class MylistWithVideo():
             raise ValueError("mylist_info_db must be MylistInfoDBController.")
 
         mylist_url = typed_mylist.url.non_query_url
-        video_dict_list = VideoDictList.create(
-            mylist_info_db.select_from_mylist_url(mylist_url)
-        )
+        video_dict_list = VideoDictList.create(mylist_info_db.select_from_mylist_url(mylist_url))
         typed_video_list = video_dict_list.to_typed_video_list()
         return cls(typed_mylist, typed_video_list)
 
+
 if __name__ == "__main__":
     pass
-
