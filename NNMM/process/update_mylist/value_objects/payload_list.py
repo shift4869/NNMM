@@ -6,8 +6,8 @@ from NNMM.process.update_mylist.value_objects.payload import Payload
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 
 
-@dataclass(frozen=False)
-class PayloadList():
+@dataclass(frozen=True)
+class PayloadList:
     """fetcher から database_updater へ受け渡すデータのペイロード のリスト
 
     構造は以下の通り
@@ -18,6 +18,7 @@ class PayloadList():
         FetchedVideoInfo:  ↑のマイリストをもとにfetchしてきた動画情報（更新先候補）
     )]
     """
+
     _list: list[Payload]
 
     def __post_init__(self) -> None:
@@ -52,6 +53,6 @@ class PayloadList():
             for mylist_with_videolist, fetched_info in payload_tuple_list
         ])
 
+
 if __name__ == "__main__":
     pass
-
