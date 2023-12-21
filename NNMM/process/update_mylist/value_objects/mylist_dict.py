@@ -29,8 +29,8 @@ class MylistDict():
             raise ValueError("_dict.keys() is invalid key.")
         return True
 
-    def __getitem__(self, item) -> Any:
-        return self._dict.__getitem__(item)
+    def __getitem__(self, key: str) -> Any:
+        return self._dict.__getitem__(key)
 
     def to_typed_mylist(self) -> TypedMylist:
         return TypedMylist.create(self._dict)
