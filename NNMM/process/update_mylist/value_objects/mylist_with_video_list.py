@@ -7,12 +7,13 @@ from NNMM.process.update_mylist.value_objects.mylist_dict_list import MylistDict
 from NNMM.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
 
 
-@dataclass(frozen=False)
-class MylistWithVideoList():
+@dataclass(frozen=True)
+class MylistWithVideoList:
     """複数のマイリストと、それぞれのマイリストが保持する動画情報をそれぞれ取得して紐づける
 
     MylistWithVideo の List を表す
-    """    
+    """
+
     _list: list[MylistWithVideo]
 
     def __post_init__(self) -> None:
@@ -59,12 +60,8 @@ class MylistWithVideoList():
         mylist_dict_list = MylistDictList.create(mylist_list)
         typed_mylist_list = mylist_dict_list.to_typed_mylist_list()
 
-        return cls([
-            MylistWithVideo.create(typed_mylist, mylist_info_db)
-            for typed_mylist in typed_mylist_list
-        ])
+        return cls([MylistWithVideo.create(typed_mylist, mylist_info_db) for typed_mylist in typed_mylist_list])
 
 
 if __name__ == "__main__":
     pass
-
