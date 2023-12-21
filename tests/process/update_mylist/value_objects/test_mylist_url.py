@@ -4,7 +4,9 @@ import unittest
 from dataclasses import FrozenInstanceError
 
 from NNMM.process.update_mylist.value_objects.mylist_url import MylistURL
+from NNMM.process.update_mylist.value_objects.mylistid import Mylistid
 from NNMM.process.update_mylist.value_objects.url import URL
+from NNMM.process.update_mylist.value_objects.userid import Userid
 
 
 class TestMylistURL(unittest.TestCase):
@@ -22,7 +24,15 @@ class TestMylistURL(unittest.TestCase):
         self.assertEqual(non_user_url + EXPECT_RSS_URL_SUFFIX, mylist_url.fetch_url)
         self.assertEqual(url.non_query_url, mylist_url.mylist_url)
 
+        self.assertEqual(Userid("1234567"), mylist_url.userid)
+        self.assertEqual(Mylistid("12345678"), mylist_url.mylistid)
+
         # 異常系
+        # 不正なURL
+        url = URL("https://www.google.co.jp/")
+        with self.assertRaises(ValueError):
+            mylist_url = MylistURL(url)
+
         # インスタンス変数を後から変えようとする -> frozen違反
         url = URL("https://www.nicovideo.jp/user/1234567/mylist/12345678")
         with self.assertRaises(FrozenInstanceError):
