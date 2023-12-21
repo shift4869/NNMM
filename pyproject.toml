@@ -7,10 +7,10 @@ license = "GNU Lesser General Public License v3.0"
 
 [tool.poetry.dependencies]
 beautifulsoup4 = "^4.10.0"
-coverage = "^7.3.3"
+coverage = "^7.3.4"
 cryptography = "^36.0.1"
 emoji = "^2.9.0"
-freezegun = "^1.3.1"
+freezegun = "^1.4.0"
 httpx = "^0.25.0"
 isort = "^5.13.2"
 mock = "^5.0.1"
@@ -26,7 +26,7 @@ xmltodict = "^0.13.0"
 [tool.poetry.dev-dependencies]
 
 [tool.isort]
-line_length = 256
+line_length = 119
 multi_line_output = 9
 
 [tool.ruff]
@@ -36,12 +36,17 @@ exclude = [
     "__pycache__",
     ".git",
 ]
-line-length = 256
+line-length = 119
 
 [tool.ruff.lint]
+fixable = ["ALL"]
 select = ["E", "F"]
 ignore = ["F401", "F541", "F841"]
 preview = true
+
+[tool.ruff.format]
+preview = true
+quote-style = "double"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
