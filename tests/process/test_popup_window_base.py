@@ -56,7 +56,7 @@ class TestPopupWindowBase(unittest.TestCase):
             mock_init = stack.enter_context(patch("NNMM.process.popup.PopupWindowBase.init"))
             mock_layout = stack.enter_context(patch("NNMM.process.popup.PopupWindowBase.make_window_layout"))
             mock_popup_ok = stack.enter_context(patch("NNMM.process.popup.sg.popup_ok"))
-            mock_process_info = stack.enter_context(patch("NNMM.process.popup.ProcessInfo.create"))
+            mock_process_info = stack.enter_context(patch("NNMM.process.popup.ProcessInfo"))
             mock_process_base = MagicMock()
 
             event_list = [("-DO-", "value1"), ("-DO_NOTHING-", "value2"), ("-EXIT-", "value3")]
@@ -74,55 +74,71 @@ class TestPopupWindowBase(unittest.TestCase):
                 mock_window.reset_mock()
                 mock_window.return_value.read.side_effect = event_list
                 mock_process_base.reset_mock()
-                instance.process_dict = {
-                    "-DO-": mock_process_base
-                }
+                instance.process_dict = {"-DO-": mock_process_base}
                 mock_process_info.reset_mock()
                 mock_popup_ok.reset_mock()
 
             def post_run(s_init, s_layout):
-                self.assertEqual([
-                    call(),
-                ], mock_init.mock_calls)
+                self.assertEqual(
+                    [
+                        call(),
+                    ],
+                    mock_init.mock_calls,
+                )
                 if s_init == Result.failed:
-                    self.assertEqual([
-                        call("情報ウィンドウの初期化に失敗しました。"),
-                    ], mock_popup_ok.mock_calls)
+                    self.assertEqual(
+                        [
+                            call("情報ウィンドウの初期化に失敗しました。"),
+                        ],
+                        mock_popup_ok.mock_calls,
+                    )
                     mock_layout.assert_not_called()
                     mock_window.assert_not_called()
                     mock_process_info.assert_not_called()
                     mock_process_base.assert_not_called()
                     return
 
-                self.assertEqual([
-                    call(),
-                ], mock_layout.mock_calls)
+                self.assertEqual(
+                    [
+                        call(),
+                    ],
+                    mock_layout.mock_calls,
+                )
                 if not s_layout:
-                    self.assertEqual([
-                        call("情報ウィンドウのレイアウト表示に失敗しました。"),
-                    ], mock_popup_ok.mock_calls)
+                    self.assertEqual(
+                        [
+                            call("情報ウィンドウのレイアウト表示に失敗しました。"),
+                        ],
+                        mock_popup_ok.mock_calls,
+                    )
                     mock_window.assert_not_called()
                     mock_process_info.assert_not_called()
                     mock_process_base.assert_not_called()
                     return
 
-                self.assertEqual([
-                    call(instance.title, s_layout, size=(100, 100), finalize=True, resizable=True, modal=True),
-                    call().read(),
-                    call().read(),
-                    call().read(),
-                    call().close(),
-                ], mock_window.mock_calls)
+                self.assertEqual(
+                    [
+                        call(instance.title, s_layout, size=(100, 100), finalize=True, resizable=True, modal=True),
+                        call().read(),
+                        call().read(),
+                        call().read(),
+                        call().close(),
+                    ],
+                    mock_window.mock_calls,
+                )
 
-                self.assertEqual([
-                    call("-DO-", instance)
-                ], mock_process_info.mock_calls)
+                self.assertEqual(
+                    [
+                        call(
+                            "-DO-", instance.popup_window, instance.values, instance.mylist_db, instance.mylist_info_db
+                        )
+                    ],
+                    mock_process_info.mock_calls,
+                )
 
-                self.assertEqual([
-                    call.__bool__(),
-                    call(mock_process_info()),
-                    call().run()
-                ], mock_process_base.mock_calls)
+                self.assertEqual(
+                    [call.__bool__(), call(mock_process_info()), call().run()], mock_process_base.mock_calls
+                )
 
             Params = namedtuple("Params", ["init", "layout", "result"])
             params_list = [

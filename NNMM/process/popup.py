@@ -40,8 +40,7 @@ class PopupWindowBase(ProcessBase):
         raise NotImplementedError
 
     def run(self) -> Result:
-        """子windowイベントループ
-        """
+        """子windowイベントループ"""
         # 初期化
         res = self.init()
         if res == Result.failed:
@@ -70,8 +69,13 @@ class PopupWindowBase(ProcessBase):
             # イベント処理
             if self.process_dict.get(event):
                 self.values = values
-                process_info = ProcessInfo.create(event, self)
-                process_info.window = self.popup_window
+                process_info = ProcessInfo(
+                    event,
+                    self.popup_window,
+                    self.values,
+                    self.mylist_db,
+                    self.mylist_info_db
+                )
                 pb: ProcessBase = self.process_dict.get(event)(process_info)
                 pb.run()
 
@@ -180,27 +184,57 @@ class PopupMylistWindow(PopupWindowBase):
 
         cf = [
             [sg.Text(horizontal_line)],
-            [sg.Text("ID", size=csize, visible=False), sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize)],
+            [
+                sg.Text("ID", size=csize, visible=False),
+                sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize),
+            ],
             [sg.Text("ユーザー名", size=csize), sg.Input(f"{username}", key="-USERNAME-", readonly=True, size=tsize)],
-            [sg.Text("マイリスト名", size=csize), sg.Input(f"{mylistname}", key="-MYLISTNAME-", readonly=True, size=tsize)],
+            [
+                sg.Text("マイリスト名", size=csize),
+                sg.Input(f"{mylistname}", key="-MYLISTNAME-", readonly=True, size=tsize),
+            ],
             [sg.Text("種別", size=csize), sg.Input(f"{typename}", key="-TYPE-", readonly=True, size=tsize)],
             [sg.Text("表示名", size=csize), sg.Input(f"{showname}", key="-SHOWNAME-", readonly=True, size=tsize)],
             [sg.Text("URL", size=csize), sg.Input(f"{url}", key="-URL-", readonly=True, size=tsize)],
-            [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CREATED_AT-", readonly=True, size=tsize)],
-            [sg.Text("更新日時", size=csize), sg.Input(f"{updated_at}", key="-UPDATED_AT-", readonly=True, size=tsize)],
-            [sg.Text("更新確認日時", size=csize), sg.Input(f"{checked_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
-            [sg.Text("更新確認インターバル", size=csize),
-                sg.InputCombo([i for i in range(1, 60)], default_value=check_interval_num, key="-CHECK_INTERVAL_NUM-", background_color="light goldenrod", size=thsize),
-                sg.InputCombo(unit_list, default_value=check_interval_unit, key="-CHECK_INTERVAL_UNIT-", background_color="light goldenrod", size=thsize)],
-            [sg.Text("未視聴フラグ", size=csize), sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize)],
+            [
+                sg.Text("作成日時", size=csize),
+                sg.Input(f"{created_at}", key="-CREATED_AT-", readonly=True, size=tsize),
+            ],
+            [
+                sg.Text("更新日時", size=csize),
+                sg.Input(f"{updated_at}", key="-UPDATED_AT-", readonly=True, size=tsize),
+            ],
+            [
+                sg.Text("更新確認日時", size=csize),
+                sg.Input(f"{checked_at}", key="-CHECKED_AT-", readonly=True, size=tsize),
+            ],
+            [
+                sg.Text("更新確認インターバル", size=csize),
+                sg.InputCombo(
+                    [i for i in range(1, 60)],
+                    default_value=check_interval_num,
+                    key="-CHECK_INTERVAL_NUM-",
+                    background_color="light goldenrod",
+                    size=thsize,
+                ),
+                sg.InputCombo(
+                    unit_list,
+                    default_value=check_interval_unit,
+                    key="-CHECK_INTERVAL_UNIT-",
+                    background_color="light goldenrod",
+                    size=thsize,
+                ),
+            ],
+            [
+                sg.Text("未視聴フラグ", size=csize),
+                sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize),
+            ],
             [sg.Text(horizontal_line)],
             [sg.Text("")],
             [sg.Text("")],
             [sg.Column([[sg.Button("保存", key="-SAVE-"), sg.Button("閉じる", key="-EXIT-")]], justification="right")],
         ]
-        layout = [[
-            sg.Frame(self.title, cf)
-        ]]
+        layout = [[sg.Frame(self.title, cf)]]
         return layout
 
 
@@ -221,8 +255,20 @@ class PopupMylistWindowSave(ProcessBase):
         self.popup_window: sg.Window = self.window
 
         # キーチェック
-        PMW_ROWS = ["-ID_INDEX-", "-USERNAME-", "-MYLISTNAME-", "-TYPE-", "-SHOWNAME-", "-URL-",
-                    "-CREATED_AT-", "-UPDATED_AT-", "-CHECKED_AT-", "-IS_INCLUDE_NEW-", "-CHECK_INTERVAL_NUM-", "-CHECK_INTERVAL_UNIT-"]
+        PMW_ROWS = [
+            "-ID_INDEX-",
+            "-USERNAME-",
+            "-MYLISTNAME-",
+            "-TYPE-",
+            "-SHOWNAME-",
+            "-URL-",
+            "-CREATED_AT-",
+            "-UPDATED_AT-",
+            "-CHECKED_AT-",
+            "-IS_INCLUDE_NEW-",
+            "-CHECK_INTERVAL_NUM-",
+            "-CHECK_INTERVAL_UNIT-",
+        ]
         allkeys = list(self.popup_window.AllKeysDict.keys())
         for k in PMW_ROWS:
             if k not in allkeys:
@@ -253,8 +299,19 @@ class PopupMylistWindowSave(ProcessBase):
             return Result.failed
 
         # マイリスト情報更新
-        self.mylist_db.upsert(id_index, username, mylistname, typename, showname, url,
-                              created_at, updated_at, checked_at, check_interval, is_include_new)
+        self.mylist_db.upsert(
+            id_index,
+            username,
+            mylistname,
+            typename,
+            showname,
+            url,
+            created_at,
+            updated_at,
+            checked_at,
+            check_interval,
+            is_include_new,
+        )
         logger.info("マイリスト情報Saved")
         return Result.success
 
@@ -312,7 +369,17 @@ class PopupVideoWindow(PopupWindowBase):
             return None
 
         r = self.record
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
+        table_cols_name = [
+            "No.",
+            "動画ID",
+            "動画名",
+            "投稿者",
+            "状況",
+            "投稿日時",
+            "登録日時",
+            "動画URL",
+            "所属マイリストURL",
+        ]
         mylist_info_cols = MylistInfo.__table__.c.keys()
 
         # 動画情報をすべて含んでいない場合はNoneを返して終了
@@ -334,7 +401,10 @@ class PopupVideoWindow(PopupWindowBase):
 
         cf = [
             [sg.Text(horizontal_line)],
-            [sg.Text("ID", size=csize, visible=False), sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize)],
+            [
+                sg.Text("ID", size=csize, visible=False),
+                sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize),
+            ],
             [sg.Text("動画ID", size=csize), sg.Input(f"{video_id}", key="-USERNAME-", readonly=True, size=tsize)],
             [sg.Text("動画名", size=csize), sg.Input(f"{title}", key="-MYLISTNAME-", readonly=True, size=tsize)],
             [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
@@ -342,19 +412,24 @@ class PopupVideoWindow(PopupWindowBase):
             [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
             [sg.Text("登録日時", size=csize), sg.Input(f"{registered_at}", key="-URL-", readonly=True, size=tsize)],
             [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
-            [sg.Text("マイリストURL", size=csize), sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize)],
-            [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
+            [
+                sg.Text("マイリストURL", size=csize),
+                sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize),
+            ],
+            [
+                sg.Text("作成日時", size=csize),
+                sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize),
+            ],
             [sg.Text(horizontal_line)],
             [sg.Text("")],
             [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
         ]
-        layout = [[
-            sg.Frame(self.title, cf)
-        ]]
+        layout = [[sg.Frame(self.title, cf)]]
         return layout
 
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()
