@@ -43,10 +43,7 @@ class DatabaseUpdater(ExecutorBase):
                 mylist = payload.mylist
                 video_list = payload.video_list
                 fetched_info = payload.fetched_info
-                future = executor.submit(
-                    self.execute_worker,
-                    mylist, video_list, fetched_info, all_index_num
-                )
+                future = executor.submit(self.execute_worker, mylist, video_list, fetched_info, all_index_num)
                 futures.append((payload, future))
             result_buf = [(f[0], f[1].result()) for f in futures]
         return result_buf
@@ -54,11 +51,11 @@ class DatabaseUpdater(ExecutorBase):
     def execute_worker(self, *argv) -> FetchedVideoInfo | Result:
         mylist: TypedMylist = argv[0]
         video_list: TypedVideoList = argv[1]
-        fetched_info: FetchedVideoInfo | None = argv[2]
+        fetched_info: FetchedVideoInfo | Result = argv[2]
         all_index_num: int = argv[3]
 
         mylist_url = mylist.url.non_query_url
-        if not fetched_info:
+        if fetched_info == Result.failed:
             # 新規マイリスト取得でレンダリングが失敗した場合など
             logger.info(mylist_url + f" : no records ... ({self.done_count}/{all_index_num}).")
             return Result.failed
@@ -68,12 +65,7 @@ class DatabaseUpdater(ExecutorBase):
         prev_video_list: TypedVideoList = video_list
         fetched_info_dict_list = fetched_info._make_result_dict()
         now_video_list = TypedVideoList.create([
-            TypedVideo.create(
-                fetched_info_dict | {
-                    "id": fetched_info_dict["no"],
-                    "created_at": dst
-                }
-            )
+            TypedVideo.create(fetched_info_dict | {"id": fetched_info_dict["no"], "created_at": dst})
             for fetched_info_dict in fetched_info_dict_list
         ])
 
@@ -149,5 +141,6 @@ class DatabaseUpdater(ExecutorBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

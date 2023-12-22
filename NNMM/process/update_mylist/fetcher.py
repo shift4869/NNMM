@@ -4,12 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
 from NNMM.process.update_mylist.executor_base import ExecutorBase
-from NNMM.process.update_mylist.value_objects.payload import Payload
-from NNMM.process.update_mylist.value_objects.payload_list import PayloadList
-from NNMM.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
 from NNMM.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
-from NNMM.process.update_mylist.value_objects.typed_video_list import TypedVideoList
-from NNMM.process.update_mylist.value_objects.video_dict_list import VideoDictList
+from NNMM.process.update_mylist.value_objects.payload_list import PayloadList
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
@@ -40,9 +36,7 @@ class Fetcher(ExecutorBase):
                 mylist = mylist_with_video.mylist
                 video_list = mylist_with_video.video_list
                 mylist_url = mylist.url.non_query_url
-                future = executor.submit(
-                    self.execute_worker, mylist_url, all_index_num
-                )
+                future = executor.submit(self.execute_worker, mylist_url, all_index_num)
                 futures.append((mylist_with_video, future))
             result_buf = [(f[0], f[1].result()) for f in futures]
         return PayloadList.create(result_buf)
@@ -65,5 +59,6 @@ class Fetcher(ExecutorBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

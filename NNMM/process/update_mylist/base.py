@@ -48,8 +48,7 @@ class Base(ProcessBase):
         raise NotImplementedError
 
     def run(self) -> Result:
-        """すべてのマイリストのマイリスト情報を更新する
-        """
+        """すべてのマイリストのマイリスト情報を更新する"""
         logger.info(f"{self.L_KIND} update start.")
 
         self.window["-INPUT2-"].update(value="更新中")
@@ -57,8 +56,7 @@ class Base(ProcessBase):
 
         # 登録されたすべてのマイリストから現在のマイリスト情報を取得する
         # 処理中もGUIイベントを処理するため別スレッドで起動
-        threading.Thread(target=self.update_mylist_info_thread,
-                         daemon=True).start()
+        threading.Thread(target=self.update_mylist_info_thread, daemon=True).start()
 
         logger.info(f"{self.L_KIND} update thread start success.")
         return Result.success
@@ -98,8 +96,7 @@ class Base(ProcessBase):
         logger.info(f"{self.L_KIND} update done elapsed time : {elapsed_time:.2f} [sec]")
 
         # 後続処理へ
-        threading.Thread(target=self.thread_done,
-                         daemon=False).start()
+        threading.Thread(target=self.thread_done, daemon=False).start()
 
         logger.info(f"{self.L_KIND} update thread done.")
         return
@@ -127,8 +124,7 @@ class ThreadDoneBase(ProcessBase):
         self.L_KIND = "UpdateMylist Base"
 
     def run(self) -> Result:
-        """すべてのマイリストのマイリスト情報を更新後の後処理
-        """
+        """すべてのマイリストのマイリスト情報を更新後の後処理"""
         # 左下の表示を更新する
         self.window["-INPUT2-"].update(value="更新完了！")
 
@@ -166,5 +162,6 @@ class ThreadDoneBase(ProcessBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()
