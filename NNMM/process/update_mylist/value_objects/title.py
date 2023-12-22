@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Title():
+class Title:
     """動画タイトル
 
     Raises:
@@ -12,11 +12,11 @@ class Title():
     Returns:
         Title: 動画タイトル
     """
+
     _name: str  # 動画タイトル
 
     def __post_init__(self) -> None:
-        """初期化後処理
-        """
+        """初期化後処理"""
         if not isinstance(self._name, str):
             raise TypeError("name is not string, invalid Title.")
         if self._name == "":
@@ -25,8 +25,7 @@ class Title():
 
     @property
     def name(self) -> str:
-        """保持している動画タイトル名を返す
-        """
+        """保持している動画タイトル名を返す"""
         return self._name
 
 

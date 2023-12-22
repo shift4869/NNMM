@@ -1,12 +1,13 @@
 import re
 from dataclasses import dataclass
+from typing import Self
 
-from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
-from NNMM.video_info_fetcher.value_objects.username import Username
+from NNMM.process.update_mylist.value_objects.myshowname import Myshowname
+from NNMM.process.update_mylist.value_objects.username import Username
 
 
 @dataclass(frozen=True)
-class Showname():
+class Showname:
     """マイリスト表示名
 
     実際にNNMM上でマイリストペインに表示される際の表示名
@@ -16,8 +17,9 @@ class Showname():
         ValueError: 引数が表示名のパターンでない場合
 
     Returns:
-        _type_: _description_
+        Self: Showname インスタンス
     """
+
     _name: str  # マイリスト表示名
 
     # 以下のどちらかの形式のみ受け付ける
@@ -25,14 +27,7 @@ class Showname():
     MYLIST_PATTERN = "^「(.*)」-(.*)さんのマイリスト$"  # 「{myshowname}」-{username}さんのマイリスト
 
     def __post_init__(self) -> None:
-        """初期化後処理
-
-        バリデーションのみ
-        """
-        PATTERN_LIST = [
-            self.UPLOADED_PATTERN,
-            self.MYLIST_PATTERN
-        ]
+        PATTERN_LIST = [self.UPLOADED_PATTERN, self.MYLIST_PATTERN]
         if not isinstance(self._name, str):
             raise TypeError("name is not string, invalid Showname.")
         if not any([re.search(p, self._name) is not None for p in PATTERN_LIST]):
@@ -40,12 +35,11 @@ class Showname():
 
     @property
     def name(self) -> str:
-        """保持しているマイリスト表示名を返す
-        """
+        """保持しているマイリスト表示名を返す"""
         return self._name
 
     @classmethod
-    def create(cls, username: Username, myshowname: Myshowname | None = None) -> "Showname":
+    def create(cls, username: Username, myshowname: Myshowname | None = None) -> Self:
         """Showname インスタンスを生成する
 
         myshowname がNone のとき、投稿動画のマイリスト表示名が設定される
