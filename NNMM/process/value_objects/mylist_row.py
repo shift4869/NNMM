@@ -17,7 +17,7 @@ class MylistRow(Showname):
 
     def without_new_mark_name(self) -> str:
         if self.is_new_mark():
-            return str(self._name[len(self.NEW_MARK):])
+            return str(self._name[len(self.NEW_MARK) :])
         return str(self._name)
 
     def with_new_mark_name(self) -> str:

@@ -6,12 +6,11 @@ from NNMM.process.value_objects.showname import Showname
 
 
 @dataclass(frozen=True)
-class MylistRowList():
+class MylistRowList:
     _list: list[MylistRow]
 
     def __post_init__(self) -> None:
-        """空リストは許容する
-        """
+        """空リストは許容する"""
         if not isinstance(self._list, list):
             raise ValueError(f"_list must be list.")
         if not all([isinstance(r, MylistRow) for r in self._list]):
@@ -29,7 +28,7 @@ class MylistRowList():
     def __setitem__(self, key, value):
         return self._list.__setitem__(key, value)
 
-    def to_name_list(self) -> list[Showname]:
+    def to_name_list(self) -> list[str]:
         return [row.name for row in self._list]
 
     @classmethod
@@ -55,9 +54,12 @@ class MylistRowList():
 
 if __name__ == "__main__":
     NUM = 5
-    row_list = [[
-        f"投稿者{i}さんの投稿動画",
-    ] for i in range(1, NUM + 1)]
+    row_list = [
+        [
+            f"投稿者{i}さんの投稿動画",
+        ]
+        for i in range(1, NUM + 1)
+    ]
     mylist_row_list = MylistRowList.create(row_list)
     print(mylist_row_list)
     name_list = mylist_row_list.to_name_list()

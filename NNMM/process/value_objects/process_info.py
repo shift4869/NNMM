@@ -11,7 +11,7 @@ from NNMM.mylist_info_db_controller import MylistInfoDBController
 
 
 @dataclass(frozen=True)
-class ProcessInfo():
+class ProcessInfo:
     name: str
     window: sg.Window
     values: dict

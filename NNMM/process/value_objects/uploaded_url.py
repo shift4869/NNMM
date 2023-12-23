@@ -1,13 +1,13 @@
 import re
 from dataclasses import dataclass
 
-from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
-from NNMM.video_info_fetcher.value_objects.url import URL
-from NNMM.video_info_fetcher.value_objects.userid import Userid
+from NNMM.process.value_objects.mylistid import Mylistid
+from NNMM.process.value_objects.url import URL
+from NNMM.process.value_objects.userid import Userid
 
 
 @dataclass(frozen=True)
-class UploadedURL():
+class UploadedURL:
     """投稿ページURL
 
     投稿ページURLはUPLOADED_URL_PATTERN に合致するURLを扱う
@@ -18,6 +18,7 @@ class UploadedURL():
     Returns:
         UploadedURL: 投稿ページURL
     """
+
     url: URL
 
     # 対象URLのパターン
@@ -37,20 +38,17 @@ class UploadedURL():
 
     @property
     def non_query_url(self) -> str:
-        """クエリなしURLを返す
-        """
+        """クエリなしURLを返す"""
         return self.url.non_query_url
 
     @property
     def original_url(self) -> str:
-        """元のURLを返す
-        """
+        """元のURLを返す"""
         return self.url.original_url
 
     @property
     def fetch_url(self) -> str:
-        """RSS取得用のURLを返す
-        """
+        """RSS取得用のURLを返す"""
         fetch_url = self.url.non_query_url + self.RSS_URL_SUFFIX
         return fetch_url
 

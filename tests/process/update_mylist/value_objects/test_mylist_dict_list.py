@@ -1,6 +1,6 @@
-from contextlib import ExitStack
 import sys
 import unittest
+from contextlib import ExitStack
 from typing import Iterator
 
 from mock import MagicMock, patch
@@ -15,10 +15,7 @@ class TestMylistDictList(unittest.TestCase):
         instance = MylistDictList([mylist_dict])
         self.assertEqual([mylist_dict], instance._list)
 
-        params_list = [
-            ["invalid"],
-            "invalid"
-        ]
+        params_list = [["invalid"], "invalid"]
         for params in params_list:
             with self.assertRaises(ValueError):
                 instance = MylistDictList(params)
@@ -32,7 +29,9 @@ class TestMylistDictList(unittest.TestCase):
 
     def test_typed_mylist_list(self):
         with ExitStack() as stack:
-            mock_typed_mylist_list = stack.enter_context(patch("NNMM.process.update_mylist.value_objects.mylist_dict_list.TypedMylistList.create"))
+            mock_typed_mylist_list = stack.enter_context(
+                patch("NNMM.process.update_mylist.value_objects.mylist_dict_list.TypedMylistList.create")
+            )
             mock_typed_mylist_list.side_effect = lambda m: "TypedMylistList.create()"
             mylist_dict = MagicMock(spec=MylistDict)
             mylist_dict.to_typed_mylist.side_effect = lambda: "to_typed_mylist()"
@@ -44,7 +43,9 @@ class TestMylistDictList(unittest.TestCase):
 
     def test_create(self):
         with ExitStack() as stack:
-            mock_mylist_dict = stack.enter_context(patch("NNMM.process.update_mylist.value_objects.mylist_dict_list.MylistDict.create"))
+            mock_mylist_dict = stack.enter_context(
+                patch("NNMM.process.update_mylist.value_objects.mylist_dict_list.MylistDict.create")
+            )
             mylist_dict = MagicMock(spec=MylistDict)
             mock_mylist_dict.side_effect = lambda m: mylist_dict
 

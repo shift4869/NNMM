@@ -1,12 +1,12 @@
 import re
 from dataclasses import dataclass
 
-from NNMM.video_info_fetcher.value_objects.url import URL
-from NNMM.video_info_fetcher.value_objects.videoid import Videoid
+from NNMM.process.value_objects.url import URL
+from NNMM.process.value_objects.videoid import Videoid
 
 
 @dataclass(frozen=True)
-class VideoURL():
+class VideoURL:
     """動画URL
 
     動画URLはVIDEO_URL_PATTERN に合致するURLを扱う
@@ -18,6 +18,7 @@ class VideoURL():
     Returns:
         VideoURL: 動画URL
     """
+
     url: URL
 
     # 対象URLのパターン
@@ -35,14 +36,12 @@ class VideoURL():
 
     @property
     def non_query_url(self) -> str:
-        """クエリなしURLを返す
-        """
+        """クエリなしURLを返す"""
         return self.url.non_query_url
 
     @property
     def original_url(self) -> str:
-        """元のURLを返す
-        """
+        """元のURLを返す"""
         return self.url.original_url
 
     @property
@@ -107,12 +106,6 @@ class VideoURL():
         # video_url の形として正しいか
         non_query_url = URL(url).non_query_url
         if re.search(VideoURL.VIDEO_URL_PATTERN, non_query_url) is None:
-            return False
-
-        # video_url の末尾に正しい形式のvideo_id があるか
-        video_url = non_query_url
-        path_tail = re.findall(VideoURL.VIDEO_URL_PATTERN, video_url)[0]
-        if re.search(VideoURL.VIDEO_ID_PATTERN, path_tail) is None:
             return False
         return True
 
