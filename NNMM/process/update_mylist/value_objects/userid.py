@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Userid():
+class Userid:
     """ユーザーID
 
     ユーザーIDは基本的には数字からなる 例：12345678
@@ -16,13 +16,10 @@ class Userid():
     Returns:
         Userid: ユーザーID
     """
+
     _id: str  # ユーザーID 1234567
 
     def __post_init__(self) -> None:
-        """初期化後処理
-
-        バリデーションのみ
-        """
         if not isinstance(self._id, str):
             raise TypeError("id is not string, invalid Userid.")
         if not re.search("^[0-9]+$", self._id):
@@ -30,8 +27,7 @@ class Userid():
 
     @property
     def id(self) -> str:
-        """保持しているユーザーIDを返す
-        """
+        """保持しているユーザーIDを返す"""
         return self._id
 
 

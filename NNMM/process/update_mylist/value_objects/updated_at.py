@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class UpdatedAt():
+class UpdatedAt:
     """更新日時
 
     更新日時はマイリストを更新した日時を表す
@@ -18,6 +18,7 @@ class UpdatedAt():
     Returns:
         UpdatedAt: 作成日時
     """
+
     _datetime: str
 
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
