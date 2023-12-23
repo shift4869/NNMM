@@ -25,11 +25,13 @@ class IncludeNewStatus(enum.Enum):
     no = False
 
 
-def find_values(obj: Any,
-                key: str,
-                is_predict_one: bool = False,
-                key_white_list: list[str] = None,
-                key_black_list: list[str] = None) -> list | Any:
+def find_values(
+    obj: Any,
+    key: str,
+    is_predict_one: bool = False,
+    key_white_list: list[str] = None,
+    key_black_list: list[str] = None,
+) -> list | Any:
     if not key_white_list:
         key_white_list = []
     if not key_black_list:
@@ -60,6 +62,7 @@ def find_values(obj: Any,
         raise ValueError(f"Value of key='{key}' are multiple found.")
     return result[0]
 
+
 def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> int:
     """MylistDBの内容をcsvファイルに書き出す
 
@@ -82,6 +85,7 @@ def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> int:
             param_list = [str(r.get(s)) for s in mylist_cols]
             fout.write(",".join(param_list) + "\n")
     return 0
+
 
 def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
     """書き出したcsvファイルからMylistDBへレコードを反映させる
@@ -121,9 +125,21 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
 
     # THINK::Mylistにもrecords一括Upsertのメソッドを作る？
     for r in records:
-        mylist_db.upsert(r["id"], r["username"], r["mylistname"], r["type"], r["showname"], r["url"],
-                         r["created_at"], r["updated_at"], r["checked_at"], r["check_interval"], r["is_include_new"])
+        mylist_db.upsert(
+            r["id"],
+            r["username"],
+            r["mylistname"],
+            r["type"],
+            r["showname"],
+            r["url"],
+            r["created_at"],
+            r["updated_at"],
+            r["checked_at"],
+            r["check_interval"],
+            r["is_include_new"],
+        )
     return 0
+
 
 def get_mylist_type(url: str) -> MylistType | None:
     """マイリストのタイプを返す
@@ -144,6 +160,7 @@ def get_mylist_type(url: str) -> MylistType | None:
         return MylistType.mylist
     return None
 
+
 def get_now_datetime() -> str:
     """タイムスタンプを返す
 
@@ -155,6 +172,7 @@ def get_now_datetime() -> str:
     dst = datetime.now().strftime(dst_df)
     return dst
 
+
 def is_mylist_include_new_video(table_list: list[list[str]]) -> bool | KeyError:
     """現在のテーブルリスト内に状況が未視聴のものが一つでも含まれているかを返す
 
@@ -165,7 +183,19 @@ def is_mylist_include_new_video(table_list: list[list[str]]) -> bool | KeyError:
         bool: 一つでも未視聴のものがあればTrue, そうでないならFalse
         KeyError: 引数のリストが不正
     """
-    table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+    table_cols_name = [
+        "No.",
+        "動画ID",
+        "動画名",
+        "投稿者",
+        "状況",
+        "投稿日時",
+        "登録日時",
+        "動画URL",
+        "所属マイリストURL",
+        "マイリスト表示名",
+        "マイリスト名",
+    ]
     STATUS_INDEX = 4
 
     # 空リストならFalse
@@ -182,6 +212,7 @@ def is_mylist_include_new_video(table_list: list[list[str]]) -> bool | KeyError:
 
     # 一つでも未視聴のものがあればTrue, そうでないならFalse
     return any([v[STATUS_INDEX] == "未視聴" for v in table_list])
+
 
 def interval_translate(interval_str: str) -> int:
     """インターバルを解釈する関数
@@ -217,21 +248,54 @@ def interval_translate(interval_str: str) -> int:
         return int(re.findall(pattern, interval_str)[0]) * 60 * 24 * 31  # 月は正確ではない28,29,30,31
     return -1
 
-def popup_get_text(message, title=None, default_text='', password_char='', size=(None, None), button_color=None,
-                   background_color=None, text_color=None, icon=None, font=None, no_titlebar=False,
-                   grab_anywhere=False, keep_on_top=None, location=(None, None), relative_location=(None, None), image=None, modal=True):
+
+def popup_get_text(
+    message,
+    title=None,
+    default_text="",
+    password_char="",
+    size=(None, None),
+    button_color=None,
+    background_color=None,
+    text_color=None,
+    icon=None,
+    font=None,
+    no_titlebar=False,
+    grab_anywhere=False,
+    keep_on_top=None,
+    location=(None, None),
+    relative_location=(None, None),
+    image=None,
+    modal=True,
+):
     """sg.popup_get_text のラッパー
 
     Notes:
         テキストボックスにデフォルトでフォーカスをセットする
         image はサポートしていないので利用するときは追加すること
     """
-    layout = [[sg.Text(message, auto_size_text=True, text_color=text_color, background_color=background_color)],
-              [sg.Input(default_text=default_text, size=size, key="-INPUT-", password_char=password_char, focus=True)],
-              [sg.Button("Ok", size=(6, 1), bind_return_key=True), sg.Button("Cancel", size=(6, 1))]]
+    layout = [
+        [sg.Text(message, auto_size_text=True, text_color=text_color, background_color=background_color)],
+        [sg.Input(default_text=default_text, size=size, key="-INPUT-", password_char=password_char, focus=True)],
+        [sg.Button("Ok", size=(6, 1), bind_return_key=True), sg.Button("Cancel", size=(6, 1))],
+    ]
 
-    window = sg.Window(title=title or message, layout=layout, icon=icon, auto_size_text=True, button_color=button_color, no_titlebar=no_titlebar,
-                       background_color=background_color, grab_anywhere=grab_anywhere, keep_on_top=keep_on_top, location=location, relative_location=relative_location, finalize=True, modal=modal, font=font)
+    window = sg.Window(
+        title=title or message,
+        layout=layout,
+        icon=icon,
+        auto_size_text=True,
+        button_color=button_color,
+        no_titlebar=no_titlebar,
+        background_color=background_color,
+        grab_anywhere=grab_anywhere,
+        keep_on_top=keep_on_top,
+        location=location,
+        relative_location=relative_location,
+        finalize=True,
+        modal=modal,
+        font=font,
+    )
 
     window["-INPUT-"].set_focus(True)
 

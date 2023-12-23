@@ -32,8 +32,6 @@ class Base(ProcessBase):
         """
         super().__init__(process_info)
 
-        self.lock = threading.Lock()
-        self.done_count = 0
         self.post_process = ThreadDoneBase
         self.L_KIND = "UpdateMylist Base"
         self.E_DONE = ""
@@ -43,29 +41,26 @@ class Base(ProcessBase):
         """更新対象のマイリストを返す
 
         Returns:
-            list[dict]: 更新対象のマイリストのリスト、エラー時空リスト
+            list[dict]: 更新対象のマイリストを表す辞書リスト
         """
         raise NotImplementedError
 
     def run(self) -> Result:
-        """すべてのマイリストのマイリスト情報を更新する"""
+        """マイリスト情報を更新する"""
         logger.info(f"{self.L_KIND} update start.")
 
         self.window["-INPUT2-"].update(value="更新中")
         self.window.refresh()
 
-        # 登録されたすべてのマイリストから現在のマイリスト情報を取得する
+        # 現在のマイリスト情報を取得する
         # 処理中もGUIイベントを処理するため別スレッドで起動
         threading.Thread(target=self.update_mylist_info_thread, daemon=True).start()
 
         logger.info(f"{self.L_KIND} update thread start success.")
         return Result.success
 
-    def update_mylist_info_thread(self) -> None:
-        """マイリスト情報を更新する（マルチスレッド前提）
-
-        Returns: None
-        """
+    def update_mylist_info_thread(self) -> Result:
+        """マイリスト情報を更新する（マルチスレッド前提）"""
         logger.info(f"{self.L_KIND} update thread start.")
 
         # 更新対象取得
@@ -73,24 +68,19 @@ class Base(ProcessBase):
         if not m_list:
             logger.info("Target Mylist is nothing.")
             self.window.write_event_value(self.E_DONE, "")
-            return
+            return Result.failed
 
-        # now_video_lists = self.get_now_video_lists(m_list)
         now_mylist_with_video_list = MylistWithVideoList.create(m_list, self.mylist_info_db)
 
-        # マルチスレッドですべてのマイリストの情報を取得する
-        # fetched_video_listsにすべてのthreadの結果を格納して以降で利用する
+        # マルチスレッドで更新対象のマイリストの情報を取得する
+        # fetched_video_listsにfetch結果を格納して以降で利用する
         start = time.time()
-        self.done_count = 0
-        # fetched_video_lists = self.get_mylist_info_execute(m_list)
         fetched_video_lists = Fetcher(now_mylist_with_video_list, self.process_info).execute()
         elapsed_time = time.time() - start
         logger.info(f"{self.L_KIND} getting done elapsed time : {elapsed_time:.2f} [sec]")
 
-        # マルチスレッドですべてのマイリストの情報を更新する
+        # マルチスレッドで更新対象のマイリストの情報についてDBを更新する
         start = time.time()
-        self.done_count = 0
-        # result = self.update_mylist_info_execute(m_list, now_mylist_with_video_list, fetched_video_lists)
         result = DatabaseUpdater(fetched_video_lists, self.process_info).execute()
         elapsed_time = time.time() - start
         logger.info(f"{self.L_KIND} update done elapsed time : {elapsed_time:.2f} [sec]")
@@ -99,9 +89,14 @@ class Base(ProcessBase):
         threading.Thread(target=self.thread_done, daemon=False).start()
 
         logger.info(f"{self.L_KIND} update thread done.")
-        return
+        return Result.success
 
-    def thread_done(self) -> None:
+    def thread_done(self) -> Result:
+        """後続処理
+
+        マイリスト更新処理が終わった後、派生先それぞれのTHREAD_DONEプロセスを呼び出す
+        呼び出し先は self.post_process にて制御される
+        """
         logger.info(f"{self.L_KIND} update post process start.")
 
         process_info = ProcessInfo.create("-UPDATE_THREAD_DONE-", self)
@@ -109,22 +104,22 @@ class Base(ProcessBase):
         pb.run()
 
         logger.info(f"{self.L_KIND} update post process done.")
+        return Result.success
 
 
 class ThreadDoneBase(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         """マイリストのマイリスト情報を更新するクラスのベース
 
-        Notes:
-            このクラスのインスタンスは直接作成・呼び出しは行わない
-            必要ならrunをオーバーライドしてそれぞれの後処理を実装する
+        このクラスのインスタンスは直接作成・呼び出しは行わない
+        必要ならrunをオーバーライドしてそれぞれの後処理を実装する
         """
         super().__init__(process_info)
 
         self.L_KIND = "UpdateMylist Base"
 
     def run(self) -> Result:
-        """すべてのマイリストのマイリスト情報を更新後の後処理"""
+        """マイリスト情報を更新後の後処理"""
         # 左下の表示を更新する
         self.window["-INPUT2-"].update(value="更新完了！")
 
@@ -157,7 +152,7 @@ class ThreadDoneBase(ProcessBase):
         self.update_mylist_pane()
 
         logger.info(f"{self.L_KIND} update success.")
-        return
+        return Result.success
 
 
 if __name__ == "__main__":
