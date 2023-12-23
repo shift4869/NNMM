@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Self
 
-from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
 from NNMM.process.update_mylist.value_objects.check_interval import CheckInterval
+from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
 from NNMM.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
 from NNMM.process.update_mylist.value_objects.mylist_url import MylistURL
@@ -15,7 +15,7 @@ from NNMM.util import IncludeNewStatus, MylistType
 
 
 @dataclass(frozen=True)
-class TypedMylist():
+class TypedMylist:
     id: MylistRowIndex
     username: Username
     mylistname: Myshowname
@@ -82,10 +82,9 @@ class TypedMylist():
             updated_at,
             checked_at,
             check_interval,
-            is_include_new
+            is_include_new,
         )
 
 
 if __name__ == "__main__":
     pass
-

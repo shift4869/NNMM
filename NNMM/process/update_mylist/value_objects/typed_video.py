@@ -14,8 +14,8 @@ from NNMM.process.update_mylist.value_objects.videoid import Videoid
 from NNMM.process.value_objects.table_row import Status
 
 
-@dataclass(frozen=False)
-class TypedVideo():
+@dataclass(frozen=True)
+class TypedVideo:
     id: VideoRowIndex
     video_id: Videoid
     title: Title
@@ -58,7 +58,7 @@ class TypedVideo():
             match key:
                 case "id":
                     type_check(key, value, VideoRowIndex)
-                    kargs[key] = str(value)
+                    kargs[key] = str(int(value))
                 case "video_id":
                     type_check(key, value, Videoid)
                     kargs[key] = str(value.id)
@@ -91,8 +91,8 @@ class TypedVideo():
         return self.replace_from_str(**kargs)
 
     def replace_from_str(self, **kargs: dict[str, str]) -> Self:
-        current_row_dict = self.to_dict()
-        new_row_dict = current_row_dict | kargs
+        current_row_dict: dict[str, str] = self.to_dict()
+        new_row_dict: dict[str, str] = current_row_dict | kargs
         return self.create(new_row_dict)
 
     def to_dict(self) -> dict[str, str]:
@@ -110,7 +110,7 @@ class TypedVideo():
         }
 
     @classmethod
-    def create(cls, video_dict: dict) -> Self:
+    def create(cls, video_dict: dict[str, str]) -> Self:
         row_id = VideoRowIndex(int(video_dict["id"]))
         video_id = Videoid(video_dict["video_id"])
         title = Title(video_dict["title"])
@@ -140,6 +140,6 @@ class TypedVideo():
             created_at,
         )
 
+
 if __name__ == "__main__":
     pass
-

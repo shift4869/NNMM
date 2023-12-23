@@ -5,7 +5,7 @@ from NNMM.process.update_mylist.value_objects.typed_mylist import TypedMylist
 
 
 @dataclass(frozen=True)
-class TypedMylistList():
+class TypedMylistList:
     _list: list[TypedMylist]
 
     def __post_init__(self) -> None:
@@ -30,4 +30,3 @@ class TypedMylistList():
 
 if __name__ == "__main__":
     pass
-

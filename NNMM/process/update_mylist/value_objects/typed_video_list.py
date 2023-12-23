@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from typing import ClassVar, Iterator, Self
+from typing import Iterator, Self
 
-from NNMM.model import Mylist
 from NNMM.process.update_mylist.value_objects.typed_video import TypedVideo
-from NNMM.process.value_objects.username import Username
 
 
 @dataclass(frozen=True)
@@ -25,8 +23,8 @@ class TypedVideoList():
     def __getitem__(self, item) -> TypedVideo:
         return self._list.__getitem__(item)
 
-    def __setitem__(self, key, value) -> None:
-        return self._list.__setitem__(key, value)
+    def __setitem__(self, index, value) -> None:
+        return self._list.__setitem__(index, value)
 
     @classmethod
     def create(cls, typed_video_list: list[TypedVideo]) -> Self:
