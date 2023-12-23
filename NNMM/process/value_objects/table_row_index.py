@@ -2,12 +2,11 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class TableRowIndex():
+class TableRowIndex:
     _index: int
 
     def __post_init__(self) -> None:
-        """index は0ベース
-        """
+        """index は0ベース"""
         if not isinstance(self._index, int):
             raise ValueError("row_index must be int.")
 

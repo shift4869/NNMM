@@ -5,12 +5,11 @@ from NNMM.process.value_objects.table_row_index import TableRowIndex
 
 
 @dataclass(frozen=True)
-class TableRowIndexList():
+class TableRowIndexList:
     _list: list[TableRowIndex]
 
     def __post_init__(self) -> None:
-        """空リストは許容する
-        """
+        """空リストは許容する"""
         if not isinstance(self._list, list):
             raise ValueError(f"_list must be list.")
         if not all([isinstance(r, TableRowIndex) for r in self._list]):
@@ -49,9 +48,7 @@ class TableRowIndexList():
         """
         if not isinstance(table_row_index_list, list):
             raise ValueError(f"table_row_index_list must be list.")
-        return cls(
-            [TableRowIndex(row_index) for row_index in table_row_index_list]
-        )
+        return cls([TableRowIndex(row_index) for row_index in table_row_index_list])
 
 
 class SelectedTableRowIndexList(TableRowIndexList):

@@ -5,14 +5,13 @@ from NNMM.process.value_objects.table_row import TableRow, TableRowTuple
 
 
 @dataclass(frozen=True)
-class TableRowList():
+class TableRowList:
     _list: list[TableRow]
 
     COLS_NAME = TableRow.COLS_NAME
 
     def __post_init__(self) -> None:
-        """空リストは許容する
-        """
+        """空リストは許容する"""
         if not isinstance(self._list, list):
             raise ValueError(f"_list must be list.")
         if not all([isinstance(r, TableRow) for r in self._list]):
@@ -63,17 +62,20 @@ class SelectedTableRowList(TableRowList):
 
 if __name__ == "__main__":
     NUM = 5
-    row_list = [[
-        f"{i}",
-        f"sm1234657{i}",
-        f"title_{i}",
-        f"username_{i}",
-        "",
-        "2023-12-13 07:25:00",
-        "2023-12-13 07:25:00",
-        "https://www.nicovideo.jp/watch/sm12346578",
-        "https://www.nicovideo.jp/user/11111111/video"
-    ] for i in range(1, NUM + 1)]
+    row_list = [
+        [
+            f"{i}",
+            f"sm1234657{i}",
+            f"title_{i}",
+            f"username_{i}",
+            "",
+            "2023-12-13 07:25:00",
+            "2023-12-13 07:25:00",
+            "https://www.nicovideo.jp/watch/sm12346578",
+            "https://www.nicovideo.jp/user/11111111/video",
+        ]
+        for i in range(1, NUM + 1)
+    ]
     table_row_list = TableRowList.create(row_list)
     print(table_row_list)
     table_data = table_row_list.to_table_data()

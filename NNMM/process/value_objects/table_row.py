@@ -34,7 +34,7 @@ TableRowTuple = namedtuple("TableRowTuple", fields)
 
 
 @dataclass(frozen=True)
-class TableRow():
+class TableRow:
     row_number: int
     video_id: Videoid
     title: Title
@@ -88,7 +88,7 @@ class TableRow():
             self.uploaded_at,
             self.registered_at,
             self.video_url,
-            self.mylist_url
+            self.mylist_url,
         ]
 
     def clone(self) -> Self:
@@ -104,7 +104,7 @@ class TableRow():
             self.uploaded_at.dt_str,
             self.registered_at.dt_str,
             self.video_url.non_query_url,
-            self.mylist_url.non_query_url
+            self.mylist_url.non_query_url,
         ]
         return list(map(str, row))
 
@@ -215,7 +215,7 @@ if __name__ == "__main__":
         "2023-12-13 07:25:00",
         "2023-12-13 07:25:00",
         "https://www.nicovideo.jp/watch/sm12346578",
-        "https://www.nicovideo.jp/user/11111111/video"
+        "https://www.nicovideo.jp/user/11111111/video",
     ]
     table_row = TableRow.create(s_row)
     print(table_row)
