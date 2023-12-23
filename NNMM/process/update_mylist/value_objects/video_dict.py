@@ -6,7 +6,7 @@ from NNMM.process.update_mylist.value_objects.typed_video import TypedVideo
 
 
 @dataclass(frozen=True)
-class VideoDict():
+class VideoDict:
     _dict: dict
 
     def __post_init__(self) -> None:

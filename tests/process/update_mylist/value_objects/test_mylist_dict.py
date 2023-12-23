@@ -1,9 +1,8 @@
 import sys
 import unittest
 from contextlib import ExitStack
-from typing import Iterator
 
-from mock import MagicMock, patch
+from mock import patch
 
 from NNMM.process.update_mylist.value_objects.mylist_dict import MylistDict
 
