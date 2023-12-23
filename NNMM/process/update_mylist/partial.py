@@ -66,7 +66,6 @@ class Partial(Base):
             # マイリストオブジェクトのキーエラーなど
             logger.error(f"{self.L_KIND} get_target_mylist failed, KeyError.")
             return []
-
         return result
 
 
@@ -78,5 +77,6 @@ class PartialThreadDone(ThreadDoneBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

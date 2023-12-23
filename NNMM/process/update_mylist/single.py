@@ -1,6 +1,5 @@
 from logging import INFO, getLogger
 
-from NNMM.model import Mylist
 from NNMM.process.update_mylist.base import Base, ThreadDoneBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 
@@ -19,9 +18,8 @@ class Single(Base):
         """
         super().__init__(process_info)
 
-        # ログメッセージ
-        self.L_KIND = "Mylist"
-        # イベントキー
+        self.post_process = SingleThreadDone
+        self.L_KIND = "Single mylist"
         self.E_DONE = "-UPDATE_THREAD_DONE-"
 
     def get_target_mylist(self) -> list[dict]:
@@ -44,10 +42,11 @@ class Single(Base):
 class SingleThreadDone(ThreadDoneBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
-        self.L_KIND = "Mylist"
+        self.L_KIND = "Single mylist"
 
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

@@ -142,4 +142,16 @@ class TypedVideo:
 
 
 if __name__ == "__main__":
-    pass
+    typed_video = TypedVideo.create({
+        "id": 1,
+        "video_id": "sm12345671",
+        "title": "title_1",
+        "username": "username_1",
+        "status": "未視聴",
+        "uploaded_at": "2023-12-22 12:34:51",
+        "registered_at": "2023-12-22 12:34:51",
+        "video_url": "https://www.nicovideo.jp/watch/sm12345671",
+        "mylist_url": "https://www.nicovideo.jp/user/10000001/video",
+        "created_at": "2023-12-22 12:34:51",
+    })
+    print(typed_video)

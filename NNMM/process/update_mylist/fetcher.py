@@ -1,5 +1,4 @@
 import asyncio
-import threading
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
@@ -16,18 +15,35 @@ logger.setLevel(INFO)
 
 
 class Fetcher(ExecutorBase):
+    """マイリスト更新時に video_info を fetch してくる fetcher をマルチスレッドで起動する
+
+    Attribute:
+        mylist_with_video_list (MylistWithVideoList): fetch すべきマイリスト情報と現在の動画情報
+
+    Returns:
+        PayloadList: PayloadList.create() で返される fetch 後の動画情報
+    """
+
     mylist_with_video_list: MylistWithVideoList
-    process_info: ProcessInfo
 
     def __init__(self, mylist_with_video_list: MylistWithVideoList, process_info: ProcessInfo) -> None:
-        self.mylist_with_video_list = mylist_with_video_list
-        self.process_info = process_info
+        """初期設定
 
-        self.window = process_info.window
-        self.lock = threading.Lock()
-        self.done_count = 0
+        Args:
+            mylist_with_video_list (MylistWithVideoList): fetch すべきマイリスト情報と現在の動画情報
+            process_info (ProcessInfo): 画面更新用 process_info
+        """
+        super().__init__(process_info)
+        if not isinstance(mylist_with_video_list, MylistWithVideoList):
+            raise ValueError("mylist_with_video_list must be MylistWithVideoList.")
+        self.mylist_with_video_list = mylist_with_video_list
 
     def execute(self) -> PayloadList:
+        """fetch する thread を起動する
+
+        Returns:
+            PayloadList: fetch すべきマイリスト情報と現在の動画情報と、fetch 後の動画情報をまとめたペイロード
+        """
         result_buf = []
         all_index_num = len(self.mylist_with_video_list)
         with ThreadPoolExecutor(max_workers=8, thread_name_prefix="ap_thread") as executor:
@@ -42,6 +58,11 @@ class Fetcher(ExecutorBase):
         return PayloadList.create(result_buf)
 
     def execute_worker(self, *argv) -> FetchedVideoInfo | Result:
+        """具体的な fetch を担当するワーカー
+
+        Returns:
+            FetchedVideoInfo | Result: fetch 後の動画情報, fetch 失敗時は Result.failed
+        """
         mylist_url, all_index_num = argv
         result = Result.failed
         try:

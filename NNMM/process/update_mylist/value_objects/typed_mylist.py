@@ -87,4 +87,18 @@ class TypedMylist:
 
 
 if __name__ == "__main__":
-    pass
+    mylist_dict = {
+        "id": 1,
+        "username": "username_1",
+        "mylistname": "投稿動画",
+        "type": "uploaded",
+        "showname": "投稿者1さんの投稿動画",
+        "url": "https://www.nicovideo.jp/user/10000001/video",
+        "created_at": "2023-12-22 12:34:56",
+        "updated_at": "2023-12-22 12:34:56",
+        "checked_at": "2023-12-22 12:34:56",
+        "check_interval": "15分",
+        "is_include_new": True,
+    }
+    typed_mylist = TypedMylist.create(mylist_dict)
+    print(typed_mylist)

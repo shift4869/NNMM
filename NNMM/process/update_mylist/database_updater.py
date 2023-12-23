@@ -1,8 +1,6 @@
-import threading
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
-from NNMM.model import MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.update_mylist.executor_base import ExecutorBase
@@ -14,27 +12,42 @@ from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.process.value_objects.table_row import Status
 from NNMM.util import Result, get_now_datetime
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class DatabaseUpdater(ExecutorBase):
+    """fetch 後の動画情報をDBに反映させる処理をマルチスレッドで起動する
+
+    Attribute:
+        payload_list (PayloadList): fetch 後のペイロードのリスト
+
+    Returns:
+        Result: DB更新に成功したら Result.success, 失敗時 Result.failed
+    """
+
     payload_list: PayloadList
-    process_info: ProcessInfo
 
     def __init__(self, payload_list: PayloadList, process_info: ProcessInfo) -> None:
-        self.payload_list = payload_list
-        self.process_info = process_info
+        """初期設定
 
-        self.window = process_info.window
-        self.mylist_db = process_info.mylist_db
-        self.mylist_info_db = process_info.mylist_info_db
-        self.lock = threading.Lock()
-        self.done_count = 0
+        Args:
+            payload_list (PayloadList): fetch 後のペイロードのリスト
+            process_info (ProcessInfo): 画面更新用 process_info
+        """
+        super().__init__(process_info)
+        if not isinstance(payload_list, PayloadList):
+            raise ValueError("payload_list must be PayloadList.")
+        self.payload_list = payload_list
 
     def execute(self) -> PayloadList:
+        """DB更新を行う thread を起動する
+
+        Returns:
+            PayloadList: DB更新に用いたペイロードと、DB更新処理結果のResult
+                         この返り値は呼び出し元では使用されない
+        """
         result_buf = []
         all_index_num = len(self.payload_list)
         with ThreadPoolExecutor(max_workers=8, thread_name_prefix="np_thread") as executor:
@@ -49,6 +62,15 @@ class DatabaseUpdater(ExecutorBase):
         return result_buf
 
     def execute_worker(self, *argv) -> FetchedVideoInfo | Result:
+        """具体的なDB更新を担当するワーカー
+
+        TODO:
+            処理を分割したい
+
+        Returns:
+            FetchedVideoInfo | Result: Result のみ返す
+                                       DB更新に成功したら Result.success, 失敗時 Result.failed
+        """
         mylist: TypedMylist = argv[0]
         video_list: TypedVideoList = argv[1]
         fetched_info: FetchedVideoInfo | Result = argv[2]
@@ -109,16 +131,7 @@ class DatabaseUpdater(ExecutorBase):
         # マルチスレッド内では各々のスレッドごとに新しくDBセッションを張る
         mylist_db = MylistDBController(self.mylist_db.dbname)
         mylist_info_db = MylistInfoDBController(self.mylist_info_db.dbname)
-        records = []
-        try:
-            for m in now_video_list:
-                r = m.to_dict()
-                if not (set(r.keys()) <= set(MylistInfo.__table__.c.keys())):
-                    raise KeyError
-                records.append(r)
-        except KeyError:
-            logger.error(f"{self.process_info.name} UpdateMylistInfoWorker failed, key error")
-            return Result.failed
+        records = [m.to_dict() for m in now_video_list]
         mylist_info_db.upsert_from_list(records)
 
         # マイリストの更新確認日時更新
