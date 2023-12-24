@@ -1,4 +1,4 @@
-from .value_objects.mylist_url import MylistURL
+from .value_objects.user_mylist_url import UserMylistURL
 from .value_objects.mylistid import Mylistid
 from .value_objects.myshowname import Myshowname
 from .value_objects.registered_at import RegisteredAt

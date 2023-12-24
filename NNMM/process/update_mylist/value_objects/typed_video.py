@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Self
 
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
-from NNMM.process.update_mylist.value_objects.mylist_url import MylistURL
+from NNMM.process.update_mylist.value_objects.user_mylist_url import UserMylistURL
 from NNMM.process.update_mylist.value_objects.registered_at import RegisteredAt
 from NNMM.process.update_mylist.value_objects.title import Title
 from NNMM.process.update_mylist.value_objects.uploaded_at import UploadedAt
@@ -24,7 +24,7 @@ class TypedVideo:
     uploaded_at: UploadedAt
     registered_at: RegisteredAt
     video_url: VideoURL
-    mylist_url: MylistURL | UploadedURL
+    mylist_url: UserMylistURL | UploadedURL
     created_at: CreatedAt
 
     def __post_init__(self) -> None:
@@ -44,8 +44,8 @@ class TypedVideo:
             raise ValueError("registered_at must be RegisteredAt.")
         if not isinstance(self.video_url, VideoURL):
             raise ValueError("video_url must be VideoURL.")
-        if not isinstance(self.mylist_url, MylistURL | UploadedURL):
-            raise ValueError("mylist_url must be MylistURL | UploadedURL.")
+        if not isinstance(self.mylist_url, UserMylistURL | UploadedURL):
+            raise ValueError("mylist_url must be UserMylistURL | UploadedURL.")
         if not isinstance(self.created_at, CreatedAt):
             raise ValueError("created_at must be CreatedAt.")
 
@@ -81,7 +81,7 @@ class TypedVideo:
                     type_check(key, value, VideoURL)
                     kargs[key] = str(value.non_query_url)
                 case "mylist_url":
-                    type_check(key, value, MylistURL | UploadedURL)
+                    type_check(key, value, UserMylistURL | UploadedURL)
                     kargs[key] = str(value.non_query_url)
                 case "created_at":
                     type_check(key, value, CreatedAt)
@@ -125,7 +125,7 @@ class TypedVideo:
         try:
             mylist_url = UploadedURL.create(mylist_url)
         except Exception:
-            mylist_url = MylistURL.create(mylist_url)
+            mylist_url = UserMylistURL.create(mylist_url)
 
         return TypedVideo(
             row_id,

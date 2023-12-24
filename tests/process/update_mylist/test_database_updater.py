@@ -17,7 +17,7 @@ from NNMM.process.update_mylist.value_objects.typed_video_list import TypedVideo
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
@@ -75,7 +75,7 @@ class TestDatabaseUpdater(unittest.TestCase):
         mylistid = Mylistid("12345678")
         showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
         myshowname = Myshowname("「まとめマイリスト」")
-        mylist_url = MylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
+        mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
         title_list = TitleList.create(["テスト動画"])
         uploaded_at_list = UploadedAtList.create(["2022-05-06 00:00:01"])
         registered_at_list = RegisteredAtList.create(["2022-05-06 00:01:01"])

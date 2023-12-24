@@ -13,7 +13,7 @@ import xmltodict
 
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.title import Title
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
 from NNMM.video_info_fetcher.value_objects.uploaded_at import UploadedAt
@@ -49,8 +49,8 @@ class VideoInfoFetcherBase(ABC):
     def __init__(self, url: str, source_type: SourceType):
         if UploadedURL.is_valid(url):
             self.url = UploadedURL.create(url)
-        elif MylistURL.is_valid(url):
-            self.url = MylistURL.create(url)
+        elif UserMylistURL.is_valid(url):
+            self.url = UserMylistURL.create(url)
         self.source_type = source_type
 
     async def _get_session_response(self, request_url: str) -> httpx.Response | None:

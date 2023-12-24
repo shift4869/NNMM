@@ -3,7 +3,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Any, Self
 
-from NNMM.process.value_objects.mylist_url import MylistURL
+from NNMM.process.value_objects.user_mylist_url import UserMylistURL
 from NNMM.process.value_objects.registered_at import RegisteredAt
 from NNMM.process.value_objects.title import Title
 from NNMM.process.value_objects.uploaded_at import UploadedAt
@@ -43,7 +43,7 @@ class TableRow:
     uploaded_at: UploadedAt
     registered_at: RegisteredAt
     video_url: VideoURL
-    mylist_url: MylistURL | UploadedURL
+    mylist_url: UserMylistURL | UploadedURL
 
     COLS_NAME = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
 
@@ -64,8 +64,8 @@ class TableRow:
             raise ValueError("registered_at must be RegisteredAt.")
         if not isinstance(self.video_url, VideoURL):
             raise ValueError("video_url must be VideoURL.")
-        if not isinstance(self.mylist_url, MylistURL | UploadedURL):
-            raise ValueError("mylist_url must be MylistURL.")
+        if not isinstance(self.mylist_url, UserMylistURL | UploadedURL):
+            raise ValueError("mylist_url must be UserMylistURL.")
 
         # 行番号は1ベース
         if self.row_number < 1:
@@ -149,7 +149,7 @@ class TableRow:
                     type_check(key, value, VideoURL)
                     kargs[key] = str(value.non_query_url)
                 case "mylist_url":
-                    type_check(key, value, MylistURL | UploadedURL)
+                    type_check(key, value, UserMylistURL | UploadedURL)
                     kargs[key] = str(value.non_query_url)
                 case invalid_key:
                     raise ValueError(f"'{invalid_key}' is not TableRow's attribute.")
@@ -190,7 +190,7 @@ class TableRow:
         if url_type == MylistType.uploaded:
             mylist_url = UploadedURL.create(mylist_url)
         elif url_type == MylistType.mylist:
-            mylist_url = MylistURL.create(mylist_url)
+            mylist_url = UserMylistURL.create(mylist_url)
 
         return cls(
             int(table_row_tuple.row_index),

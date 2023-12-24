@@ -2,15 +2,15 @@ import asyncio
 import re
 import sys
 import unittest
-from datetime import datetime
 import warnings
+from datetime import datetime
 
 import xmltodict
 
 from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.item_info import ItemInfo
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
@@ -132,8 +132,8 @@ class TestRSSParser(unittest.TestCase):
 
             if UploadedURL.is_valid(url):
                 mylist_url = UploadedURL.create(url)
-            elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.create(url)
+            elif UserMylistURL.is_valid(url):
+                mylist_url = UserMylistURL.create(url)
 
             self.assertEqual(mylist_url, rp.mylist_url)
             self.assertEqual(xml_dict, rp.xml_dict)
@@ -150,7 +150,7 @@ class TestRSSParser(unittest.TestCase):
         url = self._get_url_set()[2]
         xml = self._make_xml(url)
         rp = RSSParser(url, xml)
-        self.assertEqual(MylistURL.create(url), rp._get_mylist_url())
+        self.assertEqual(UserMylistURL.create(url), rp._get_mylist_url())
 
     def test_get_userid_mylistid(self):
         """_get_userid_mylistid のテスト"""
@@ -158,8 +158,8 @@ class TestRSSParser(unittest.TestCase):
         for url in urls:
             if UploadedURL.is_valid(url):
                 mylist_url = UploadedURL.create(url)
-            elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.create(url)
+            elif UserMylistURL.is_valid(url):
+                mylist_url = UserMylistURL.create(url)
             xml = self._make_xml(url)
 
             rp = RSSParser(URL(url).non_query_url, xml)
@@ -256,8 +256,8 @@ class TestRSSParser(unittest.TestCase):
 
                 myshowname = Myshowname("投稿動画")
                 showname = Showname.create(username, None)
-            elif MylistURL.is_valid(url):
-                mylist_url = MylistURL.create(url)
+            elif UserMylistURL.is_valid(url):
+                mylist_url = UserMylistURL.create(url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid
 

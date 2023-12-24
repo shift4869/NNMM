@@ -7,7 +7,7 @@ from NNMM.process.update_mylist.value_objects.check_interval import CheckInterva
 from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
 from NNMM.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
-from NNMM.process.update_mylist.value_objects.mylist_url import MylistURL
+from NNMM.process.update_mylist.value_objects.user_mylist_url import UserMylistURL
 from NNMM.process.update_mylist.value_objects.myshowname import Myshowname
 from NNMM.process.update_mylist.value_objects.showname import Showname
 from NNMM.process.update_mylist.value_objects.typed_mylist import TypedMylist
@@ -146,7 +146,7 @@ class TestTypedMylist(unittest.TestCase):
             Myshowname("マイリスト1"),
             MylistType(MylistType.mylist),
             Showname("「マイリスト1」-投稿者1さんの投稿動画"),
-            MylistURL.create("https://www.nicovideo.jp/user/1111111/mylist/10000001"),
+            UserMylistURL.create("https://www.nicovideo.jp/user/1111111/mylist/10000001"),
             CreatedAt("2023-12-22 12:34:56"),
             UpdatedAt("2023-12-22 12:34:56"),
             CheckedAt("2023-12-22 12:34:56"),

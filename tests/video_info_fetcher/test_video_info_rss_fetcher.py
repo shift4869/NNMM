@@ -17,7 +17,7 @@ from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
 from NNMM.video_info_fetcher.value_objects.showname import Showname
@@ -316,8 +316,8 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             username = Username(mylist_info[2])
             myshowname = Myshowname("投稿動画")
             showname = Showname.create(username, None)
-        elif MylistURL.is_valid(url):
-            mylist_url = MylistURL.create(url)
+        elif UserMylistURL.is_valid(url):
+            mylist_url = UserMylistURL.create(url)
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
             username = Username(mylist_info[2])
@@ -468,8 +468,8 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
 
             if UploadedURL.is_valid(url):
                 expect_mylist_url = UploadedURL.create(url)
-            elif MylistURL.is_valid(url):
-                expect_mylist_url = MylistURL.create(url)
+            elif UserMylistURL.is_valid(url):
+                expect_mylist_url = UserMylistURL.create(url)
 
             self.assertEqual(expect_mylist_url, virf.mylist_url)
             self.assertEqual(source_type, virf.source_type)

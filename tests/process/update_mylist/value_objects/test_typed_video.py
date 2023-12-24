@@ -5,7 +5,7 @@ from copy import deepcopy
 from dataclasses import FrozenInstanceError
 
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
-from NNMM.process.update_mylist.value_objects.mylist_url import MylistURL
+from NNMM.process.update_mylist.value_objects.user_mylist_url import UserMylistURL
 from NNMM.process.update_mylist.value_objects.registered_at import RegisteredAt
 from NNMM.process.update_mylist.value_objects.title import Title
 from NNMM.process.update_mylist.value_objects.typed_video import TypedVideo
@@ -200,7 +200,7 @@ class TestTypedVideo(unittest.TestCase):
             UploadedAt(video_dict["uploaded_at"]),
             RegisteredAt(video_dict["registered_at"]),
             VideoURL.create(video_dict["video_url"]),
-            MylistURL.create(video_dict["mylist_url"]),
+            UserMylistURL.create(video_dict["mylist_url"]),
             CreatedAt(video_dict["created_at"]),
         )
         self.assertEqual(expect, actual)

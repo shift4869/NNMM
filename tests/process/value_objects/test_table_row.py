@@ -4,7 +4,7 @@ from collections import namedtuple
 from copy import deepcopy
 from dataclasses import FrozenInstanceError
 
-from NNMM.process.value_objects.mylist_url import MylistURL
+from NNMM.process.value_objects.user_mylist_url import UserMylistURL
 from NNMM.process.value_objects.registered_at import RegisteredAt
 from NNMM.process.value_objects.table_row import Status, TableRow, TableRowTuple
 from NNMM.process.value_objects.title import Title
@@ -266,7 +266,7 @@ class TestTableRow(unittest.TestCase):
             UploadedAt(video_dict["uploaded_at"]),
             RegisteredAt(video_dict["registered_at"]),
             VideoURL.create(video_dict["video_url"]),
-            MylistURL.create(video_dict["mylist_url"]),
+            UserMylistURL.create(video_dict["mylist_url"]),
         )
         self.assertEqual(expect, actual)
 

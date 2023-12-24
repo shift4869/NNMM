@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pprint import pprint
 
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
@@ -32,7 +32,7 @@ class FetchedPageVideoInfo:
     mylistid: Mylistid  # マイリストID 12345678
     showname: Showname  # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
     myshowname: Myshowname  # マイリスト名 「まとめマイリスト」
-    mylist_url: UploadedURL | MylistURL  # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
+    mylist_url: UploadedURL | UserMylistURL  # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
     video_id_list: VideoidList  # 動画IDリスト [sm12345678]
     title_list: TitleList  # 動画タイトルリスト [テスト動画]
     registered_at_list: RegisteredAtList  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
@@ -60,8 +60,8 @@ class FetchedPageVideoInfo:
         if not isinstance(self.myshowname, Myshowname):
             raise TypeError("myshowname must be Myshowname.")
 
-        if not (isinstance(self.mylist_url, MylistURL) or isinstance(self.mylist_url, UploadedURL)):
-            raise TypeError("mylist_url must be MylistURL|UploadedURL.")
+        if not (isinstance(self.mylist_url, UserMylistURL) or isinstance(self.mylist_url, UploadedURL)):
+            raise TypeError("mylist_url must be UserMylistURL|UploadedURL.")
 
         if not isinstance(self.video_id_list, VideoidList):
             raise TypeError("video_id_list must be VideoidList.")
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     mylistid = Mylistid("12345678")
     showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
     myshowname = Myshowname("「まとめマイリスト」")
-    mylist_url = MylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
+    mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
     video_url_list = VideoURLList.create(["https://www.nicovideo.jp/watch/sm12345678"])
     video_id_list = VideoidList.create(video_url_list.video_id_list)
     title_list = TitleList.create(["テスト動画"])

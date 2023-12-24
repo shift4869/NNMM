@@ -10,7 +10,7 @@ from NNMM.process import config as process_config
 from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
 from NNMM.video_info_fetcher.video_info_fetcher_base import SourceType, VideoInfoFetcherBase
 
@@ -20,7 +20,7 @@ logger.setLevel(INFO)
 
 @dataclass
 class VideoInfoRssFetcher(VideoInfoFetcherBase):
-    mylist_url: UploadedURL | MylistURL
+    mylist_url: UploadedURL | UserMylistURL
 
     # 日付フォーマット
     SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
@@ -30,8 +30,8 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
         super().__init__(url, SourceType.RSS)
         if UploadedURL.is_valid(url):
             self.mylist_url = UploadedURL.create(url)
-        elif MylistURL.is_valid(url):
-            self.mylist_url = MylistURL.create(url)
+        elif UserMylistURL.is_valid(url):
+            self.mylist_url = UserMylistURL.create(url)
 
     async def _analysis_rss(self, xml_text: str) -> FetchedPageVideoInfo:
         try:

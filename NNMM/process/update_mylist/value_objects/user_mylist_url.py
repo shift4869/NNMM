@@ -1,13 +1,13 @@
 import re
 from dataclasses import dataclass
 
-from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
-from NNMM.video_info_fetcher.value_objects.url import URL
-from NNMM.video_info_fetcher.value_objects.userid import Userid
+from NNMM.process.update_mylist.value_objects.mylistid import Mylistid
+from NNMM.process.update_mylist.value_objects.url import URL
+from NNMM.process.update_mylist.value_objects.userid import Userid
 
 
 @dataclass(frozen=True)
-class MylistURL:
+class UserMylistURL:
     """マイリストURL
 
     マイリストURLはMYLIST_URL_PATTERN に合致するURLを扱う
@@ -17,13 +17,13 @@ class MylistURL:
         ValueError: 引数がマイリストURLのパターンでなかった場合
 
     Returns:
-        MylistURL: マイリストURL
+        UserMylistURL: マイリストURL
     """
 
     url: URL
 
     # 対象URLのパターン
-    MYLIST_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)$"
+    USER_MYLIST_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)$"
 
     # RSSリクエストURLサフィックス
     RSS_URL_SUFFIX = "?rss=2.0"
@@ -74,7 +74,7 @@ class MylistURL:
         クエリなしURLからユーザーID部分を切り出す
         """
         mylist_url = self.url.non_query_url
-        userid, mylistid = re.findall(MylistURL.MYLIST_URL_PATTERN, mylist_url)[0]
+        userid, mylistid = re.findall(UserMylistURL.USER_MYLIST_URL_PATTERN, mylist_url)[0]
         return Userid(userid)
 
     @property
@@ -84,12 +84,12 @@ class MylistURL:
         クエリなしURLからマイリストID部分を切り出す
         """
         mylist_url = self.url.non_query_url
-        userid, mylistid = re.findall(MylistURL.MYLIST_URL_PATTERN, mylist_url)[0]
+        userid, mylistid = re.findall(UserMylistURL.USER_MYLIST_URL_PATTERN, mylist_url)[0]
         return Mylistid(mylistid)
 
     @classmethod
-    def create(cls, url: str | URL) -> "MylistURL":
-        """MylistURL インスタンスを作成する
+    def create(cls, url: str | URL) -> "UserMylistURL":
+        """UserMylistURL インスタンスを作成する
 
         URL インスタンスを作成して
         それをもとにしてMylistURL インスタンス作成する
@@ -98,7 +98,7 @@ class MylistURL:
             url (str | URL): 対象URLを表す文字列 or URL
 
         Returns:
-            MylistURL: MylistURL インスタンス
+            UserMylistURL: UserMylistURL インスタンス
         """
         return cls(URL(url))
 
@@ -114,11 +114,11 @@ class MylistURL:
             url (str | URL): チェック対象のURLを表す文字列 or URL
 
         Returns:
-            bool: 引数がMylistURL.MYLIST_URL_PATTERN パターンに則っているならばTrue,
+            bool: 引数がMylistURL.USER_MYLIST_URL_PATTERN パターンに則っているならばTrue,
                   そうでないならFalse
         """
         non_query_url = URL(url).non_query_url
-        return re.search(MylistURL.MYLIST_URL_PATTERN, non_query_url) is not None
+        return re.search(UserMylistURL.USER_MYLIST_URL_PATTERN, non_query_url) is not None
 
 
 if __name__ == "__main__":
@@ -130,8 +130,8 @@ if __name__ == "__main__":
     ]
 
     for url in urls:
-        if MylistURL.is_valid(url):
-            u = MylistURL.create(url)
+        if UserMylistURL.is_valid(url):
+            u = UserMylistURL.create(url)
             print(u.non_query_url)
             print(u.fetch_url)
         else:

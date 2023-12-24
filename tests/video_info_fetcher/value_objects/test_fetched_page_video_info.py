@@ -8,7 +8,7 @@ import unittest
 from dataclasses import FrozenInstanceError
 
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
@@ -26,7 +26,7 @@ class TestFetchedPageVideoInfo(unittest.TestCase):
         mylistid = Mylistid("12345678")
         showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
         myshowname = Myshowname("「まとめマイリスト」")
-        mylist_url = MylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
+        mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
         video_url_list = VideoURLList.create(["https://www.nicovideo.jp/watch/sm12345678"])
         video_id_list = VideoidList.create(video_url_list.video_id_list)
         title_list = TitleList.create(["テスト動画"])
@@ -80,7 +80,7 @@ class TestFetchedPageVideoInfo(unittest.TestCase):
         mylistid = Mylistid("12345678")
         showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
         myshowname = Myshowname("「まとめマイリスト」")
-        mylist_url = MylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
+        mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
         video_url_list = VideoURLList.create(["https://www.nicovideo.jp/watch/sm12345678"])
         video_id_list = VideoidList.create(video_url_list.video_id_list)
         title_list = TitleList.create(["テスト動画"])
@@ -257,7 +257,7 @@ class TestFetchedPageVideoInfo(unittest.TestCase):
         mylistid = Mylistid("12345678")
         showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
         myshowname = Myshowname("「まとめマイリスト」")
-        mylist_url = MylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
+        mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
         video_url_list = VideoURLList.create(["https://www.nicovideo.jp/watch/sm12345678"])
         video_id_list = VideoidList.create(video_url_list.video_id_list)
         title_list = TitleList.create(["テスト動画"])

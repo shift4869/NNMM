@@ -3,7 +3,7 @@ from datetime import datetime
 from pprint import pprint
 from typing import ClassVar
 
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
@@ -42,7 +42,7 @@ class FetchedVideoInfo:
     mylistid: Mylistid  # マイリストID 12345678
     showname: Showname  # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
     myshowname: Myshowname  # マイリスト名 「まとめマイリスト」
-    mylist_url: UploadedURL | MylistURL  # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
+    mylist_url: UploadedURL | UserMylistURL  # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
     video_id_list: VideoidList  # 動画IDリスト [sm12345678]
     title_list: TitleList  # 動画タイトルリスト [テスト動画]
     uploaded_at_list: UploadedAtList  # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
@@ -92,8 +92,8 @@ class FetchedVideoInfo:
         if not isinstance(self.myshowname, Myshowname):
             raise TypeError("myshowname must be Myshowname.")
 
-        if not (isinstance(self.mylist_url, MylistURL) or isinstance(self.mylist_url, UploadedURL)):
-            raise TypeError("mylist_url must be MylistURL|UploadedURL.")
+        if not (isinstance(self.mylist_url, UserMylistURL) or isinstance(self.mylist_url, UploadedURL)):
+            raise TypeError("mylist_url must be UserMylistURL|UploadedURL.")
 
         if not isinstance(self.video_id_list, VideoidList):
             raise TypeError("video_id_list must be VideoidList.")
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     mylistid = Mylistid("12345678")
     showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
     myshowname = Myshowname("「まとめマイリスト」")
-    mylist_url = MylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
+    mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
     title_list = TitleList.create(["テスト動画"])
     uploaded_at_list = UploadedAtList.create(["2022-05-06 00:00:01"])
     registered_at_list = RegisteredAtList.create(["2022-05-06 00:01:01"])

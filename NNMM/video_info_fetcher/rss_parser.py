@@ -8,7 +8,7 @@ import xmltodict
 
 from NNMM.util import find_values
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
@@ -26,7 +26,7 @@ from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 @dataclass
 class RSSParser:
-    mylist_url: UploadedURL | MylistURL
+    mylist_url: UploadedURL | UserMylistURL
     xml_dict: dict
 
     SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
@@ -35,11 +35,11 @@ class RSSParser:
     def __init__(self, url: str, xml_text: str) -> None:
         if UploadedURL.is_valid(url):
             self.mylist_url = UploadedURL.create(url)
-        elif MylistURL.is_valid(url):
-            self.mylist_url = MylistURL.create(url)
+        elif UserMylistURL.is_valid(url):
+            self.mylist_url = UserMylistURL.create(url)
         self.xml_dict = xmltodict.parse(xml_text)
 
-    def _get_mylist_url(self) -> UploadedURL | MylistURL:
+    def _get_mylist_url(self) -> UploadedURL | UserMylistURL:
         """マイリストURL"""
         return self.mylist_url
 
@@ -56,7 +56,7 @@ class RSSParser:
             title = find_values(self.xml_dict, "title", True, ["rss", "channel"], [])
             pattern = "^(.*)さんの投稿動画‐ニコニコ動画$"
             username = re.findall(pattern, title)[0]
-        elif isinstance(self.mylist_url, MylistURL):
+        elif isinstance(self.mylist_url, UserMylistURL):
             username = find_values(self.xml_dict, "dc:creator", True, [], [])
         return Username(username)
 
@@ -67,7 +67,7 @@ class RSSParser:
             myshowname = Myshowname("投稿動画")
             showname = Showname.create(username, None)
             return (showname, myshowname)
-        elif isinstance(self.mylist_url, MylistURL):
+        elif isinstance(self.mylist_url, UserMylistURL):
             # マイリストの場合はタイトルから取得
             page_title = find_values(self.xml_dict, "title", True, ["rss", "channel"], ["item"])
             pattern = "^マイリスト (.*)‐ニコニコ動画$"
