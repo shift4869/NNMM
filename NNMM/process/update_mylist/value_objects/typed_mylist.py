@@ -5,13 +5,13 @@ from NNMM.process.update_mylist.value_objects.check_interval import CheckInterva
 from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
 from NNMM.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
-from NNMM.process.update_mylist.value_objects.user_mylist_url import UserMylistURL
-from NNMM.process.update_mylist.value_objects.myshowname import Myshowname
-from NNMM.process.update_mylist.value_objects.showname import Showname
 from NNMM.process.update_mylist.value_objects.updated_at import UpdatedAt
-from NNMM.process.update_mylist.value_objects.uploaded_url import UploadedURL
-from NNMM.process.update_mylist.value_objects.username import Username
 from NNMM.util import IncludeNewStatus, MylistType
+from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
+from NNMM.video_info_fetcher.value_objects.showname import Showname
+from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from NNMM.video_info_fetcher.value_objects.username import Username
 
 
 @dataclass(frozen=True)

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Iterator, Self
 
 from NNMM.process.value_objects.mylist_row import MylistRow
-from NNMM.process.value_objects.showname import Showname
+from NNMM.video_info_fetcher.value_objects.showname import Showname
 
 
 @dataclass(frozen=True)

@@ -2,15 +2,15 @@ from dataclasses import dataclass
 from typing import Any, Self
 
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
-from NNMM.process.update_mylist.value_objects.user_mylist_url import UserMylistURL
-from NNMM.process.update_mylist.value_objects.registered_at import RegisteredAt
-from NNMM.process.update_mylist.value_objects.title import Title
-from NNMM.process.update_mylist.value_objects.uploaded_at import UploadedAt
-from NNMM.process.update_mylist.value_objects.uploaded_url import UploadedURL
-from NNMM.process.update_mylist.value_objects.username import Username
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
+from NNMM.video_info_fetcher.value_objects.title import Title
+from NNMM.video_info_fetcher.value_objects.uploaded_at import UploadedAt
+from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
+from NNMM.video_info_fetcher.value_objects.username import Username
 from NNMM.process.update_mylist.value_objects.video_row_index import VideoRowIndex
-from NNMM.process.update_mylist.value_objects.video_url import VideoURL
-from NNMM.process.update_mylist.value_objects.videoid import Videoid
+from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
+from NNMM.video_info_fetcher.value_objects.videoid import Videoid
 from NNMM.process.value_objects.table_row import Status
 
 

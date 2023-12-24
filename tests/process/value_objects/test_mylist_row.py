@@ -7,7 +7,7 @@ from dataclasses import FrozenInstanceError
 from mock import patch
 
 from NNMM.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
-from NNMM.process.value_objects.showname import Showname
+from NNMM.video_info_fetcher.value_objects.showname import Showname
 
 
 class TestMylistRow(unittest.TestCase):
