@@ -1,21 +1,22 @@
 import sys
 import unittest
 from contextlib import ExitStack
-from logging import WARNING, getLogger
 from pathlib import Path
 
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
 from NNMM.main_window import MainWindow
-from NNMM.process import config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, video_play, watched, watched_all_mylist, watched_mylist
+from NNMM.mylist_db_controller import MylistDBController
+from NNMM.mylist_info_db_controller import MylistInfoDBController
+from NNMM.process import config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search
+from NNMM.process import show_mylist_info, show_mylist_info_all, timer, video_play, watched, watched_all_mylist
+from NNMM.process import watched_mylist
 from NNMM.process.base import ProcessBase
 from NNMM.process.update_mylist import every, partial, single
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
-logger = getLogger("NNMM.main_window")
-logger.setLevel(WARNING)
 TEST_DB_PATH = ":memory:"
 
 
@@ -38,9 +39,43 @@ class ConcreteErrorProcessBase(ProcessBase):
 
 
 class TestWindowMain(unittest.TestCase):
+    def _get_instance(self):
+        with ExitStack() as stack:
+            mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
+            mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window", spec=sg.Window))
+            mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
+            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.get_config"))
+            mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController", spec=MylistDBController))
+            mockmidbc = stack.enter_context(
+                patch("NNMM.main_window.MylistInfoDBController", spec=MylistInfoDBController)
+            )
+            mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
+            mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
+            mock_logger_dict = stack.enter_context(patch("logging.root.manager.loggerDict"))
+            mockump = stack.enter_context(patch("NNMM.main_window.MainWindow.update_mylist_pane"))
+            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.make_layout"))
+            mockcmpcl = stack.enter_context(patch("NNMM.main_window.config.ConfigLoad"))
+            mockpi = stack.enter_context(patch("NNMM.main_window.ProcessInfo.create"))
+            mw = MainWindow()
+            return mw
+
+    def _get_mylist_dict(self, index: int = 1) -> dict:
+        return {
+            "id": index,
+            "username": f"username_{index}",
+            "mylistname": f"mylistname_{index}",
+            "type": f"uploaded",
+            "showname": f"showname_{index}",
+            "url": f"url_{index}",
+            "created_at": "2023-12-21 12:34:56",
+            "updated_at": "2023-12-21 12:34:56",
+            "checked_at": "2023-12-21 12:34:56",
+            "check_interval": "15分",
+            "is_include_new": index % 2 == 0,
+        }
+
     def test_init(self):
-        """WindowMainの初期化後の状態をテストする
-        """
+        """WindowMainの初期化後の状態をテストする"""
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
             mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window"))
@@ -72,6 +107,7 @@ class TestWindowMain(unittest.TestCase):
 
             def r_mock_window(title, layout, icon, size, finalize, resizable):
                 return r_mock
+
             mockwd.side_effect = r_mock_window
 
             # インスタンス生成->__init__実行
@@ -112,7 +148,7 @@ class TestWindowMain(unittest.TestCase):
 
             lcfccal = mocklcfc.call_args_list
             self.assertEqual(len(lcfccal), 1)
-            self.assertEqual(("./log/logging.ini", ), lcfccal[0][0])
+            self.assertEqual(("./log/logging.ini",), lcfccal[0][0])
             self.assertEqual({"disable_existing_loggers": False}, lcfccal[0][1])
             mocklcfc.reset_mock()
 
@@ -158,8 +194,7 @@ class TestWindowMain(unittest.TestCase):
         pass
 
     def test_make_layout(self):
-        """WindowMainのレイアウトをテストする
-        """
+        """WindowMainのレイアウトをテストする"""
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
             mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
@@ -176,12 +211,9 @@ class TestWindowMain(unittest.TestCase):
 
             # configレイアウトのdummy
             def DummyCFLayout():
-                cf_layout = [[
-                    sg.Frame("Config", [
-                        [sg.Text("dummy layout")]
-                    ], size=(1370, 100))
-                ]]
+                cf_layout = [[sg.Frame("Config", [[sg.Text("dummy layout")]], size=(1370, 100))]]
                 return cf_layout
+
             mockcmgcl.side_effect = DummyCFLayout
 
             # インスタンス生成
@@ -195,7 +227,8 @@ class TestWindowMain(unittest.TestCase):
             def make_layout():
                 # 左ペイン
                 listbox_right_click_menu = [
-                    "-LISTBOX_RIGHT_CLICK_MENU-", [
+                    "-LISTBOX_RIGHT_CLICK_MENU-",
+                    [
                         "! ",
                         "---",
                         "全動画表示::-MR-",
@@ -215,20 +248,47 @@ class TestWindowMain(unittest.TestCase):
                         "強調表示を解除::-MR-",
                         "---",
                         "情報表示::-MR-",
-                    ]
+                    ],
                 ]
                 l_pane = [
-                    [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 44), auto_size_text=True, right_click_menu=listbox_right_click_menu)],
-                    [sg.Button(" インターバル更新 ", key="-PARTIAL_UPDATE-"), sg.Button(" すべて更新 ", key="-ALL_UPDATE-")],
-                    [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Input("", key="-INPUT2-", size=(24, 10))],
+                    [
+                        sg.Listbox(
+                            [],
+                            key="-LIST-",
+                            enable_events=False,
+                            size=(40, 44),
+                            auto_size_text=True,
+                            right_click_menu=listbox_right_click_menu,
+                        )
+                    ],
+                    [
+                        sg.Button(" インターバル更新 ", key="-PARTIAL_UPDATE-"),
+                        sg.Button(" すべて更新 ", key="-ALL_UPDATE-"),
+                    ],
+                    [
+                        sg.Button("  +  ", key="-CREATE-"),
+                        sg.Button("  -  ", key="-DELETE-"),
+                        sg.Input("", key="-INPUT2-", size=(24, 10)),
+                    ],
                 ]
 
                 # 右ペイン
-                table_cols_name = ["No.", "   動画ID   ", "                動画名                ", "   投稿者   ", "  状況  ", "     投稿日時      ", "     登録日時      ", "動画URL", "所属マイリストURL"]
+                table_cols_name = [
+                    "No.",
+                    "   動画ID   ",
+                    "                動画名                ",
+                    "   投稿者   ",
+                    "  状況  ",
+                    "     投稿日時      ",
+                    "     登録日時      ",
+                    "動画URL",
+                    "所属マイリストURL",
+                ]
                 cols_width = [20, 20, 20, 20, 80, 100, 100, 0, 0]
                 def_data = [["", "", "", "", "", "", "", "", ""]]
                 table_right_click_menu = [
-                    "-TABLE_RIGHT_CLICK_MENU-", [
+                    "-TABLE_RIGHT_CLICK_MENU-",
+                    [
                         "! ",
                         "---",
                         "ブラウザで開く::-TR-",
@@ -242,7 +302,7 @@ class TestWindowMain(unittest.TestCase):
                         "情報表示::-TR-",
                         "---",
                         "!動画ダウンロード::-TR-",
-                    ]
+                    ],
                 ]
                 table_style = {
                     "values": def_data,
@@ -258,31 +318,62 @@ class TestWindowMain(unittest.TestCase):
                 }
                 t = sg.Table(**table_style)
                 r_pane = [
-                    [sg.Input("", key="-INPUT1-", size=(120, 100)), sg.Button("更新", key="-UPDATE-"), sg.Button("終了", key="-EXIT-")],
+                    [
+                        sg.Input("", key="-INPUT1-", size=(120, 100)),
+                        sg.Button("更新", key="-UPDATE-"),
+                        sg.Button("終了", key="-EXIT-"),
+                    ],
                     [sg.Column([[t]], expand_x=True)],
                 ]
 
                 # ウィンドウのレイアウト
-                mf_layout = [[
-                    sg.Frame("Main", [
-                        [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
-                    ], size=(1370, 1000))
-                ]]
+                mf_layout = [
+                    [
+                        sg.Frame(
+                            "Main",
+                            [
+                                [
+                                    sg.Column(l_pane, expand_x=True),
+                                    sg.Column(r_pane, expand_x=True, element_justification="right"),
+                                ]
+                            ],
+                            size=(1370, 1000),
+                        )
+                    ]
+                ]
                 cf_layout = DummyCFLayout()
-                lf_layout = [[
-                    sg.Frame("ログ", [
-                        [sg.Column([[
-                            sg.Multiline(size=(1080, 100), auto_refresh=True, autoscroll=True, reroute_stdout=True, reroute_stderr=True)
-                        ]])]
-                    ], size=(1370, 1000))
-                ]]
-                layout = [[
-                    sg.TabGroup([[
-                        sg.Tab("マイリスト", mf_layout),
-                        sg.Tab("設定", cf_layout),
-                        sg.Tab("ログ", lf_layout)
-                    ]], key="-TAB_CHANGED-", enable_events=True)
-                ]]
+                lf_layout = [
+                    [
+                        sg.Frame(
+                            "ログ",
+                            [
+                                [
+                                    sg.Column([
+                                        [
+                                            sg.Multiline(
+                                                size=(1080, 100),
+                                                auto_refresh=True,
+                                                autoscroll=True,
+                                                reroute_stdout=True,
+                                                reroute_stderr=True,
+                                            )
+                                        ]
+                                    ])
+                                ]
+                            ],
+                            size=(1370, 1000),
+                        )
+                    ]
+                ]
+                layout = [
+                    [
+                        sg.TabGroup(
+                            [[sg.Tab("マイリスト", mf_layout), sg.Tab("設定", cf_layout), sg.Tab("ログ", lf_layout)]],
+                            key="-TAB_CHANGED-",
+                            enable_events=True,
+                        )
+                    ]
+                ]
                 return layout
 
             # 実行
@@ -291,7 +382,7 @@ class TestWindowMain(unittest.TestCase):
 
             def check_layout(e, a):
                 """sgオブジェクトは別IDで生成されるため、各要素を比較する
-                    self.assertEqual(expect, actual)
+                self.assertEqual(expect, actual)
                 """
                 # typeチェック
                 self.assertEqual(type(e), type(a))
@@ -322,53 +413,83 @@ class TestWindowMain(unittest.TestCase):
             self.assertEqual(0, actual)
         pass
 
-    def test_run(self):
-        """WindowMainのメインベントループをテストする
-        """
+    def test_update_mylist_pane(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.main_window.logger.error"))
-            mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
-            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.get_config"))
-            mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
-            mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
-            mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
-            mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockump = stack.enter_context(patch("NNMM.main_window.MainWindow.update_mylist_pane"))
-            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.make_layout"))
-            mockcmpcl = stack.enter_context(patch("NNMM.main_window.config.ConfigLoad"))
-            mockpi = stack.enter_context(patch("NNMM.main_window.ProcessInfo.create"))
+            mw = self._get_instance()
+            mw.window = MagicMock()
+            mw.mylist_db = MagicMock()
 
-            def r_mock_window(title, layout, icon, size, finalize, resizable):
-                r_mock = MagicMock()
-                v_mock = MagicMock()
-                v_mock.side_effect = [
-                    ("-DO_TEST-", "do something"),
-                    ("-TAB_CHANGED-", {"-TAB_CHANGED-": "設定"}),
-                    ("-TAB_CHANGED-", {"-TAB_CHANGED-": "ログ"}),
-                    ("-NONE_TEST-", "none"),
-                    ("-ERROR_TEST-", "error"),
-                    ("-EXIT-", "exit"),
-                ]
-                type(r_mock).read = v_mock
-                type(r_mock).close = lambda s: 0
-                return r_mock
-            mockwd.side_effect = r_mock_window
+            def pre_run(is_include_new):
+                mw.window.reset_mock()
+                mw.mylist_db.reset_mock()
+                if is_include_new:
+                    m_list = [self._get_mylist_dict(2)]
+                    mw.mylist_db.select.side_effect = lambda: m_list
+                else:
+                    m_list = [self._get_mylist_dict(1)]
+                    mw.mylist_db.select.side_effect = lambda: m_list
 
-            # 実行
-            mw = MainWindow()
+            def post_run(is_include_new):
+                self.assertEqual([call.select()], mw.mylist_db.mock_calls)
+
+                NEW_MARK = "*:"
+                m_list = []
+                if is_include_new:
+                    m_list = [self._get_mylist_dict(2)]
+                else:
+                    m_list = [self._get_mylist_dict(1)]
+
+                index = 0
+                include_new_index_list = []
+                for i, m in enumerate(m_list):
+                    if m["is_include_new"]:
+                        m["showname"] = NEW_MARK + m["showname"]
+                        include_new_index_list.append(i)
+                list_data = [m["showname"] for m in m_list]
+
+                expect_window_calls = [call.__getitem__("-LIST-"), call.__getitem__().update(values=list_data)]
+                for i in include_new_index_list:
+                    expect_window_calls.extend([
+                        call.__getitem__("-LIST-"),
+                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light pink"),
+                    ])
+                expect_window_calls.extend([
+                    call.__getitem__("-LIST-"),
+                    call.__getitem__().Widget.see(index),
+                    call.__getitem__("-LIST-"),
+                    call.__getitem__().update(set_to_index=index),
+                ])
+                self.assertEqual(expect_window_calls, mw.window.mock_calls)
+
+            params_list = [True, False]
+            for params in params_list:
+                pre_run(params)
+                actual = mw.update_mylist_pane()
+                expect = Result.success
+                self.assertEqual(expect, actual)
+                post_run(params)
+
+    def test_run(self):
+        """WindowMainのメインベントループをテストする"""
+        with ExitStack() as stack:
+            mock_config_load = stack.enter_context(patch("NNMM.main_window.config.ConfigLoad"))
+            mock_logger = stack.enter_context(patch("NNMM.main_window.logger.error"))
+
+            mw = self._get_instance()
+            mw.window.read.side_effect = [
+                ("-DO_TEST-", {"do": "do something"}),
+                ("-TAB_CHANGED-", {"-TAB_CHANGED-": "設定"}),
+                ("-TAB_CHANGED-", {"-TAB_CHANGED-": "ログ"}),
+                ("-NONE_TEST-", {"none": "none"}),
+                ("-ERROR_TEST-", {"error": "error"}),
+                ("-EXIT-", "exit"),
+            ]
+
             mw.dict["-DO_TEST-"] = ConcreteProcessBase
-            mw.dict["-NONE_TEST-"] = lambda: None
+            mw.dict["-NONE_TEST-"] = lambda info: None
             mw.dict["-ERROR_TEST-"] = ConcreteErrorProcessBase
             actual = mw.run()
             self.assertIs(Result.success, actual)
-
-            ICON_PATH = "./image/icon.png"
-            icon_binary = None
-            with Path(ICON_PATH).open("rb") as fin:
-                icon_binary = fin.read()
-            mockwd.assert_called_once_with("NNMM", mockmmwl.return_value, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
 
 
 if __name__ == "__main__":

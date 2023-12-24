@@ -8,21 +8,22 @@ import PySimpleGUI as sg
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process import base, config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, video_play, watched, watched_all_mylist, watched_mylist
+from NNMM.process import base, config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search
+from NNMM.process import show_mylist_info, show_mylist_info_all, timer, video_play, watched, watched_all_mylist
+from NNMM.process import watched_mylist
+from NNMM.process.update_mylist import every, partial, single
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.update_mylist import every, single, partial
 from NNMM.util import Result
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class MainWindow():
-    """メインウィンドウクラス
-    """
+class MainWindow:
+    """メインウィンドウクラス"""
+
     def __init__(self) -> None:
-        """メインウィンドウクラスのコンストラクタ
-        """
+        """メインウィンドウクラスのコンストラクタ"""
         # 設定値初期化
         self.config = config.ConfigBase.set_config()
 
@@ -112,7 +113,8 @@ class MainWindow():
         """
         # 左ペイン
         listbox_right_click_menu = [
-            "-LISTBOX_RIGHT_CLICK_MENU-", [
+            "-LISTBOX_RIGHT_CLICK_MENU-",
+            [
                 "! ",
                 "---",
                 "全動画表示::-MR-",
@@ -132,20 +134,44 @@ class MainWindow():
                 "強調表示を解除::-MR-",
                 "---",
                 "情報表示::-MR-",
-            ]
+            ],
         ]
         l_pane = [
-            [sg.Listbox([], key="-LIST-", enable_events=False, size=(40, 44), auto_size_text=True, right_click_menu=listbox_right_click_menu)],
+            [
+                sg.Listbox(
+                    [],
+                    key="-LIST-",
+                    enable_events=False,
+                    size=(40, 44),
+                    auto_size_text=True,
+                    right_click_menu=listbox_right_click_menu,
+                )
+            ],
             [sg.Button(" インターバル更新 ", key="-PARTIAL_UPDATE-"), sg.Button(" すべて更新 ", key="-ALL_UPDATE-")],
-            [sg.Button("  +  ", key="-CREATE-"), sg.Button("  -  ", key="-DELETE-"), sg.Input("", key="-INPUT2-", size=(24, 10))],
+            [
+                sg.Button("  +  ", key="-CREATE-"),
+                sg.Button("  -  ", key="-DELETE-"),
+                sg.Input("", key="-INPUT2-", size=(24, 10)),
+            ],
         ]
 
         # 右ペイン
-        table_cols_name = ["No.", "   動画ID   ", "                動画名                ", "   投稿者   ", "  状況  ", "     投稿日時      ", "     登録日時      ", "動画URL", "所属マイリストURL"]
+        table_cols_name = [
+            "No.",
+            "   動画ID   ",
+            "                動画名                ",
+            "   投稿者   ",
+            "  状況  ",
+            "     投稿日時      ",
+            "     登録日時      ",
+            "動画URL",
+            "所属マイリストURL",
+        ]
         cols_width = [20, 20, 20, 20, 80, 100, 100, 0, 0]
         def_data = [["", "", "", "", "", "", "", "", ""]]
         table_right_click_menu = [
-            "-TABLE_RIGHT_CLICK_MENU-", [
+            "-TABLE_RIGHT_CLICK_MENU-",
+            [
                 "! ",
                 "---",
                 "ブラウザで開く::-TR-",
@@ -159,7 +185,7 @@ class MainWindow():
                 "情報表示::-TR-",
                 "---",
                 "!動画ダウンロード::-TR-",
-            ]
+            ],
         ]
         table_style = {
             "values": def_data,
@@ -175,31 +201,62 @@ class MainWindow():
         }
         t = sg.Table(**table_style)
         r_pane = [
-            [sg.Input("", key="-INPUT1-", size=(120, 100)), sg.Button("更新", key="-UPDATE-"), sg.Button("終了", key="-EXIT-")],
+            [
+                sg.Input("", key="-INPUT1-", size=(120, 100)),
+                sg.Button("更新", key="-UPDATE-"),
+                sg.Button("終了", key="-EXIT-"),
+            ],
             [sg.Column([[t]], expand_x=True)],
         ]
 
         # ウィンドウのレイアウト
-        mf_layout = [[
-            sg.Frame("Main", [
-                [sg.Column(l_pane, expand_x=True), sg.Column(r_pane, expand_x=True, element_justification="right")]
-            ], size=(1370, 1000))
-        ]]
+        mf_layout = [
+            [
+                sg.Frame(
+                    "Main",
+                    [
+                        [
+                            sg.Column(l_pane, expand_x=True),
+                            sg.Column(r_pane, expand_x=True, element_justification="right"),
+                        ]
+                    ],
+                    size=(1370, 1000),
+                )
+            ]
+        ]
         cf_layout = config.ConfigBase.make_layout()
-        lf_layout = [[
-            sg.Frame("ログ", [
-                [sg.Column([[
-                    sg.Multiline(size=(1080, 100), auto_refresh=True, autoscroll=True, reroute_stdout=True, reroute_stderr=True)
-                ]])]
-            ], size=(1370, 1000))
-        ]]
-        layout = [[
-            sg.TabGroup([[
-                sg.Tab("マイリスト", mf_layout),
-                sg.Tab("設定", cf_layout),
-                sg.Tab("ログ", lf_layout)
-            ]], key="-TAB_CHANGED-", enable_events=True)
-        ]]
+        lf_layout = [
+            [
+                sg.Frame(
+                    "ログ",
+                    [
+                        [
+                            sg.Column([
+                                [
+                                    sg.Multiline(
+                                        size=(1080, 100),
+                                        auto_refresh=True,
+                                        autoscroll=True,
+                                        reroute_stdout=True,
+                                        reroute_stderr=True,
+                                    )
+                                ]
+                            ])
+                        ]
+                    ],
+                    size=(1370, 1000),
+                )
+            ]
+        ]
+        layout = [
+            [
+                sg.TabGroup(
+                    [[sg.Tab("マイリスト", mf_layout), sg.Tab("設定", cf_layout), sg.Tab("ログ", lf_layout)]],
+                    key="-TAB_CHANGED-",
+                    enable_events=True,
+                )
+            ]
+        ]
 
         return layout
 
@@ -232,8 +289,7 @@ class MainWindow():
         return Result.success
 
     def run(self) -> Result:
-        """メインイベントループ
-        """
+        """メインイベントループ"""
         while True:
             # イベントの読み込み
             event, values = self.window.read()
