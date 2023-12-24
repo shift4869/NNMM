@@ -39,8 +39,9 @@ NNMM = NicoNicoMylistManager
 1. 表示されたテキストボックス内に以下のどちらかの形式のURLを入力する
     - 投稿動画：https://www.nicovideo.jp/user/{user_id}/video
     - マイリスト：https://www.nicovideo.jp/user/{user_id}/mylist/{mylist_id}
-1. 初回はそのままページがスクレイピングされ動画情報が収集される
+1. その他必要情報を入力して登録
 1. 左側のマイリストペインから登録したマイリストをダブルクリックすると、取得した動画一覧が右ペインに表示される
+    - 初回は取得0件。以下の更新を行うと取得される。
 1. 登録したマイリストの動画一覧は以下のいずれかで更新される（RSSを用いて30件ずつ）
     - 動画一覧が右ペインに表示されているときに右上の更新ボタンを押す
     - オートリロード時
@@ -54,6 +55,6 @@ NNMM = NicoNicoMylistManager
 
 ## License/Author
 GNU Lesser General Public License v3.0（PySimpleGUIを使用している）  
-Copyright (c) 2021 [shift](https://twitter.com/_shift4869)  
+Copyright (c) 2021 - 2023 [shift](https://twitter.com/_shift4869)  
 
 
