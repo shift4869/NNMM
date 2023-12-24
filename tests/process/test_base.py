@@ -4,13 +4,14 @@ import unittest
 from collections import namedtuple
 
 import PySimpleGUI as sg
-from mock import MagicMock, call
+from mock import MagicMock, call, patch
 
 from NNMM.main_window import MainWindow
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.mylist_row import MylistRow
+from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.process.value_objects.table_row import TableRowTuple
 from NNMM.util import Result
@@ -150,6 +151,127 @@ class TestProcessBase(unittest.TestCase):
         instance = ConcreteProcessBase(self.process_info)
         actual = instance.run()
         self.assertIs(Result.success, actual)
+
+    def test_get_selected_mylist_row_index(self):
+        instance = ConcreteProcessBase(self.process_info)
+        instance.window.__getitem__.return_value.get_indexes.side_effect = lambda: [0]
+        actual = instance.get_selected_mylist_row_index()
+        self.assertEqual(SelectedMylistRowIndex(0), actual)
+
+        instance.window.__getitem__.return_value.get_indexes.side_effect = ValueError
+        actual = instance.get_selected_mylist_row_index()
+        self.assertIsNone(actual)
+
+    def test_get_selected_mylist_row(self):
+        mock_create = self.enterContext(patch("NNMM.process.base.SelectedMylistRow.create"))
+        mock_create.side_effect = lambda showname: showname
+        instance = ConcreteProcessBase(self.process_info)
+        instance.values.__getitem__.side_effect = lambda key: ["values['-LIST-']"]
+        actual = instance.get_selected_mylist_row()
+        expect = "values['-LIST-']"
+        self.assertEqual(expect, actual)
+
+        instance.values.__getitem__.side_effect = lambda key: None
+        actual = instance.get_selected_mylist_row()
+        self.assertIsNone(actual)
+
+        instance.values.__getitem__.side_effect = lambda key: ValueError
+        actual = instance.get_selected_mylist_row()
+        self.assertIsNone(actual)
+
+    def test_get_all_mylist_row(self):
+        mock_create = self.enterContext(patch("NNMM.process.base.MylistRowList.create"))
+        mock_create.side_effect = lambda mylist_row_list: mylist_row_list
+        instance = ConcreteProcessBase(self.process_info)
+        instance.window.__getitem__.return_value.Values = "window['-LIST-'].Values"
+        actual = instance.get_all_mylist_row()
+        expect = "window['-LIST-'].Values"
+        self.assertEqual(expect, actual)
+
+        mock_create.side_effect = ValueError
+        actual = instance.get_all_mylist_row()
+        self.assertIsNone(actual)
+
+    def test_get_selected_table_row_index_list(self):
+        mock_create = self.enterContext(patch("NNMM.process.base.SelectedTableRowIndexList.create"))
+        mock_create.side_effect = lambda table_row_index_list: table_row_index_list
+        instance = ConcreteProcessBase(self.process_info)
+        instance.values.__getitem__.side_effect = lambda key: "values['-TABLE-']"
+        actual = instance.get_selected_table_row_index_list()
+        expect = "values['-TABLE-']"
+        self.assertEqual(expect, actual)
+
+        mock_create.side_effect = ValueError
+        actual = instance.get_selected_table_row_index_list()
+        self.assertIsNone(actual)
+
+    def test_get_selected_table_row_list(self):
+        mock_create = self.enterContext(patch("NNMM.process.base.SelectedTableRowList.create"))
+        mock_get_all_table_row = self.enterContext(patch("NNMM.process.base.ProcessBase.get_all_table_row"))
+        mock_get_selected_table_row_index_list = self.enterContext(
+            patch("NNMM.process.base.ProcessBase.get_selected_table_row_index_list")
+        )
+        mock_create.side_effect = lambda table_row_list: table_row_list
+
+        def make_table_row_mock(index: int) -> MagicMock:
+            r = MagicMock()
+            r.row_number = index
+            r.to_row.side_effect = lambda: index
+            return r
+
+        all_table_row = [make_table_row_mock(i) for i in range(10)]
+        mock_get_all_table_row.side_effect = lambda: all_table_row
+
+        mock_get_selected_table_row_index_list.return_value.to_int_list.side_effect = lambda: [2, 5]
+
+        instance = ConcreteProcessBase(self.process_info)
+        actual = instance.get_selected_table_row_list()
+        expect = [3, 6]
+        self.assertEqual(expect, actual)
+        mock_create.assert_called_once_with([3, 6])
+
+        mock_create.side_effect = ValueError
+        actual = instance.get_selected_table_row_list()
+        self.assertIsNone(actual)
+
+    def test_get_all_table_row(self):
+        mock_create = self.enterContext(patch("NNMM.process.base.TableRowList.create"))
+        mock_create.side_effect = lambda table_row_list: table_row_list
+        instance = ConcreteProcessBase(self.process_info)
+        instance.window.__getitem__.return_value.Values = "window['-TABLE-']"
+        actual = instance.get_all_table_row()
+        expect = "window['-TABLE-']"
+        self.assertEqual(expect, actual)
+
+        mock_create.side_effect = ValueError
+        actual = instance.get_all_table_row()
+        self.assertIsNone(actual)
+
+    def test_get_upper_textbox(self):
+        mock_upper_textbox = self.enterContext(patch("NNMM.process.base.UpperTextbox"))
+        mock_upper_textbox.side_effect = lambda table_row_index_list: table_row_index_list
+        instance = ConcreteProcessBase(self.process_info)
+        instance.window.__getitem__.return_value.get.side_effect = lambda: "window['-INPUT1-']"
+        actual = instance.get_upper_textbox()
+        expect = "window['-INPUT1-']"
+        self.assertEqual(expect, actual)
+
+        mock_upper_textbox.side_effect = ValueError
+        actual = instance.get_upper_textbox()
+        self.assertIsNone(actual)
+
+    def test_get_bottom_textbox(self):
+        mock_bottom_textbox = self.enterContext(patch("NNMM.process.base.BottomTextbox"))
+        mock_bottom_textbox.side_effect = lambda table_row_index_list: table_row_index_list
+        instance = ConcreteProcessBase(self.process_info)
+        instance.window.__getitem__.return_value.get.side_effect = lambda: "window['-INPUT2-']"
+        actual = instance.get_bottom_textbox()
+        expect = "window['-INPUT2-']"
+        self.assertEqual(expect, actual)
+
+        mock_bottom_textbox.side_effect = ValueError
+        actual = instance.get_bottom_textbox()
+        self.assertIsNone(actual)
 
     def test_update_mylist_pane(self):
         instance = ConcreteProcessBase(self.process_info)
