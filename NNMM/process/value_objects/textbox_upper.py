@@ -3,12 +3,11 @@ from typing import Self
 
 
 @dataclass(frozen=True)
-class UpperTextbox():
+class UpperTextbox:
     _text: str
 
     def __post_init__(self) -> None:
-        """空文字列は許容する
-        """
+        """空文字列は許容する"""
         if not isinstance(self._text, str):
             raise ValueError("textbox must be str.")
 
@@ -30,7 +29,7 @@ class UpperTextbox():
         """上部のテキストボックスに入力されている文字列を扱う
 
         Args:
-            input_text (str): 
+            input_text (str):
                 上部のテキストボックスに入力されている文字列
                 主に window["-INPUT1-"].get() を受け取る
 
