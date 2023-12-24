@@ -48,8 +48,11 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
 
         Notes:
             self.RESULT_DICT_COLS をキーとする情報を辞書で返す
-            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
-            table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
+            table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
+                               "投稿日時", "登録日時", "動画URL",
+                               "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+            table_cols = ["no", "video_id", "title", "username", "status",
+                          "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
             RSSは取得が速い代わりに最大30件までしか情報を取得できない
 
         Returns:
