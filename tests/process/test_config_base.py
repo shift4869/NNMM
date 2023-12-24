@@ -42,7 +42,10 @@ class TestConfigBase(unittest.TestCase):
     def test_make_layout(self):
         def expect_config_layout() -> sg.Frame:
             auto_reload_combo_box = sg.InputCombo(
-                ("(使用しない)", "15分毎", "30分毎", "60分毎"), default_value="(使用しない)", key="-C_AUTO_RELOAD-", size=(20, 10)
+                ("(使用しない)", "15分毎", "30分毎", "60分毎"),
+                default_value="(使用しない)",
+                key="-C_AUTO_RELOAD-",
+                size=(20, 10),
             )
 
             horizontal_line = "-" * 100
@@ -67,9 +70,7 @@ class TestConfigBase(unittest.TestCase):
                 [sg.Text("")],
                 [sg.Column([[sg.Button("設定保存", key="-C_CONFIG_SAVE-")]], justification="right")],
             ]
-            layout = [[
-                sg.Frame("Config", cf, size=(1070, 100))
-            ]]
+            layout = [[sg.Frame("Config", cf, size=(1070, 100))]]
             return layout
 
         expect = expect_config_layout()
@@ -115,10 +116,7 @@ class TestConfigBase(unittest.TestCase):
             actual = ConfigBase.set_config()
             self.assertEqual(mock_config, actual)
 
-            self.assertEqual(
-                [call(CONFIG_FILE_PATH, encoding="utf-8")],
-                mock_config.read.mock_calls
-            )
+            self.assertEqual([call(CONFIG_FILE_PATH, encoding="utf-8")], mock_config.read.mock_calls)
 
         # 実際に取得してiniファイルの構造を調べる
         actual = ConfigBase.set_config()

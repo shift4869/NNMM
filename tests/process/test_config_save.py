@@ -63,6 +63,7 @@ class TestConfigSave(unittest.TestCase):
                 r = MagicMock()
                 r.get = lambda: str
                 return r
+
             expect_next_dict = {
                 "general": {
                     "browser_path": "n_browser_path",
@@ -104,7 +105,7 @@ class TestConfigSave(unittest.TestCase):
             # rcal[{n回目の呼び出し}][kwargs=1]
             rcal = mockread.call_args_list
             self.assertEqual(len(rcal), 1)
-            self.assertEqual((CONFIG_FILE_PATH, ), rcal[0][0])
+            self.assertEqual((CONFIG_FILE_PATH,), rcal[0][0])
             self.assertEqual({"encoding": "utf-8"}, rcal[0][1])
 
             # wcal[{n回目の呼び出し}][args=0]
@@ -128,7 +129,6 @@ class TestConfigSave(unittest.TestCase):
             Path(TEST_PREV_SAVE_PATH).unlink(missing_ok=True)
             Path(TEST_NEXT_SAVE_PATH).unlink(missing_ok=True)
         pass
-
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 
 RegisteredAt の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -11,8 +12,7 @@ from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
 
 class TestRegisteredAt(unittest.TestCase):
     def test_RegisteredAtInit(self):
-        """RegisteredAt の初期化後の状態をテストする
-        """
+        """RegisteredAt の初期化後の状態をテストする"""
         # 正常系
         # 通常の登録日時
         expect_destination_datetime_format = "%Y-%m-%d %H:%M:%S"
@@ -44,8 +44,7 @@ class TestRegisteredAt(unittest.TestCase):
             registered_at = RegisteredAt(dt_str)
 
     def test_dt_str(self):
-        """dt_str のテスト
-        """
+        """dt_str のテスト"""
         dt_str = "2022-05-14 00:01:00"
         registered_at = RegisteredAt(dt_str)
         self.assertEqual(dt_str, registered_at.dt_str)

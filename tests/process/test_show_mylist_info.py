@@ -26,12 +26,35 @@ class TestShowMylistInfo(unittest.TestCase):
     def _make_mylist_db(self) -> list[dict]:
         NUM = 5
         res = []
-        col = ["id", "username", "mylistname", "type", "showname", "url",
-               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i + 1}", "投稿動画", "uploaded", f"投稿者{i + 1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
-                 "15分", True if i % 2 == 0 else False] for i in range(NUM)]
+        col = [
+            "id",
+            "username",
+            "mylistname",
+            "type",
+            "showname",
+            "url",
+            "created_at",
+            "updated_at",
+            "checked_at",
+            "check_interval",
+            "is_include_new",
+        ]
+        rows = [
+            [
+                i,
+                f"投稿者{i + 1}",
+                "投稿動画",
+                "uploaded",
+                f"投稿者{i + 1}さんの投稿動画",
+                f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "15分",
+                True if i % 2 == 0 else False,
+            ]
+            for i in range(NUM)
+        ]
 
         for row in rows:
             d = {}
@@ -43,8 +66,12 @@ class TestShowMylistInfo(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.show_mylist_info.logger.info"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.show_mylist_info.ProcessBase.update_table_pane"))
-            mock_selected_mylist_row = stack.enter_context(patch("NNMM.process.show_mylist_info.ProcessBase.get_selected_mylist_row"))
+            mock_update_table_pane = stack.enter_context(
+                patch("NNMM.process.show_mylist_info.ProcessBase.update_table_pane")
+            )
+            mock_selected_mylist_row = stack.enter_context(
+                patch("NNMM.process.show_mylist_info.ProcessBase.get_selected_mylist_row")
+            )
 
             instance = ShowMylistInfo(self.process_info)
 
@@ -55,7 +82,10 @@ class TestShowMylistInfo(unittest.TestCase):
                     NEW_MARK = "*:"
                     s_showname = NEW_MARK + s_showname
                 mock_selected_mylist_row.reset_mock()
-                def f(): return SelectedMylistRow.create(s_showname)
+
+                def f():
+                    return SelectedMylistRow.create(s_showname)
+
                 mock_selected_mylist_row.side_effect = f
                 instance.mylist_db.reset_mock()
                 instance.mylist_db.select_from_showname.side_effect = lambda showname: [m_list[0]]
@@ -63,25 +93,19 @@ class TestShowMylistInfo(unittest.TestCase):
                 mock_update_table_pane.reset_mock()
 
             def post_run(is_include_new):
-                self.assertEqual([
-                    call()
-                ], mock_selected_mylist_row.mock_calls)
+                self.assertEqual([call()], mock_selected_mylist_row.mock_calls)
 
                 m_list = self._make_mylist_db()
                 s_showname = m_list[0]["showname"]
-                self.assertEqual([
-                    call.select_from_showname(s_showname)
-                ], instance.mylist_db.mock_calls)
+                self.assertEqual([call.select_from_showname(s_showname)], instance.mylist_db.mock_calls)
 
                 mylist_url = m_list[0]["url"]
-                self.assertEqual([
-                    call.__getitem__("-INPUT1-"),
-                    call.__getitem__().update(value=mylist_url)
-                ], instance.window.mock_calls)
+                self.assertEqual(
+                    [call.__getitem__("-INPUT1-"), call.__getitem__().update(value=mylist_url)],
+                    instance.window.mock_calls,
+                )
 
-                self.assertEqual([
-                    call(mylist_url)
-                ], mock_update_table_pane.mock_calls)
+                self.assertEqual([call(mylist_url)], mock_update_table_pane.mock_calls)
 
             Params = namedtuple("Params", ["is_include_new", "result"])
             params_list = [

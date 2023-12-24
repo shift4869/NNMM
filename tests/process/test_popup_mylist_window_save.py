@@ -49,6 +49,7 @@ class TestPopupMylistWindowSave(unittest.TestCase):
 
             def pre_run(valid_keys_dict_flag, s_interval_num):
                 s_record = self._make_record(s_interval_num)
+
                 def _return_get(v):
                     r = MagicMock()
                     r.get.return_value = v
@@ -96,10 +97,24 @@ class TestPopupMylistWindowSave(unittest.TestCase):
                     mock_mylist_db.assert_not_called()
                     return
 
-                self.assertEqual([
-                    call.upsert(id_index, username, mylistname, typename, showname, url,
-                                created_at, updated_at, checked_at, check_interval, is_include_new)
-                ], mock_mylist_db.mock_calls)
+                self.assertEqual(
+                    [
+                        call.upsert(
+                            id_index,
+                            username,
+                            mylistname,
+                            typename,
+                            showname,
+                            url,
+                            created_at,
+                            updated_at,
+                            checked_at,
+                            check_interval,
+                            is_include_new,
+                        )
+                    ],
+                    mock_mylist_db.mock_calls,
+                )
 
             Params = namedtuple("Params", ["valid_keys_dict_flag", "s_interval_num", "result"])
             params_list = [

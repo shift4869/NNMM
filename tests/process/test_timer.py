@@ -70,15 +70,24 @@ class TestTimer(unittest.TestCase):
                 instance.values.reset_mock()
                 mock_bottom_textbox.reset_mock()
                 if skip_kind == "-FIRST_SET-":
-                    def f(): return BottomTextbox.create("")
+
+                    def f():
+                        return BottomTextbox.create("")
+
                     mock_bottom_textbox.side_effect = f
                     instance.values.get.side_effect = lambda key: "-FIRST_SET-"
                 elif skip_kind == "-NOW_PROCESSING-":
-                    def f(): return BottomTextbox.create("更新中")
+
+                    def f():
+                        return BottomTextbox.create("更新中")
+
                     mock_bottom_textbox.side_effect = f
                     instance.values.get.side_effect = lambda key: ""
                 else:
-                    def f(): return BottomTextbox.create("")
+
+                    def f():
+                        return BottomTextbox.create("")
+
                     mock_bottom_textbox.side_effect = f
                     instance.values.get.side_effect = lambda key: ""
 
@@ -91,10 +100,7 @@ class TestTimer(unittest.TestCase):
                 mock_timer_cancel.reset_mock()
 
             def post_run(is_use_auto_reload, interval_num, skip_kind, is_cancel):
-                self.assertEqual([
-                    call(),
-                    call().__getitem__("general")
-                ], mock_config.mock_calls)
+                self.assertEqual([call(), call().__getitem__("general")], mock_config.mock_calls)
 
                 if is_use_auto_reload:
                     if not isinstance(interval_num, int) or interval_num < 0:
@@ -115,37 +121,31 @@ class TestTimer(unittest.TestCase):
                     mock_bottom_textbox.assert_not_called()
                     return
 
-                self.assertEqual([
-                    call(),
-                ], mock_bottom_textbox.mock_calls)
+                self.assertEqual(
+                    [
+                        call(),
+                    ],
+                    mock_bottom_textbox.mock_calls,
+                )
 
                 expect_window_call = []
-                expect_values_call = [
-                    call.get("-TIMER_SET-")
-                ]
+                expect_values_call = [call.get("-TIMER_SET-")]
                 if skip_kind == "-FIRST_SET-":
-                    expect_values_call.append(
-                        call.__setitem__("-TIMER_SET-", "")
-                    )
+                    expect_values_call.append(call.__setitem__("-TIMER_SET-", ""))
                 elif skip_kind == "-NOW_PROCESSING-":
-                    expect_values_call.append(
-                        call.__setitem__("-TIMER_SET-", "")
-                    )
+                    expect_values_call.append(call.__setitem__("-TIMER_SET-", ""))
                 else:
-                    expect_window_call.append(
-                        call.write_event_value("-PARTIAL_UPDATE-", "")
-                    )
+                    expect_window_call.append(call.write_event_value("-PARTIAL_UPDATE-", ""))
 
                 self.assertEqual(expect_window_call, instance.window.mock_calls)
                 self.assertEqual(expect_values_call, instance.values.mock_calls)
 
                 mock_timer_cancel.assert_called_once_with()
 
-                self.assertEqual([
-                    call(interval_num * 60, instance.run),
-                    call().setDaemon(True),
-                    call().start()
-                ], mock_threading_timer.mock_calls)
+                self.assertEqual(
+                    [call(interval_num * 60, instance.run), call().setDaemon(True), call().start()],
+                    mock_threading_timer.mock_calls,
+                )
 
             Params = namedtuple("Params", ["is_use_auto_reload", "interval_num", "skip_kind", "is_cancel", "result"])
             params_list = [
@@ -161,14 +161,13 @@ class TestTimer(unittest.TestCase):
                 Params(False, 15, "", False, Result.failed),
             ]
             for params in params_list:
-                pre_run(params.is_use_auto_reload, params.interval_num,
-                        params.skip_kind, params.is_cancel)
+                pre_run(params.is_use_auto_reload, params.interval_num, params.skip_kind, params.is_cancel)
                 actual = instance.run()
                 expect = params.result
                 self.assertIs(expect, actual)
-                post_run(params.is_use_auto_reload, params.interval_num,
-                         params.skip_kind, params.is_cancel)
+                post_run(params.is_use_auto_reload, params.interval_num, params.skip_kind, params.is_cancel)
         pass
+
 
 if __name__ == "__main__":
     if sys.argv:

@@ -14,20 +14,73 @@ class TestMylistDBController(unittest.TestCase):
         self.controller = MylistDBController(self.test_db_path)
 
     def _get_mylist_list(self) -> list[tuple]:
-        """Mylistオブジェクトの情報セットを返す（mylist_url以外）
-        """
+        """Mylistオブジェクトの情報セットを返す（mylist_url以外）"""
         mylist_list = [
-            (1, "投稿者1", "投稿動画", "uploaded", "投稿者1さんの投稿動画", "2021-05-29 00:00:11", "2021-10-16 00:00:11", "2021-10-17 00:00:11", "15分", False),
-            (2, "投稿者2", "投稿動画", "uploaded", "投稿者2さんの投稿動画", "2021-05-29 00:00:22", "2021-10-16 00:00:22", "2021-10-17 00:00:22", "15分", False),
-            (3, "投稿者1", "マイリスト1", "mylist", "「マイリスト1」-投稿者1さんのマイリスト", "2021-05-29 00:11:11", "2021-10-16 00:11:11", "2021-10-17 00:11:11", "15分", False),
-            (4, "投稿者1", "マイリスト2", "mylist", "「マイリスト2」-投稿者1さんのマイリスト", "2021-05-29 00:22:11", "2021-10-16 00:22:11", "2021-10-17 00:22:11", "15分", False),
-            (5, "投稿者3", "マイリスト3", "mylist", "「マイリスト3」-投稿者3さんのマイリスト", "2021-05-29 00:11:33", "2021-10-16 00:11:33", "2021-10-17 00:11:33", "15分", False),
+            (
+                1,
+                "投稿者1",
+                "投稿動画",
+                "uploaded",
+                "投稿者1さんの投稿動画",
+                "2021-05-29 00:00:11",
+                "2021-10-16 00:00:11",
+                "2021-10-17 00:00:11",
+                "15分",
+                False,
+            ),
+            (
+                2,
+                "投稿者2",
+                "投稿動画",
+                "uploaded",
+                "投稿者2さんの投稿動画",
+                "2021-05-29 00:00:22",
+                "2021-10-16 00:00:22",
+                "2021-10-17 00:00:22",
+                "15分",
+                False,
+            ),
+            (
+                3,
+                "投稿者1",
+                "マイリスト1",
+                "mylist",
+                "「マイリスト1」-投稿者1さんのマイリスト",
+                "2021-05-29 00:11:11",
+                "2021-10-16 00:11:11",
+                "2021-10-17 00:11:11",
+                "15分",
+                False,
+            ),
+            (
+                4,
+                "投稿者1",
+                "マイリスト2",
+                "mylist",
+                "「マイリスト2」-投稿者1さんのマイリスト",
+                "2021-05-29 00:22:11",
+                "2021-10-16 00:22:11",
+                "2021-10-17 00:22:11",
+                "15分",
+                False,
+            ),
+            (
+                5,
+                "投稿者3",
+                "マイリスト3",
+                "mylist",
+                "「マイリスト3」-投稿者3さんのマイリスト",
+                "2021-05-29 00:11:33",
+                "2021-10-16 00:11:33",
+                "2021-10-17 00:11:33",
+                "15分",
+                False,
+            ),
         ]
         return mylist_list
 
     def _get_mylist_url_list(self) -> list[str]:
-        """mylist_urlの情報セットを返す
-        """
+        """mylist_urlの情報セットを返す"""
         url_info = [
             "https://www.nicovideo.jp/user/11111111/video",
             "https://www.nicovideo.jp/user/22222222/video",
@@ -101,8 +154,7 @@ class TestMylistDBController(unittest.TestCase):
         return expect
 
     def test_get_showname(self):
-        """shownameを取得する機能のテスト
-        """
+        """shownameを取得する機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -126,8 +178,7 @@ class TestMylistDBController(unittest.TestCase):
             self.assertEqual(expect_showname, actual_showname)
 
     def test_upsert(self):
-        """MylistにUPSERTする機能のテスト
-        """
+        """MylistにUPSERTする機能のテスト"""
         controller = self.controller
 
         # INSERT
@@ -136,7 +187,19 @@ class TestMylistDBController(unittest.TestCase):
         id_num = 1
         for i in range(0, MAX_RECORD_NUM):
             r = self._make_mylist_sample(i)
-            res = controller.upsert(r.id, r.username, r.mylistname, r.type, r.showname, r.url, r.created_at, r.updated_at, r.checked_at, r.check_interval, r.is_include_new)
+            res = controller.upsert(
+                r.id,
+                r.username,
+                r.mylistname,
+                r.type,
+                r.showname,
+                r.url,
+                r.created_at,
+                r.updated_at,
+                r.checked_at,
+                r.check_interval,
+                r.is_include_new,
+            )
             self.assertEqual(res, 0)
 
             d = r.to_dict()
@@ -154,8 +217,19 @@ class TestMylistDBController(unittest.TestCase):
         for i in t_id:
             expect[i]["check_interval"] = "30分"
             r = expect[i]
-            res = controller.upsert(r["id"], r["username"], r["mylistname"], r["type"], r["showname"], r["url"],
-                                    r["created_at"], r["updated_at"], r["checked_at"], r["check_interval"], r["is_include_new"])
+            res = controller.upsert(
+                r["id"],
+                r["username"],
+                r["mylistname"],
+                r["type"],
+                r["showname"],
+                r["url"],
+                r["created_at"],
+                r["updated_at"],
+                r["checked_at"],
+                r["check_interval"],
+                r["is_include_new"],
+            )
             self.assertEqual(res, 1)
         actual = controller.select()
         expect = sorted(expect, key=lambda x: x["id"])
@@ -163,8 +237,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual(expect, actual)
 
     def test_update_include_flag(self):
-        """Mylistの特定のレコードについて新着フラグを更新する機能のテスト
-        """
+        """Mylistの特定のレコードについて新着フラグを更新する機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -188,8 +261,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual(res, -1)
 
     def test_update_updated_at(self):
-        """Mylistの特定のレコードについて更新日時を更新する機能のテスト
-        """
+        """Mylistの特定のレコードについて更新日時を更新する機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -216,8 +288,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual(res, -1)
 
     def test_update_checked_at(self):
-        """Mylistの特定のレコードについて更新確認日時を更新する機能のテスト
-        """
+        """Mylistの特定のレコードについて更新確認日時を更新する機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -244,8 +315,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual(res, -1)
 
     def test_update_username(self):
-        """Mylistの特定のレコードについてusernameを更新する機能のテスト
-        """
+        """Mylistの特定のレコードについてusernameを更新する機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -271,8 +341,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual(res, -1)
 
     def test_swap_id(self):
-        """idを交換する機能のテスト
-        """
+        """idを交換する機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -301,8 +370,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual((None, None), actual)
 
     def test_delete_from_mylist_url(self):
-        """Mylistのレコードを削除する機能のテスト
-        """
+        """Mylistのレコードを削除する機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -324,8 +392,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual(res, -1)
 
     def test_select(self):
-        """MylistからSELECTする
-        """
+        """MylistからSELECTする"""
         controller = self.controller
         expect = self._load_table()
         expect = sorted(expect, key=lambda x: x["id"])
@@ -335,8 +402,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual(expect, actual)
 
     def test_select_from_showname(self):
-        """Mylistからshownameを条件としてSELECTする機能のテスト
-        """
+        """Mylistからshownameを条件としてSELECTする機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -353,8 +419,7 @@ class TestMylistDBController(unittest.TestCase):
         self.assertEqual([], actual)
 
     def test_select_from_url(self):
-        """Mylistからurlを条件としてSELECTする機能のテスト
-        """
+        """Mylistからurlを条件としてSELECTする機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 

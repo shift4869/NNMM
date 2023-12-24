@@ -18,6 +18,7 @@ class RegisteredAtList(Iterable):
     Returns:
         RegisteredAtList: 登録日時リスト
     """
+
     _list: list[RegisteredAt]
 
     DESTINATION_DATETIME_FORMAT = RegisteredAt.DESTINATION_DATETIME_FORMAT

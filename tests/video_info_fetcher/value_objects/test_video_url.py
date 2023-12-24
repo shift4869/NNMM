@@ -2,6 +2,7 @@
 
 VideoURL の各種機能をテストする
 """
+
 import re
 import sys
 import unittest
@@ -14,8 +15,7 @@ from NNMM.video_info_fetcher.value_objects.videoid import Videoid
 
 class TestVideoURL(unittest.TestCase):
     def test_VideoURLInit(self):
-        """VideoURL の初期化後の状態をテストする
-        """
+        """VideoURL の初期化後の状態をテストする"""
         # 正常系
         # 通常の動画URL（クエリ付き）
         url = URL("https://www.nicovideo.jp/watch/sm12345678?ref=pc_mypage_nicorepo")
@@ -37,8 +37,7 @@ class TestVideoURL(unittest.TestCase):
             video_url.url = URL("https://www.nicovideo.jp/watch/sm23456789")
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         # 正常系
         # 文字列
         url = "https://www.nicovideo.jp/watch/sm12345678?ref=pc_mypage_nicorepo"
@@ -57,8 +56,7 @@ class TestVideoURL(unittest.TestCase):
             video_url = VideoURL.create(url)
 
     def test_is_valid(self):
-        """is_valid のテスト
-        """
+        """is_valid のテスト"""
         # 正常系
         # 文字列
         url = "https://www.nicovideo.jp/watch/sm12345678?ref=pc_mypage_nicorepo"

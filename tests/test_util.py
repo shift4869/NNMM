@@ -12,30 +12,95 @@ from mock import mock_open, patch
 
 from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
-from NNMM.util import MylistType, Result, find_values, get_mylist_type, get_now_datetime, interval_translate, is_mylist_include_new_video, load_mylist, popup_get_text, save_mylist
+from NNMM.util import (
+    MylistType,
+    Result,
+    find_values,
+    get_mylist_type,
+    get_now_datetime,
+    interval_translate,
+    is_mylist_include_new_video,
+    load_mylist,
+    popup_get_text,
+    save_mylist,
+)
 
 TEST_DB_PATH = ":memory:"
 CSV_PATH = "./tests/result.csv"
+
 
 class TestUtil(unittest.TestCase):
     def tearDown(self):
         Path(CSV_PATH).unlink(missing_ok=True)
 
     def _get_mylist_info_list(self) -> list[tuple]:
-        """Mylistオブジェクトの情報セットを返す（mylist_url以外）
-        """
+        """Mylistオブジェクトの情報セットを返す（mylist_url以外）"""
         mylist_info = [
-            (1, "投稿者1", "投稿動画", "uploaded", "投稿者1さんの投稿動画", "2021-05-29 00:00:11", "2021-10-16 00:00:11", "2021-10-17 00:00:11", "15分", False),
-            (2, "投稿者2", "投稿動画", "uploaded", "投稿者2さんの投稿動画", "2021-05-29 00:00:22", "2021-10-16 00:00:22", "2021-10-17 00:00:22", "15分", False),
-            (3, "投稿者1", "マイリスト1", "mylist", "「マイリスト1」-投稿者1さんのマイリスト", "2021-05-29 00:11:11", "2021-10-16 00:11:11", "2021-10-17 00:11:11", "15分", False),
-            (4, "投稿者1", "マイリスト2", "mylist", "「マイリスト2」-投稿者1さんのマイリスト", "2021-05-29 00:22:11", "2021-10-16 00:22:11", "2021-10-17 00:22:11", "15分", False),
-            (5, "投稿者3", "マイリスト3", "mylist", "「マイリスト3」-投稿者3さんのマイリスト", "2021-05-29 00:11:33", "2021-10-16 00:11:33", "2021-10-17 00:11:33", "15分", False),
+            (
+                1,
+                "投稿者1",
+                "投稿動画",
+                "uploaded",
+                "投稿者1さんの投稿動画",
+                "2021-05-29 00:00:11",
+                "2021-10-16 00:00:11",
+                "2021-10-17 00:00:11",
+                "15分",
+                False,
+            ),
+            (
+                2,
+                "投稿者2",
+                "投稿動画",
+                "uploaded",
+                "投稿者2さんの投稿動画",
+                "2021-05-29 00:00:22",
+                "2021-10-16 00:00:22",
+                "2021-10-17 00:00:22",
+                "15分",
+                False,
+            ),
+            (
+                3,
+                "投稿者1",
+                "マイリスト1",
+                "mylist",
+                "「マイリスト1」-投稿者1さんのマイリスト",
+                "2021-05-29 00:11:11",
+                "2021-10-16 00:11:11",
+                "2021-10-17 00:11:11",
+                "15分",
+                False,
+            ),
+            (
+                4,
+                "投稿者1",
+                "マイリスト2",
+                "mylist",
+                "「マイリスト2」-投稿者1さんのマイリスト",
+                "2021-05-29 00:22:11",
+                "2021-10-16 00:22:11",
+                "2021-10-17 00:22:11",
+                "15分",
+                False,
+            ),
+            (
+                5,
+                "投稿者3",
+                "マイリスト3",
+                "mylist",
+                "「マイリスト3」-投稿者3さんのマイリスト",
+                "2021-05-29 00:11:33",
+                "2021-10-16 00:11:33",
+                "2021-10-17 00:11:33",
+                "15分",
+                False,
+            ),
         ]
         return mylist_info
 
     def _get_mylist_url_list(self) -> list[str]:
-        """mylist_urlの情報セットを返す
-        """
+        """mylist_urlの情報セットを返す"""
         url_info = [
             "https://www.nicovideo.jp/user/11111111/video",
             "https://www.nicovideo.jp/user/22222222/video",
@@ -76,14 +141,58 @@ class TestUtil(unittest.TestCase):
         return r
 
     def _get_video_info_list(self) -> list[tuple]:
-        """動画情報セットを返す（mylist_url以外）
-        """
+        """動画情報セットを返す（mylist_url以外）"""
         video_info = [
-            ("sm11111111", "動画タイトル1", "投稿者1", "未視聴", "2021-05-29 22:00:11", "2021-05-29 22:01:11", "https://www.nicovideo.jp/watch/sm11111111", "2021-10-16 00:00:11"),
-            ("sm22222222", "動画タイトル2", "投稿者1", "未視聴", "2021-05-29 22:00:22", "2021-05-29 22:02:22", "https://www.nicovideo.jp/watch/sm22222222", "2021-10-16 00:00:22"),
-            ("sm33333333", "動画タイトル3", "投稿者1", "未視聴", "2021-05-29 22:00:33", "2021-05-29 22:03:33", "https://www.nicovideo.jp/watch/sm33333333", "2021-10-16 00:00:33"),
-            ("sm44444444", "動画タイトル4", "投稿者2", "未視聴", "2021-05-29 22:00:44", "2021-05-29 22:04:44", "https://www.nicovideo.jp/watch/sm44444444", "2021-10-16 00:00:44"),
-            ("sm55555555", "動画タイトル5", "投稿者2", "未視聴", "2021-05-29 22:00:55", "2021-05-29 22:05:55", "https://www.nicovideo.jp/watch/sm55555555", "2021-10-16 00:00:55"),
+            (
+                "sm11111111",
+                "動画タイトル1",
+                "投稿者1",
+                "未視聴",
+                "2021-05-29 22:00:11",
+                "2021-05-29 22:01:11",
+                "https://www.nicovideo.jp/watch/sm11111111",
+                "2021-10-16 00:00:11",
+            ),
+            (
+                "sm22222222",
+                "動画タイトル2",
+                "投稿者1",
+                "未視聴",
+                "2021-05-29 22:00:22",
+                "2021-05-29 22:02:22",
+                "https://www.nicovideo.jp/watch/sm22222222",
+                "2021-10-16 00:00:22",
+            ),
+            (
+                "sm33333333",
+                "動画タイトル3",
+                "投稿者1",
+                "未視聴",
+                "2021-05-29 22:00:33",
+                "2021-05-29 22:03:33",
+                "https://www.nicovideo.jp/watch/sm33333333",
+                "2021-10-16 00:00:33",
+            ),
+            (
+                "sm44444444",
+                "動画タイトル4",
+                "投稿者2",
+                "未視聴",
+                "2021-05-29 22:00:44",
+                "2021-05-29 22:04:44",
+                "https://www.nicovideo.jp/watch/sm44444444",
+                "2021-10-16 00:00:44",
+            ),
+            (
+                "sm55555555",
+                "動画タイトル5",
+                "投稿者2",
+                "未視聴",
+                "2021-05-29 22:00:55",
+                "2021-05-29 22:05:55",
+                "https://www.nicovideo.jp/watch/sm55555555",
+                "2021-10-16 00:00:55",
+            ),
         ]
         return video_info
 
@@ -121,9 +230,7 @@ class TestUtil(unittest.TestCase):
 
     def test_find_values(self):
         cache_filepath = Path("./tests/cache/test_notes_with_reactions.json")
-        sample_dict = orjson.loads(
-            cache_filepath.read_bytes()
-        ).get("result")
+        sample_dict = orjson.loads(cache_filepath.read_bytes()).get("result")
 
         # 辞書とキーのみ指定
         actual = find_values(sample_dict, "username")
@@ -214,8 +321,7 @@ class TestUtil(unittest.TestCase):
             actual = find_values(sample_dict, "invalid_key", True)
 
     def test_save_mylist(self):
-        """save_mylistのテスト
-        """
+        """save_mylistのテスト"""
         with ExitStack() as stack:
             mockio = stack.enter_context(patch("pathlib.Path.open", mock_open()))
             m_cont = MylistDBController(TEST_DB_PATH)
@@ -248,7 +354,7 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(res, 0)
 
             # open呼び出し予測値
-            expect = (("w", ), {"encoding": "utf_8_sig"})
+            expect = (("w",), {"encoding": "utf_8_sig"})
 
             # open呼び出しチェック
             ocal = mockio.call_args_list
@@ -271,8 +377,7 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_load_mylist(self):
-        """load_mylistのテスト
-        """
+        """load_mylistのテスト"""
         with ExitStack() as stack:
             m_cont = MylistDBController(TEST_DB_PATH)
             MAX_RECORD_NUM = 5
@@ -320,7 +425,7 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(res, 0)
 
             # open呼び出し予測値
-            expect = (("r", ), {"encoding": "utf_8_sig"})
+            expect = (("r",), {"encoding": "utf_8_sig"})
 
             # open呼び出しチェック
             ocal = mockio.call_args_list
@@ -335,8 +440,7 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_get_mylist_type(self):
-        """マイリストのタイプを返す機能のテスト
-        """
+        """マイリストのタイプを返す機能のテスト"""
         # 正常系
         # 投稿動画ページのURL
         url = "https://www.nicovideo.jp/user/11111111/video"
@@ -367,8 +471,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(None, actual)
 
     def test_get_now_datetime(self):
-        """タイムスタンプを返す機能のテスト
-        """
+        """タイムスタンプを返す機能のテスト"""
         src_df = "%Y/%m/%d %H:%M"
         dst_df = "%Y-%m-%d %H:%M:%S"
         f_now = "2021-10-22 01:00:00"
@@ -385,9 +488,19 @@ class TestUtil(unittest.TestCase):
             self.assertNotEqual(expect, actual)
 
     def test_is_mylist_include_new_video(self):
-        """テーブルリスト内を走査する機能のテスト
-        """
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
+        """テーブルリスト内を走査する機能のテスト"""
+        table_cols_name = [
+            "No.",
+            "動画ID",
+            "動画名",
+            "投稿者",
+            "状況",
+            "投稿日時",
+            "動画URL",
+            "所属マイリストURL",
+            "マイリスト表示名",
+            "マイリスト名",
+        ]
         STATUS_INDEX = 4
         video_id_t = "sm100000{:02}"
         video_name_t = "動画タイトル_{:02}"
@@ -401,8 +514,19 @@ class TestUtil(unittest.TestCase):
         def table_list_factory():
             # 実際はタプルのリストだが値を修正してテストするためにリストのリストとする
             t = [
-                [i, video_id_t.format(i), video_name_t.format(i), username, "", uploaded_t.format(i),
-                 video_url_t.format(i), mylist_url, myshowname, showname] for i in range(1, 10)
+                [
+                    i,
+                    video_id_t.format(i),
+                    video_name_t.format(i),
+                    username,
+                    "",
+                    uploaded_t.format(i),
+                    video_url_t.format(i),
+                    mylist_url,
+                    myshowname,
+                    showname,
+                ]
+                for i in range(1, 10)
             ]
             return t
 
@@ -441,8 +565,7 @@ class TestUtil(unittest.TestCase):
         pass
 
     def test_interval_translate(self):
-        """インターバルを解釈する関数のテスト
-        """
+        """インターバルを解釈する関数のテスト"""
         # 正常系
         # 分
         e_val = random.randint(1, 59)

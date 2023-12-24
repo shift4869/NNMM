@@ -7,10 +7,7 @@ from NNMM.process.update_mylist.value_objects.check_interval import CheckInterva
 
 class TestCheckInterval(unittest.TestCase):
     def test_init(self):
-        self.assertEqual(
-            CheckInterval.UNIT,
-            ["分", "時間", "日", "週間", "ヶ月"]
-        )
+        self.assertEqual(CheckInterval.UNIT, ["分", "時間", "日", "週間", "ヶ月"])
         Params = namedtuple("Params", ["amount", "unit"])
         params_list = [
             Params(15, "分"),
@@ -46,10 +43,7 @@ class TestCheckInterval(unittest.TestCase):
         ]
         for params in params_list:
             instance = CheckInterval(params.amount, params.unit)
-            self.assertEqual(
-                f"{params.amount}{params.unit}",
-                instance.interval_str
-            )
+            self.assertEqual(f"{params.amount}{params.unit}", instance.interval_str)
 
     def test_get_min_amount(self):
         Params = namedtuple("Params", ["amount", "unit", "result"])

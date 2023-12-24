@@ -2,6 +2,7 @@
 
 UploadedURL の各種機能をテストする
 """
+
 import re
 import sys
 import unittest
@@ -13,8 +14,7 @@ from NNMM.video_info_fetcher.value_objects.url import URL
 
 class TestUploadedURL(unittest.TestCase):
     def test_UploadedURLInit(self):
-        """UploadedURL の初期化後の状態をテストする
-        """
+        """UploadedURL の初期化後の状態をテストする"""
         # 正常系
         # 通常の投稿動画ページのURL（クエリ付き）
         EXPECT_RSS_URL_SUFFIX = "?rss=2.0"
@@ -34,8 +34,7 @@ class TestUploadedURL(unittest.TestCase):
             uploaded_url.url = URL("https://www.nicovideo.jp/user/2345678/video")
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         # 正常系
         # 文字列
         url = "https://www.nicovideo.jp/user/1234567/video?ref=pc_mypage_nicorepo"
@@ -54,8 +53,7 @@ class TestUploadedURL(unittest.TestCase):
             uploaded_url = UploadedURL.create(url)
 
     def test_is_valid(self):
-        """is_valid のテスト
-        """
+        """is_valid のテスト"""
         # 正常系
         # 文字列
         url = "https://www.nicovideo.jp/user/1234567/video?ref=pc_mypage_nicorepo"

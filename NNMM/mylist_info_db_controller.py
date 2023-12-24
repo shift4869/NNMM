@@ -12,8 +12,18 @@ class MylistInfoDBController(DBControllerBase):
     def __init__(self, db_fullpath="NNMM_DB.db"):
         super().__init__(db_fullpath)
 
-    def upsert(self, video_id: str, title: str, username: str, status: str,
-               uploaded_at: str, registered_at: str, video_url: str, mylist_url: str, created_at: str) -> int:
+    def upsert(
+        self,
+        video_id: str,
+        title: str,
+        username: str,
+        status: str,
+        uploaded_at: str,
+        registered_at: str,
+        video_url: str,
+        mylist_url: str,
+        created_at: str,
+    ) -> int:
         """MylistInfoにUPSERTする
 
         Notes:
@@ -39,10 +49,14 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = MylistInfo(video_id, title, username, status, uploaded_at, registered_at, video_url, mylist_url, created_at)
+        r = MylistInfo(
+            video_id, title, username, status, uploaded_at, registered_at, video_url, mylist_url, created_at
+        )
 
         try:
-            q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
+            q = session.query(MylistInfo).filter(
+                and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url)
+            )
             p = q.one()
         except NoResultFound:
             # INSERT
@@ -108,10 +122,14 @@ class MylistInfoDBController(DBControllerBase):
                 mylist_url = record.get("mylist_url")
                 created_at = record.get("created_at")
 
-                r = MylistInfo(video_id, title, username, status, uploaded_at, registered_at, video_url, mylist_url, created_at)
+                r = MylistInfo(
+                    video_id, title, username, status, uploaded_at, registered_at, video_url, mylist_url, created_at
+                )
 
                 try:
-                    q = session.query(MylistInfo).filter(and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url))
+                    q = session.query(MylistInfo).filter(
+                        and_(MylistInfo.video_id == r.video_id, MylistInfo.mylist_url == r.mylist_url)
+                    )
                     p = q.with_for_update().one()
                 except NoResultFound:
                     # INSERT
@@ -169,9 +187,12 @@ class MylistInfoDBController(DBControllerBase):
         # UPDATE対象をSELECT
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
-        record = session.query(MylistInfo).filter(
-            and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url)
-        ).with_for_update().first()
+        record = (
+            session.query(MylistInfo)
+            .filter(and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url))
+            .with_for_update()
+            .first()
+        )
 
         # 存在しない場合はエラー
         if not record:
@@ -211,9 +232,7 @@ class MylistInfoDBController(DBControllerBase):
         # UPDATE対象をSELECT
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
-        records = session.query(MylistInfo).filter(
-            MylistInfo.mylist_url == mylist_url
-        ).with_for_update()
+        records = session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).with_for_update()
 
         # 1件も存在しない場合はエラー
         if not records.first():
@@ -249,9 +268,7 @@ class MylistInfoDBController(DBControllerBase):
         # UPDATE対象をSELECT
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
-        records = session.query(MylistInfo).filter(
-            MylistInfo.mylist_url == mylist_url
-        ).with_for_update()
+        records = session.query(MylistInfo).filter(MylistInfo.mylist_url == mylist_url).with_for_update()
 
         # 1件も存在しない場合はエラー
         if not records.first():
@@ -361,9 +378,12 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
 
-        res = session.query(MylistInfo).filter(
-            and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url)
-        ).with_for_update().all()
+        res = (
+            session.query(MylistInfo)
+            .filter(and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url))
+            .with_for_update()
+            .all()
+        )
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         session.close()
@@ -389,9 +409,7 @@ class MylistInfoDBController(DBControllerBase):
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
-        res_dict.sort(
-            key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True
-        )
+        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
 
         session.close()
         return res_dict
@@ -416,9 +434,7 @@ class MylistInfoDBController(DBControllerBase):
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDで降順ソート
-        res_dict.sort(
-            key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True
-        )
+        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
 
         session.close()
         return res_dict
@@ -442,9 +458,7 @@ class MylistInfoDBController(DBControllerBase):
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
-        res_dict.sort(
-            key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True
-        )
+        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
 
         session.close()
         return res_dict
@@ -463,7 +477,7 @@ if __name__ == "__main__":
         registered_at="2021-05-29 22:01:11",
         video_url="https://www.nicovideo.jp/watch/sm11111111",
         mylist_url="https://www.nicovideo.jp/user/11111111/mylist/12345678",
-        created_at="2021-10-16 00:00:11"
+        created_at="2021-10-16 00:00:11",
     )
     print(res)
     print(mylist_info_db.select())

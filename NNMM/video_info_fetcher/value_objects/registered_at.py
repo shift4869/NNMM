@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class RegisteredAt():
+class RegisteredAt:
     """登録日時
 
     Notes:
@@ -22,6 +22,7 @@ class RegisteredAt():
     Returns:
         RegisteredAt: 登録日時
     """
+
     _datetime: str  # 登録日時 %Y-%m-%d %H:%M:%S
 
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -41,8 +42,7 @@ class RegisteredAt():
 
     @property
     def dt_str(self) -> str:
-        """保持している登録日時を返す
-        """
+        """保持している登録日時を返す"""
         return self._datetime
 
 

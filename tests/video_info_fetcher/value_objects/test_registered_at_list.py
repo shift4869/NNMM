@@ -2,6 +2,7 @@
 
 RegisteredAtList の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -21,8 +22,7 @@ class TestRegisteredAtList(unittest.TestCase):
         return [RegisteredAt(r) for r in registered_at_strs]
 
     def test_RegisteredAtListInit(self):
-        """RegisteredAtList の初期化後の状態をテストする
-        """
+        """RegisteredAtList の初期化後の状態をテストする"""
         base_dt_str = "2022-05-12 00:01:0{}"
         registered_at_strs = self._get_dt_strs()
         registered_ats = self._get_registered_ats()
@@ -59,8 +59,7 @@ class TestRegisteredAtList(unittest.TestCase):
             registered_at_list = RegisteredAtList(registered_ats)
 
     def test_iter_len(self):
-        """iter と len のテスト
-        """
+        """iter と len のテスト"""
         registered_ats = self._get_registered_ats()
         registered_at_list = RegisteredAtList(registered_ats)
         self.assertEqual(len(registered_ats), len(registered_at_list))
@@ -68,8 +67,7 @@ class TestRegisteredAtList(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         registered_at_str = "2022-05-12 00:01:01"
         registered_at_strs = self._get_dt_strs()
         registered_ats = self._get_registered_ats()

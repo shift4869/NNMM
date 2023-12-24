@@ -18,6 +18,7 @@ class TitleList(Iterable):
     Returns:
         TitleList: 動画タイトルリスト
     """
+
     _list: list[Title]
 
     def __post_init__(self) -> None:

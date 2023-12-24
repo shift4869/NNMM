@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Mylistid():
+class Mylistid:
     """マイリストID
 
     マイリストIDは基本的には(8桁の)数字からなる 例：12345678
@@ -16,6 +16,7 @@ class Mylistid():
     Returns:
         Mylistid: マイリストID
     """
+
     _id: str  # マイリストID 12345678
 
     def __post_init__(self) -> None:
@@ -31,8 +32,7 @@ class Mylistid():
 
     @property
     def id(self) -> str:
-        """保持しているマイリストIDを返す
-        """
+        """保持しているマイリストIDを返す"""
         return self._id
 
 

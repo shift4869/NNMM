@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Videoid():
+class Videoid:
     """動画ID
 
     動画IDは基本的には(sm + 数字)からなる 例：sm12345678
@@ -16,6 +16,7 @@ class Videoid():
     Returns:
         Videoid: 動画ID
     """
+
     _id: str  # 動画ID sm12345678
 
     def __post_init__(self) -> None:
@@ -30,8 +31,7 @@ class Videoid():
 
     @property
     def id(self) -> str:
-        """保持している動画IDを返す
-        """
+        """保持している動画IDを返す"""
         return self._id
 
 

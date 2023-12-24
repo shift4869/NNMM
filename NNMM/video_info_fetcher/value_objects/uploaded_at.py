@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class UploadedAt():
+class UploadedAt:
     """投稿日時
 
     Notes:
@@ -19,6 +19,7 @@ class UploadedAt():
     Returns:
         UploadedAt: 投稿日時
     """
+
     _datetime: str  # 投稿日時 %Y-%m-%d %H:%M:%S
 
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -38,8 +39,7 @@ class UploadedAt():
 
     @property
     def dt_str(self) -> str:
-        """保持している投稿日時を返す
-        """
+        """保持している投稿日時を返す"""
         return self._datetime
 
 

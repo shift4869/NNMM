@@ -2,6 +2,7 @@
 
 UploadedAtList の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -21,8 +22,7 @@ class TestUploadedAtList(unittest.TestCase):
         return [UploadedAt(r) for r in uploaded_at_strs]
 
     def test_UploadedAtListInit(self):
-        """UploadedAtList の初期化後の状態をテストする
-        """
+        """UploadedAtList の初期化後の状態をテストする"""
         base_dt_str = "2022-05-12 00:01:0{}"
         uploaded_at_strs = self._get_dt_strs()
         uploaded_ats = self._get_uploaded_ats()
@@ -59,8 +59,7 @@ class TestUploadedAtList(unittest.TestCase):
             uploaded_at_list = UploadedAtList(uploaded_ats)
 
     def test_iter_len(self):
-        """iter と len のテスト
-        """
+        """iter と len のテスト"""
         uploaded_ats = self._get_uploaded_ats()
         uploaded_at_list = UploadedAtList(uploaded_ats)
         self.assertEqual(len(uploaded_ats), len(uploaded_at_list))
@@ -68,8 +67,7 @@ class TestUploadedAtList(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         uploaded_at_str = "2022-05-12 00:01:01"
         uploaded_at_strs = self._get_dt_strs()
         uploaded_ats = self._get_uploaded_ats()

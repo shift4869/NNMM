@@ -18,6 +18,7 @@ class VideoidList(Iterable):
     Returns:
         VideoidList: 動画IDリスト
     """
+
     _list: list[Videoid]
 
     def __post_init__(self) -> None:

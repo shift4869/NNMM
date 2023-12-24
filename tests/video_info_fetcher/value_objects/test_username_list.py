@@ -2,6 +2,7 @@
 
 UsernameList の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -21,8 +22,7 @@ class TestUsernameList(unittest.TestCase):
         return [Username(r) for r in username_strs]
 
     def test_UsernameListInit(self):
-        """UsernameList の初期化後の状態をテストする
-        """
+        """UsernameList の初期化後の状態をテストする"""
         base_name = "作成者{}"
         username_strs = self._get_dt_strs()
         usernames = self._get_usernames()
@@ -57,8 +57,7 @@ class TestUsernameList(unittest.TestCase):
             username_list = UsernameList(usernames)
 
     def test_iter_len(self):
-        """iter と len のテスト
-        """
+        """iter と len のテスト"""
         usernames = self._get_usernames()
         username_list = UsernameList(usernames)
         self.assertEqual(len(usernames), len(username_list))
@@ -66,8 +65,7 @@ class TestUsernameList(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         base_name = "作成者{}"
         username_strs = self._get_dt_strs()
         usernames = self._get_usernames()

@@ -2,6 +2,7 @@
 
 Videoid の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -11,8 +12,7 @@ from NNMM.video_info_fetcher.value_objects.videoid import Videoid
 
 class TestVideoid(unittest.TestCase):
     def test_VideoidInit(self):
-        """Videoid の初期化後の状態をテストする
-        """
+        """Videoid の初期化後の状態をテストする"""
         # 正常系
         # 通常の動画ID
         id = "sm12345678"
@@ -42,8 +42,7 @@ class TestVideoid(unittest.TestCase):
             videoid = Videoid(id)
 
     def test_id(self):
-        """id のテスト
-        """
+        """id のテスト"""
         id = "sm12345678"
         videoid = Videoid(id)
         self.assertEqual(id, videoid.id)

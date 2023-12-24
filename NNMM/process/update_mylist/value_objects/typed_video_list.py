@@ -5,7 +5,7 @@ from NNMM.process.update_mylist.value_objects.typed_video import TypedVideo
 
 
 @dataclass(frozen=True)
-class TypedVideoList():
+class TypedVideoList:
     _list: list[TypedVideo]
 
     def __post_init__(self) -> None:
@@ -33,4 +33,3 @@ class TypedVideoList():
 
 if __name__ == "__main__":
     pass
-

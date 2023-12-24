@@ -2,6 +2,7 @@
 
 Mylistid の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -11,8 +12,7 @@ from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 
 class TestMylistid(unittest.TestCase):
     def test_MylistidInit(self):
-        """Mylistid の初期化後の状態をテストする
-        """
+        """Mylistid の初期化後の状態をテストする"""
         # 正常系
         # 通常のマイリストID
         id = "1234567"
@@ -42,8 +42,7 @@ class TestMylistid(unittest.TestCase):
             mylistid = Mylistid(id)
 
     def test_id(self):
-        """id のテスト
-        """
+        """id のテスト"""
         id = "1234567"
         mylistid = Mylistid(id)
         self.assertEqual(id, mylistid.id)

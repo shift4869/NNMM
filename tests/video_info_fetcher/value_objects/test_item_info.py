@@ -2,6 +2,7 @@
 
 ItemInfo の各種機能をテストする
 """
+
 import sys
 import unittest
 
@@ -14,8 +15,7 @@ from NNMM.video_info_fetcher.value_objects.videoid import Videoid
 
 class TestItemInfo(unittest.TestCase):
     def _make_iteminfo(self, error_target="", error_value="") -> list[dict]:
-        """iteminfo を表す辞書のセットを返す
-        """
+        """iteminfo を表す辞書のセットを返す"""
         NUM = 5
         res = []
         for i in range(NUM):
@@ -38,8 +38,7 @@ class TestItemInfo(unittest.TestCase):
         return res
 
     def test_ItemInfoInit(self):
-        """ItemInfo の初期化後の状態をテストする
-        """
+        """ItemInfo の初期化後の状態をテストする"""
         # 正常系
         items = self._make_iteminfo()
         for item in items:
@@ -50,16 +49,14 @@ class TestItemInfo(unittest.TestCase):
             self.assertEqual(item.get("video_url").video_id, r.video_id)
 
     def test_is_valid(self):
-        """_is_valid のテスト
-        """
+        """_is_valid のテスト"""
         # 正常系
         item = self._make_iteminfo()[0]
         r = ItemInfo(**item)
         self.assertEqual(True, r._is_valid())
 
     def test_to_dict(self):
-        """to_dict のテスト
-        """
+        """to_dict のテスト"""
         item = self._make_iteminfo()[0]
         r = ItemInfo(**item)
 
@@ -67,8 +64,7 @@ class TestItemInfo(unittest.TestCase):
         self.assertEqual(item, r.to_dict())
 
     def test_result(self):
-        """result のテスト
-        """
+        """result のテスト"""
         item = self._make_iteminfo()[0]
         r = ItemInfo(**item)
 

@@ -46,8 +46,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         pass
 
     def _get_url_set(self) -> list[str]:
-        """urlセットを返す
-        """
+        """urlセットを返す"""
         url_info = [
             "https://www.nicovideo.jp/user/11111111/video",
             "https://www.nicovideo.jp/user/22222222/video",
@@ -58,8 +57,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         return url_info
 
     def _get_mylist_url_set(self) -> list[str]:
-        """mylist_urlセットを返す
-        """
+        """mylist_urlセットを返す"""
         mylist_url_info = [
             "https://www.nicovideo.jp/user/11111111/video",
             "https://www.nicovideo.jp/user/22222222/video",
@@ -70,8 +68,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         return mylist_url_info
 
     def _get_mylist_info_set(self, mylist_url: str) -> tuple[str, str, str]:
-        """マイリスト情報セットを返す
-        """
+        """マイリスト情報セットを返す"""
         request_url = mylist_url
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
         if re.findall(pattern, request_url):
@@ -81,16 +78,27 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         mylist_info = {
             mylist_url_info[0]: ("投稿者1さんの投稿動画‐ニコニコ動画", "Wed, 19 Oct 2021 01:00:00 +0900", "投稿者1"),
             mylist_url_info[1]: ("投稿者2さんの投稿動画‐ニコニコ動画", "Wed, 19 Oct 2021 02:00:00 +0900", "投稿者2"),
-            mylist_url_info[2]: ("マイリスト 投稿者1のマイリスト1‐ニコニコ動画", "Wed, 19 Oct 2021 01:00:01 +0900", "投稿者1"),
-            mylist_url_info[3]: ("マイリスト 投稿者1のマイリスト2‐ニコニコ動画", "Wed, 19 Oct 2021 01:00:02 +0900", "投稿者1"),
-            mylist_url_info[4]: ("マイリスト 投稿者3のマイリスト1‐ニコニコ動画", "Wed, 19 Oct 2021 03:00:01 +0900", "投稿者3"),
+            mylist_url_info[2]: (
+                "マイリスト 投稿者1のマイリスト1‐ニコニコ動画",
+                "Wed, 19 Oct 2021 01:00:01 +0900",
+                "投稿者1",
+            ),
+            mylist_url_info[3]: (
+                "マイリスト 投稿者1のマイリスト2‐ニコニコ動画",
+                "Wed, 19 Oct 2021 01:00:02 +0900",
+                "投稿者1",
+            ),
+            mylist_url_info[4]: (
+                "マイリスト 投稿者3のマイリスト1‐ニコニコ動画",
+                "Wed, 19 Oct 2021 03:00:01 +0900",
+                "投稿者3",
+            ),
         }
         res = mylist_info.get(request_url, ("", "", ""))
         return res
 
     def _get_video_info_set(self, request_url: str) -> list[tuple[str, str, str]]:
-        """動画情報セットを返す
-        """
+        """動画情報セットを返す"""
         mylist_url = request_url
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
         if re.findall(pattern, mylist_url):
@@ -131,8 +139,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         return res
 
     def _get_video_info(self, video_id: str) -> list[tuple[str, str, str]]:
-        """動画情報を返す
-        """
+        """動画情報を返す"""
         # video_idのパターンはsm{投稿者id}00000{動画識別2桁}
         pattern = r"sm([0-9]{1})00000([0-9]{2})"
         n, m = re.findall(pattern, video_id)[0]
@@ -143,18 +150,17 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         username = f"動画投稿者{n}"
 
         res = {
-            "video_id": video_id,         # 動画ID [sm12345678]
-            "title": title,               # 動画タイトル [テスト動画]
-            "uploaded_at": uploaded_at,   # 投稿日時 [%Y-%m-%d %H:%M:%S]
-            "video_url": video_url,       # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
-            "user_id": user_id,           # 投稿者id [投稿者1]
-            "username": username,         # 投稿者 [投稿者1]
+            "video_id": video_id,  # 動画ID [sm12345678]
+            "title": title,  # 動画タイトル [テスト動画]
+            "uploaded_at": uploaded_at,  # 投稿日時 [%Y-%m-%d %H:%M:%S]
+            "video_url": video_url,  # 動画URL [https://www.nicovideo.jp/watch/sm12345678]
+            "user_id": user_id,  # 投稿者id [投稿者1]
+            "username": username,  # 投稿者 [投稿者1]
         }
         return res
 
     def _get_xml_from_api(self, video_id: str) -> str:
-        """APIから返ってくる動画情報セットxmlを返す
-        """
+        """APIから返ってくる動画情報セットxmlを返す"""
         video_info = self._get_video_info(video_id)
         title = video_info.get("title")
         first_retrieve = video_info.get("uploaded_at")
@@ -186,9 +192,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             str: 成功時 生成したxml, 失敗時 空文字列
         """
         # クエリ除去
-        mylist_url = urllib.parse.urlunparse(
-            urllib.parse.urlparse(mylist_url)._replace(query=None)
-        )
+        mylist_url = urllib.parse.urlunparse(urllib.parse.urlparse(mylist_url)._replace(query=None))
 
         # マイリストのURLならRSSが取得できるURLに加工
         pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
@@ -267,6 +271,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 count = count - 1
                 raise ValueError
             return r
+
         type(r_response).run_in_executor = ReturnrunInExecutor
         return r_response
 
@@ -292,6 +297,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
 
             r_response = self._make_response_mock(request_url, status_code, error_target)
             return r_response
+
         mock.side_effect = return_session_response
         return mock
 
@@ -325,16 +331,16 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
 
         num = len(title_list)
         rss_result = {
-            "no": range(1, num + 1),                    # No. [1, ..., len()-1]
-            "userid": userid,                           # ユーザーID 1234567
-            "mylistid": mylistid,                       # マイリストID 12345678
-            "showname": showname,                       # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
-            "myshowname": myshowname,                   # マイリスト名 「まとめマイリスト」
-            "mylist_url": mylist_url,                   # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
-            "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
-            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
-            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
-            "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+            "no": range(1, num + 1),  # No. [1, ..., len()-1]
+            "userid": userid,  # ユーザーID 1234567
+            "mylistid": mylistid,  # マイリストID 12345678
+            "showname": showname,  # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
+            "myshowname": myshowname,  # マイリスト名 「まとめマイリスト」
+            "mylist_url": mylist_url,  # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
+            "video_id_list": video_id_list,  # 動画IDリスト [sm12345678]
+            "title_list": title_list,  # 動画タイトルリスト [テスト動画]
+            "registered_at_list": registered_at_list,  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
         }
 
         def return_rss(soup: BeautifulSoup):
@@ -363,18 +369,20 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
 
         num = len(video_id_list)
         api_result = {
-            "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
-            "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
-            "title_list": title_list,               # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-            "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-            "username_list": username_list,         # 投稿者リスト [投稿者1]
+            "no": list(range(1, num + 1)),  # No. [1, ..., len()-1]
+            "video_id_list": video_id_list,  # 動画IDリスト [sm12345678]
+            "title_list": title_list,  # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,  # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+            "username_list": username_list,  # 投稿者リスト [投稿者1]
         }
 
         if kind == "TitleError":
             api_result["title_list"] = TitleList([t.name + "_不正なタイトル名" for t in title_list])
         if kind == "VideoUrlError":
-            api_result["video_url_list"] = VideoURLList([v.non_query_url + "_不正なタイトル名" for v in video_url_list])
+            api_result["video_url_list"] = VideoURLList([
+                v.non_query_url + "_不正なタイトル名" for v in video_url_list
+            ])
         if kind == "UsernameError":
             api_result["username_list"] = UsernameList([])
 
@@ -408,11 +416,37 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             myshowname = mylist_info[0].replace("‐ニコニコ動画", "")
             showname = f"「{myshowname}」-{username}さんのマイリスト"
 
-        table_cols = ["no", "video_id", "title", "username", "status", "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
+        table_cols = [
+            "no",
+            "video_id",
+            "title",
+            "username",
+            "status",
+            "uploaded_at",
+            "registered_at",
+            "video_url",
+            "mylist_url",
+            "showname",
+            "mylistname",
+        ]
         res = []
-        for video_id, title, uploaded_at, registered_at, username, video_url in zip(video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list):
+        for video_id, title, uploaded_at, registered_at, username, video_url in zip(
+            video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list
+        ):
             # 出力インターフェイスチェック
-            value_list = [-1, video_id, title, username, "", uploaded_at, registered_at, video_url, mylist_url, showname, myshowname]
+            value_list = [
+                -1,
+                video_id,
+                title,
+                username,
+                "",
+                uploaded_at,
+                registered_at,
+                video_url,
+                mylist_url,
+                showname,
+                myshowname,
+            ]
             if len(table_cols) != len(value_list):
                 continue
 
@@ -426,8 +460,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         return res
 
     def test_init(self):
-        """VideoInfoRssFetcher の初期化後の状態をテストする
-        """
+        """VideoInfoRssFetcher の初期化後の状態をテストする"""
         source_type = SourceType.RSS
         urls = self._get_url_set()
         for url in urls:
@@ -443,7 +476,9 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
 
     def test_analysis_rss(self):
         with ExitStack() as stack:
-            mock_logger_error = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_rss_fetcher.logger.error"))
+            mock_logger_error = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_rss_fetcher.logger.error")
+            )
 
             url = self._get_url_set()[0]
             xml = self._get_xml_from_rss(url).strip()
@@ -463,13 +498,18 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
                 actual = loop.run_until_complete(virf._analysis_rss("invalid_xml"))
 
     def test_fetch_videoinfo_from_rss(self):
-        """_fetch_videoinfo_from_rss のテスト
-        """
+        """_fetch_videoinfo_from_rss のテスト"""
         with ExitStack() as stack:
             mockcpb = stack.enter_context(patch("NNMM.process.config.ConfigBase.get_config", self._make_config_mock))
-            mockses = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._get_session_response"))
-            mocksoup = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._analysis_rss"))
-            mockhapi = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._get_videoinfo_from_api"))
+            mockses = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._get_session_response")
+            )
+            mocksoup = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._analysis_rss")
+            )
+            mockhapi = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._get_videoinfo_from_api")
+            )
 
             # 正常系
             mockses = self._make_session_response_mock(mockses, 200)
@@ -550,10 +590,11 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             # TODO::結合時のエラーを模倣する
 
     def test_fetch_videoinfo(self):
-        """_fetch_videoinfo のテスト
-        """
+        """_fetch_videoinfo のテスト"""
         with ExitStack() as stack:
-            mockfvft = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._fetch_videoinfo_from_rss"))
+            mockfvft = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_rss_fetcher.VideoInfoRssFetcher._fetch_videoinfo_from_rss")
+            )
 
             expect = "VideoInfoRssFetcher._fetch_videoinfo() called"
             mockfvft.side_effect = lambda: str(expect)

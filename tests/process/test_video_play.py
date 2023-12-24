@@ -27,15 +27,37 @@ class TestVideoPlay(unittest.TestCase):
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def _make_mylist_db(self, num: int = 5) -> list[dict]:
-        """mylist_db.select()で取得されるマイリストデータセット
-        """
+        """mylist_db.select()で取得されるマイリストデータセット"""
         res = []
-        col = ["id", "username", "mylistname", "type", "showname", "url",
-               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i + 1}", "投稿動画", "uploaded", f"投稿者{i + 1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
-                 "15分", False] for i in range(num)]
+        col = [
+            "id",
+            "username",
+            "mylistname",
+            "type",
+            "showname",
+            "url",
+            "created_at",
+            "updated_at",
+            "checked_at",
+            "check_interval",
+            "is_include_new",
+        ]
+        rows = [
+            [
+                i,
+                f"投稿者{i + 1}",
+                "投稿動画",
+                "uploaded",
+                f"投稿者{i + 1}さんの投稿動画",
+                f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "15分",
+                False,
+            ]
+            for i in range(num)
+        ]
 
         for row in rows:
             d = {}
@@ -45,12 +67,23 @@ class TestVideoPlay(unittest.TestCase):
         return res
 
     def _make_table_data(self, mylist_url) -> list[str]:
-        """self.window["-TABLE-"].Valuesで取得されるテーブル情報動画データセット
-        """
+        """self.window["-TABLE-"].Valuesで取得されるテーブル情報動画データセット"""
         NUM = 5
         res = []
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
-                           "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名", "作成日時"]
+        table_cols_name = [
+            "No.",
+            "動画ID",
+            "動画名",
+            "投稿者",
+            "状況",
+            "投稿日時",
+            "登録日時",
+            "動画URL",
+            "所属マイリストURL",
+            "マイリスト表示名",
+            "マイリスト名",
+            "作成日時",
+        ]
         for k in range(NUM):
             for i in range(NUM):
                 # MylistInfo + showname系
@@ -116,8 +149,12 @@ class TestVideoPlay(unittest.TestCase):
             mock_execute = stack.enter_context(patch("NNMM.process.video_play.sg.execute_command_subprocess"))
             mock_popup = stack.enter_context(patch("NNMM.process.video_play.sg.popup_ok"))
             mock_watched = stack.enter_context(patch("NNMM.process.video_play.Watched"))
-            mock_selected_table_row_index_list = stack.enter_context(patch("NNMM.process.video_play.ProcessBase.get_selected_table_row_index_list"))
-            mock_selected_table_row_list = stack.enter_context(patch("NNMM.process.video_play.ProcessBase.get_selected_table_row_list"))
+            mock_selected_table_row_index_list = stack.enter_context(
+                patch("NNMM.process.video_play.ProcessBase.get_selected_table_row_index_list")
+            )
+            mock_selected_table_row_list = stack.enter_context(
+                patch("NNMM.process.video_play.ProcessBase.get_selected_table_row_list")
+            )
 
             instance = VideoPlay(self.process_info)
 
@@ -127,15 +164,22 @@ class TestVideoPlay(unittest.TestCase):
             m_list = self._make_mylist_db()
             mylist_url = m_list[0]["url"]
             def_data = self._make_table_data(mylist_url)
+
             def pre_run(s_values, is_cmd, is_watched):
                 dummy_path.touch()
                 s_def_data = deepcopy(def_data)
                 mock_selected_table_row_index_list.reset_mock()
                 if isinstance(s_values, int):
-                    def f(): return SelectedTableRowIndexList.create([s_values])
+
+                    def f():
+                        return SelectedTableRowIndexList.create([s_values])
+
                     mock_selected_table_row_index_list.side_effect = f
                 else:
-                    def f(): return SelectedTableRowIndexList.create([])
+
+                    def f():
+                        return SelectedTableRowIndexList.create([])
+
                     mock_selected_table_row_index_list.side_effect = f
 
                 mock_selected_table_row_list.reset_mock()
@@ -147,20 +191,32 @@ class TestVideoPlay(unittest.TestCase):
                         s_def_data[s_values][STATUS_INDEX] = "未視聴"
                     else:
                         s_def_data[s_values][STATUS_INDEX] = ""
-                    def f(): return SelectedTableRowList.create(s_def_data)
+
+                    def f():
+                        return SelectedTableRowList.create(s_def_data)
+
                     mock_selected_table_row_list.side_effect = f
 
                 instance.mylist_info_db.reset_mock()
-                def f(video_id): return self._get_mylist_info_from_video_id(s_def_data, video_id)
+
+                def f(video_id):
+                    return self._get_mylist_info_from_video_id(s_def_data, video_id)
+
                 instance.mylist_info_db.select_from_video_id.side_effect = f
 
                 mock_config.reset_mock()
                 if is_cmd:
                     dummy_path.touch()
-                    def f(key, default): return dummy_path
+
+                    def f(key, default):
+                        return dummy_path
+
                     mock_config.return_value.__getitem__.return_value.get.side_effect = f
                 else:
-                    def f(key, default): return ""
+
+                    def f(key, default):
+                        return ""
+
                     mock_config.return_value.__getitem__.return_value.get.side_effect = f
                 mock_execute.reset_mock()
                 mock_popup.reset_mock()
@@ -168,9 +224,7 @@ class TestVideoPlay(unittest.TestCase):
 
             def post_run(s_values, is_cmd, is_watched):
                 dummy_path.unlink(missing_ok=True)
-                self.assertEqual([
-                    call()
-                ], mock_selected_table_row_index_list.mock_calls)
+                self.assertEqual([call()], mock_selected_table_row_index_list.mock_calls)
                 if not isinstance(s_values, int):
                     mock_selected_table_row_list.assert_not_called()
                     instance.mylist_info_db.assert_not_called()
@@ -180,40 +234,33 @@ class TestVideoPlay(unittest.TestCase):
                     mock_watched.assert_not_called()
                     return
 
-                self.assertEqual([
-                    call(),
-                ], mock_selected_table_row_list.mock_calls)
+                self.assertEqual(
+                    [
+                        call(),
+                    ],
+                    mock_selected_table_row_list.mock_calls,
+                )
 
                 s_def_data = deepcopy(def_data)
                 video_id = s_def_data[s_values][1]
-                self.assertEqual([
-                    call.select_from_video_id(video_id)
-                ], instance.mylist_info_db.mock_calls)
+                self.assertEqual([call.select_from_video_id(video_id)], instance.mylist_info_db.mock_calls)
 
-                self.assertEqual([
-                    call(),
-                    call().__getitem__("general"),
-                    call().__getitem__().get("browser_path", "")
-                ], mock_config.mock_calls)
+                self.assertEqual(
+                    [call(), call().__getitem__("general"), call().__getitem__().get("browser_path", "")],
+                    mock_config.mock_calls,
+                )
                 if is_cmd:
                     table_dict = self._convert_table_data_to_dict(s_def_data)
                     video_url = table_dict[s_values].get("video_url")
-                    mock_execute.assert_called_once_with(
-                        dummy_path, video_url
-                    )
+                    mock_execute.assert_called_once_with(dummy_path, video_url)
                     mock_popup.assert_not_called()
                 else:
                     mock_execute.assert_not_called()
-                    mock_popup.assert_called_once_with(
-                        "ブラウザパスが不正です。設定タブから設定してください。"
-                    )
+                    mock_popup.assert_called_once_with("ブラウザパスが不正です。設定タブから設定してください。")
                     return
 
                 if is_watched:
-                    self.assertEqual([
-                        call(instance.process_info),
-                        call().run()
-                    ], mock_watched.mock_calls)
+                    self.assertEqual([call(instance.process_info), call().run()], mock_watched.mock_calls)
                 else:
                     mock_watched.assert_not_called()
 

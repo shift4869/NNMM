@@ -47,9 +47,7 @@ class ProcessBase(ABC):
             SelectedMylistRowIndex | None: 選択マイリストインデックス
         """
         try:
-            return SelectedMylistRowIndex(
-                int(self.window["-LIST-"].get_indexes()[0])
-            )
+            return SelectedMylistRowIndex(int(self.window["-LIST-"].get_indexes()[0]))
         except Exception:
             return None
 
@@ -65,9 +63,7 @@ class ProcessBase(ABC):
             selected_mylist_row = list(self.values["-LIST-"])
             if not selected_mylist_row:
                 return None
-            return SelectedMylistRow.create(
-                self.values["-LIST-"][0]
-            )
+            return SelectedMylistRow.create(self.values["-LIST-"][0])
         except Exception:
             return None
 
@@ -78,9 +74,7 @@ class ProcessBase(ABC):
             MylistRowList | None: すべてのマイリストを含むリスト
         """
         try:
-            return MylistRowList.create(
-                self.window["-LIST-"].Values
-            )
+            return MylistRowList.create(self.window["-LIST-"].Values)
         except Exception:
             return None
 
@@ -93,9 +87,7 @@ class ProcessBase(ABC):
             SelectedTableRowIndexList | None: 選択テーブル行インデックスリスト
         """
         try:
-            return SelectedTableRowIndexList.create(
-                self.values["-TABLE-"]
-            )
+            return SelectedTableRowIndexList.create(self.values["-TABLE-"])
         except Exception:
             return None
 
@@ -133,9 +125,7 @@ class ProcessBase(ABC):
             TableRowList | None: すべてのテーブル行を含むリスト
         """
         try:
-            return TableRowList.create(
-                self.window["-TABLE-"].Values
-            )
+            return TableRowList.create(self.window["-TABLE-"].Values)
         except Exception:
             return None
 
@@ -203,7 +193,7 @@ class ProcessBase(ABC):
         """テーブルリストペインの表示を更新する
 
         Args:
-            mylist_url (str): 表示対象マイリスト, 
+            mylist_url (str): 表示対象マイリスト,
                               空白時は右上のテキストボックスから取得
                               右上のテキストボックスも空なら現在表示中のテーブルをリフレッシュする
 
@@ -239,9 +229,7 @@ class ProcessBase(ABC):
             records = self.mylist_info_db.select_from_mylist_url(mylist_url)
             table_row_list = []
             for i, r in enumerate(records):
-                record = TableRowTuple._make(
-                    [i + 1] + list(r.values())[1:-1]
-                )
+                record = TableRowTuple._make([i + 1] + list(r.values())[1:-1])
                 table_row = [
                     record.row_index,
                     record.video_id,
@@ -251,7 +239,7 @@ class ProcessBase(ABC):
                     record.uploaded_at,
                     record.registered_at,
                     record.video_url,
-                    record.mylist_url
+                    record.mylist_url,
                 ]
                 table_row_list.append(table_row)
             def_data = TableRowList.create(table_row_list)
@@ -271,5 +259,6 @@ class ProcessBase(ABC):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

@@ -69,13 +69,7 @@ class PopupWindowBase(ProcessBase):
             # イベント処理
             if self.process_dict.get(event):
                 self.values = values
-                process_info = ProcessInfo(
-                    event,
-                    self.popup_window,
-                    self.values,
-                    self.mylist_db,
-                    self.mylist_info_db
-                )
+                process_info = ProcessInfo(event, self.popup_window, self.values, self.mylist_db, self.mylist_info_db)
                 pb: ProcessBase = self.process_dict.get(event)(process_info)
                 pb.run()
 

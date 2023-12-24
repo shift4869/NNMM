@@ -24,8 +24,20 @@ class MylistDBController(DBControllerBase):
             return res_str
         return ""
 
-    def upsert(self, id: int, username: str, mylistname: str, type: str, showname: str, url: str,
-               created_at: str, updated_at: str, checked_at: str, check_interval: str, is_include_new: bool) -> int:
+    def upsert(
+        self,
+        id: int,
+        username: str,
+        mylistname: str,
+        type: str,
+        showname: str,
+        url: str,
+        created_at: str,
+        updated_at: str,
+        checked_at: str,
+        check_interval: str,
+        is_include_new: bool,
+    ) -> int:
         """MylistにUPSERTする
 
         Notes:
@@ -56,7 +68,19 @@ class MylistDBController(DBControllerBase):
         session = Session()
         res = -1
 
-        r = Mylist(id, username, mylistname, type, showname, url, created_at, updated_at, checked_at, check_interval, is_include_new)
+        r = Mylist(
+            id,
+            username,
+            mylistname,
+            type,
+            showname,
+            url,
+            created_at,
+            updated_at,
+            checked_at,
+            check_interval,
+            is_include_new,
+        )
 
         try:
             q = session.query(Mylist).filter(or_(Mylist.url == r.url)).with_for_update()
@@ -368,7 +392,7 @@ if __name__ == "__main__":
         updated_at="2021-10-16 00:00:11",
         checked_at="2021-10-17 00:00:11",
         check_interval="15分",
-        is_include_new=False
+        is_include_new=False,
     )
     print(res)
     print(mylist_info.select())

@@ -56,7 +56,10 @@ class TestPopupVideoWindow(unittest.TestCase):
 
         cf = [
             [sg.Text(horizontal_line)],
-            [sg.Text("ID", size=csize, visible=False), sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize)],
+            [
+                sg.Text("ID", size=csize, visible=False),
+                sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize),
+            ],
             [sg.Text("動画ID", size=csize), sg.Input(f"{video_id}", key="-USERNAME-", readonly=True, size=tsize)],
             [sg.Text("動画名", size=csize), sg.Input(f"{title}", key="-MYLISTNAME-", readonly=True, size=tsize)],
             [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
@@ -64,15 +67,19 @@ class TestPopupVideoWindow(unittest.TestCase):
             [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
             [sg.Text("登録日時", size=csize), sg.Input(f"{registered_at}", key="-URL-", readonly=True, size=tsize)],
             [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
-            [sg.Text("マイリストURL", size=csize), sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize)],
-            [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
+            [
+                sg.Text("マイリストURL", size=csize),
+                sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize),
+            ],
+            [
+                sg.Text("作成日時", size=csize),
+                sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize),
+            ],
             [sg.Text(horizontal_line)],
             [sg.Text("")],
             [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
         ]
-        layout = [[
-            sg.Frame(window_title, cf)
-        ]]
+        layout = [[sg.Frame(window_title, cf)]]
         return layout
 
     def _assert_layout(self, e, a) -> None:
@@ -108,17 +115,19 @@ class TestPopupVideoWindow(unittest.TestCase):
             mock_window = MagicMock()
             mock_mylist_info_db = MagicMock()
 
-            def_data = [[
-                "1", 
-                "sm12346578", 
-                "title_1", 
-                "username_1", 
-                "", 
-                "2023-12-13 07:25:00",
-                "2023-12-13 07:25:00",
-                "https://www.nicovideo.jp/watch/sm12346578",
-                "https://www.nicovideo.jp/user/11111111/video"
-            ]]
+            def_data = [
+                [
+                    "1",
+                    "sm12346578",
+                    "title_1",
+                    "username_1",
+                    "",
+                    "2023-12-13 07:25:00",
+                    "2023-12-13 07:25:00",
+                    "https://www.nicovideo.jp/watch/sm12346578",
+                    "https://www.nicovideo.jp/user/11111111/video",
+                ]
+            ]
             instance = PopupVideoWindow(self.process_info)
 
             def pre_run(s_values, s_records):
@@ -148,14 +157,15 @@ class TestPopupVideoWindow(unittest.TestCase):
 
             def post_run(s_values, s_records):
                 if s_values != -1:
-                    self.assertEqual([
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__("-TABLE-"),
-                    ], mock_values.mock_calls)
+                    self.assertEqual(
+                        [
+                            call.__getitem__("-TABLE-"),
+                            call.__getitem__("-TABLE-"),
+                        ],
+                        mock_values.mock_calls,
+                    )
                 else:
-                    self.assertEqual([
-                        call.__getitem__("-TABLE-")
-                    ], mock_values.mock_calls)
+                    self.assertEqual([call.__getitem__("-TABLE-")], mock_values.mock_calls)
                     instance.window.assert_not_called()
                     mock_mylist_info_db.assert_not_called()
                     self.assertIsNone(instance.record)
@@ -164,15 +174,11 @@ class TestPopupVideoWindow(unittest.TestCase):
                     return
 
                 s_def_data = deepcopy(def_data)
-                self.assertEqual([
-                    call.__getitem__("-TABLE-")
-                ], instance.window.mock_calls)
+                self.assertEqual([call.__getitem__("-TABLE-")], instance.window.mock_calls)
 
                 video_id = s_def_data[0][1]
                 mylist_url = s_def_data[0][8]
-                self.assertEqual([
-                    call.select_from_id_url(video_id, mylist_url)
-                ], mock_mylist_info_db.mock_calls)
+                self.assertEqual([call.select_from_id_url(video_id, mylist_url)], mock_mylist_info_db.mock_calls)
 
                 if s_records:
                     self.assertEqual(s_records, instance.record)

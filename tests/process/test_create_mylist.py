@@ -50,6 +50,7 @@ class TestCreateMylist(unittest.TestCase):
 
     def test_CreateMylist_make_layout(self):
         instance = CreateMylist(self.process_info)
+
         def make_layout(s_url_type, s_mylist_url, s_window_title):
             horizontal_line = "-" * 132
             csize = (20, 1)
@@ -59,8 +60,14 @@ class TestCreateMylist(unittest.TestCase):
                 cf = [
                     [sg.Text(horizontal_line)],
                     [sg.Text("URL", size=csize), sg.Input(s_mylist_url, key="-URL-", readonly=True, size=tsize)],
-                    [sg.Text("URLタイプ", size=csize), sg.Input(s_url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
-                    [sg.Text("ユーザー名", size=csize), sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize)],
+                    [
+                        sg.Text("URLタイプ", size=csize),
+                        sg.Input(s_url_type, key="-URL_TYPE-", readonly=True, size=tsize),
+                    ],
+                    [
+                        sg.Text("ユーザー名", size=csize),
+                        sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
+                    ],
                     [sg.Text(horizontal_line)],
                     [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
                 ]
@@ -68,20 +75,27 @@ class TestCreateMylist(unittest.TestCase):
                 cf = [
                     [sg.Text(horizontal_line)],
                     [sg.Text("URL", size=csize), sg.Input(s_mylist_url, key="-URL-", readonly=True, size=tsize)],
-                    [sg.Text("URLタイプ", size=csize), sg.Input(s_url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
-                    [sg.Text("ユーザー名", size=csize), sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize)],
-                    [sg.Text("マイリスト名", size=csize), sg.Input("", key="-MYLISTNAME-", background_color="light goldenrod", size=tsize)],
+                    [
+                        sg.Text("URLタイプ", size=csize),
+                        sg.Input(s_url_type, key="-URL_TYPE-", readonly=True, size=tsize),
+                    ],
+                    [
+                        sg.Text("ユーザー名", size=csize),
+                        sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
+                    ],
+                    [
+                        sg.Text("マイリスト名", size=csize),
+                        sg.Input("", key="-MYLISTNAME-", background_color="light goldenrod", size=tsize),
+                    ],
                     [sg.Text(horizontal_line)],
                     [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
                 ]
-            layout = [[
-                sg.Frame(s_window_title, cf)
-            ]]
+            layout = [[sg.Frame(s_window_title, cf)]]
             return layout
 
         def check_layout(e, a):
             """sgオブジェクトは別IDで生成されるため、各要素を比較する
-                self.assertEqual(expect, actual)
+            self.assertEqual(expect, actual)
             """
             # typeチェック
             self.assertEqual(type(e), type(a))
@@ -106,6 +120,7 @@ class TestCreateMylist(unittest.TestCase):
             if hasattr(a, "Key") and a.Key:
                 self.assertEqual(e.Key, a.Key)
             return 0
+
         window_title = "登録情報入力"
         mylist_url = self._get_mylist_url_list()[0]
         params_list = [
@@ -122,7 +137,9 @@ class TestCreateMylist(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.create_mylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.create_mylist.logger.error"))
             mockpu = stack.enter_context(patch("NNMM.process.create_mylist.sg.popup"))
-            mock_get_config = stack.enter_context(patch("NNMM.process.create_mylist.process_config.ConfigBase.get_config"))
+            mock_get_config = stack.enter_context(
+                patch("NNMM.process.create_mylist.process_config.ConfigBase.get_config")
+            )
             mock_get_mylist_type = stack.enter_context(patch("NNMM.process.create_mylist.get_mylist_type"))
             mock_get_now_datetime = stack.enter_context(patch("NNMM.process.create_mylist.get_now_datetime"))
             mock_popup_get_text = stack.enter_context(patch("NNMM.process.create_mylist.popup_get_text"))
@@ -133,8 +150,16 @@ class TestCreateMylist(unittest.TestCase):
 
             mock_make_layout.return_value = "make_layout_response"
             mock_get_now_datetime.return_value = "mock_get_now_datetime_response"
-            def pre_run(s_mylist_url, s_url_type, s_prev_mylist,
-                        get_config_value, s_username, s_mylistname, window_button_value):
+
+            def pre_run(
+                s_mylist_url,
+                s_url_type,
+                s_prev_mylist,
+                get_config_value,
+                s_username,
+                s_mylistname,
+                window_button_value,
+            ):
                 mock_popup_get_text.reset_mock()
                 mock_popup_get_text.return_value = s_mylist_url
 
@@ -162,8 +187,15 @@ class TestCreateMylist(unittest.TestCase):
                 mock_read.read = lambda: (window_button_value, values)
                 mock_window.return_value = mock_read
 
-            def post_run(s_mylist_url, s_url_type, s_prev_mylist,
-                         get_config_value, s_username, s_mylistname, window_button_value):
+            def post_run(
+                s_mylist_url,
+                s_url_type,
+                s_prev_mylist,
+                get_config_value,
+                s_username,
+                s_mylistname,
+                window_button_value,
+            ):
                 sample_url1 = "https://www.nicovideo.jp/user/*******/video"
                 sample_url2 = "https://www.nicovideo.jp/user/*******/mylist/********"
                 message = f"追加する マイリスト/ 投稿動画一覧 のURLを入力\n{sample_url1}\n{sample_url2}"
@@ -200,12 +232,15 @@ class TestCreateMylist(unittest.TestCase):
                 if s_username == "" or s_mylistname == "":
                     return
 
-                self.assertEqual([
-                    call(title="登録情報入力", layout="make_layout_response", auto_size_text=True, finalize=True),
-                    call().__getitem__("-USERNAME-"),
-                    call().__getitem__().set_focus(True),
-                    call().close()
-                ], mock_window.mock_calls)
+                self.assertEqual(
+                    [
+                        call(title="登録情報入力", layout="make_layout_response", auto_size_text=True, finalize=True),
+                        call().__getitem__("-USERNAME-"),
+                        call().__getitem__().set_focus(True),
+                        call().close(),
+                    ],
+                    mock_window.mock_calls,
+                )
 
                 check_interval = ""
                 i_str = get_config_value
@@ -230,12 +265,26 @@ class TestCreateMylist(unittest.TestCase):
                     mylistname = s_mylistname
                     showname = f"「{mylistname}」-{username}さんのマイリスト"
                     is_include_new = False
-                self.assertEqual([
-                    call.select_from_url(s_mylist_url),
-                    call.select(),
-                    call.upsert(id_index, username, mylistname, url_type, showname, mylist_url,
-                                dst, dst, dst, check_interval, is_include_new)
-                ], instance.mylist_db.mock_calls)
+                self.assertEqual(
+                    [
+                        call.select_from_url(s_mylist_url),
+                        call.select(),
+                        call.upsert(
+                            id_index,
+                            username,
+                            mylistname,
+                            url_type,
+                            showname,
+                            mylist_url,
+                            dst,
+                            dst,
+                            dst,
+                            check_interval,
+                            is_include_new,
+                        ),
+                    ],
+                    instance.mylist_db.mock_calls,
+                )
 
             mylist_url_list = self._get_mylist_url_list()
             for mylist_url in mylist_url_list:
@@ -245,15 +294,42 @@ class TestCreateMylist(unittest.TestCase):
                 username = mylist_info[2]
                 mylistname = mylist_info[1]
                 params_list = [
-                    (mylist_url, url_type, prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.success),
+                    (
+                        mylist_url,
+                        url_type,
+                        prev_mylist,
+                        "(使用しない)",
+                        username,
+                        mylistname,
+                        "-REGISTER-",
+                        Result.success,
+                    ),
                     (mylist_url, url_type, prev_mylist, "10分毎", username, mylistname, "-REGISTER-", Result.success),
                     ("", url_type, prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
                     (mylist_url, "", prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
-                    (mylist_url, url_type, ["prev_mylist_exist"], "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
+                    (
+                        mylist_url,
+                        url_type,
+                        ["prev_mylist_exist"],
+                        "(使用しない)",
+                        username,
+                        mylistname,
+                        "-REGISTER-",
+                        Result.failed,
+                    ),
                     (mylist_url, url_type, prev_mylist, "invalid", username, mylistname, "-REGISTER-", Result.failed),
                     (mylist_url, url_type, prev_mylist, "(使用しない)", "", mylistname, "-REGISTER-", Result.failed),
                     # (mylist_url, url_type, prev_mylist, "(使用しない)", username, "", "-REGISTER-", Result.failed),
-                    (mylist_url, url_type, prev_mylist, "(使用しない)", username, mylistname, "invalid", Result.failed),
+                    (
+                        mylist_url,
+                        url_type,
+                        prev_mylist,
+                        "(使用しない)",
+                        username,
+                        mylistname,
+                        "invalid",
+                        Result.failed,
+                    ),
                 ]
                 for params in params_list:
                     pre_run(params[0], params[1], params[2], params[3], params[4], params[5], params[6])
@@ -270,9 +346,15 @@ class TestCreateMylist(unittest.TestCase):
     def test_CreateMylistThreadDone_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.create_mylist.logger.info"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.create_mylist.ProcessBase.update_mylist_pane"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.create_mylist.ProcessBase.update_table_pane"))
-            mock_get_upper_textbox = stack.enter_context(patch("NNMM.process.create_mylist.ProcessBase.get_upper_textbox"))
+            mock_update_mylist_pane = stack.enter_context(
+                patch("NNMM.process.create_mylist.ProcessBase.update_mylist_pane")
+            )
+            mock_update_table_pane = stack.enter_context(
+                patch("NNMM.process.create_mylist.ProcessBase.update_table_pane")
+            )
+            mock_get_upper_textbox = stack.enter_context(
+                patch("NNMM.process.create_mylist.ProcessBase.get_upper_textbox")
+            )
 
             instance = CreateMylistThreadDone(self.process_info)
 
@@ -282,9 +364,7 @@ class TestCreateMylist(unittest.TestCase):
             mock_update_mylist_pane.assert_called_once_with()
             mock_update_mylist_pane.reset_mock()
 
-            mock_update_table_pane.assert_called_once_with(
-                mock_get_upper_textbox().to_str()
-            )
+            mock_update_table_pane.assert_called_once_with(mock_get_upper_textbox().to_str())
             mock_update_table_pane.reset_mock()
         pass
 

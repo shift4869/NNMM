@@ -28,10 +28,18 @@ class TestDeleteMylist(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.delete_mylist.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.delete_mylist.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.update_mylist_pane"))
-            mock_get_selected_mylist_row = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.get_selected_mylist_row"))
-            mock_get_upper_textbox = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.get_upper_textbox"))
-            mock_get_bottom_textbox = stack.enter_context(patch("NNMM.process.delete_mylist.ProcessBase.get_bottom_textbox"))
+            mock_update_mylist_pane = stack.enter_context(
+                patch("NNMM.process.delete_mylist.ProcessBase.update_mylist_pane")
+            )
+            mock_get_selected_mylist_row = stack.enter_context(
+                patch("NNMM.process.delete_mylist.ProcessBase.get_selected_mylist_row")
+            )
+            mock_get_upper_textbox = stack.enter_context(
+                patch("NNMM.process.delete_mylist.ProcessBase.get_upper_textbox")
+            )
+            mock_get_bottom_textbox = stack.enter_context(
+                patch("NNMM.process.delete_mylist.ProcessBase.get_bottom_textbox")
+            )
             mock_popup_ok_cancel = stack.enter_context(patch("NNMM.process.delete_mylist.sg.popup_ok_cancel"))
             mock_mylist_db = MagicMock()
 
@@ -61,19 +69,31 @@ class TestDeleteMylist(unittest.TestCase):
                 mock_get_upper_textbox.reset_mock()
                 mock_get_bottom_textbox.reset_mock()
                 if values_kind == "-LIST-":
-                    def f(): return SelectedMylistRow.create(showname_s)
+
+                    def f():
+                        return SelectedMylistRow.create(showname_s)
+
                     mock_get_selected_mylist_row.side_effect = f
                     mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
                 elif values_kind == "-LIST_NEW_MARK-":
-                    def f(): return SelectedMylistRow.create("*:" + showname_s)
+
+                    def f():
+                        return SelectedMylistRow.create("*:" + showname_s)
+
                     mock_get_selected_mylist_row.side_effect = f
                     mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
                 elif values_kind == "-INPUT1-":
-                    def f(): return UpperTextbox(mylist_url_s)
+
+                    def f():
+                        return UpperTextbox(mylist_url_s)
+
                     mock_get_upper_textbox.side_effect = f
                     mock_get_selected_mylist_row.side_effect = lambda: 0
                 elif values_kind == "-INPUT2-":
-                    def f(): return BottomTextbox(mylist_url_s)
+
+                    def f():
+                        return BottomTextbox(mylist_url_s)
+
                     mock_get_bottom_textbox.side_effect = f
                     mock_get_selected_mylist_row.side_effect = lambda: 0
                     mock_get_upper_textbox.side_effect = lambda: 0
@@ -83,7 +103,7 @@ class TestDeleteMylist(unittest.TestCase):
                     mock_mylist_db.select_from_url.side_effect = lambda mylist_url: [{}]
                 elif s_prev_mylist == "invalid":
                     mock_mylist_db.select_from_url.side_effect = lambda mylist_url: ""
-                else: 
+                else:
                     mock_mylist_db.select_from_url.side_effect = return_select_from_url
                 mock_mylist_db.delete_from_mylist_url.reset_mock()
                 instance.mylist_db = mock_mylist_db
@@ -129,10 +149,13 @@ class TestDeleteMylist(unittest.TestCase):
                 else:
                     instance.mylist_info_db.delete_in_mylist.assert_not_called()
                     instance.mylist_db.delete_from_mylist_url.assert_not_called()
-                    self.assertEqual([
-                        call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value="マイリスト削除キャンセル"),
-                    ], instance.window.mock_calls)
+                    self.assertEqual(
+                        [
+                            call.__getitem__("-INPUT2-"),
+                            call.__getitem__().update(value="マイリスト削除キャンセル"),
+                        ],
+                        instance.window.mock_calls,
+                    )
                     mock_update_mylist_pane.assert_not_called()
                     return
 
@@ -140,14 +163,17 @@ class TestDeleteMylist(unittest.TestCase):
                 instance.mylist_db.delete_from_mylist_url.assert_called_once_with(mylist_url_s)
                 mock_update_mylist_pane.assert_called_once_with()
 
-                self.assertEqual([
-                    call.__getitem__("-TABLE-"),
-                    call.__getitem__().update(values=[[]]),
-                    call.__getitem__("-INPUT1-"),
-                    call.__getitem__().update(value=""),
-                    call.__getitem__("-INPUT2-"),
-                    call.__getitem__().update(value="マイリスト削除完了"),
-                ], instance.window.mock_calls)
+                self.assertEqual(
+                    [
+                        call.__getitem__("-TABLE-"),
+                        call.__getitem__().update(values=[[]]),
+                        call.__getitem__("-INPUT1-"),
+                        call.__getitem__().update(value=""),
+                        call.__getitem__("-INPUT2-"),
+                        call.__getitem__().update(value="マイリスト削除完了"),
+                    ],
+                    instance.window.mock_calls,
+                )
 
             params_list = [
                 ("-LIST-", "s_prev_mylist", True, Result.success),

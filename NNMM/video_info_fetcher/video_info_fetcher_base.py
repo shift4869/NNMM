@@ -72,9 +72,9 @@ class VideoInfoFetcherBase(ABC):
         timeout = httpx.Timeout(60, read=10)
         transport = httpx.AsyncHTTPTransport(retries=self.MAX_RETRY_NUM)
         try:
-            async with httpx.AsyncClient(follow_redirects=follow_redirects,
-                                         timeout=timeout,
-                                         transport=transport) as client:
+            async with httpx.AsyncClient(
+                follow_redirects=follow_redirects, timeout=timeout, transport=transport
+            ) as client:
                 response = await client.get(request_url)
                 response.raise_for_status()
         except Exception:
@@ -108,9 +108,9 @@ class VideoInfoFetcherBase(ABC):
         follow_redirects = True
         timeout = httpx.Timeout(60, read=10)
         transport = httpx.AsyncHTTPTransport(retries=self.MAX_RETRY_NUM)
-        async with httpx.AsyncClient(follow_redirects=follow_redirects,
-                                     timeout=timeout,
-                                     transport=transport) as client:
+        async with httpx.AsyncClient(
+            follow_redirects=follow_redirects, timeout=timeout, transport=transport
+        ) as client:
             for video_id in video_id_list:
                 url = self.API_URL_BASE + video_id.id
 
@@ -143,12 +143,12 @@ class VideoInfoFetcherBase(ABC):
 
         num = len(video_id_list)
         res = {
-            "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
-            "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
-            "title_list": title_list,               # 動画タイトルリスト [テスト動画]
-            "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-            "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-            "username_list": username_list,         # 投稿者リスト [投稿者1]
+            "no": list(range(1, num + 1)),  # No. [1, ..., len()-1]
+            "video_id_list": video_id_list,  # 動画IDリスト [sm12345678]
+            "title_list": title_list,  # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,  # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+            "username_list": username_list,  # 投稿者リスト [投稿者1]
         }
 
         return FetchedAPIVideoInfo(**res)
@@ -171,6 +171,7 @@ class VideoInfoFetcherBase(ABC):
 
 if __name__ == "__main__":
     from NNMM.process import config as process_config
+
     logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
     for name in logging.root.manager.loggerDict:
         getLogger(name).disabled = True

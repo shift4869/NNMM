@@ -6,7 +6,7 @@ from NNMM.video_info_fetcher.value_objects.username import Username
 
 
 @dataclass(frozen=True)
-class Showname():
+class Showname:
     """マイリスト表示名
 
     実際にNNMM上でマイリストペインに表示される際の表示名
@@ -18,6 +18,7 @@ class Showname():
     Returns:
         _type_: _description_
     """
+
     _name: str  # マイリスト表示名
 
     # 以下のどちらかの形式のみ受け付ける
@@ -29,10 +30,7 @@ class Showname():
 
         バリデーションのみ
         """
-        PATTERN_LIST = [
-            self.UPLOADED_PATTERN,
-            self.MYLIST_PATTERN
-        ]
+        PATTERN_LIST = [self.UPLOADED_PATTERN, self.MYLIST_PATTERN]
         if not isinstance(self._name, str):
             raise TypeError("name is not string, invalid Showname.")
         if not any([re.search(p, self._name) is not None for p in PATTERN_LIST]):
@@ -40,8 +38,7 @@ class Showname():
 
     @property
     def name(self) -> str:
-        """保持しているマイリスト表示名を返す
-        """
+        """保持しているマイリスト表示名を返す"""
         return self._name
 
     @classmethod

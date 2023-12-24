@@ -38,8 +38,7 @@ class TestUpdatedAt(unittest.TestCase):
             uploaded_at = UpdatedAt(dt_str)
 
     def test_dt_str(self):
-        """dt_str のテスト
-        """
+        """dt_str のテスト"""
         dt_str = "2022-05-14 00:01:00"
         uploaded_at = UpdatedAt(dt_str)
         self.assertEqual(dt_str, uploaded_at.dt_str)

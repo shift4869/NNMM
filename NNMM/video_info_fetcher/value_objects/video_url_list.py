@@ -19,6 +19,7 @@ class VideoURLList(Iterable):
     Returns:
         VideoURLList: 動画URLリスト
     """
+
     _list: list[VideoURL]
 
     def __post_init__(self) -> None:
@@ -40,8 +41,7 @@ class VideoURLList(Iterable):
 
     @property
     def video_id_list(self) -> list[Videoid]:
-        """動画IDリストを返す
-        """
+        """動画IDリストを返す"""
         return [v.video_id for v in self._list]
 
     @classmethod

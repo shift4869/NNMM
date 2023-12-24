@@ -68,27 +68,57 @@ class TestPopupMylistWindow(unittest.TestCase):
 
         cf = [
             [sg.Text(horizontal_line)],
-            [sg.Text("ID", size=csize, visible=False), sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize)],
+            [
+                sg.Text("ID", size=csize, visible=False),
+                sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize),
+            ],
             [sg.Text("ユーザー名", size=csize), sg.Input(f"{username}", key="-USERNAME-", readonly=True, size=tsize)],
-            [sg.Text("マイリスト名", size=csize), sg.Input(f"{mylistname}", key="-MYLISTNAME-", readonly=True, size=tsize)],
+            [
+                sg.Text("マイリスト名", size=csize),
+                sg.Input(f"{mylistname}", key="-MYLISTNAME-", readonly=True, size=tsize),
+            ],
             [sg.Text("種別", size=csize), sg.Input(f"{typename}", key="-TYPE-", readonly=True, size=tsize)],
             [sg.Text("表示名", size=csize), sg.Input(f"{showname}", key="-SHOWNAME-", readonly=True, size=tsize)],
             [sg.Text("URL", size=csize), sg.Input(f"{url}", key="-URL-", readonly=True, size=tsize)],
-            [sg.Text("作成日時", size=csize), sg.Input(f"{created_at}", key="-CREATED_AT-", readonly=True, size=tsize)],
-            [sg.Text("更新日時", size=csize), sg.Input(f"{updated_at}", key="-UPDATED_AT-", readonly=True, size=tsize)],
-            [sg.Text("更新確認日時", size=csize), sg.Input(f"{checked_at}", key="-CHECKED_AT-", readonly=True, size=tsize)],
-            [sg.Text("更新確認インターバル", size=csize),
-                sg.InputCombo([i for i in range(1, 60)], default_value=check_interval_num, key="-CHECK_INTERVAL_NUM-", background_color="light goldenrod", size=thsize),
-                sg.InputCombo(unit_list, default_value=check_interval_unit, key="-CHECK_INTERVAL_UNIT-", background_color="light goldenrod", size=thsize)],
-            [sg.Text("未視聴フラグ", size=csize), sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize)],
+            [
+                sg.Text("作成日時", size=csize),
+                sg.Input(f"{created_at}", key="-CREATED_AT-", readonly=True, size=tsize),
+            ],
+            [
+                sg.Text("更新日時", size=csize),
+                sg.Input(f"{updated_at}", key="-UPDATED_AT-", readonly=True, size=tsize),
+            ],
+            [
+                sg.Text("更新確認日時", size=csize),
+                sg.Input(f"{checked_at}", key="-CHECKED_AT-", readonly=True, size=tsize),
+            ],
+            [
+                sg.Text("更新確認インターバル", size=csize),
+                sg.InputCombo(
+                    [i for i in range(1, 60)],
+                    default_value=check_interval_num,
+                    key="-CHECK_INTERVAL_NUM-",
+                    background_color="light goldenrod",
+                    size=thsize,
+                ),
+                sg.InputCombo(
+                    unit_list,
+                    default_value=check_interval_unit,
+                    key="-CHECK_INTERVAL_UNIT-",
+                    background_color="light goldenrod",
+                    size=thsize,
+                ),
+            ],
+            [
+                sg.Text("未視聴フラグ", size=csize),
+                sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize),
+            ],
             [sg.Text(horizontal_line)],
             [sg.Text("")],
             [sg.Text("")],
             [sg.Column([[sg.Button("保存", key="-SAVE-"), sg.Button("閉じる", key="-EXIT-")]], justification="right")],
         ]
-        layout = [[
-            sg.Frame(window_title, cf)
-        ]]
+        layout = [[sg.Frame(window_title, cf)]]
         return layout
 
     def _assert_layout(self, e, a) -> None:
@@ -119,7 +149,9 @@ class TestPopupMylistWindow(unittest.TestCase):
     def test_init(self):
         with ExitStack() as stack:
             mock_logger_error = stack.enter_context(patch("NNMM.process.popup.logger.error"))
-            mock_selected_mylist_row = stack.enter_context(patch("NNMM.process.popup.ProcessBase.get_selected_mylist_row"))
+            mock_selected_mylist_row = stack.enter_context(
+                patch("NNMM.process.popup.ProcessBase.get_selected_mylist_row")
+            )
 
             instance = PopupMylistWindow(self.process_info)
 
@@ -131,19 +163,23 @@ class TestPopupMylistWindow(unittest.TestCase):
 
                 mock_selected_mylist_row.reset_mock()
                 if s_value:
-                    def f(): return SelectedMylistRow.create(s_value)
+
+                    def f():
+                        return SelectedMylistRow.create(s_value)
+
                     mock_selected_mylist_row.side_effect = f
                 else:
-                    def f(): return None
+
+                    def f():
+                        return None
+
                     mock_selected_mylist_row.side_effect = f
 
                 instance.mylist_db.reset_mock()
                 instance.mylist_db.select_from_showname.side_effect = lambda showname: s_record
 
             def post_run(s_value, s_record):
-                self.assertEqual([
-                    call()
-                ], mock_selected_mylist_row.mock_calls)
+                self.assertEqual([call()], mock_selected_mylist_row.mock_calls)
                 if s_value and len(s_value) > 0:
                     pass
                 else:
@@ -158,9 +194,7 @@ class TestPopupMylistWindow(unittest.TestCase):
                 if s_value[:2] == NEW_MARK:
                     s_value = s_value[2:]
 
-                self.assertEqual([
-                    call.select_from_showname(s_value)
-                ], instance.mylist_db.mock_calls)
+                self.assertEqual([call.select_from_showname(s_value)], instance.mylist_db.mock_calls)
                 if s_record and len(s_record) == 1:
                     s_record = s_record[0]
                 else:
@@ -173,9 +207,12 @@ class TestPopupMylistWindow(unittest.TestCase):
                 self.assertEqual(s_record, instance.record)
                 self.assertEqual("マイリスト情報", instance.title)
                 self.assertEqual((580, 450), instance.size)
-                self.assertEqual({
-                    "-SAVE-": PopupMylistWindowSave,
-                }, instance.process_dict)
+                self.assertEqual(
+                    {
+                        "-SAVE-": PopupMylistWindowSave,
+                    },
+                    instance.process_dict,
+                )
 
             Params = namedtuple("Params", ["value", "record", "result"])
             showname_1 = "投稿者1さんの投稿動画"
@@ -212,7 +249,9 @@ class TestPopupMylistWindow(unittest.TestCase):
 
             instance.record = self._make_record(s_check_interval, s_is_include_new)
 
-        Params = namedtuple("Params", ["has_record_flag", "valid_record_flag", "s_check_interval", "s_is_include_new", "result_func"])
+        Params = namedtuple(
+            "Params", ["has_record_flag", "valid_record_flag", "s_check_interval", "s_is_include_new", "result_func"]
+        )
         params_list = [
             Params(True, True, "15分", True, self._make_expect_window_layout),
             Params(True, True, "15分", False, self._make_expect_window_layout),

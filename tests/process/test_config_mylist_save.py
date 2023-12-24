@@ -48,17 +48,13 @@ class TestMylistSaveCSV(unittest.TestCase):
 
             # 呼び出し確認
             default_path = Path("") / "result.csv"
-            expect_kwargs = {
-                "default_path": default_path.absolute(),
-                "default_extension": "csv",
-                "save_as": True
-            }
+            expect_kwargs = {"default_path": default_path.absolute(), "default_extension": "csv", "save_as": True}
 
             # pgfcal[{n回目の呼び出し}][args=0]
             # pgfcal[{n回目の呼び出し}][kwargs=1]
             pgfcal = mockpgf.call_args_list
             self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("保存先ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(("保存先ファイル選択",), pgfcal[0][0])
             self.assertEqual(expect_kwargs, pgfcal[0][1])
             mockpgf.reset_mock()
 
@@ -71,7 +67,7 @@ class TestMylistSaveCSV(unittest.TestCase):
             # pucal[{n回目の呼び出し}][args=0]
             pucal = mockpu.call_args_list
             self.assertEqual(len(pucal), 1)
-            self.assertEqual(("保存完了", ), pucal[0][0])
+            self.assertEqual(("保存完了",), pucal[0][0])
             mockpu.reset_mock()
 
             # 異常系
@@ -82,7 +78,7 @@ class TestMylistSaveCSV(unittest.TestCase):
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list
             self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("保存先ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(("保存先ファイル選択",), pgfcal[0][0])
             self.assertEqual(expect_kwargs, pgfcal[0][1])
             mockpgf.reset_mock()
 
@@ -96,7 +92,7 @@ class TestMylistSaveCSV(unittest.TestCase):
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list
             self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("保存先ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(("保存先ファイル選択",), pgfcal[0][0])
             self.assertEqual(expect_kwargs, pgfcal[0][1])
             mockpgf.reset_mock()
 
@@ -107,7 +103,7 @@ class TestMylistSaveCSV(unittest.TestCase):
 
             pucal = mockpu.call_args_list
             self.assertEqual(len(pucal), 1)
-            self.assertEqual(("保存失敗", ), pucal[0][0])
+            self.assertEqual(("保存失敗",), pucal[0][0])
             mockpu.reset_mock()
         pass
 

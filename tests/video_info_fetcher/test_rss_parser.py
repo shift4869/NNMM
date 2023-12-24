@@ -30,8 +30,7 @@ class TestRSSParser(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def _get_url_set(self) -> list[str]:
-        """urlセットを返す
-        """
+        """urlセットを返す"""
         url_info = [
             "https://www.nicovideo.jp/user/11111111/video",
             "https://www.nicovideo.jp/user/22222222/video?ref=pc_mypage_nicorepo",
@@ -80,10 +79,10 @@ class TestRSSParser(unittest.TestCase):
 
         NUM = 5
         xml = '<?xml version="1.0" encoding="utf-8"?>'
-        xml += '''<rss version="2.0"
+        xml += """<rss version="2.0"
                        xmlns:dc="http://purl.org/dc/elements/1.1/"
                        xmlns:atom="http://www.w3.org/2005/Atom">
-                  <channel>'''
+                  <channel>"""
         xml += f"<title>{mylist_name}</title>"
         xml += f"<link>{mylist_url}?ref=rss_mylist_rss2</link>"
         xml += f"<dc:creator>{username}</dc:creator>"
@@ -124,8 +123,7 @@ class TestRSSParser(unittest.TestCase):
         return ItemInfo(title, registered_at, video_url)
 
     def test_RSSParserInit(self):
-        """RSSParser の初期化後の状態をテストする
-        """
+        """RSSParser の初期化後の状態をテストする"""
         urls = self._get_url_set()
         for url in urls:
             xml = self._make_xml(url)
@@ -143,8 +141,7 @@ class TestRSSParser(unittest.TestCase):
             # TODO::入力値チェックを入れる
 
     def test_get_mylist_url(self):
-        """_get_mylist_url のテスト
-        """
+        """_get_mylist_url のテスト"""
         url = self._get_url_set()[0]
         xml = self._make_xml(url)
         rp = RSSParser(url, xml)
@@ -156,8 +153,7 @@ class TestRSSParser(unittest.TestCase):
         self.assertEqual(MylistURL.create(url), rp._get_mylist_url())
 
     def test_get_userid_mylistid(self):
-        """_get_userid_mylistid のテスト
-        """
+        """_get_userid_mylistid のテスト"""
         urls = self._get_url_set()
         for url in urls:
             if UploadedURL.is_valid(url):
@@ -173,8 +169,7 @@ class TestRSSParser(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_get_username(self):
-        """_get_username のテスト
-        """
+        """_get_username のテスト"""
         # 投稿動画
         url = self._get_url_set()[0]
         xml = self._make_xml(url)
@@ -203,8 +198,7 @@ class TestRSSParser(unittest.TestCase):
         self.assertEqual(expect, actual)
 
     def test_get_showname_myshowname(self):
-        """_get_showname_myshowname のテスト
-        """
+        """_get_showname_myshowname のテスト"""
         # 投稿動画
         url = self._get_url_set()[0]
         xml = self._make_xml(url)
@@ -231,7 +225,7 @@ class TestRSSParser(unittest.TestCase):
         username = rp._get_username()
         title_lx = xml_dict["rss"]["channel"]["title"]
         pattern = "^マイリスト (.*)‐ニコニコ動画$"
-        
+
         myshowname = Myshowname("投稿動画")
 
         myshowname = Myshowname(re.findall(pattern, title_lx)[0])
@@ -241,8 +235,7 @@ class TestRSSParser(unittest.TestCase):
         self.assertEqual(expect, actual)
 
     def test_parse(self):
-        """parse のテスト
-        """
+        """parse のテスト"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         urls = self._get_url_set()
@@ -295,16 +288,16 @@ class TestRSSParser(unittest.TestCase):
 
             num = len(title_list)
             res = {
-                "no": list(range(1, num + 1)),               # No. [1, ..., len()-1]
-                "userid": userid,                            # ユーザーID 1234567
-                "mylistid": mylistid,                        # マイリストID 12345678
-                "showname": showname,                        # マイリスト表示名 「投稿者1さんの投稿動画」
-                "myshowname": myshowname,                    # マイリスト名 「投稿動画」
-                "mylist_url": mylist_url,                    # マイリストURL https://www.nicovideo.jp/user/11111111/video
-                "video_id_list": video_id_list,              # 動画IDリスト [sm12345678]
-                "title_list": title_list,                    # 動画タイトルリスト [テスト動画]
-                "registered_at_list": registered_at_list,    # 登録日時リスト [%Y-%m-%d %H:%M:%S]
-                "video_url_list": video_url_list,            # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+                "no": list(range(1, num + 1)),  # No. [1, ..., len()-1]
+                "userid": userid,  # ユーザーID 1234567
+                "mylistid": mylistid,  # マイリストID 12345678
+                "showname": showname,  # マイリスト表示名 「投稿者1さんの投稿動画」
+                "myshowname": myshowname,  # マイリスト名 「投稿動画」
+                "mylist_url": mylist_url,  # マイリストURL https://www.nicovideo.jp/user/11111111/video
+                "video_id_list": video_id_list,  # 動画IDリスト [sm12345678]
+                "title_list": title_list,  # 動画タイトルリスト [テスト動画]
+                "registered_at_list": registered_at_list,  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
             }
             expect = FetchedPageVideoInfo(**res)
 

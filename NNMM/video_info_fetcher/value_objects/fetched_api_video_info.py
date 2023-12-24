@@ -9,7 +9,7 @@ from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 @dataclass(frozen=True)
-class FetchedAPIVideoInfo():
+class FetchedAPIVideoInfo:
     """APIから取得される動画情報をまとめたデータクラス
 
     動画情報API："https://ext.nicovideo.jp/api/getthumbinfo/{動画ID}"
@@ -22,12 +22,13 @@ class FetchedAPIVideoInfo():
     Returns:
         FetchedAPIVideoInfo: APIから取得される動画情報
     """
-    no: list[int]                     # No. [1, ..., len()-1]
-    video_id_list: VideoidList        # 動画IDリスト [sm12345678]
-    title_list: TitleList             # 動画タイトルリスト [テスト動画]
+
+    no: list[int]  # No. [1, ..., len()-1]
+    video_id_list: VideoidList  # 動画IDリスト [sm12345678]
+    title_list: TitleList  # 動画タイトルリスト [テスト動画]
     uploaded_at_list: UploadedAtList  # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-    video_url_list: VideoURLList      # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-    username_list: UsernameList       # 投稿者リスト [投稿者1]
+    video_url_list: VideoURLList  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    username_list: UsernameList  # 投稿者リスト [投稿者1]
 
     def __post_init__(self) -> None:
         """初期化後処理
@@ -54,11 +55,13 @@ class FetchedAPIVideoInfo():
             raise TypeError("username_list must be UsernameList.")
 
         num = len(self.no)
-        if not all([len(self.video_id_list) == num,
-                    len(self.title_list) == num,
-                    len(self.uploaded_at_list) == num,
-                    len(self.video_url_list) == num,
-                    len(self.username_list) == num]):
+        if not all([
+            len(self.video_id_list) == num,
+            len(self.title_list) == num,
+            len(self.uploaded_at_list) == num,
+            len(self.video_url_list) == num,
+            len(self.username_list) == num,
+        ]):
             raise ValueError("There are different size (*_list).")
         return True
 
@@ -82,6 +85,5 @@ if __name__ == "__main__":
     username_list = UsernameList.create(["投稿者1"])
     no = list(range(1, len(video_id_list) + 1))
 
-    fvi_api = FetchedAPIVideoInfo([1], video_id_list, title_list, uploaded_at_list,
-                                  video_url_list, username_list)
+    fvi_api = FetchedAPIVideoInfo([1], video_id_list, title_list, uploaded_at_list, video_url_list, username_list)
     pprint(fvi_api.to_dict())

@@ -50,17 +50,13 @@ class TestMylistLoadCSV(unittest.TestCase):
 
             # 呼び出し確認
             default_path = Path("") / "input.csv"
-            expect_kwargs = {
-                "default_path": default_path.absolute(),
-                "default_extension": "csv",
-                "save_as": False
-            }
+            expect_kwargs = {"default_path": default_path.absolute(), "default_extension": "csv", "save_as": False}
 
             # pgfcal[{n回目の呼び出し}][args=0]
             # pgfcal[{n回目の呼び出し}][kwargs=1]
             pgfcal = mockpgf.call_args_list
             self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("読込ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(("読込ファイル選択",), pgfcal[0][0])
             self.assertEqual(expect_kwargs, pgfcal[0][1])
             mockpgf.reset_mock()
 
@@ -73,7 +69,7 @@ class TestMylistLoadCSV(unittest.TestCase):
             # pucal[{n回目の呼び出し}][args=0]
             pucal = mockpu.call_args_list
             self.assertEqual(len(pucal), 1)
-            self.assertEqual(("読込完了", ), pucal[0][0])
+            self.assertEqual(("読込完了",), pucal[0][0])
             mockpu.reset_mock()
 
             # mockums[{n回目の呼び出し}][args=0]
@@ -90,7 +86,7 @@ class TestMylistLoadCSV(unittest.TestCase):
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list
             self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("読込ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(("読込ファイル選択",), pgfcal[0][0])
             self.assertEqual(expect_kwargs, pgfcal[0][1])
             mockpgf.reset_mock()
 
@@ -105,7 +101,7 @@ class TestMylistLoadCSV(unittest.TestCase):
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list
             self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("読込ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(("読込ファイル選択",), pgfcal[0][0])
             self.assertEqual(expect_kwargs, pgfcal[0][1])
             mockpgf.reset_mock()
 
@@ -113,7 +109,7 @@ class TestMylistLoadCSV(unittest.TestCase):
 
             pucal = mockpu.call_args_list
             self.assertEqual(len(pucal), 1)
-            self.assertEqual(("読込ファイルが存在しません", ), pucal[0][0])
+            self.assertEqual(("読込ファイルが存在しません",), pucal[0][0])
             mockpu.reset_mock()
 
             # 読込に失敗
@@ -124,7 +120,7 @@ class TestMylistLoadCSV(unittest.TestCase):
             # 呼び出し確認
             pgfcal = mockpgf.call_args_list
             self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("読込ファイル選択", ), pgfcal[0][0])
+            self.assertEqual(("読込ファイル選択",), pgfcal[0][0])
             self.assertEqual(expect_kwargs, pgfcal[0][1])
             mockpgf.reset_mock()
 
@@ -132,7 +128,7 @@ class TestMylistLoadCSV(unittest.TestCase):
 
             pucal = mockpu.call_args_list
             self.assertEqual(len(pucal), 1)
-            self.assertEqual(("読込失敗", ), pucal[0][0])
+            self.assertEqual(("読込失敗",), pucal[0][0])
             mockpu.reset_mock()
 
             Path(TEST_INPUT_PATH).unlink(missing_ok=True)

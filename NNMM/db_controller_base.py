@@ -19,7 +19,7 @@ class DBControllerBase(metaclass=ABCMeta):
             connect_args={
                 "timeout": 30,
                 "check_same_thread": False,
-            }
+            },
         )
         Base.metadata.create_all(self.engine)
 
@@ -38,6 +38,7 @@ class DBControllerBase(metaclass=ABCMeta):
 
 if __name__ == "__main__":
     import NNMM.mylist_info_db_controller
+
     db_fullpath = Path(":memory:")
     db_cont = NNMM.mylist_info_db_controller(db_fullpath=str(db_fullpath))
     pass

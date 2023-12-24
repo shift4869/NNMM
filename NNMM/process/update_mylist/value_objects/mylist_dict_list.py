@@ -6,7 +6,7 @@ from NNMM.process.update_mylist.value_objects.typed_mylist_list import TypedMyli
 
 
 @dataclass(frozen=True)
-class MylistDictList():
+class MylistDictList:
     _list: list[MylistDict]
 
     def __post_init__(self) -> None:
@@ -25,9 +25,7 @@ class MylistDictList():
         return self._list.__getitem__(index)
 
     def to_typed_mylist_list(self) -> TypedMylistList:
-        return TypedMylistList.create([
-            mylist_dict.to_typed_mylist() for mylist_dict in self._list
-        ])
+        return TypedMylistList.create([mylist_dict.to_typed_mylist() for mylist_dict in self._list])
 
     @classmethod
     def create(cls, mylist_dict_list: list[dict]) -> Self:
@@ -40,9 +38,7 @@ class MylistDictList():
         Returns:
             Self: MylistDictList インスタンス
         """
-        return cls([
-            MylistDict.create(mylist_dict) for mylist_dict in mylist_dict_list
-        ])
+        return cls([MylistDict.create(mylist_dict) for mylist_dict in mylist_dict_list])
 
 
 if __name__ == "__main__":

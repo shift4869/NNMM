@@ -2,6 +2,7 @@
 
 Username の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -11,8 +12,7 @@ from NNMM.video_info_fetcher.value_objects.username import Username
 
 class TestUsername(unittest.TestCase):
     def test_UsernameInit(self):
-        """Username の初期化後の状態をテストする
-        """
+        """Username の初期化後の状態をテストする"""
         # 正常系
         username_str = "作成者1"
         username = Username(username_str)
@@ -33,8 +33,7 @@ class TestUsername(unittest.TestCase):
             username = Username(-1)
 
     def test_name(self):
-        """_name のテスト
-        """
+        """_name のテスト"""
         username_str = "作成者1"
         username = Username(username_str)
         self.assertEqual(username_str, username._name)

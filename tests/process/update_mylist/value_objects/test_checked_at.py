@@ -7,8 +7,7 @@ from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
 
 class TestCheckedAt(unittest.TestCase):
     def test_init(self):
-        """CheckedAt の初期化後の状態をテストする
-        """
+        """CheckedAt の初期化後の状態をテストする"""
         # 正常系
         # 通常の投稿日時
         expect_destination_datetime_format = "%Y-%m-%d %H:%M:%S"
@@ -40,8 +39,7 @@ class TestCheckedAt(unittest.TestCase):
             uploaded_at = CheckedAt(dt_str)
 
     def test_dt_str(self):
-        """dt_str のテスト
-        """
+        """dt_str のテスト"""
         dt_str = "2022-05-14 00:01:00"
         uploaded_at = CheckedAt(dt_str)
         self.assertEqual(dt_str, uploaded_at.dt_str)

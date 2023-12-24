@@ -13,20 +13,63 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.controller = MylistInfoDBController(self.test_db_path)
 
     def _get_video_list(self) -> list[tuple]:
-        """動画情報セットを返す（mylist_url以外）
-        """
+        """動画情報セットを返す（mylist_url以外）"""
         video = [
-            ("sm11111111", "動画タイトル1", "投稿者1", "未視聴", "2021-05-29 22:00:11", "2021-05-29 22:01:11", "https://www.nicovideo.jp/watch/sm11111111", "2021-10-16 00:00:11"),
-            ("sm22222222", "動画タイトル2", "投稿者1", "未視聴", "2021-05-29 22:00:22", "2021-05-29 22:02:22", "https://www.nicovideo.jp/watch/sm22222222", "2021-10-16 00:00:22"),
-            ("sm33333333", "動画タイトル3", "投稿者1", "未視聴", "2021-05-29 22:00:33", "2021-05-29 22:03:33", "https://www.nicovideo.jp/watch/sm33333333", "2021-10-16 00:00:33"),
-            ("sm44444444", "動画タイトル4", "投稿者2", "未視聴", "2021-05-29 22:00:44", "2021-05-29 22:04:44", "https://www.nicovideo.jp/watch/sm44444444", "2021-10-16 00:00:44"),
-            ("sm55555555", "動画タイトル5", "投稿者2", "未視聴", "2021-05-29 22:00:55", "2021-05-29 22:05:55", "https://www.nicovideo.jp/watch/sm55555555", "2021-10-16 00:00:55"),
+            (
+                "sm11111111",
+                "動画タイトル1",
+                "投稿者1",
+                "未視聴",
+                "2021-05-29 22:00:11",
+                "2021-05-29 22:01:11",
+                "https://www.nicovideo.jp/watch/sm11111111",
+                "2021-10-16 00:00:11",
+            ),
+            (
+                "sm22222222",
+                "動画タイトル2",
+                "投稿者1",
+                "未視聴",
+                "2021-05-29 22:00:22",
+                "2021-05-29 22:02:22",
+                "https://www.nicovideo.jp/watch/sm22222222",
+                "2021-10-16 00:00:22",
+            ),
+            (
+                "sm33333333",
+                "動画タイトル3",
+                "投稿者1",
+                "未視聴",
+                "2021-05-29 22:00:33",
+                "2021-05-29 22:03:33",
+                "https://www.nicovideo.jp/watch/sm33333333",
+                "2021-10-16 00:00:33",
+            ),
+            (
+                "sm44444444",
+                "動画タイトル4",
+                "投稿者2",
+                "未視聴",
+                "2021-05-29 22:00:44",
+                "2021-05-29 22:04:44",
+                "https://www.nicovideo.jp/watch/sm44444444",
+                "2021-10-16 00:00:44",
+            ),
+            (
+                "sm55555555",
+                "動画タイトル5",
+                "投稿者2",
+                "未視聴",
+                "2021-05-29 22:00:55",
+                "2021-05-29 22:05:55",
+                "https://www.nicovideo.jp/watch/sm55555555",
+                "2021-10-16 00:00:55",
+            ),
         ]
         return video
 
     def _get_mylist_url_list(self) -> list[str]:
-        """mylist_urlの情報セットを返す
-        """
+        """mylist_urlの情報セットを返す"""
         mylist_info = [
             "https://www.nicovideo.jp/user/11111111/video",
             "https://www.nicovideo.jp/user/11111111/mylist/12345678",
@@ -88,8 +131,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         return expect
 
     def test_upsert(self):
-        """MylistInfoにUPSERTする機能のテスト
-        """
+        """MylistInfoにUPSERTする機能のテスト"""
         controller = self.controller
 
         # INSERT
@@ -107,7 +149,7 @@ class TestMylistInfoDBController(unittest.TestCase):
                     r.registered_at,
                     r.video_url,
                     r.mylist_url,
-                    r.created_at
+                    r.created_at,
                 )
                 self.assertEqual(res, 0)
 
@@ -135,7 +177,7 @@ class TestMylistInfoDBController(unittest.TestCase):
                 r["registered_at"],
                 r["video_url"],
                 r["mylist_url"],
-                r["created_at"]
+                r["created_at"],
             )
             self.assertEqual(res, 1)
         actual = controller.select()
@@ -144,8 +186,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(expect, actual)
 
     def test_upsert_from_list(self):
-        """MylistInfoにListからまとめて受け取りUPSERTする機能のテスト
-        """
+        """MylistInfoにListからまとめて受け取りUPSERTする機能のテスト"""
         controller = self.controller
 
         # INSERT
@@ -193,8 +234,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(expect, actual)
 
     def test_update_status(self):
-        """MylistInfoの特定のレコードについてstatusを更新する機能のテスト
-        """
+        """MylistInfoの特定のレコードについてstatusを更新する機能のテスト"""
         controller = self.controller
         expect = []
         records = []
@@ -240,8 +280,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(res, -1)
 
     def test_update_status_in_mylist(self):
-        """MylistInfoについて特定のマイリストに含まれるレコードのstatusをすべて更新する機能のテスト
-        """
+        """MylistInfoについて特定のマイリストに含まれるレコードのstatusをすべて更新する機能のテスト"""
         controller = self.controller
         expect = []
         records = []
@@ -287,8 +326,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(res, -1)
 
     def test_update_username_in_mylist(self):
-        """MylistInfoについて特定のマイリストに含まれるレコードのusernameをすべて更新する機能のテスト
-        """
+        """MylistInfoについて特定のマイリストに含まれるレコードのusernameをすべて更新する機能のテスト"""
         controller = self.controller
         expect = []
         records = []
@@ -330,8 +368,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(res, 1)
 
     def test_delete_in_mylist(self):
-        """MylistInfoについて特定のマイリストに含まれるレコードをすべて削除する機能のテスト
-        """
+        """MylistInfoについて特定のマイリストに含まれるレコードをすべて削除する機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -355,8 +392,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(res, 1)
 
     def test_Select(self):
-        """MylistInfoからSELECTする機能のテスト
-        """
+        """MylistInfoからSELECTする機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -366,8 +402,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(expect, actual)
 
     def test_select_from_video_id(self):
-        """MylistInfoからvideo_idを条件としてSELECTする機能のテスト
-        """
+        """MylistInfoからvideo_idを条件としてSELECTする機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -391,8 +426,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(actual, [])
 
     def test_select_from_id_url(self):
-        """MylistInfoからvideo_idとmylist_urlを条件としてSELECTする機能のテスト
-        """
+        """MylistInfoからvideo_idとmylist_urlを条件としてSELECTする機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -429,8 +463,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(actual, [])
 
     def test_select_from_video_url(self):
-        """MylistInfoからvideo_urlを条件としてSELECTする機能のテスト
-        """
+        """MylistInfoからvideo_urlを条件としてSELECTする機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -453,8 +486,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(actual, [])
 
     def test_select_from_mylist_url(self):
-        """MylistInfoからmylist_urlを条件としてSELECTする機能のテスト
-        """
+        """MylistInfoからmylist_urlを条件としてSELECTする機能のテスト"""
         controller = self.controller
         expect = self._load_table()
 
@@ -477,8 +509,7 @@ class TestMylistInfoDBController(unittest.TestCase):
         self.assertEqual(actual, [])
 
     def test_select_from_username(self):
-        """MylistInfoからusernameを条件としてSELECTする機能のテスト
-        """
+        """MylistInfoからusernameを条件としてSELECTする機能のテスト"""
         controller = self.controller
         expect_records = self._load_table()
 

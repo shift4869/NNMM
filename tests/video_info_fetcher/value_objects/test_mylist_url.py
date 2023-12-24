@@ -2,6 +2,7 @@
 
 MylistURL の各種機能をテストする
 """
+
 import re
 import sys
 import unittest
@@ -13,8 +14,7 @@ from NNMM.video_info_fetcher.value_objects.url import URL
 
 class TestMylistURL(unittest.TestCase):
     def test_MylistURLInit(self):
-        """MylistURL の初期化後の状態をテストする
-        """
+        """MylistURL の初期化後の状態をテストする"""
         # 正常系
         # 通常のマイリストページのURL（クエリ付き）
         EXPECT_RSS_URL_SUFFIX = "?rss=2.0"
@@ -36,8 +36,7 @@ class TestMylistURL(unittest.TestCase):
             mylist_url.url = URL("https://www.nicovideo.jp/user/1234567/mylist/23456789")
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         # 正常系
         # 文字列
         url = "https://www.nicovideo.jp/user/1234567/mylist/12345678?ref=pc_mypage_nicorepo"
@@ -56,8 +55,7 @@ class TestMylistURL(unittest.TestCase):
             mylist_url = MylistURL.create(url)
 
     def test_is_valid(self):
-        """is_valid のテスト
-        """
+        """is_valid のテスト"""
         # 正常系
         # 文字列
         url = "https://www.nicovideo.jp/user/1234567/mylist/12345678?ref=pc_mypage_nicorepo"

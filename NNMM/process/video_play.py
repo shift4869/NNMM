@@ -38,9 +38,7 @@ class VideoPlay(ProcessBase):
         selected_table_row = selected_table_row_list[0]
 
         # 動画URLを取得
-        records = self.mylist_info_db.select_from_video_id(
-            selected_table_row.video_id.id
-        )
+        records = self.mylist_info_db.select_from_video_id(selected_table_row.video_id.id)
         record = records[0]
         video_url = record.get("video_url")
 
@@ -71,5 +69,6 @@ class VideoPlay(ProcessBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

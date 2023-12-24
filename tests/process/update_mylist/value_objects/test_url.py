@@ -23,9 +23,7 @@ class TestURL(unittest.TestCase):
             url = URL(original_url)  # 文字列からの生成チェック
             url_in_url = URL(url)  # URLからの生成チェック
 
-            non_query_url = urllib.parse.urlunparse(
-                urllib.parse.urlparse(original_url)._replace(query=None)
-            )
+            non_query_url = urllib.parse.urlunparse(urllib.parse.urlparse(original_url)._replace(query=None))
             expect = non_query_url
             actual = url.non_query_url
             self.assertEqual(expect, actual)

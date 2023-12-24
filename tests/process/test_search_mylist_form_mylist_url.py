@@ -27,12 +27,35 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
     def _make_mylist_db(self) -> list[dict]:
         NUM = 5
         res = []
-        col = ["id", "username", "mylistname", "type", "showname", "url",
-               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i + 1}", "投稿動画", "uploaded", f"投稿者{i + 1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
-                 "15分", False] for i in range(NUM)]
+        col = [
+            "id",
+            "username",
+            "mylistname",
+            "type",
+            "showname",
+            "url",
+            "created_at",
+            "updated_at",
+            "checked_at",
+            "check_interval",
+            "is_include_new",
+        ]
+        rows = [
+            [
+                i,
+                f"投稿者{i + 1}",
+                "投稿動画",
+                "uploaded",
+                f"投稿者{i + 1}さんの投稿動画",
+                f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "15分",
+                False,
+            ]
+            for i in range(NUM)
+        ]
 
         for row in rows:
             d = {}
@@ -45,7 +68,9 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
             mock_popup_get_text = stack.enter_context(patch("NNMM.process.search.popup_get_text"))
-            mock_selected_mylist_row_index = stack.enter_context(patch("NNMM.process.search.ProcessBase.get_selected_mylist_row_index"))
+            mock_selected_mylist_row_index = stack.enter_context(
+                patch("NNMM.process.search.ProcessBase.get_selected_mylist_row_index")
+            )
             mock_mylist_db = MagicMock()
 
             instance = MylistSearchFromMylistURL(self.process_info)
@@ -56,7 +81,10 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
 
                 mock_selected_mylist_row_index.reset_mock()
                 if get_indexes >= 0:
-                    def f(): return SelectedMylistRowIndex(get_indexes)
+
+                    def f():
+                        return SelectedMylistRowIndex(get_indexes)
+
                     mock_selected_mylist_row_index.side_effect = f
                 else:
                     mock_selected_mylist_row_index.side_effect = lambda: None
@@ -73,9 +101,7 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
                 instance.mylist_db = mock_mylist_db
 
             def post_run(search_mylist_url, get_indexes, is_include_new, is_hit):
-                self.assertEqual([
-                    call("マイリストURL入力（完全一致）")
-                ], mock_popup_get_text.mock_calls)
+                self.assertEqual([call("マイリストURL入力（完全一致）")], mock_popup_get_text.mock_calls)
 
                 if search_mylist_url is None or search_mylist_url == "":
                     instance.window.assert_not_called()
@@ -83,9 +109,7 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
                     mock_mylist_db.assert_not_called()
                     return
 
-                self.assertEqual([
-                    call()
-                ], mock_selected_mylist_row_index.mock_calls)
+                self.assertEqual([call()], mock_selected_mylist_row_index.mock_calls)
 
                 index = get_indexes
                 expect_calls = []
@@ -112,12 +136,12 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
                 for i in include_new_index_list:
                     expect_calls.extend([
                         call.__getitem__("-LIST-"),
-                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light pink")
+                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light pink"),
                     ])
                 for i in match_index_list:
                     expect_calls.extend([
                         call.__getitem__("-LIST-"),
-                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light goldenrod")
+                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light goldenrod"),
                     ])
                 expect_calls.extend([
                     call.__getitem__("-LIST-"),
@@ -128,18 +152,13 @@ class TestMylistSearchFromMylistURL(unittest.TestCase):
                 if len(match_index_list) > 0:
                     expect_calls.extend([
                         call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value=f"{len(match_index_list)}件ヒット！")
+                        call.__getitem__().update(value=f"{len(match_index_list)}件ヒット！"),
                     ])
                 else:
-                    expect_calls.extend([
-                        call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value="該当なし")
-                    ])
+                    expect_calls.extend([call.__getitem__("-INPUT2-"), call.__getitem__().update(value="該当なし")])
                 self.assertEqual(expect_calls, instance.window.mock_calls)
 
-                self.assertEqual([
-                    call.select()
-                ], mock_mylist_db.mock_calls)
+                self.assertEqual([call.select()], mock_mylist_db.mock_calls)
 
             search_mylist_url = "https://www.nicovideo.jp/user/10000001/video"
             Params = namedtuple("Params", ["search_mylist_url", "get_indexes", "is_include_new", "is_hit", "result"])

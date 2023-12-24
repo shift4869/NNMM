@@ -2,6 +2,7 @@
 
 VideoidList の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -21,8 +22,7 @@ class TestVideoidList(unittest.TestCase):
         return [Videoid(r) for r in video_id_strs]
 
     def test_VideoidListInit(self):
-        """VideoidList の初期化後の状態をテストする
-        """
+        """VideoidList の初期化後の状態をテストする"""
         base_id_str = "sm1000000{}"
         video_id_strs = self._get_id_strs()
         video_ids = self._get_video_ids()
@@ -57,8 +57,7 @@ class TestVideoidList(unittest.TestCase):
             video_id_list = VideoidList(video_ids)
 
     def test_iter_len(self):
-        """iter と len のテスト
-        """
+        """iter と len のテスト"""
         video_ids = self._get_video_ids()
         video_id_list = VideoidList(video_ids)
         self.assertEqual(len(video_ids), len(video_id_list))
@@ -66,8 +65,7 @@ class TestVideoidList(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         base_id_str = "sm1000000{}"
         video_id_strs = self._get_id_strs()
         video_ids = self._get_video_ids()

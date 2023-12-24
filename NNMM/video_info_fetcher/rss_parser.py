@@ -25,7 +25,7 @@ from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 @dataclass
-class RSSParser():
+class RSSParser:
     mylist_url: UploadedURL | MylistURL
     xml_dict: dict
 
@@ -40,20 +40,17 @@ class RSSParser():
         self.xml_dict = xmltodict.parse(xml_text)
 
     def _get_mylist_url(self) -> UploadedURL | MylistURL:
-        """マイリストURL
-        """
+        """マイリストURL"""
         return self.mylist_url
 
     def _get_userid_mylistid(self) -> tuple[Userid, Mylistid]:
-        """ユーザーID, マイリストID設定
-        """
+        """ユーザーID, マイリストID設定"""
         userid = self.mylist_url.userid
         mylistid = self.mylist_url.mylistid
         return (userid, mylistid)
 
     def _get_username(self) -> Username:
-        """投稿者収集
-        """
+        """投稿者収集"""
         if isinstance(self.mylist_url, UploadedURL):
             # タイトルからユーザー名を取得
             title = find_values(self.xml_dict, "title", True, ["rss", "channel"], [])
@@ -64,8 +61,7 @@ class RSSParser():
         return Username(username)
 
     def _get_showname_myshowname(self) -> tuple[Showname, Myshowname]:
-        """マイリスト名収集
-        """
+        """マイリスト名収集"""
         username = self._get_username()
         if isinstance(self.mylist_url, UploadedURL):
             myshowname = Myshowname("投稿動画")
@@ -105,23 +101,12 @@ class RSSParser():
 
         # 動画エントリ取得
         items_dict = find_values(self.xml_dict, "item", True, [], [])
-        video_url_list = [
-            VideoURL.create(video_url)
-            for video_url in find_values(items_dict, "link", False, [], [])
-        ]
-        video_id_list = [
-            video_url.video_id
-            for video_url in video_url_list
-        ]
-        title_list = [
-            Title(title)
-            for title in find_values(items_dict, "title", False, [], [])
-        ]
+        video_url_list = [VideoURL.create(video_url) for video_url in find_values(items_dict, "link", False, [], [])]
+        video_id_list = [video_url.video_id for video_url in video_url_list]
+        title_list = [Title(title) for title in find_values(items_dict, "title", False, [], [])]
         registered_at_list = [
             RegisteredAt(
-                datetime.strptime(
-                    pub_date, self.SOURCE_DATETIME_FORMAT
-                ).strftime(self.DESTINATION_DATETIME_FORMAT)
+                datetime.strptime(pub_date, self.SOURCE_DATETIME_FORMAT).strftime(self.DESTINATION_DATETIME_FORMAT)
             )
             for pub_date in find_values(items_dict, "pubDate", False, [], [])
         ]
@@ -143,22 +128,23 @@ class RSSParser():
 
         # 返り値設定
         res = {
-            "no": list(range(1, num + 1)),              # No. [1, ..., len()-1]
-            "userid": userid,                           # ユーザーID 1234567
-            "mylistid": mylistid,                       # マイリストID 12345678
-            "showname": showname,                       # マイリスト表示名 「投稿者1さんの投稿動画」
-            "myshowname": myshowname,                   # マイリスト名 「投稿動画」
-            "mylist_url": mylist_url,                   # マイリストURL https://www.nicovideo.jp/user/11111111/video
-            "video_id_list": video_id_list,             # 動画IDリスト [sm12345678]
-            "title_list": title_list,                   # 動画タイトルリスト [テスト動画]
-            "registered_at_list": registered_at_list,   # 登録日時リスト [%Y-%m-%d %H:%M:%S]
-            "video_url_list": video_url_list,           # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+            "no": list(range(1, num + 1)),  # No. [1, ..., len()-1]
+            "userid": userid,  # ユーザーID 1234567
+            "mylistid": mylistid,  # マイリストID 12345678
+            "showname": showname,  # マイリスト表示名 「投稿者1さんの投稿動画」
+            "myshowname": myshowname,  # マイリスト名 「投稿動画」
+            "mylist_url": mylist_url,  # マイリストURL https://www.nicovideo.jp/user/11111111/video
+            "video_id_list": video_id_list,  # 動画IDリスト [sm12345678]
+            "title_list": title_list,  # 動画タイトルリスト [テスト動画]
+            "registered_at_list": registered_at_list,  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
+            "video_url_list": video_url_list,  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
         }
         return FetchedPageVideoInfo(**res)
 
 
 if __name__ == "__main__":
     from NNMM.video_info_fetcher.video_info_rss_fetcher import VideoInfoRssFetcher
+
     urls = [
         # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
         # "https://www.nicovideo.jp/user/31784111/video",  # 投稿動画0件

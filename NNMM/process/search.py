@@ -280,9 +280,7 @@ class VideoSearch(ProcessBase):
                 index = i  # 更新後にスクロールするインデックスを更新
 
         # 検索でヒットした項目の背景色とテキスト色を変更する
-        self.window["-TABLE-"].update(
-            row_colors=[(i, "black", "light goldenrod") for i in match_index_list]
-        )
+        self.window["-TABLE-"].update(row_colors=[(i, "black", "light goldenrod") for i in match_index_list])
 
         # indexをセットしてスクロール
         self.window["-TABLE-"].Widget.see(index + 1)
@@ -356,5 +354,6 @@ class VideoSearchClear(ProcessBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

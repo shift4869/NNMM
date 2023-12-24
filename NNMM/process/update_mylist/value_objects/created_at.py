@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class CreatedAt():
+class CreatedAt:
     """作成日時
 
     作成日時はマイリストがDBに最初に登録された日時を表す
@@ -16,6 +16,7 @@ class CreatedAt():
     Returns:
         CreatedAt: 作成日時
     """
+
     _datetime: str
 
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"

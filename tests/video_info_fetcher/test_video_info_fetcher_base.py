@@ -35,8 +35,7 @@ class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
 
 class TestVideoInfoFetcherBase(unittest.TestCase):
     def _get_url_set(self) -> list[str]:
-        """urlセットを返す
-        """
+        """urlセットを返す"""
         url_info = [
             "https://www.nicovideo.jp/user/11111111/video",
             "https://www.nicovideo.jp/user/22222222/video",
@@ -61,8 +60,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         """.strip()
 
     def test_VideoInfoFetcherBaseInit(self):
-        """VideoInfoFetcherBase の初期化後の状態をテストする
-        """
+        """VideoInfoFetcherBase の初期化後の状態をテストする"""
         # 正常系
         source_type = SourceType.HTML
         urls = self._get_url_set()
@@ -90,11 +88,14 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             cvif = ConcreteVideoInfoFetcher(url)
 
     def test_get_session_response(self):
-        """_get_session_response のテスト
-        """
+        """_get_session_response のテスト"""
         with ExitStack() as stack:
-            mock_logger_error = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error"))
-            mock_async_client = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_fetcher_base.httpx.AsyncClient"))
+            mock_logger_error = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error")
+            )
+            mock_async_client = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_fetcher_base.httpx.AsyncClient")
+            )
 
             # 正常系
             mock_response = MagicMock()
@@ -115,7 +116,6 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             # 呼び出し確認::TODO
 
-
             mock_response.reset_mock()
             mock_get.reset_mock()
             mock_aenter.reset_mock()
@@ -129,11 +129,14 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_get_videoinfo_from_api(self):
-        """_get_videoinfo_from_api のテスト TODO
-        """
+        """_get_videoinfo_from_api のテスト TODO"""
         with ExitStack() as stack:
-            mock_logger_error = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error"))
-            mock_async_client = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_fetcher_base.httpx.AsyncClient"))
+            mock_logger_error = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error")
+            )
+            mock_async_client = stack.enter_context(
+                patch("NNMM.video_info_fetcher.video_info_fetcher_base.httpx.AsyncClient")
+            )
 
             def make_response(request_url):
                 mock_response = MagicMock()
@@ -141,6 +144,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
                 index = int(videoid[2:])
                 mock_response.text = self._make_api_xml(index)
                 return mock_response
+
             mock_get = AsyncMock()
             mock_get.get.side_effect = lambda url: make_response(url)
             mock_aenter = MagicMock()
@@ -155,35 +159,24 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             src_df = "%Y-%m-%dT%H:%M:%S%z"
             dst_df = "%Y-%m-%d %H:%M:%S"
-            title_list = [
-                Title(f"動画タイトル_{i:02}")
-                for i in range(1, num + 1)
-            ]
+            title_list = [Title(f"動画タイトル_{i:02}") for i in range(1, num + 1)]
             uploaded_at_list = [
-                UploadedAt(
-                    datetime.strptime(f"2007-03-06T00:33:{i:02}+09:00", src_df).strftime(dst_df)
-                )
+                UploadedAt(datetime.strptime(f"2007-03-06T00:33:{i:02}+09:00", src_df).strftime(dst_df))
                 for i in range(1, num + 1)
             ]
-            video_url_list = [
-                VideoURL.create(f"https://www.nicovideo.jp/watch/sm{i}")
-                for i in range(1, num + 1)
-            ]
-            username_list = [
-                Username(f"username_{i:02}")
-                for i in range(1, num + 1)
-            ]
+            video_url_list = [VideoURL.create(f"https://www.nicovideo.jp/watch/sm{i}") for i in range(1, num + 1)]
+            username_list = [Username(f"username_{i:02}") for i in range(1, num + 1)]
             title_list = TitleList.create(title_list)
             uploaded_at_list = UploadedAtList.create(uploaded_at_list)
             video_url_list = VideoURLList.create(video_url_list)
             username_list = UsernameList.create(username_list)
             res = {
-                "no": list(range(1, num + 1)),          # No. [1, ..., len()-1]
-                "video_id_list": video_id_list,         # 動画IDリスト [sm12345678]
-                "title_list": title_list,               # 動画タイトルリスト [テスト動画]
-                "uploaded_at_list": uploaded_at_list,   # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
-                "video_url_list": video_url_list,       # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
-                "username_list": username_list,         # 投稿者リスト [投稿者1]
+                "no": list(range(1, num + 1)),  # No. [1, ..., len()-1]
+                "video_id_list": video_id_list,  # 動画IDリスト [sm12345678]
+                "title_list": title_list,  # 動画タイトルリスト [テスト動画]
+                "uploaded_at_list": uploaded_at_list,  # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
+                "video_url_list": video_url_list,  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+                "username_list": username_list,  # 投稿者リスト [投稿者1]
             }
             expect = FetchedAPIVideoInfo(**res)
 
@@ -209,8 +202,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
                 actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
 
     def test__fetch_videoinfo(self):
-        """_fetch_videoinfo のテスト
-        """
+        """_fetch_videoinfo のテスト"""
         url = self._get_url_set()[0]
         cvif = ConcreteVideoInfoFetcher(url)
         loop = asyncio.new_event_loop()
@@ -219,8 +211,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         self.assertEqual(["test_fetch_videoinfo"], actual)
 
     def test_fetch_videoinfo(self):
-        """fetch_videoinfo のテスト
-        """
+        """fetch_videoinfo のテスト"""
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error"))
 

@@ -2,6 +2,7 @@
 
 Userid の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -11,8 +12,7 @@ from NNMM.video_info_fetcher.value_objects.userid import Userid
 
 class TestUserid(unittest.TestCase):
     def test_UseridInit(self):
-        """Userid の初期化後の状態をテストする
-        """
+        """Userid の初期化後の状態をテストする"""
         # 正常系
         # 通常のユーザーID
         id = "12345678"
@@ -43,8 +43,7 @@ class TestUserid(unittest.TestCase):
             userid = Userid(id)
 
     def test_id(self):
-        """id のテスト
-        """
+        """id のテスト"""
         id = "12345678"
         userid = Userid(id)
         self.assertEqual(id, userid.id)

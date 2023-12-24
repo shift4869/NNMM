@@ -18,8 +18,7 @@ class Timer(ProcessBase):
         self.timer_thread = None
 
     def _timer_cancel(self) -> None:
-        """現在タイマー待機中のものがあればキャンセルする
-        """
+        """現在タイマー待機中のものがあればキャンセルする"""
         if self.timer_thread:
             self.timer_thread.cancel()
             self.timer_thread = None
@@ -89,5 +88,6 @@ class Timer(ProcessBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

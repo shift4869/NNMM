@@ -4,9 +4,9 @@ from typing import Literal, Self
 
 
 @dataclass(frozen=True)
-class CheckInterval():
-    """更新間隔
-    """
+class CheckInterval:
+    """更新間隔"""
+
     _amount: int
     _unit: Literal["分", "時間", "日", "週間", "ヶ月"]
 
@@ -16,7 +16,7 @@ class CheckInterval():
         if not isinstance(self._amount, int):
             raise ValueError("_amount must be int.")
         if not isinstance(self._unit, str):
-            raise ValueError('_unit must be unit literal string.')
+            raise ValueError("_unit must be unit literal string.")
 
         if self._amount < 1:
             raise ValueError("_amount must be _amount >= 1.")
@@ -104,6 +104,7 @@ class CheckInterval():
             raise ValueError("interval_str cannot split.")
         amount, unit = cls.split(interval_str)
         return CheckInterval(amount, unit)
+
 
 if __name__ == "__main__":
     interval_str_list = [

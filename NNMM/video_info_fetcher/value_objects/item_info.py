@@ -9,7 +9,7 @@ from NNMM.video_info_fetcher.value_objects.videoid import Videoid
 
 
 @dataclass(frozen=True)
-class ItemInfo():
+class ItemInfo:
     """rssから取得される動画情報の1エントリをまとめたデータクラス
 
     Notes:
@@ -21,10 +21,11 @@ class ItemInfo():
     Returns:
         ItemInfo: rssから取得される動画情報の1エントリ分の情報をまとめたもの
     """
+
     video_id: ClassVar[Videoid]  # 動画ID sm12345678
-    title: Title                 # 動画タイトル テスト動画
+    title: Title  # 動画タイトル テスト動画
     registered_at: RegisteredAt  # 登録日時 %Y-%m-%d %H:%M:%S
-    video_url: VideoURL          # 動画URL https://www.nicovideo.jp/watch/sm12345678
+    video_url: VideoURL  # 動画URL https://www.nicovideo.jp/watch/sm12345678
 
     def __post_init__(self) -> None:
         """初期化後処理

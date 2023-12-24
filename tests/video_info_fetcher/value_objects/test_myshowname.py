@@ -2,6 +2,7 @@
 
 Myshowname の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -11,8 +12,7 @@ from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 
 class TestMyshowname(unittest.TestCase):
     def test_MyshownameInit(self):
-        """Myshowname の初期化後の状態をテストする
-        """
+        """Myshowname の初期化後の状態をテストする"""
         # 正常系
         myshowname_str = "テスト用マイリスト1"
         myshowname = Myshowname(myshowname_str)
@@ -33,8 +33,7 @@ class TestMyshowname(unittest.TestCase):
             myshowname = Myshowname(-1)
 
     def test_name(self):
-        """_name のテスト
-        """
+        """_name のテスト"""
         myshowname_str = "テスト用マイリスト1"
         myshowname = Myshowname(myshowname_str)
         self.assertEqual(myshowname_str, myshowname._name)

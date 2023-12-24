@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Username():
+class Username:
     """投稿者名
 
     投稿者名は動画を投稿したユーザー名を表す
@@ -19,6 +19,7 @@ class Username():
     Returns:
         Username: 投稿者名
     """
+
     _name: str  # 投稿者名
 
     def __post_init__(self) -> None:
@@ -33,8 +34,7 @@ class Username():
 
     @property
     def name(self) -> str:
-        """保持している投稿者名を返す
-        """
+        """保持している投稿者名を返す"""
         return self._name
 
 

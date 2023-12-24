@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class CheckedAt():
+class CheckedAt:
     """確認日時
 
     確認日時はマイリストの更新を確認した日時を表す
@@ -17,6 +17,7 @@ class CheckedAt():
     Returns:
         CheckedAt: 作成日時
     """
+
     _datetime: str
 
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"

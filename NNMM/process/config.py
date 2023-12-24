@@ -17,6 +17,7 @@ class ConfigBase(ProcessBase):
     派生クラスと外部から使用されるクラス変数とクラスメソッドを定義する
     このベースクラス自体は抽象メソッドであるrunを実装していないためインスタンスは作成できない
     """
+
     CONFIG_FILE_PATH = "./config/config.ini"
     config = None
 
@@ -32,7 +33,10 @@ class ConfigBase(ProcessBase):
         """
         # オートリロード間隔
         auto_reload_combo_box = sg.InputCombo(
-            ("(使用しない)", "15分毎", "30分毎", "60分毎"), default_value="(使用しない)", key="-C_AUTO_RELOAD-", size=(20, 10)
+            ("(使用しない)", "15分毎", "30分毎", "60分毎"),
+            default_value="(使用しない)",
+            key="-C_AUTO_RELOAD-",
+            size=(20, 10),
         )
 
         horizontal_line = "-" * 100
@@ -57,9 +61,7 @@ class ConfigBase(ProcessBase):
             [sg.Text("")],
             [sg.Column([[sg.Button("設定保存", key="-C_CONFIG_SAVE-")]], justification="right")],
         ]
-        layout = [[
-            sg.Frame("Config", cf, size=(500, 580))
-        ]]
+        layout = [[sg.Frame("Config", cf, size=(500, 580))]]
         return layout
 
     @classmethod
@@ -105,10 +107,7 @@ class MylistLoadCSV(ConfigBase):
         # 読込ファイルパスをユーザーから取得する
         default_path = Path("") / "input.csv"
         sd_path_str = sg.popup_get_file(
-            "読込ファイル選択",
-            default_path=default_path.absolute(),
-            default_extension="csv",
-            save_as=False
+            "読込ファイル選択", default_path=default_path.absolute(), default_extension="csv", save_as=False
         )
 
         # キャンセルされた場合は何もしない
@@ -148,10 +147,7 @@ class MylistSaveCSV(ConfigBase):
         # 保存先ファイルパスをユーザーから取得する
         default_path = Path("") / "result.csv"
         sd_path_str = sg.popup_get_file(
-            "保存先ファイル選択",
-            default_path=default_path.absolute(),
-            default_extension="csv",
-            save_as=True
+            "保存先ファイル選択", default_path=default_path.absolute(), default_extension="csv", save_as=True
         )
 
         # キャンセルされた場合は何もしない
@@ -255,5 +251,6 @@ class ConfigSave(ConfigBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

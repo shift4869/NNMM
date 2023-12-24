@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Userid():
+class Userid:
     """ユーザーID
 
     ユーザーIDは基本的には数字からなる 例：12345678
@@ -16,6 +16,7 @@ class Userid():
     Returns:
         Userid: ユーザーID
     """
+
     _id: str  # ユーザーID 1234567
 
     def __post_init__(self) -> None:
@@ -30,8 +31,7 @@ class Userid():
 
     @property
     def id(self) -> str:
-        """保持しているユーザーIDを返す
-        """
+        """保持しているユーザーIDを返す"""
         return self._id
 
 

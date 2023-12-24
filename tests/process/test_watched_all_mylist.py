@@ -28,12 +28,35 @@ class TestWatchedAllMylist(unittest.TestCase):
 
     def _make_mylist_db(self, num: int = 5) -> list[dict]:
         res = []
-        col = ["id", "username", "mylistname", "type", "showname", "url",
-               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i + 1}", "投稿動画", "uploaded", f"投稿者{i + 1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
-                 "15分", i % 2 == 0] for i in range(num)]
+        col = [
+            "id",
+            "username",
+            "mylistname",
+            "type",
+            "showname",
+            "url",
+            "created_at",
+            "updated_at",
+            "checked_at",
+            "check_interval",
+            "is_include_new",
+        ]
+        rows = [
+            [
+                i,
+                f"投稿者{i + 1}",
+                "投稿動画",
+                "uploaded",
+                f"投稿者{i + 1}さんの投稿動画",
+                f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "15分",
+                i % 2 == 0,
+            ]
+            for i in range(num)
+        ]
 
         for row in rows:
             d = {}
@@ -43,12 +66,23 @@ class TestWatchedAllMylist(unittest.TestCase):
         return res
 
     def _make_table_data(self, mylist_url) -> list[str]:
-        """self.window["-TABLE-"].Valuesで取得されるテーブル情報動画データセット
-        """
+        """self.window["-TABLE-"].Valuesで取得されるテーブル情報動画データセット"""
         NUM = 5
         res = []
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
-                           "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "マイリスト表示名", "マイリスト名", "作成日時"]
+        table_cols_name = [
+            "No.",
+            "動画ID",
+            "動画名",
+            "投稿者",
+            "状況",
+            "投稿日時",
+            "登録日時",
+            "動画URL",
+            "所属マイリストURL",
+            "マイリスト表示名",
+            "マイリスト名",
+            "作成日時",
+        ]
         for k in range(NUM):
             for i in range(NUM):
                 # MylistInfo + showname系
@@ -81,16 +115,25 @@ class TestWatchedAllMylist(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.watched_all_mylist.logger.info"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.update_mylist_pane"))
-            mock_update_table_pane = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.update_table_pane"))
-            mock_upper_textbox = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.get_upper_textbox"))
-            mock_all_table_row = stack.enter_context(patch("NNMM.process.watched_all_mylist.ProcessBase.get_all_table_row"))
+            mock_update_mylist_pane = stack.enter_context(
+                patch("NNMM.process.watched_all_mylist.ProcessBase.update_mylist_pane")
+            )
+            mock_update_table_pane = stack.enter_context(
+                patch("NNMM.process.watched_all_mylist.ProcessBase.update_table_pane")
+            )
+            mock_upper_textbox = stack.enter_context(
+                patch("NNMM.process.watched_all_mylist.ProcessBase.get_upper_textbox")
+            )
+            mock_all_table_row = stack.enter_context(
+                patch("NNMM.process.watched_all_mylist.ProcessBase.get_all_table_row")
+            )
 
             instance = WatchedAllMylist(self.process_info)
 
             m_list = self._make_mylist_db()
             mylist_url = m_list[0]["url"]
             def_data = self._make_table_data(mylist_url)
+
             def pre_run(is_mylist_url_empty):
                 s_def_data = deepcopy(def_data)
 
@@ -102,15 +145,24 @@ class TestWatchedAllMylist(unittest.TestCase):
 
                 mock_upper_textbox.reset_mock()
                 if is_mylist_url_empty:
-                    def f(): return UpperTextbox.create("")
+
+                    def f():
+                        return UpperTextbox.create("")
+
                     mock_upper_textbox.side_effect = f
                 else:
-                    def f(): return UpperTextbox.create(mylist_url)
+
+                    def f():
+                        return UpperTextbox.create(mylist_url)
+
                     mock_upper_textbox.side_effect = f
 
                 mock_all_table_row.reset_mock()
                 s_def_data = [[i + 1] + r[1:-1] for i, r in enumerate(s_def_data)]
-                def f(): return TableRowList.create(s_def_data)
+
+                def f():
+                    return TableRowList.create(s_def_data)
+
                 mock_all_table_row.side_effect = f
 
                 mock_update_mylist_pane.reset_mock()
@@ -120,14 +172,15 @@ class TestWatchedAllMylist(unittest.TestCase):
                 records = [m for m in m_list if m["is_include_new"]]
                 mylist_url_list = [r["url"] for r in records]
                 expect_mylist_db_calls = [call.select()]
-                expect_mylist_db_calls.extend(
-                    [call.update_include_flag(s_mylist_url, False) for s_mylist_url in mylist_url_list]
-                )
+                expect_mylist_db_calls.extend([
+                    call.update_include_flag(s_mylist_url, False) for s_mylist_url in mylist_url_list
+                ])
                 self.assertEqual(expect_mylist_db_calls, instance.mylist_db.mock_calls)
 
-                self.assertEqual([
-                    call.update_status_in_mylist(s_mylist_url, "") for s_mylist_url in mylist_url_list
-                ], instance.mylist_info_db.mock_calls)
+                self.assertEqual(
+                    [call.update_status_in_mylist(s_mylist_url, "") for s_mylist_url in mylist_url_list],
+                    instance.mylist_info_db.mock_calls,
+                )
 
                 expect_window_calls = []
                 s_mylist_url = mylist_url
@@ -137,12 +190,10 @@ class TestWatchedAllMylist(unittest.TestCase):
                     s_def_data = [[i + 1] + r[1:-1] for i, r in enumerate(s_def_data)]
                     s_def_data = TableRowList.create(s_def_data)
                     for i, _ in enumerate(s_def_data):
-                        s_def_data[i] = s_def_data[i].replace_from_typed_value(
-                            status=Status.watched
-                        )
+                        s_def_data[i] = s_def_data[i].replace_from_typed_value(status=Status.watched)
                     expect_window_calls.extend([
                         call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(values=s_def_data.to_table_data())
+                        call.__getitem__().update(values=s_def_data.to_table_data()),
                     ])
                 self.assertEqual(expect_window_calls, instance.window.mock_calls)
 

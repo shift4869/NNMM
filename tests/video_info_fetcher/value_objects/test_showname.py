@@ -2,6 +2,7 @@
 
 Showname の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -13,8 +14,7 @@ from NNMM.video_info_fetcher.value_objects.username import Username
 
 class TestShowname(unittest.TestCase):
     def test_ShownameInit(self):
-        """Showname の初期化後の状態をテストする
-        """
+        """Showname の初期化後の状態をテストする"""
         # 正常系
         EXPECT_UPLOADED_PATTERN = "^(.*)さんの投稿動画$"
         EXPECT_MYLIST_PATTERN = "^「(.*)」-(.*)さんのマイリスト$"
@@ -46,16 +46,14 @@ class TestShowname(unittest.TestCase):
             showname = Showname(-1)
 
     def test_name(self):
-        """_name のテスト
-        """
+        """_name のテスト"""
         showname_str = "投稿者1さんの投稿動画"
         showname = Showname(showname_str)
         self.assertEqual(showname_str, showname._name)
         self.assertEqual(showname._name, showname.name)
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         # 正常系
         # 投稿動画のマイリスト表示名
         username = Username("投稿者1")

@@ -28,18 +28,29 @@ class TestMoveUp(unittest.TestCase):
             mockli = stack.enter_context(patch("NNMM.process.move_up.logger.info"))
             mockle = stack.enter_context(patch("NNMM.process.move_up.logger.error"))
             mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.update_mylist_pane"))
-            mock_selected_mylist_row = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.get_selected_mylist_row"))
-            mock_selected_mylist_row_index = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.get_selected_mylist_row_index"))
+            mock_selected_mylist_row = stack.enter_context(
+                patch("NNMM.process.move_up.ProcessBase.get_selected_mylist_row")
+            )
+            mock_selected_mylist_row_index = stack.enter_context(
+                patch("NNMM.process.move_up.ProcessBase.get_selected_mylist_row_index")
+            )
             mock_all_mylist_row = stack.enter_context(patch("NNMM.process.move_up.ProcessBase.get_all_mylist_row"))
 
             instance = MoveUp(self.process_info)
+
             def pre_run(s_src_index, s_max_index, s_src_v, s_dst_v):
                 mock_selected_mylist_row.reset_mock()
                 if s_src_v == "":
-                    def f(): return None
+
+                    def f():
+                        return None
+
                     mock_selected_mylist_row.side_effect = f
                 else:
-                    def f(): return SelectedMylistRow.create(s_src_v)
+
+                    def f():
+                        return SelectedMylistRow.create(s_src_v)
+
                     mock_selected_mylist_row.side_effect = f
 
                 mock_selected_mylist_row_index.reset_mock()
@@ -47,7 +58,10 @@ class TestMoveUp(unittest.TestCase):
                     s_src_index = s_max_index
                     mock_selected_mylist_row_index.side_effect = lambda: 0
                 else:
-                    def f(): return SelectedMylistRowIndex(s_src_index)
+
+                    def f():
+                        return SelectedMylistRowIndex(s_src_index)
+
                     mock_selected_mylist_row_index.side_effect = lambda: s_src_index
 
                 if s_src_v != "":
@@ -60,6 +74,7 @@ class TestMoveUp(unittest.TestCase):
                     mock_all_mylist_row.side_effect = lambda: list_data
 
                 instance.mylist_db.reset_mock()
+
                 def return_record(showname):
                     if showname in s_src_v:
                         return [{"id": s_src_index}]
@@ -73,17 +88,23 @@ class TestMoveUp(unittest.TestCase):
 
             def post_run(s_src_index, s_max_index, s_src_v, s_dst_v):
                 if s_src_v == "":
-                    self.assertEqual([
-                        call(),
-                    ], mock_selected_mylist_row.mock_calls)
+                    self.assertEqual(
+                        [
+                            call(),
+                        ],
+                        mock_selected_mylist_row.mock_calls,
+                    )
                     mock_selected_mylist_row_index.assert_not_called()
                     instance.mylist_db.assert_not_called()
                     mock_update_mylist_pane.assert_not_called()
                     return
                 else:
-                    self.assertEqual([
-                        call(),
-                    ], mock_selected_mylist_row.mock_calls)
+                    self.assertEqual(
+                        [
+                            call(),
+                        ],
+                        mock_selected_mylist_row.mock_calls,
+                    )
 
                 if s_src_index == 0:
                     instance.mylist_db.assert_not_called()
@@ -95,20 +116,26 @@ class TestMoveUp(unittest.TestCase):
                     s_dst_index = s_src_index - 1
                 else:
                     s_dst_index = s_src_index - 1
-                self.assertEqual([
-                    call.__getitem__("-LIST-"),
-                    call.__getitem__().update(set_to_index=s_dst_index),
-                ], instance.window.mock_calls)
+                self.assertEqual(
+                    [
+                        call.__getitem__("-LIST-"),
+                        call.__getitem__().update(set_to_index=s_dst_index),
+                    ],
+                    instance.window.mock_calls,
+                )
 
                 if s_src_v.startswith("*:"):
                     s_src_v = s_src_v[2:]
                 if s_dst_v.startswith("*:"):
                     s_dst_v = s_dst_v[2:]
-                self.assertEqual([
-                    call.select_from_showname(s_src_v),
-                    call.select_from_showname(s_dst_v),
-                    call.swap_id(s_src_index, s_dst_index),
-                ], instance.mylist_db.mock_calls)
+                self.assertEqual(
+                    [
+                        call.select_from_showname(s_src_v),
+                        call.select_from_showname(s_dst_v),
+                        call.swap_id(s_src_index, s_dst_index),
+                    ],
+                    instance.mylist_db.mock_calls,
+                )
 
                 mock_update_mylist_pane.assert_called_once_with()
 

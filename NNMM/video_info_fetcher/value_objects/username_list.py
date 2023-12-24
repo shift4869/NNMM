@@ -18,6 +18,7 @@ class UsernameList(Iterable):
     Returns:
         UsernameList: 投稿者名リスト
     """
+
     _list: list[Username]
 
     def __post_init__(self) -> None:

@@ -27,15 +27,33 @@ class TestShowMylistInfoAll(unittest.TestCase):
     def _make_mylist_info_db(self) -> list[dict]:
         NUM = 5
         res = []
-        table_cols = ["no", "video_id", "title", "username", "status",
-                      "uploaded_at", "registered_at", "video_url", "mylist_url"]
+        table_cols = [
+            "no",
+            "video_id",
+            "title",
+            "username",
+            "status",
+            "uploaded_at",
+            "registered_at",
+            "video_url",
+            "mylist_url",
+        ]
         n = 0
         for k in range(NUM):
-            table_rows = [[n, f"sm{k + 1}000000{i + 1}", f"動画タイトル{k + 1}_{i + 1}", f"投稿者{k + 1}", "",
-                           f"2022-02-01 0{k + 1}:00:0{i + 1}",
-                           f"2022-02-01 0{k + 1}:01:0{i + 1}",
-                           f"https://www.nicovideo.jp/watch/sm{k + 1}000000{i + 1}",
-                           f"https://www.nicovideo.jp/user/1000000{k + 1}/video"] for i in range(NUM)]
+            table_rows = [
+                [
+                    n,
+                    f"sm{k + 1}000000{i + 1}",
+                    f"動画タイトル{k + 1}_{i + 1}",
+                    f"投稿者{k + 1}",
+                    "",
+                    f"2022-02-01 0{k + 1}:00:0{i + 1}",
+                    f"2022-02-01 0{k + 1}:01:0{i + 1}",
+                    f"https://www.nicovideo.jp/watch/sm{k + 1}000000{i + 1}",
+                    f"https://www.nicovideo.jp/user/1000000{k + 1}/video",
+                ]
+                for i in range(NUM)
+            ]
             n = n + 1
 
             for rows in table_rows:
@@ -48,14 +66,19 @@ class TestShowMylistInfoAll(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.show_mylist_info_all.logger.info"))
-            mock_selected_mylist_row_index = stack.enter_context(patch("NNMM.process.show_mylist_info_all.ProcessBase.get_selected_mylist_row_index"))
+            mock_selected_mylist_row_index = stack.enter_context(
+                patch("NNMM.process.show_mylist_info_all.ProcessBase.get_selected_mylist_row_index")
+            )
 
             instance = ShowMylistInfoAll(self.process_info)
 
             def pre_run(s_index, not_empty_records):
                 mock_selected_mylist_row_index.reset_mock()
                 if s_index >= 0:
-                    def f(): return SelectedMylistRowIndex(s_index)
+
+                    def f():
+                        return SelectedMylistRowIndex(s_index)
+
                     mock_selected_mylist_row_index.side_effect = f
                 else:
                     mock_selected_mylist_row_index.side_effect = lambda: None
@@ -86,7 +109,17 @@ class TestShowMylistInfoAll(unittest.TestCase):
                     records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]
                     table_row_list = []
                     for i, r in enumerate(records):
-                        a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["registered_at"], r["video_url"], r["mylist_url"]]
+                        a = [
+                            i + 1,
+                            r["video_id"],
+                            r["title"],
+                            r["username"],
+                            r["status"],
+                            r["uploaded_at"],
+                            r["registered_at"],
+                            r["video_url"],
+                            r["mylist_url"],
+                        ]
                         table_row_list.append(a)
                     def_data = TableRowList.create(table_row_list)
                     expect_window_call.extend([
@@ -107,9 +140,7 @@ class TestShowMylistInfoAll(unittest.TestCase):
                 ])
                 self.assertEqual(expect_window_call, instance.window.mock_calls)
 
-                self.assertEqual([
-                    call.select()
-                ], instance.mylist_info_db.mock_calls)
+                self.assertEqual([call.select()], instance.mylist_info_db.mock_calls)
 
             Params = namedtuple("Params", ["index", "not_empty_records", "result"])
             params_list = [

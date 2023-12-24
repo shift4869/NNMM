@@ -18,6 +18,7 @@ class UploadedAtList(Iterable):
     Returns:
         UploadedAtList: 投稿日時リスト
     """
+
     _list: list[UploadedAt]
 
     DESTINATION_DATETIME_FORMAT = UploadedAt.DESTINATION_DATETIME_FORMAT

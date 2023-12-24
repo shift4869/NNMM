@@ -2,6 +2,7 @@
 
 Title の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -11,8 +12,7 @@ from NNMM.video_info_fetcher.value_objects.title import Title
 
 class TestTitle(unittest.TestCase):
     def test_TitleInit(self):
-        """Title の初期化後の状態をテストする
-        """
+        """Title の初期化後の状態をテストする"""
         # 正常系
         title_str = "動画タイトル1"
         title = Title(title_str)
@@ -33,8 +33,7 @@ class TestTitle(unittest.TestCase):
             title = Title(-1)
 
     def test_name(self):
-        """_name のテスト
-        """
+        """_name のテスト"""
         title_str = "動画タイトル1"
         title = Title(title_str)
         self.assertEqual(title_str, title._name)

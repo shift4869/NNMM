@@ -2,6 +2,7 @@
 
 TitleList の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -21,8 +22,7 @@ class TestTitleList(unittest.TestCase):
         return [Title(r) for r in title_strs]
 
     def test_TitleListInit(self):
-        """TitleList の初期化後の状態をテストする
-        """
+        """TitleList の初期化後の状態をテストする"""
         base_title = "動画タイトル{}"
         title_strs = self._get_title_strs()
         titles = self._get_titles()
@@ -57,8 +57,7 @@ class TestTitleList(unittest.TestCase):
             title_list = TitleList(titles)
 
     def test_iter_len(self):
-        """iter と len のテスト
-        """
+        """iter と len のテスト"""
         titles = self._get_titles()
         title_list = TitleList(titles)
         self.assertEqual(len(titles), len(title_list))
@@ -66,8 +65,7 @@ class TestTitleList(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         base_title = "動画タイトル{}"
         title_strs = self._get_title_strs()
         titles = self._get_titles()

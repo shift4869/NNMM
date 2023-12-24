@@ -48,9 +48,10 @@ class WatchedMylist(ProcessBase):
 
         logger.info(f"WatchedMylist success.")
         return Result.success
-    
+
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()

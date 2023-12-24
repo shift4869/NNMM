@@ -2,6 +2,7 @@
 
 VideoURLList の各種機能をテストする
 """
+
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
@@ -21,8 +22,7 @@ class TestVideoURLList(unittest.TestCase):
         return [VideoURL.create(r) for r in video_url_strs]
 
     def test_VideoURLListInit(self):
-        """VideoURLList の初期化後の状態をテストする
-        """
+        """VideoURLList の初期化後の状態をテストする"""
         base_url = "https://www.nicovideo.jp/watch/sm1000000{}"
         video_url_strs = self._get_urls()
         video_urls = self._get_video_urls()
@@ -57,8 +57,7 @@ class TestVideoURLList(unittest.TestCase):
             video_url_list = VideoURLList(video_urls)
 
     def test_iter_len(self):
-        """iter と len のテスト
-        """
+        """iter と len のテスト"""
         video_urls = self._get_video_urls()
         video_url_list = VideoURLList(video_urls)
         self.assertEqual(len(video_urls), len(video_url_list))
@@ -66,8 +65,7 @@ class TestVideoURLList(unittest.TestCase):
             self.assertEqual(expect, actual)
 
     def test_create(self):
-        """create のテスト
-        """
+        """create のテスト"""
         base_url = "https://www.nicovideo.jp/watch/sm1000000{}"
         video_url_strs = self._get_urls()
         video_urls = self._get_video_urls()

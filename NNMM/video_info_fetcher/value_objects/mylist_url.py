@@ -7,7 +7,7 @@ from NNMM.video_info_fetcher.value_objects.userid import Userid
 
 
 @dataclass(frozen=True)
-class MylistURL():
+class MylistURL:
     """マイリストURL
 
     マイリストURLはMYLIST_URL_PATTERN に合致するURLを扱う
@@ -19,6 +19,7 @@ class MylistURL():
     Returns:
         MylistURL: マイリストURL
     """
+
     url: URL
 
     # 対象URLのパターン
@@ -38,14 +39,12 @@ class MylistURL():
 
     @property
     def non_query_url(self) -> str:
-        """クエリなしURLを返す
-        """
+        """クエリなしURLを返す"""
         return self.url.non_query_url
 
     @property
     def original_url(self) -> str:
-        """元のURLを返す
-        """
+        """元のURLを返す"""
         return self.url.original_url
 
     @property

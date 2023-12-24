@@ -37,12 +37,35 @@ class TestProcessBase(unittest.TestCase):
     def _make_mylist_db(self) -> list[dict]:
         NUM = 5
         res = []
-        col = ["id", "username", "mylistname", "type", "showname", "url",
-               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i + 1}", "投稿動画", "uploaded", f"投稿者{i + 1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
-                 "15分", False] for i in range(NUM)]
+        col = [
+            "id",
+            "username",
+            "mylistname",
+            "type",
+            "showname",
+            "url",
+            "created_at",
+            "updated_at",
+            "checked_at",
+            "check_interval",
+            "is_include_new",
+        ]
+        rows = [
+            [
+                i,
+                f"投稿者{i + 1}",
+                "投稿動画",
+                "uploaded",
+                f"投稿者{i + 1}さんの投稿動画",
+                f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "15分",
+                False,
+            ]
+            for i in range(NUM)
+        ]
 
         for row in rows:
             d = {}
@@ -62,16 +85,45 @@ class TestProcessBase(unittest.TestCase):
         if m == -1:
             return []
 
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
-                           "投稿日時", "登録日時", "動画URL", "所属マイリストURL", "作成日時"]
-        table_cols = ["no", "video_id", "title", "username", "status",
-                      "uploaded_at", "registered_at", "video_url", "mylist_url", "created_at"]
-        table_rows = [[i, f"sm{m}000000{i + 1}", f"動画タイトル{m}_{i + 1}", f"投稿者{m}", "",
-                       "2022-02-01 02:30:00",
-                       "2022-02-02 02:30:00",
-                       f"https://www.nicovideo.jp/watch/sm{m}000000{i + 1}",
-                       f"https://www.nicovideo.jp/user/1000000{m}/video",
-                       "2022-02-03 02:30:00"] for i in range(NUM)]
+        table_cols_name = [
+            "No.",
+            "動画ID",
+            "動画名",
+            "投稿者",
+            "状況",
+            "投稿日時",
+            "登録日時",
+            "動画URL",
+            "所属マイリストURL",
+            "作成日時",
+        ]
+        table_cols = [
+            "no",
+            "video_id",
+            "title",
+            "username",
+            "status",
+            "uploaded_at",
+            "registered_at",
+            "video_url",
+            "mylist_url",
+            "created_at",
+        ]
+        table_rows = [
+            [
+                i,
+                f"sm{m}000000{i + 1}",
+                f"動画タイトル{m}_{i + 1}",
+                f"投稿者{m}",
+                "",
+                "2022-02-01 02:30:00",
+                "2022-02-02 02:30:00",
+                f"https://www.nicovideo.jp/watch/sm{m}000000{i + 1}",
+                f"https://www.nicovideo.jp/user/1000000{m}/video",
+                "2022-02-03 02:30:00",
+            ]
+            for i in range(NUM)
+        ]
 
         for rows in table_rows:
             d = {}
@@ -105,10 +157,16 @@ class TestProcessBase(unittest.TestCase):
         def pre_run(s_index, is_include_new, has_mylist_db):
             instance.window.reset_mock()
             if s_index >= 0:
-                def f(): return [s_index]
+
+                def f():
+                    return [s_index]
+
                 instance.window.__getitem__.return_value.get_indexes.side_effect = f
             else:
-                def f(): return []
+
+                def f():
+                    return []
+
                 instance.window.__getitem__.return_value.get_indexes.side_effect = f
 
             instance.mylist_db.reset_mock()
@@ -142,9 +200,7 @@ class TestProcessBase(unittest.TestCase):
                 for i in range(all_num):
                     expect_window_call.extend([
                         call.__getitem__("-LIST-"),
-                        call.__getitem__().Widget.itemconfig(
-                            i, fg="black", bg="light pink"
-                        ),
+                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light pink"),
                     ])
 
             s_index = max(s_index, 0)
@@ -156,9 +212,7 @@ class TestProcessBase(unittest.TestCase):
             ])
             self.assertEqual(expect_window_call, instance.window.mock_calls)
 
-            self.assertEqual([
-                call.select()
-            ], instance.mylist_db.mock_calls)
+            self.assertEqual([call.select()], instance.mylist_db.mock_calls)
 
         Params = namedtuple("Params", ["s_index", "is_include_new", "has_mylist_db", "result"])
         params_list = [
@@ -187,17 +241,26 @@ class TestProcessBase(unittest.TestCase):
             instance.mylist_info_db.reset_mock()
 
             if s_mylist_url == "":
-                def f(): return ""
+
+                def f():
+                    return ""
+
                 instance.window.__getitem__.return_value.get.side_effect = f
 
                 records = self._make_mylist_info_db(mylist_url)
                 records = [[i + 1] + list(r.values())[1:-1] for i, r in enumerate(records)]
                 instance.window.__getitem__.return_value.Values = records
                 if s_index >= 0:
-                    def g(): return [s_index]
+
+                    def g():
+                        return [s_index]
+
                     instance.window.__getitem__.return_value.get_indexes.side_effect = g
                 else:
-                    def g(): return []
+
+                    def g():
+                        return []
+
                     instance.window.__getitem__.return_value.get_indexes.side_effect = g
             else:
                 if has_mylist_db:
@@ -205,10 +268,16 @@ class TestProcessBase(unittest.TestCase):
                 else:
                     instance.mylist_db.select.side_effect = lambda: []
                 if has_mylist_info_db:
-                    def f(url): return self._make_mylist_info_db(url)
+
+                    def f(url):
+                        return self._make_mylist_info_db(url)
+
                     instance.mylist_info_db.select_from_mylist_url.side_effect = f
                 else:
-                    def f(url): return []
+
+                    def f(url):
+                        return []
+
                     instance.mylist_info_db.select_from_mylist_url.side_effect = f
 
         def post_run(s_index, s_mylist_url, has_mylist_db, has_mylist_info_db):
@@ -230,9 +299,7 @@ class TestProcessBase(unittest.TestCase):
                 instance.mylist_db.assert_not_called()
                 instance.mylist_info_db.assert_not_called()
             else:
-                self.assertEqual([
-                    call.select()
-                ], instance.mylist_db.mock_calls)
+                self.assertEqual([call.select()], instance.mylist_db.mock_calls)
 
                 m_list = self._make_mylist_db()
                 if not has_mylist_db:
@@ -243,17 +310,13 @@ class TestProcessBase(unittest.TestCase):
                         index = i
                         break
 
-                self.assertEqual([
-                    call.select_from_mylist_url(s_mylist_url)
-                ], instance.mylist_info_db.mock_calls)
+                self.assertEqual([call.select_from_mylist_url(s_mylist_url)], instance.mylist_info_db.mock_calls)
 
                 records = self._make_mylist_info_db(s_mylist_url)
                 if not has_mylist_info_db:
                     records = []
                 for i, r in enumerate(records):
-                    record = TableRowTuple._make(
-                        [i + 1] + list(r.values())[1:-1]
-                    )
+                    record = TableRowTuple._make([i + 1] + list(r.values())[1:-1])
                     table_row = [
                         record.row_index,
                         record.video_id,
@@ -263,7 +326,7 @@ class TestProcessBase(unittest.TestCase):
                         record.uploaded_at,
                         record.registered_at,
                         record.video_url,
-                        record.mylist_url
+                        record.mylist_url,
                     ]
                     table_row = list(map(str, table_row))
                     def_data.append(table_row)
@@ -281,7 +344,7 @@ class TestProcessBase(unittest.TestCase):
                 ])
             expect_window_call.extend([
                 call.__getitem__("-TABLE-"),
-                call.__getitem__().update(row_colors=[(0, "", "")])
+                call.__getitem__().update(row_colors=[(0, "", "")]),
             ])
             self.assertEqual(expect_window_call, instance.window.mock_calls)
 
@@ -310,6 +373,7 @@ class TestProcessBase(unittest.TestCase):
             expect = params.result
             self.assertIs(expect, actual)
             post_run(*params[:-1])
+
 
 if __name__ == "__main__":
     if sys.argv:

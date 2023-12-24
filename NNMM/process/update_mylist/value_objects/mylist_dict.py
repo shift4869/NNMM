@@ -6,7 +6,7 @@ from NNMM.process.update_mylist.value_objects.typed_mylist import TypedMylist
 
 
 @dataclass(frozen=True)
-class MylistDict():
+class MylistDict:
     _dict: dict
 
     def __post_init__(self) -> None:

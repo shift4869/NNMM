@@ -26,12 +26,35 @@ class TestMylistSearchFromVideo(unittest.TestCase):
     def _make_mylist_db(self) -> list[dict]:
         NUM = 5
         res = []
-        col = ["id", "username", "mylistname", "type", "showname", "url",
-               "created_at", "updated_at", "checked_at", "check_interval", "is_include_new"]
-        rows = [[i, f"投稿者{i + 1}", "投稿動画", "uploaded", f"投稿者{i + 1}さんの投稿動画",
-                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                 "2022-02-01 02:30:00", "2022-02-01 02:30:00", "2022-02-01 02:30:00",
-                 "15分", True if i % 2 == 0 else False] for i in range(NUM)]
+        col = [
+            "id",
+            "username",
+            "mylistname",
+            "type",
+            "showname",
+            "url",
+            "created_at",
+            "updated_at",
+            "checked_at",
+            "check_interval",
+            "is_include_new",
+        ]
+        rows = [
+            [
+                i,
+                f"投稿者{i + 1}",
+                "投稿動画",
+                "uploaded",
+                f"投稿者{i + 1}さんの投稿動画",
+                f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "15分",
+                True if i % 2 == 0 else False,
+            ]
+            for i in range(NUM)
+        ]
 
         for row in rows:
             d = {}
@@ -51,14 +74,21 @@ class TestMylistSearchFromVideo(unittest.TestCase):
         if m == -1:
             return []
 
-        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況",
-                           "投稿日時", "動画URL", "所属マイリストURL"]
-        table_cols = ["no", "video_id", "title", "username", "status",
-                      "uploaded", "video_url", "mylist_url"]
-        table_rows = [[i, f"sm{m}000000{i + 1}", f"動画タイトル{m}_{i + 1}", f"投稿者{m}", "",
-                       "2022-02-01 02:30:00",
-                       f"https://www.nicovideo.jp/watch/sm{m}000000{i + 1}",
-                       f"https://www.nicovideo.jp/user/1000000{m}/video"] for i in range(NUM)]
+        table_cols_name = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "動画URL", "所属マイリストURL"]
+        table_cols = ["no", "video_id", "title", "username", "status", "uploaded", "video_url", "mylist_url"]
+        table_rows = [
+            [
+                i,
+                f"sm{m}000000{i + 1}",
+                f"動画タイトル{m}_{i + 1}",
+                f"投稿者{m}",
+                "",
+                "2022-02-01 02:30:00",
+                f"https://www.nicovideo.jp/watch/sm{m}000000{i + 1}",
+                f"https://www.nicovideo.jp/user/1000000{m}/video",
+            ]
+            for i in range(NUM)
+        ]
 
         for rows in table_rows:
             d = {}
@@ -71,7 +101,9 @@ class TestMylistSearchFromVideo(unittest.TestCase):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
             mock_popup_get_text = stack.enter_context(patch("NNMM.process.search.popup_get_text"))
-            mock_selected_mylist_row_index = stack.enter_context(patch("NNMM.process.search.ProcessBase.get_selected_mylist_row_index"))
+            mock_selected_mylist_row_index = stack.enter_context(
+                patch("NNMM.process.search.ProcessBase.get_selected_mylist_row_index")
+            )
             mock_mylist_db = MagicMock()
             mock_mylist_info_db = MagicMock()
 
@@ -83,7 +115,10 @@ class TestMylistSearchFromVideo(unittest.TestCase):
 
                 mock_selected_mylist_row_index.reset_mock()
                 if get_indexes >= 0:
-                    def f(): return get_indexes
+
+                    def f():
+                        return get_indexes
+
                     mock_selected_mylist_row_index.side_effect = f
                 else:
                     mock_selected_mylist_row_index.side_effect = lambda: None
@@ -102,15 +137,14 @@ class TestMylistSearchFromVideo(unittest.TestCase):
                     if not is_hit:
                         records = [r | {"title": "no_hit"} for r in records]
                     return records
+
                 mock_mylist_info_db.reset_mock()
                 mock_mylist_info_db.select_from_mylist_url.side_effect = _make_records
                 instance.mylist_info_db.reset_mock()
                 instance.mylist_info_db = mock_mylist_info_db
 
             def post_run(pattern, get_indexes, is_include_new, is_hit):
-                self.assertEqual([
-                    call("動画名検索（正規表現可）")
-                ], mock_popup_get_text.mock_calls)
+                self.assertEqual([call("動画名検索（正規表現可）")], mock_popup_get_text.mock_calls)
 
                 if pattern is None or pattern == "":
                     instance.window.assert_not_called()
@@ -118,9 +152,7 @@ class TestMylistSearchFromVideo(unittest.TestCase):
                     mock_mylist_db.assert_not_called()
                     return
 
-                self.assertEqual([
-                    call()
-                ], mock_selected_mylist_row_index.mock_calls)
+                self.assertEqual([call()], mock_selected_mylist_row_index.mock_calls)
 
                 index = get_indexes
                 expect_mylist_info_db_calls = []
@@ -145,27 +177,22 @@ class TestMylistSearchFromVideo(unittest.TestCase):
                         include_new_index_list.append(i)
                     mylist_url = m["url"]
                     records = _make_records(mylist_url)
-                    expect_mylist_info_db_calls.append(
-                        call.select_from_mylist_url(mylist_url)
-                    )
+                    expect_mylist_info_db_calls.append(call.select_from_mylist_url(mylist_url))
                     for r in records:
                         if re.findall(pattern, r["title"]):
                             match_index_list.append(i)
                             index = i
                 list_data = [m["showname"] for m in m_list]
-                expect_window_calls.extend([
-                    call.__getitem__("-LIST-"),
-                    call.__getitem__().update(values=list_data)
-                ])
+                expect_window_calls.extend([call.__getitem__("-LIST-"), call.__getitem__().update(values=list_data)])
                 for i in include_new_index_list:
                     expect_window_calls.extend([
                         call.__getitem__("-LIST-"),
-                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light pink")
+                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light pink"),
                     ])
                 for i in match_index_list:
                     expect_window_calls.extend([
                         call.__getitem__("-LIST-"),
-                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light goldenrod")
+                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light goldenrod"),
                     ])
                 expect_window_calls.extend([
                     call.__getitem__("-LIST-"),
@@ -176,22 +203,18 @@ class TestMylistSearchFromVideo(unittest.TestCase):
                 if len(match_index_list) > 0:
                     expect_window_calls.extend([
                         call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value=f"{len(match_index_list)}件ヒット！")
+                        call.__getitem__().update(value=f"{len(match_index_list)}件ヒット！"),
                     ])
                 else:
                     expect_window_calls.extend([
                         call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value="該当なし")
+                        call.__getitem__().update(value="該当なし"),
                     ])
                 self.assertEqual(expect_window_calls, instance.window.mock_calls)
 
-                self.assertEqual(
-                    expect_mylist_info_db_calls, mock_mylist_info_db.mock_calls
-                )
+                self.assertEqual(expect_mylist_info_db_calls, mock_mylist_info_db.mock_calls)
 
-                self.assertEqual([
-                    call.select()
-                ], mock_mylist_db.mock_calls)
+                self.assertEqual([call.select()], mock_mylist_db.mock_calls)
 
             Params = namedtuple("Params", ["pattern", "get_indexes", "is_include_new", "is_hit", "result"])
             params_list = [

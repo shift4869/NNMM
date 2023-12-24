@@ -39,10 +39,22 @@ class ShowMylistInfoAll(ProcessBase):
         # 全動画情報を取得
         NUM = 100
         video_info_list = self.mylist_info_db.select()  # DB内にある全ての動画情報を取得
-        records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]  # 最大100要素までのスライス
+        records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[
+            0:NUM
+        ]  # 最大100要素までのスライス
         table_row_list = []
         for i, r in enumerate(records):
-            a = [i + 1, r["video_id"], r["title"], r["username"], r["status"], r["uploaded_at"], r["registered_at"], r["video_url"], r["mylist_url"]]
+            a = [
+                i + 1,
+                r["video_id"],
+                r["title"],
+                r["username"],
+                r["status"],
+                r["uploaded_at"],
+                r["registered_at"],
+                r["video_url"],
+                r["mylist_url"],
+            ]
             table_row_list.append(a)
         def_data = TableRowList.create(table_row_list)
 
@@ -64,5 +76,6 @@ class ShowMylistInfoAll(ProcessBase):
 
 if __name__ == "__main__":
     from NNMM import main_window
+
     mw = main_window.MainWindow()
     mw.run()
