@@ -316,14 +316,14 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
             mylistid = mylist_url.mylistid
             username = Username(mylist_info[2])
             myshowname = Myshowname("投稿動画")
-            showname = Showname.create(username, None)
+            showname = Showname.create(util.MylistType.uploaded, username, None)
         elif UserMylistURL.is_valid_mylist_url(url):
             mylist_url = UserMylistURL.create(url)
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
             username = Username(mylist_info[2])
             myshowname = Myshowname(mylist_info[0].replace("‐ニコニコ動画", ""))
-            showname = Showname.create(username, myshowname)
+            showname = Showname.create(util.MylistType.mylist, username, myshowname)
 
         video_id_list = VideoidList.create(video_id_list)
         title_list = TitleList.create(title_list)

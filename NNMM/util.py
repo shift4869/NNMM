@@ -19,6 +19,7 @@ class MylistType(enum.Enum):
     none = None
     uploaded = "uploaded"
     mylist = "mylist"
+    series = "series"
 
 
 class IncludeNewStatus(enum.Enum):

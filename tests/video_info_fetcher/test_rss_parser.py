@@ -6,6 +6,7 @@ import warnings
 from datetime import datetime
 
 import xmltodict
+from NNMM.util import MylistType
 
 from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
@@ -204,7 +205,7 @@ class TestRSSParser(unittest.TestCase):
 
         username = rp._get_username()
         myshowname = Myshowname("投稿動画")
-        showname = Showname.create(username, None)
+        showname = Showname.create(MylistType.uploaded, username, None)
         expect = (showname, myshowname)
         actual = rp._get_showname_myshowname()
         self.assertEqual(expect, actual)
@@ -224,7 +225,7 @@ class TestRSSParser(unittest.TestCase):
         myshowname = Myshowname("投稿動画")
 
         myshowname = Myshowname(re.findall(pattern, title_lx)[0])
-        showname = Showname.create(username, myshowname)
+        showname = Showname.create(MylistType.mylist, username, myshowname)
         expect = (showname, myshowname)
         actual = rp._get_showname_myshowname()
         self.assertEqual(expect, actual)
@@ -250,7 +251,7 @@ class TestRSSParser(unittest.TestCase):
                 username = Username(re.findall(pattern, title_lx)[0])
 
                 myshowname = Myshowname("投稿動画")
-                showname = Showname.create(username, None)
+                showname = Showname.create(MylistType.uploaded, username, None)
             elif UserMylistURL.is_valid_mylist_url(url):
                 mylist_url = UserMylistURL.create(URL(url).non_query_url)
                 userid = mylist_url.userid
@@ -262,7 +263,7 @@ class TestRSSParser(unittest.TestCase):
                 title_lx = xml_dict["rss"]["channel"]["title"]
                 pattern = "^マイリスト (.*)‐ニコニコ動画$"
                 myshowname = Myshowname(re.findall(pattern, title_lx)[0])
-                showname = Showname.create(username, myshowname)
+                showname = Showname.create(MylistType.mylist, username, myshowname)
 
             video_id_list = []
             title_list = []

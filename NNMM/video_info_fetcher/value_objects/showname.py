@@ -1,6 +1,8 @@
 import re
 from dataclasses import dataclass
+from typing import Self
 
+from NNMM.util import MylistType
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.username import Username
 
@@ -24,13 +26,14 @@ class Showname:
     # 以下のどちらかの形式のみ受け付ける
     UPLOADED_PATTERN = "^(.*)さんの投稿動画$"  # {username}さんの投稿動画
     MYLIST_PATTERN = "^「(.*)」-(.*)さんのマイリスト$"  # 「{myshowname}」-{username}さんのマイリスト
+    SERIES_PATTERN = "^「(.*)」-(.*)さんのシリーズ$"  # 「{myshowname}」-{username}さんのシリーズ
 
     def __post_init__(self) -> None:
         """初期化後処理
 
         バリデーションのみ
         """
-        PATTERN_LIST = [self.UPLOADED_PATTERN, self.MYLIST_PATTERN]
+        PATTERN_LIST = [self.UPLOADED_PATTERN, self.MYLIST_PATTERN, self.SERIES_PATTERN]
         if not isinstance(self._name, str):
             raise TypeError("name is not string, invalid Showname.")
         if not any([re.search(p, self._name) is not None for p in PATTERN_LIST]):
@@ -42,23 +45,40 @@ class Showname:
         return self._name
 
     @classmethod
-    def create(cls, username: Username, myshowname: Myshowname | None = None) -> "Showname":
+    def create(cls, mylist_type: MylistType, username: Username, myshowname: Myshowname | None = None) -> Self:
         """Showname インスタンスを生成する
 
-        myshowname がNone のとき、投稿動画のマイリスト表示名が設定される
+        mylist_type に対応したマイリスト表示名を設定する
 
         Args:
+            mylist_type (MylistType): マイリストタイプ
             username (Username): ユーザー名インスタンス
             myshowname (Myshowname, optional): マイリスト名インスタンス or None
 
         Returns:
             Showname: マイリスト表示名
         """
+        if not isinstance(mylist_type, MylistType):
+            raise ValueError("mylist_type must be MylistType.")
+        if not isinstance(username, Username):
+            raise ValueError("username must be Username.")
+        if not isinstance(myshowname, Myshowname | None):
+            raise ValueError("myshowname must be Myshowname | None.")
+
+        if (not myshowname) and (mylist_type != MylistType.uploaded):
+            raise ValueError("myshowname is None, but mylist_type is not MylistType.uploaded.")
+
         showname = ""
-        if myshowname is None:
-            showname = f"{username.name}さんの投稿動画"
-        if isinstance(myshowname, Myshowname):
-            showname = f"「{myshowname.name}」-{username.name}さんのマイリスト"
+        match mylist_type:
+            case MylistType.uploaded:
+                # MylistType.uploaded のとき myshowname は無視される
+                showname = f"{username.name}さんの投稿動画"
+            case MylistType.mylist:
+                showname = f"「{myshowname.name}」-{username.name}さんのマイリスト"
+            case MylistType.series:
+                showname = f"「{myshowname.name}」-{username.name}さんのシリーズ"
+            case _:
+                raise ValueError("mylist_type is invalid MylistType.")
         return cls(showname)
 
 
@@ -78,7 +98,7 @@ if __name__ == "__main__":
 
     for username in usernames:
         try:
-            showname = Showname.create(Username(username))
+            showname = Showname.create(MylistType.uploaded, Username(username))
             print(showname)
         except (ValueError, TypeError) as e:
             print(e.args[0])
@@ -86,7 +106,15 @@ if __name__ == "__main__":
     for username in usernames:
         for myshowname in myshownames:
             try:
-                showname = Showname.create(Username(username), Myshowname(myshowname))
+                showname = Showname.create(MylistType.mylist, Username(username), Myshowname(myshowname))
+                print(showname)
+            except (ValueError, TypeError) as e:
+                print(e.args[0])
+
+    for username in usernames:
+        for myshowname in myshownames:
+            try:
+                showname = Showname.create(MylistType.series, Username(username), Myshowname(myshowname))
                 print(showname)
             except (ValueError, TypeError) as e:
                 print(e.args[0])

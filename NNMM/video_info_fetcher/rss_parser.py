@@ -6,7 +6,7 @@ from datetime import datetime
 
 import xmltodict
 
-from NNMM.util import find_values
+from NNMM.util import MylistType, find_values
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
 from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
@@ -64,14 +64,14 @@ class RSSParser:
         username = self._get_username()
         if isinstance(self.mylist_url, UploadedURL):
             myshowname = Myshowname("投稿動画")
-            showname = Showname.create(username, None)
+            showname = Showname.create(MylistType.uploaded, username, None)
             return (showname, myshowname)
         elif isinstance(self.mylist_url, UserMylistURL):
             # マイリストの場合はタイトルから取得
             page_title = find_values(self.xml_dict, "title", True, ["rss", "channel"], ["item"])
             pattern = "^マイリスト (.*)‐ニコニコ動画$"
             myshowname = Myshowname(re.findall(pattern, page_title)[0])
-            showname = Showname.create(username, myshowname)
+            showname = Showname.create(MylistType.mylist, username, myshowname)
             return (showname, myshowname)
         raise AttributeError("(showname, myshowname) parse failed.")
 

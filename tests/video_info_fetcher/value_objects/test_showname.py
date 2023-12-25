@@ -1,12 +1,8 @@
-"""Showname のテスト
-
-Showname の各種機能をテストする
-"""
-
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
+from NNMM.util import MylistType
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.showname import Showname
 from NNMM.video_info_fetcher.value_objects.username import Username
@@ -60,22 +56,22 @@ class TestShowname(unittest.TestCase):
         myshowname = Myshowname("テスト用マイリスト1")
 
         expect_showname = "投稿者1さんの投稿動画"
-        showname = Showname.create(username, None)
+        showname = Showname.create(MylistType.uploaded, username, None)
         self.assertEqual(expect_showname, showname.name)
 
         # マイリストのマイリスト表示名
         expect_showname = "「テスト用マイリスト1」-投稿者1さんのマイリスト"
-        showname = Showname.create(username, myshowname)
+        showname = Showname.create(MylistType.mylist, username, myshowname)
         self.assertEqual(expect_showname, showname.name)
 
         # 異常系
         # 入力がどちらもNone
-        with self.assertRaises(AttributeError):
-            showname = Showname.create(None, None)
+        with self.assertRaises(ValueError):
+            showname = Showname.create(MylistType.uploaded, None, None)
 
         # usernameのみNone
-        with self.assertRaises(AttributeError):
-            showname = Showname.create(None, myshowname)
+        with self.assertRaises(ValueError):
+            showname = Showname.create(MylistType.uploaded, None, myshowname)
 
 
 if __name__ == "__main__":
