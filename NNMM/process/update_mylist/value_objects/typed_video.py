@@ -2,16 +2,16 @@ from dataclasses import dataclass
 from typing import Any, Self
 
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from NNMM.process.update_mylist.value_objects.video_row_index import VideoRowIndex
+from NNMM.process.value_objects.table_row import Status
+from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
 from NNMM.video_info_fetcher.value_objects.title import Title
 from NNMM.video_info_fetcher.value_objects.uploaded_at import UploadedAt
-from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
 from NNMM.video_info_fetcher.value_objects.username import Username
-from NNMM.process.update_mylist.value_objects.video_row_index import VideoRowIndex
 from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
 from NNMM.video_info_fetcher.value_objects.videoid import Videoid
-from NNMM.process.value_objects.table_row import Status
 
 
 @dataclass(frozen=True)
@@ -24,7 +24,7 @@ class TypedVideo:
     uploaded_at: UploadedAt
     registered_at: RegisteredAt
     video_url: VideoURL
-    mylist_url: UserMylistURL | UploadedURL
+    mylist_url: MylistURL
     created_at: CreatedAt
 
     def __post_init__(self) -> None:
@@ -44,8 +44,8 @@ class TypedVideo:
             raise ValueError("registered_at must be RegisteredAt.")
         if not isinstance(self.video_url, VideoURL):
             raise ValueError("video_url must be VideoURL.")
-        if not isinstance(self.mylist_url, UserMylistURL | UploadedURL):
-            raise ValueError("mylist_url must be UserMylistURL | UploadedURL.")
+        if not isinstance(self.mylist_url, MylistURL):
+            raise ValueError("mylist_url must be MylistURL.")
         if not isinstance(self.created_at, CreatedAt):
             raise ValueError("created_at must be CreatedAt.")
 
@@ -81,7 +81,7 @@ class TypedVideo:
                     type_check(key, value, VideoURL)
                     kargs[key] = str(value.non_query_url)
                 case "mylist_url":
-                    type_check(key, value, UserMylistURL | UploadedURL)
+                    type_check(key, value, MylistURL)
                     kargs[key] = str(value.non_query_url)
                 case "created_at":
                     type_check(key, value, CreatedAt)
@@ -121,11 +121,7 @@ class TypedVideo:
         video_url = VideoURL.create(video_dict["video_url"])
         created_at = CreatedAt(video_dict["created_at"])
 
-        mylist_url = video_dict["mylist_url"]
-        try:
-            mylist_url = UploadedURL.create(mylist_url)
-        except Exception:
-            mylist_url = UserMylistURL.create(mylist_url)
+        mylist_url = MylistURLFactory.create(video_dict["mylist_url"])
 
         return TypedVideo(
             row_id,

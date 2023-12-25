@@ -7,10 +7,10 @@ from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
 from NNMM.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
 from NNMM.process.update_mylist.value_objects.updated_at import UpdatedAt
 from NNMM.util import IncludeNewStatus, MylistType
+from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.showname import Showname
-from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.username import Username
 
 
@@ -21,7 +21,7 @@ class TypedMylist:
     mylistname: Myshowname
     type: MylistType
     showname: Showname
-    url: UserMylistURL | UploadedURL
+    url: MylistURL
     created_at: CreatedAt
     updated_at: UpdatedAt
     checked_at: CheckedAt
@@ -39,8 +39,8 @@ class TypedMylist:
             raise ValueError("type must be MylistType.")
         if not isinstance(self.showname, Showname):
             raise ValueError("showname must be Showname.")
-        if not isinstance(self.url, UserMylistURL | UploadedURL):
-            raise ValueError("url must be UserMylistURL | UploadedURL.")
+        if not isinstance(self.url, MylistURL):
+            raise ValueError("url must be MylistURL.")
         if not isinstance(self.created_at, CreatedAt):
             raise ValueError("created_at must be CreatedAt.")
         if not isinstance(self.updated_at, UpdatedAt):
@@ -65,11 +65,7 @@ class TypedMylist:
         check_interval = CheckInterval.create(mylist_dict["check_interval"])
         is_include_new = IncludeNewStatus(mylist_dict["is_include_new"])
 
-        mylist_url = mylist_dict["url"]
-        try:
-            mylist_url = UploadedURL.create(mylist_url)
-        except Exception:
-            mylist_url = UserMylistURL.create(mylist_url)
+        mylist_url = MylistURLFactory.create(mylist_dict["url"])
 
         return TypedMylist(
             row_id,

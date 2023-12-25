@@ -1,8 +1,3 @@
-"""URL のテスト
-
-URL の各種機能をテストする
-"""
-
 import sys
 import unittest
 import urllib.parse
@@ -16,13 +11,16 @@ class TestURL(unittest.TestCase):
         urls = [
             "https://www.nicovideo.jp/user/11111111/video",
             "https://www.nicovideo.jp/user/22222222/video?ref=pc_mypage_nicorepo",
+            "https://www.nicovideo.jp/user/33333333/video?ref=pc_mypage_nicorepo#fragment=abc",
             "https://www.nicovideo.jp/user/11111111/mylist/00000011",
             "https://www.nicovideo.jp/user/11111111/mylist/00000012?ref=pc_mypage_nicorepo",
             "https://www.nicovideo.jp/user/33333333/mylist/00000031",
+            "Http://www.nicovideo.jp/user/11111111/mylist/00000011",
+            "ttp://www.nicovideo.jp/user/11111111/mylist/00000011",
         ]
         return urls
 
-    def test_URLInit(self):
+    def test_init(self):
         """URL の初期化後の状態をテストする"""
         # 正常系
         urls = self._get_url_set()
@@ -30,7 +28,14 @@ class TestURL(unittest.TestCase):
             url = URL(original_url)  # 文字列からの生成チェック
             url_in_url = URL(url)  # URLからの生成チェック
 
-            non_query_url = urllib.parse.urlunparse(urllib.parse.urlparse(original_url)._replace(query=None))
+            if original_url.startswith("H"):
+                original_url: str = "h" + original_url[1:]
+            if original_url.startswith("t"):
+                original_url: str = "h" + original_url
+
+            non_query_url = urllib.parse.urlunparse(
+                urllib.parse.urlparse(original_url)._replace(query=None, fragment=None)
+            )
             expect = non_query_url
             actual = url.non_query_url
             self.assertEqual(expect, actual)

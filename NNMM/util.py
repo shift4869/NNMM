@@ -16,6 +16,7 @@ class Result(enum.Enum):
 
 
 class MylistType(enum.Enum):
+    none = None
     uploaded = "uploaded"
     mylist = "mylist"
 

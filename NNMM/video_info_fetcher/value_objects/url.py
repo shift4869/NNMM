@@ -1,10 +1,10 @@
 import re
 import urllib.parse
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, Self
 
 
-@dataclass
+@dataclass(frozen=True)
 class URL:
     """URL
 
@@ -19,28 +19,36 @@ class URL:
         URL: URLを表すValueObject
     """
 
-    non_query_url: str  # クエリなしURL
-    original_url: ClassVar[str]  # もとのURL
+    original_url: str  # もとのURL
+    non_query_url: ClassVar[str]  # クエリなしURL
 
     URL_PATTERN = r"^https?://[a-zA-Z0-9_/:%#$&\?\(\)~\.=\+\-]+"
 
-    def __init__(self, url: "str | URL") -> None:
+    def __init__(self, url: str | Self) -> None:
         """初期化処理
 
         Args:
             url (str | URL): 対象となるURL文字列（候補）
         """
-        # 引数の型をstr に合わせる
+        # 引数の型を str に合わせる
         if isinstance(url, URL):
-            url = url.original_url
+            url: str = url.original_url
+
+        # 先頭が大文字のHから始まっていたら小文字にする
+        if url.startswith("H"):
+            url: str = "h" + url[1:]
+
+        # h抜きなら補完する
+        if url.startswith("t"):
+            url: str = "h" + url
 
         if not self.is_valid(url):
             raise ValueError("args is not URL string.")
 
         # クエリ除去
-        non_query_url = urllib.parse.urlunparse(urllib.parse.urlparse(str(url))._replace(query=None))
-        self.non_query_url = non_query_url
-        self.original_url = url
+        non_query_url = urllib.parse.urlunparse(urllib.parse.urlparse(str(url))._replace(query=None, fragment=None))
+        object.__setattr__(self, "non_query_url", non_query_url)
+        object.__setattr__(self, "original_url", url)
 
     @classmethod
     def is_valid(self, estimated_url: str) -> bool:

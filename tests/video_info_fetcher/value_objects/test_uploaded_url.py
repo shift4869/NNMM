@@ -8,8 +8,10 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
+from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
 from NNMM.video_info_fetcher.value_objects.url import URL
+from NNMM.video_info_fetcher.value_objects.userid import Userid
 
 
 class TestUploadedURL(unittest.TestCase):
@@ -20,18 +22,21 @@ class TestUploadedURL(unittest.TestCase):
         EXPECT_RSS_URL_SUFFIX = "?rss=2.0"
         url = URL("https://www.nicovideo.jp/user/1234567/video?ref=pc_mypage_nicorepo")
         uploaded_url = UploadedURL(url)
-        self.assertEqual(url, uploaded_url.url)
         self.assertEqual(url.non_query_url, uploaded_url.non_query_url)
         self.assertEqual(url.original_url, uploaded_url.original_url)
         self.assertEqual(url.non_query_url + EXPECT_RSS_URL_SUFFIX, uploaded_url.fetch_url)
-        self.assertEqual(url.non_query_url, uploaded_url.mylist_url)
+
+        non_query_url = uploaded_url.non_query_url
+        userid = re.findall(UploadedURL.UPLOADED_URL_PATTERN, non_query_url)[0]
+        self.assertEqual(Userid(userid), uploaded_url.userid)
+        self.assertEqual(Mylistid(""), uploaded_url.mylistid)
 
         # 異常系
         # インスタンス変数を後から変えようとする -> frozen違反
-        url = URL("https://www.nicovideo.jp/user/1234567/video")
+        url = "https://www.nicovideo.jp/user/1234567/video"
         with self.assertRaises(FrozenInstanceError):
             uploaded_url = UploadedURL(url)
-            uploaded_url.url = URL("https://www.nicovideo.jp/user/2345678/video")
+            uploaded_url.original_url = url + "FrozenError"
 
     def test_create(self):
         """create のテスト"""
@@ -44,7 +49,8 @@ class TestUploadedURL(unittest.TestCase):
         # URL
         url = URL("https://www.nicovideo.jp/user/1234567/video?ref=pc_mypage_nicorepo")
         uploaded_url = UploadedURL.create(url)
-        self.assertEqual(url, uploaded_url.url)
+        self.assertEqual(url.original_url, uploaded_url.original_url)
+        self.assertEqual(url.non_query_url, uploaded_url.non_query_url)
 
         # 異常系
         # URLを表す文字列でない（URLのエラー）
@@ -52,24 +58,24 @@ class TestUploadedURL(unittest.TestCase):
         with self.assertRaises(ValueError):
             uploaded_url = UploadedURL.create(url)
 
-    def test_is_valid(self):
-        """is_valid のテスト"""
+    def test_is_valid_mylist_url(self):
+        """is_valid_mylist_url のテスト"""
         # 正常系
         # 文字列
         url = "https://www.nicovideo.jp/user/1234567/video?ref=pc_mypage_nicorepo"
-        actual = UploadedURL.is_valid(url)
+        actual = UploadedURL.is_valid_mylist_url(url)
         self.assertEqual(True, actual)
 
         # URL
         url = URL("https://www.nicovideo.jp/user/1234567/video?ref=pc_mypage_nicorepo")
-        actual = UploadedURL.is_valid(url)
+        actual = UploadedURL.is_valid_mylist_url(url)
         self.assertEqual(True, actual)
 
         # 異常系
         # 投稿動画ページのURLでない
         url = "https://不正なURLアドレス/user/1234567/video"
-        with self.assertRaises(ValueError):
-            actual = UploadedURL.is_valid(url)
+        actual = UploadedURL.is_valid_mylist_url(url)
+        self.assertEqual(False, actual)
 
 
 if __name__ == "__main__":

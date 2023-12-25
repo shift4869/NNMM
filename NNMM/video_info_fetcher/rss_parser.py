@@ -8,6 +8,8 @@ import xmltodict
 
 from NNMM.util import find_values
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
+from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
@@ -26,20 +28,17 @@ from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 @dataclass
 class RSSParser:
-    mylist_url: UploadedURL | UserMylistURL
+    mylist_url: MylistURL
     xml_dict: dict
 
     SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
     DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
     def __init__(self, url: str, xml_text: str) -> None:
-        if UploadedURL.is_valid(url):
-            self.mylist_url = UploadedURL.create(url)
-        elif UserMylistURL.is_valid(url):
-            self.mylist_url = UserMylistURL.create(url)
+        self.mylist_url = MylistURLFactory.create(url)
         self.xml_dict = xmltodict.parse(xml_text)
 
-    def _get_mylist_url(self) -> UploadedURL | UserMylistURL:
+    def _get_mylist_url(self) -> MylistURL:
         """マイリストURL"""
         return self.mylist_url
 

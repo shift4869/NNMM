@@ -8,13 +8,13 @@ import unittest
 from dataclasses import FrozenInstanceError
 
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
 from NNMM.video_info_fetcher.value_objects.showname import Showname
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
 from NNMM.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.userid import Userid
 from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
 from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
@@ -94,7 +94,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
                 uploaded_at.dt_str,
                 registered_at.dt_str,
                 video_url.video_url,
-                mylist_url.mylist_url,
+                mylist_url.non_query_url,
                 showname.name,
                 myshowname.name,
             ]
@@ -421,7 +421,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
                 uploaded_at.dt_str,
                 registered_at.dt_str,
                 video_url.video_url,
-                mylist_url.mylist_url,
+                mylist_url.non_query_url,
                 showname.name,
                 myshowname.name,
             ]
@@ -457,7 +457,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
                 uploaded_at.dt_str,
                 registered_at.dt_str,
                 video_url.video_url,
-                mylist_url.mylist_url,
+                mylist_url.non_query_url,
                 showname.name,
                 myshowname.name,
             ]

@@ -17,13 +17,14 @@ from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
 from NNMM.video_info_fetcher.value_objects.showname import Showname
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
 from NNMM.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.username import Username
 from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
 from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
@@ -309,14 +310,14 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         registered_at_list = [video_info["registered_at"] for video_info in video_info_list]
         video_url_list = [video_info["video_url"] for video_info in video_info_list]
 
-        if UploadedURL.is_valid(url):
+        if UploadedURL.is_valid_mylist_url(url):
             mylist_url = UploadedURL.create(url)
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
             username = Username(mylist_info[2])
             myshowname = Myshowname("投稿動画")
             showname = Showname.create(username, None)
-        elif UserMylistURL.is_valid(url):
+        elif UserMylistURL.is_valid_mylist_url(url):
             mylist_url = UserMylistURL.create(url)
             userid = mylist_url.userid
             mylistid = mylist_url.mylistid
@@ -465,12 +466,7 @@ class TestVideoInfoRssFetcher(unittest.TestCase):
         urls = self._get_url_set()
         for url in urls:
             virf = VideoInfoRssFetcher(url)
-
-            if UploadedURL.is_valid(url):
-                expect_mylist_url = UploadedURL.create(url)
-            elif UserMylistURL.is_valid(url):
-                expect_mylist_url = UserMylistURL.create(url)
-
+            expect_mylist_url = MylistURLFactory.create(url)
             self.assertEqual(expect_mylist_url, virf.mylist_url)
             self.assertEqual(source_type, virf.source_type)
 

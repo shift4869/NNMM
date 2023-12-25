@@ -10,7 +10,7 @@ import xmltodict
 from NNMM.video_info_fetcher.rss_parser import RSSParser
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.item_info import ItemInfo
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
@@ -19,6 +19,7 @@ from NNMM.video_info_fetcher.value_objects.title import Title
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
 from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
 from NNMM.video_info_fetcher.value_objects.url import URL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.username import Username
 from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
 from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
@@ -130,10 +131,7 @@ class TestRSSParser(unittest.TestCase):
             xml_dict = xmltodict.parse(xml)
             rp = RSSParser(url, xml)
 
-            if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.create(url)
-            elif UserMylistURL.is_valid(url):
-                mylist_url = UserMylistURL.create(url)
+            mylist_url = MylistURLFactory.create(url)
 
             self.assertEqual(mylist_url, rp.mylist_url)
             self.assertEqual(xml_dict, rp.xml_dict)
@@ -156,10 +154,7 @@ class TestRSSParser(unittest.TestCase):
         """_get_userid_mylistid のテスト"""
         urls = self._get_url_set()
         for url in urls:
-            if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.create(url)
-            elif UserMylistURL.is_valid(url):
-                mylist_url = UserMylistURL.create(url)
+            mylist_url = MylistURLFactory.create(url)
             xml = self._make_xml(url)
 
             rp = RSSParser(URL(url).non_query_url, xml)
@@ -245,8 +240,8 @@ class TestRSSParser(unittest.TestCase):
 
             rp = RSSParser(URL(url).non_query_url, xml)
 
-            if UploadedURL.is_valid(url):
-                mylist_url = UploadedURL.create(url)
+            if UploadedURL.is_valid_mylist_url(url):
+                mylist_url = UploadedURL.create(URL(url).non_query_url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid  # 投稿動画の場合、マイリストIDは空文字列
 
@@ -256,8 +251,8 @@ class TestRSSParser(unittest.TestCase):
 
                 myshowname = Myshowname("投稿動画")
                 showname = Showname.create(username, None)
-            elif UserMylistURL.is_valid(url):
-                mylist_url = UserMylistURL.create(url)
+            elif UserMylistURL.is_valid_mylist_url(url):
+                mylist_url = UserMylistURL.create(URL(url).non_query_url)
                 userid = mylist_url.userid
                 mylistid = mylist_url.mylistid
 

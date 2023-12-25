@@ -3,15 +3,14 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Any, Self
 
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
 from NNMM.video_info_fetcher.value_objects.title import Title
 from NNMM.video_info_fetcher.value_objects.uploaded_at import UploadedAt
-from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
 from NNMM.video_info_fetcher.value_objects.username import Username
 from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
 from NNMM.video_info_fetcher.value_objects.videoid import Videoid
-from NNMM.util import MylistType, get_mylist_type
 
 
 class Status(enum.Enum):
@@ -43,7 +42,7 @@ class TableRow:
     uploaded_at: UploadedAt
     registered_at: RegisteredAt
     video_url: VideoURL
-    mylist_url: UserMylistURL | UploadedURL
+    mylist_url: MylistURL
 
     COLS_NAME = ["No.", "動画ID", "動画名", "投稿者", "状況", "投稿日時", "登録日時", "動画URL", "所属マイリストURL"]
 
@@ -64,8 +63,8 @@ class TableRow:
             raise ValueError("registered_at must be RegisteredAt.")
         if not isinstance(self.video_url, VideoURL):
             raise ValueError("video_url must be VideoURL.")
-        if not isinstance(self.mylist_url, UserMylistURL | UploadedURL):
-            raise ValueError("mylist_url must be UserMylistURL.")
+        if not isinstance(self.mylist_url, MylistURL):
+            raise ValueError("mylist_url must be MylistURL.")
 
         # 行番号は1ベース
         if self.row_number < 1:
@@ -149,7 +148,7 @@ class TableRow:
                     type_check(key, value, VideoURL)
                     kargs[key] = str(value.non_query_url)
                 case "mylist_url":
-                    type_check(key, value, UserMylistURL | UploadedURL)
+                    type_check(key, value, MylistURL)
                     kargs[key] = str(value.non_query_url)
                 case invalid_key:
                     raise ValueError(f"'{invalid_key}' is not TableRow's attribute.")
@@ -185,12 +184,7 @@ class TableRow:
 
         table_row_tuple = TableRowTuple._make(row)
 
-        mylist_url = table_row_tuple.mylist_url
-        url_type = get_mylist_type(mylist_url)
-        if url_type == MylistType.uploaded:
-            mylist_url = UploadedURL.create(mylist_url)
-        elif url_type == MylistType.mylist:
-            mylist_url = UserMylistURL.create(mylist_url)
+        mylist_url = MylistURLFactory.create(table_row_tuple.mylist_url)
 
         return cls(
             int(table_row_tuple.row_index),

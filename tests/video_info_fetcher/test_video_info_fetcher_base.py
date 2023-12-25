@@ -10,12 +10,13 @@ from urllib.parse import urlparse
 from mock import AsyncMock, MagicMock, patch
 
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.title import Title
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
 from NNMM.video_info_fetcher.value_objects.uploaded_at import UploadedAt
 from NNMM.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.username import Username
 from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
 from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
@@ -66,13 +67,8 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
         urls = self._get_url_set()
         for url in urls:
             cvif = ConcreteVideoInfoFetcher(url)
-
-            if UploadedURL.is_valid(url):
-                expect_url = UploadedURL.create(url)
-            elif UserMylistURL.is_valid(url):
-                expect_url = UserMylistURL.create(url)
-
-            self.assertEqual(expect_url, cvif.url)
+            expect_url = MylistURLFactory.create(url)
+            self.assertEqual(expect_url, cvif.mylist_url)
             self.assertEqual(source_type, cvif.source_type)
 
             API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
@@ -107,7 +103,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             url = self._get_url_set()[0]
             cvif = ConcreteVideoInfoFetcher(url)
-            request_url = cvif.url.non_query_url
+            request_url = cvif.mylist_url.non_query_url
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
             actual = loop.run_until_complete(cvif._get_session_response(request_url))

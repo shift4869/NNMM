@@ -13,13 +13,12 @@ import xmltodict
 
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.title import Title
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
 from NNMM.video_info_fetcher.value_objects.uploaded_at import UploadedAt
 from NNMM.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
-from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
-from NNMM.video_info_fetcher.value_objects.url import URL
 from NNMM.video_info_fetcher.value_objects.username import Username
 from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
 from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
@@ -40,17 +39,14 @@ class SourceType(Enum):
 
 @dataclass
 class VideoInfoFetcherBase(ABC):
-    url: URL
+    mylist_url: MylistURL
     source_type: SourceType
 
     API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
     MAX_RETRY_NUM = 5
 
     def __init__(self, url: str, source_type: SourceType):
-        if UploadedURL.is_valid(url):
-            self.url = UploadedURL.create(url)
-        elif UserMylistURL.is_valid(url):
-            self.url = UserMylistURL.create(url)
+        self.mylist_url = MylistURLFactory.create(url)
         self.source_type = source_type
 
     async def _get_session_response(self, request_url: str) -> httpx.Response | None:
