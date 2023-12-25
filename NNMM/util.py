@@ -160,6 +160,9 @@ def get_mylist_type(url: str) -> MylistType | None:
     pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
     if re.search(pattern, url):
         return MylistType.mylist
+    pattern = "^https://www.nicovideo.jp/user/([0-9]+)/series/([0-9]+)$"
+    if re.search(pattern, url):
+        return MylistType.series
     return None
 
 

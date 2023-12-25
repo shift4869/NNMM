@@ -29,6 +29,7 @@ class TestCreateMylist(unittest.TestCase):
             "https://www.nicovideo.jp/user/11111111/mylist/00000011",
             "https://www.nicovideo.jp/user/11111111/mylist/00000012",
             "https://www.nicovideo.jp/user/33333333/mylist/00000031",
+            "https://www.nicovideo.jp/user/11111111/series/00000011",
         ]
         return url_info
 
@@ -40,6 +41,7 @@ class TestCreateMylist(unittest.TestCase):
             mylist_url_info[2]: ("「マイリスト1」-投稿者1さんのマイリスト", "マイリスト1", "投稿者1"),
             mylist_url_info[3]: ("「マイリスト2」-投稿者1さんのマイリスト", "マイリスト2", "投稿者1"),
             mylist_url_info[4]: ("「マイリスト3」-投稿者3さんのマイリスト", "マイリスト3", "投稿者3"),
+            mylist_url_info[5]: ("「マイリスト1」-投稿者1さんのシリーズ", "マイリスト1", "投稿者1"),
         }
         res = mylist_info.get(mylist_url, ("", "", ""))
         return res
@@ -51,18 +53,18 @@ class TestCreateMylist(unittest.TestCase):
     def test_CreateMylist_make_layout(self):
         instance = CreateMylist(self.process_info)
 
-        def make_layout(s_url_type, s_mylist_url, s_window_title):
+        def make_layout(s_mylist_type, s_mylist_url, s_window_title):
             horizontal_line = "-" * 132
             csize = (20, 1)
             tsize = (50, 1)
             cf = []
-            if s_url_type == "uploaded":
+            if s_mylist_type == MylistType.uploaded:
                 cf = [
                     [sg.Text(horizontal_line)],
                     [sg.Text("URL", size=csize), sg.Input(s_mylist_url, key="-URL-", readonly=True, size=tsize)],
                     [
                         sg.Text("URLタイプ", size=csize),
-                        sg.Input(s_url_type, key="-URL_TYPE-", readonly=True, size=tsize),
+                        sg.Input(s_mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
                     ],
                     [
                         sg.Text("ユーザー名", size=csize),
@@ -71,13 +73,13 @@ class TestCreateMylist(unittest.TestCase):
                     [sg.Text(horizontal_line)],
                     [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
                 ]
-            elif s_url_type == "mylist":
+            elif s_mylist_type == MylistType.mylist:
                 cf = [
                     [sg.Text(horizontal_line)],
                     [sg.Text("URL", size=csize), sg.Input(s_mylist_url, key="-URL-", readonly=True, size=tsize)],
                     [
                         sg.Text("URLタイプ", size=csize),
-                        sg.Input(s_url_type, key="-URL_TYPE-", readonly=True, size=tsize),
+                        sg.Input(s_mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
                     ],
                     [
                         sg.Text("ユーザー名", size=csize),
@@ -86,6 +88,25 @@ class TestCreateMylist(unittest.TestCase):
                     [
                         sg.Text("マイリスト名", size=csize),
                         sg.Input("", key="-MYLISTNAME-", background_color="light goldenrod", size=tsize),
+                    ],
+                    [sg.Text(horizontal_line)],
+                    [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
+                ]
+            elif s_mylist_type == MylistType.series:
+                cf = [
+                    [sg.Text(horizontal_line)],
+                    [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
+                    [
+                        sg.Text("URLタイプ", size=csize),
+                        sg.Input(s_mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
+                    ],
+                    [
+                        sg.Text("ユーザー名", size=csize),
+                        sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
+                    ],
+                    [
+                        sg.Text("シリーズ名", size=csize),
+                        sg.Input("", key="-SERIESNAME-", background_color="light goldenrod", size=tsize),
                     ],
                     [sg.Text(horizontal_line)],
                     [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
@@ -124,8 +145,10 @@ class TestCreateMylist(unittest.TestCase):
         window_title = "登録情報入力"
         mylist_url = self._get_mylist_url_list()[0]
         params_list = [
-            ("uploaded", mylist_url, window_title),
-            ("mylist", mylist_url, window_title),
+            (MylistType.uploaded, mylist_url, window_title),
+            (MylistType.mylist, mylist_url, window_title),
+            (MylistType.series, mylist_url, window_title),
+            (None, mylist_url, window_title),
         ]
         for params in params_list:
             actual = instance.make_layout(params[0], params[1], params[2])
@@ -140,7 +163,6 @@ class TestCreateMylist(unittest.TestCase):
             mock_get_config = stack.enter_context(
                 patch("NNMM.process.create_mylist.process_config.ConfigBase.get_config")
             )
-            mock_get_mylist_type = stack.enter_context(patch("NNMM.process.create_mylist.get_mylist_type"))
             mock_get_now_datetime = stack.enter_context(patch("NNMM.process.create_mylist.get_now_datetime"))
             mock_popup_get_text = stack.enter_context(patch("NNMM.process.create_mylist.popup_get_text"))
             mock_window = stack.enter_context(patch("NNMM.process.create_mylist.sg.Window"))
@@ -163,12 +185,6 @@ class TestCreateMylist(unittest.TestCase):
                 mock_popup_get_text.reset_mock()
                 mock_popup_get_text.return_value = s_mylist_url
 
-                mock_get_mylist_type.reset_mock()
-                if isinstance(s_url_type, MylistType):
-                    mock_get_mylist_type.side_effect = get_mylist_type
-                else:
-                    mock_get_mylist_type.side_effect = lambda mylist_url: None
-
                 mock_select_from_url.reset_mock()
                 mock_select_from_url.side_effect = lambda mylist_url: s_prev_mylist
                 instance.mylist_db.reset_mock()
@@ -183,6 +199,7 @@ class TestCreateMylist(unittest.TestCase):
                 values = {
                     "-USERNAME-": s_username,
                     "-MYLISTNAME-": s_mylistname,
+                    "-SERIESNAME-": s_mylistname,
                 }
                 mock_read.read = lambda: (window_button_value, values)
                 mock_window.return_value = mock_read
@@ -196,20 +213,21 @@ class TestCreateMylist(unittest.TestCase):
                 s_mylistname,
                 window_button_value,
             ):
-                sample_url1 = "https://www.nicovideo.jp/user/*******/video"
-                sample_url2 = "https://www.nicovideo.jp/user/*******/mylist/********"
-                message = f"追加する マイリスト/ 投稿動画一覧 のURLを入力\n{sample_url1}\n{sample_url2}"
+                sample_url_list = [
+                    "https://www.nicovideo.jp/user/*******/video",
+                    "https://www.nicovideo.jp/user/*******/mylist/********",
+                    "https://www.nicovideo.jp/user/*******/series/********",
+                ]
+                message = f"追加するマイリストのURLを入力\n{'\n'.join(sample_url_list)}"
                 mock_popup_get_text.assert_called_once_with(message, title="追加URL")
 
                 if s_mylist_url == "":
-                    mock_get_mylist_type.assert_not_called()
                     mock_select_from_url.assert_not_called()
                     mock_get_config.assert_not_called()
                     mock_window.assert_not_called()
                     return
 
-                mock_get_mylist_type.assert_called_once_with(s_mylist_url)
-                if s_url_type == "":
+                if s_mylist_url == "invalid":
                     mock_select_from_url.assert_not_called()
                     mock_get_config.assert_not_called()
                     mock_window.assert_not_called()
@@ -265,6 +283,11 @@ class TestCreateMylist(unittest.TestCase):
                     mylistname = s_mylistname
                     showname = f"「{mylistname}」-{username}さんのマイリスト"
                     is_include_new = False
+                elif url_type == MylistType.series:
+                    username = s_username
+                    mylistname = s_mylistname
+                    showname = f"「{mylistname}」-{username}さんのシリーズ"
+                    is_include_new = False
                 self.assertEqual(
                     [
                         call.select_from_url(s_mylist_url),
@@ -273,9 +296,9 @@ class TestCreateMylist(unittest.TestCase):
                             id_index,
                             username,
                             mylistname,
-                            url_type,
+                            url_type.value,
                             showname,
-                            mylist_url,
+                            s_mylist_url,
                             dst,
                             dst,
                             dst,
@@ -306,7 +329,16 @@ class TestCreateMylist(unittest.TestCase):
                     ),
                     (mylist_url, url_type, prev_mylist, "10分毎", username, mylistname, "-REGISTER-", Result.success),
                     ("", url_type, prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
-                    (mylist_url, "", prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
+                    (
+                        "invalid",
+                        url_type,
+                        prev_mylist,
+                        "(使用しない)",
+                        username,
+                        mylistname,
+                        "-REGISTER-",
+                        Result.failed,
+                    ),
                     (
                         mylist_url,
                         url_type,
@@ -319,7 +351,6 @@ class TestCreateMylist(unittest.TestCase):
                     ),
                     (mylist_url, url_type, prev_mylist, "invalid", username, mylistname, "-REGISTER-", Result.failed),
                     (mylist_url, url_type, prev_mylist, "(使用しない)", "", mylistname, "-REGISTER-", Result.failed),
-                    # (mylist_url, url_type, prev_mylist, "(使用しない)", username, "", "-REGISTER-", Result.failed),
                     (
                         mylist_url,
                         url_type,

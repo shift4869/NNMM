@@ -29,7 +29,6 @@ class SeriesURL(MylistURL):
 
     # 対象URLのパターン
     SERIES_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/series/([0-9]+)$"
-
     # シリーズ取得APIのベースURL
     SERIES_API_BASE_URL = "https://nvapi.nicovideo.jp/v1/series/"
 
@@ -66,6 +65,15 @@ class SeriesURL(MylistURL):
         return Mylistid(seriesid)
 
     def _make_action_track_id(self) -> str:
+        """actionTrackId を作成する
+
+        actionTrackIdについて
+            10桁のアルファベット小文字大文字数字と、
+            24桁の数字をアンダースコアで接続する
+
+        Returns:
+            str: actionTrackId
+        """
         first_charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         last_charset = "0123456789"
         first_str = "".join(random.choices(first_charset, k=10))
@@ -79,14 +87,7 @@ class SeriesURL(MylistURL):
         https://github.com/castella-cake/niconico-peppermint-extension/blob/fd09ba26287f703c83d815e21c6775d3fe76b244/src/js/background.js#L83
 
         シリーズ取得のAPI
-        https://www.nicovideo.jp/user/12899156/series/442402
-        https://nvapi.nicovideo.jp/v1/series/407241?_frontendId=6&_frontendVersion=0&actionTrackId=abcdefghij_012345678901234567891234
-        actionTrackIdについて
-          10桁のアルファベット小文字大文字数字
-          24桁の数字をアンダースコアで接続
-          abcdefghij_012345678901234567891234
-        _frontendId=6
-        _frontendVersion=0 は固定？
+        https://nvapi.nicovideo.jp/v1/series/{series_id}?_frontendId=6&_frontendVersion=0&actionTrackId={action_track_id}
         """
         mylistid = self.mylistid
         base_url = self.SERIES_API_BASE_URL + mylistid.id
@@ -105,15 +106,15 @@ class SeriesURL(MylistURL):
     def is_valid_mylist_url(cls, url: str | URL) -> bool:
         """シリーズURLのパターンかどうかを返す
 
-        このメソッドがTrueならばSeriesURL インスタンスが作成できる
-        また、このメソッドがTrueならば引数のurl がSeriesURL の形式であることが判別できる
+        このメソッドがTrueならば SeriesURL インスタンスが作成できる
+        また、このメソッドがTrueならば引数の url が SeriesURL の形式であることが判別できる
         (v.v.)
 
         Args:
             url (str | URL): チェック対象のURLを表す文字列 or URL
 
         Returns:
-            bool: 引数がSeriesURL.SERIES_URL_PATTERN パターンに則っているならばTrue,
+            bool: 引数が SeriesURL.SERIES_URL_PATTERN パターンに則っているならばTrue,
                   そうでないならFalse
         """
         try:
@@ -151,6 +152,5 @@ if __name__ == "__main__":
         if SeriesURL.is_valid_mylist_url(url):
             u = SeriesURL.create(url)
             print(u)
-            print(u.fetch_url)
         else:
             print("Not Target URL : " + url)
