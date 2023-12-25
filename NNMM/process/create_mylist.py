@@ -9,6 +9,7 @@ from NNMM.process import config as process_config
 from NNMM.process.base import ProcessBase
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import MylistType, Result, get_mylist_type, get_now_datetime, popup_get_text
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -18,18 +19,19 @@ class CreateMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def make_layout(
-        self, url_type: Literal["uploaded", "mylist"], mylist_url: str, window_title: str
-    ) -> list[list[sg.Frame]]:
+    def make_layout(self, mylist_type: MylistType, mylist_url: str, window_title: str) -> list[list[sg.Frame]]:
         horizontal_line = "-" * 132
         csize = (20, 1)
         tsize = (50, 1)
         cf = []
-        if url_type == "uploaded":
+        if mylist_type == MylistType.uploaded:
             cf = [
                 [sg.Text(horizontal_line)],
                 [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
-                [sg.Text("URLタイプ", size=csize), sg.Input(url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
+                [
+                    sg.Text("URLタイプ", size=csize),
+                    sg.Input(mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
+                ],
                 [
                     sg.Text("ユーザー名", size=csize),
                     sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
@@ -37,11 +39,14 @@ class CreateMylist(ProcessBase):
                 [sg.Text(horizontal_line)],
                 [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
             ]
-        elif url_type == "mylist":
+        elif mylist_type == MylistType.mylist:
             cf = [
                 [sg.Text(horizontal_line)],
                 [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
-                [sg.Text("URLタイプ", size=csize), sg.Input(url_type, key="-URL_TYPE-", readonly=True, size=tsize)],
+                [
+                    sg.Text("URLタイプ", size=csize),
+                    sg.Input(mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
+                ],
                 [
                     sg.Text("ユーザー名", size=csize),
                     sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
@@ -49,6 +54,25 @@ class CreateMylist(ProcessBase):
                 [
                     sg.Text("マイリスト名", size=csize),
                     sg.Input("", key="-MYLISTNAME-", background_color="light goldenrod", size=tsize),
+                ],
+                [sg.Text(horizontal_line)],
+                [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
+            ]
+        elif mylist_type == MylistType.series:
+            cf = [
+                [sg.Text(horizontal_line)],
+                [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
+                [
+                    sg.Text("URLタイプ", size=csize),
+                    sg.Input(mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
+                ],
+                [
+                    sg.Text("ユーザー名", size=csize),
+                    sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
+                ],
+                [
+                    sg.Text("シリーズ名", size=csize),
+                    sg.Input("", key="-SERIESNAME-", background_color="light goldenrod", size=tsize),
                 ],
                 [sg.Text(horizontal_line)],
                 [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
@@ -67,9 +91,12 @@ class CreateMylist(ProcessBase):
         logger.info("Create mylist start.")
 
         # 追加するマイリストURLをユーザーに問い合わせる
-        sample_url1 = "https://www.nicovideo.jp/user/*******/video"
-        sample_url2 = "https://www.nicovideo.jp/user/*******/mylist/********"
-        message = f"追加する マイリスト/ 投稿動画一覧 のURLを入力\n{sample_url1}\n{sample_url2}"
+        sample_url_list = [
+            "https://www.nicovideo.jp/user/*******/video",
+            "https://www.nicovideo.jp/user/*******/mylist/********",
+            "https://www.nicovideo.jp/user/*******/series/********",
+        ]
+        message = f"追加するマイリストのURLを入力\n{'\n'.join(sample_url_list)}"
         mylist_url = popup_get_text(message, title="追加URL")
 
         # キャンセルされた場合
@@ -77,21 +104,21 @@ class CreateMylist(ProcessBase):
             logger.info("Create mylist canceled.")
             return Result.failed
 
-        # クエリ除去
-        mylist_url = urllib.parse.urlunparse(urllib.parse.urlparse(mylist_url)._replace(query=None, fragment=None))
-
         # 入力されたurlが対応したタイプでない場合何もしない
-        url_type = get_mylist_type(mylist_url)
-        if not url_type:
+        try:
+            mylist_url = MylistURLFactory.create(mylist_url)
+        except Exception:
             sg.popup("入力されたURLには対応していません\n新規追加処理を終了します", title="")
             logger.info(f"Create mylist failed, '{mylist_url}' is invalid url.")
             return Result.failed
+        non_query_url = mylist_url.non_query_url
+        mylist_type = mylist_url.mylist_type
 
         # 既存マイリストと重複していた場合何もしない
-        prev_mylist = self.mylist_db.select_from_url(mylist_url)
+        prev_mylist = self.mylist_db.select_from_url(non_query_url)
         if prev_mylist:
             sg.popup("既存マイリスト一覧に含まれています\n新規追加処理を終了します", title="")
-            logger.info(f"Create mylist canceled, '{mylist_url}' is already included.")
+            logger.info(f"Create mylist canceled, '{non_query_url}' is already included.")
             return Result.failed
 
         # マイリスト情報収集開始
@@ -119,7 +146,7 @@ class CreateMylist(ProcessBase):
         showname = ""
         is_include_new = False
 
-        layout = self.make_layout(url_type.value, mylist_url, window_title)
+        layout = self.make_layout(mylist_type, non_query_url, window_title)
         window = sg.Window(title=window_title, layout=layout, auto_size_text=True, finalize=True)
         window["-USERNAME-"].set_focus(True)
         button, values = window.read()
@@ -129,15 +156,20 @@ class CreateMylist(ProcessBase):
             logger.info("Create mylist canceled.")
             return Result.failed
         else:
-            if url_type == MylistType.uploaded:
+            if mylist_type == MylistType.uploaded:
                 username = values["-USERNAME-"]
                 mylistname = "投稿動画"
                 showname = f"{username}さんの投稿動画"
                 is_include_new = False
-            elif url_type == MylistType.mylist:
+            elif mylist_type == MylistType.mylist:
                 username = values["-USERNAME-"]
                 mylistname = values["-MYLISTNAME-"]
                 showname = f"「{mylistname}」-{username}さんのマイリスト"
+                is_include_new = False
+            elif mylist_type == MylistType.series:
+                username = values["-USERNAME-"]
+                mylistname = values["-SERIESNAME-"]
+                showname = f"「{mylistname}」-{username}さんのシリーズ"
                 is_include_new = False
 
         # ユーザー入力値が不正の場合は登録しない
@@ -155,9 +187,9 @@ class CreateMylist(ProcessBase):
             id_index,
             username,
             mylistname,
-            url_type,
+            mylist_type.value,
             showname,
-            mylist_url,
+            non_query_url,
             dst,
             dst,
             dst,
@@ -166,7 +198,7 @@ class CreateMylist(ProcessBase):
         )
 
         # 後続処理へ
-        self.window["-INPUT1-"].update(value=mylist_url)
+        self.window["-INPUT1-"].update(value=non_query_url)
         self.window["-INPUT2-"].update(value="マイリスト追加完了")
         self.window.write_event_value("-CREATE_THREAD_DONE-", "")
         return Result.success

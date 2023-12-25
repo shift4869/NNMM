@@ -1,11 +1,12 @@
 from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
+from NNMM.video_info_fetcher.value_objects.series_url import SeriesURL
 from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
 from NNMM.video_info_fetcher.value_objects.url import URL
 from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 
 
 class MylistURLFactory:
-    _class_list: list = [UploadedURL, UserMylistURL]
+    _class_list: list[MylistURL] = [UploadedURL, UserMylistURL, SeriesURL]
 
     def __init__(self) -> None:
         pass

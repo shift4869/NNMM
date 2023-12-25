@@ -1,8 +1,8 @@
 import re
 from dataclasses import dataclass
 from typing import ClassVar, Self
-from NNMM.util import MylistType
 
+from NNMM.util import MylistType
 from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.url import URL

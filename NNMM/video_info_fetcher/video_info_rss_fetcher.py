@@ -18,10 +18,6 @@ logger.setLevel(INFO)
 
 @dataclass
 class VideoInfoRssFetcher(VideoInfoFetcherBase):
-    # 日付フォーマット
-    SOURCE_DATETIME_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
-    DESTINATION_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
     def __init__(self, url: str):
         super().__init__(url, SourceType.RSS)
 

@@ -47,6 +47,8 @@ class MylistRow(Showname):
             showname: str = showname.name
         if showname == "":
             raise ValueError(f"showname must be non-empty.")
+        if showname.startswith(cls.NEW_MARK):
+            showname: str = str(showname[len(cls.NEW_MARK) :])
         return cls(showname)
 
 
