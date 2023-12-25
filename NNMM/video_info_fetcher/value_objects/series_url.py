@@ -28,7 +28,7 @@ class SeriesURL(MylistURL):
     non_query_url: ClassVar[str]
 
     # 対象URLのパターン
-    SERIES_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/series/([0-9]+)$"
+    SERIES_URL_PATTERN = r"^https://www.nicovideo.jp/user/([0-9]+)/series/([0-9]+)$"
     # シリーズ取得APIのベースURL
     SERIES_API_BASE_URL = "https://nvapi.nicovideo.jp/v1/series/"
 
