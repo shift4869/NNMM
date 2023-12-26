@@ -66,16 +66,16 @@ class TestFetcher(unittest.TestCase):
         with ExitStack() as stack:
             mock_logger = stack.enter_context(patch("NNMM.process.update_mylist.fetcher.logger.info"))
             mock_fetch_videoinfo = stack.enter_context(
-                patch("NNMM.process.update_mylist.fetcher.VideoInfoRssFetcher.fetch_videoinfo")
+                patch("NNMM.process.update_mylist.fetcher.VideoInfoFetcher.fetch_videoinfo")
             )
-            mock_fetch_videoinfo.side_effect = lambda url: "VideoInfoRssFetcher.fetch_videoinfo()"
+            mock_fetch_videoinfo.side_effect = lambda url: "VideoInfoFetcher.fetch_videoinfo()"
             mylist_with_video_list = MagicMock(spec=MylistWithVideoList)
             instance = Fetcher(mylist_with_video_list, self.process_info)
 
             mylist_url = "https://www.nicovideo.jp/user/1111111/mylist/10000001"
             all_index_num = 2
             actual = instance.execute_worker(mylist_url, all_index_num)
-            expect = "VideoInfoRssFetcher.fetch_videoinfo()"
+            expect = "VideoInfoFetcher.fetch_videoinfo()"
             self.assertEqual(expect, actual)
 
             self.assertEqual([call(mylist_url)], mock_fetch_videoinfo.mock_calls)
