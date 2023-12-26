@@ -24,16 +24,12 @@ class Showname:
 
     _name: str  # マイリスト表示名
 
-    # 以下のどちらかの形式のみ受け付ける
+    # 以下のいずれかの形式のみ受け付ける
     UPLOADED_PATTERN = "^(.*)さんの投稿動画$"  # {username}さんの投稿動画
     MYLIST_PATTERN = "^「(.*)」-(.*)さんのマイリスト$"  # 「{myshowname}」-{username}さんのマイリスト
     SERIES_PATTERN = "^「(.*)」-(.*)さんのシリーズ$"  # 「{myshowname}」-{username}さんのシリーズ
 
     def __post_init__(self) -> None:
-        """初期化後処理
-
-        バリデーションのみ
-        """
         PATTERN_LIST = [self.UPLOADED_PATTERN, self.MYLIST_PATTERN, self.SERIES_PATTERN]
         if not isinstance(self._name, str):
             raise TypeError("name is not string, invalid Showname.")

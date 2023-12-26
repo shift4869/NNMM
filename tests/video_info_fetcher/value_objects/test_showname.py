@@ -1,5 +1,6 @@
 import sys
 import unittest
+from collections import namedtuple
 from dataclasses import FrozenInstanceError
 
 from NNMM.util import MylistType
@@ -9,11 +10,10 @@ from NNMM.video_info_fetcher.value_objects.username import Username
 
 
 class TestShowname(unittest.TestCase):
-    def test_ShownameInit(self):
-        """Showname の初期化後の状態をテストする"""
-        # 正常系
+    def test_init(self):
         EXPECT_UPLOADED_PATTERN = "^(.*)さんの投稿動画$"
         EXPECT_MYLIST_PATTERN = "^「(.*)」-(.*)さんのマイリスト$"
+        EXPECT_SERIES_PATTERN = "^「(.*)」-(.*)さんのシリーズ$"
 
         # 投稿動画のマイリスト表示名パターン
         showname_str = "投稿者1さんの投稿動画"
@@ -26,6 +26,12 @@ class TestShowname(unittest.TestCase):
         showname = Showname(showname_str)
         self.assertEqual(showname_str, showname._name)
         self.assertEqual(EXPECT_MYLIST_PATTERN, Showname.MYLIST_PATTERN)
+
+        # シリーズのマイリスト表示名パターン
+        showname_str = "「テスト用シリーズ1」-投稿者1さんのシリーズ"
+        showname = Showname(showname_str)
+        self.assertEqual(showname_str, showname._name)
+        self.assertEqual(EXPECT_SERIES_PATTERN, Showname.SERIES_PATTERN)
 
         # 異常系
         # インスタンス変数を後から変えようとする -> frozen違反
@@ -42,36 +48,47 @@ class TestShowname(unittest.TestCase):
             showname = Showname(-1)
 
     def test_name(self):
-        """_name のテスト"""
         showname_str = "投稿者1さんの投稿動画"
         showname = Showname(showname_str)
         self.assertEqual(showname_str, showname._name)
         self.assertEqual(showname._name, showname.name)
 
     def test_create(self):
-        """create のテスト"""
-        # 正常系
-        # 投稿動画のマイリスト表示名
         username = Username("投稿者1")
         myshowname = Myshowname("テスト用マイリスト1")
 
-        expect_showname = "投稿者1さんの投稿動画"
-        showname = Showname.create(MylistType.uploaded, username, None)
-        self.assertEqual(expect_showname, showname.name)
+        Params = namedtuple("Params", ["mylist_type", "username", "myshowname", "result"])
+        params_list: list[Params] = [
+            Params(MylistType.uploaded, username, None, "投稿者1さんの投稿動画"),
+            Params(MylistType.mylist, username, myshowname, "「テスト用マイリスト1」-投稿者1さんのマイリスト"),
+            Params(
+                MylistType.series,
+                username,
+                Myshowname("テスト用シリーズ1"),
+                "「テスト用シリーズ1」-投稿者1さんのシリーズ",
+            ),
+            Params(MylistType.none, username, myshowname, None),
+            Params(MylistType.mylist, username, None, None),
+            Params(MylistType.mylist, username, -1, None),
+            Params(MylistType.uploaded, None, None, None),
+            Params(None, username, myshowname, None),
+        ]
 
-        # マイリストのマイリスト表示名
-        expect_showname = "「テスト用マイリスト1」-投稿者1さんのマイリスト"
-        showname = Showname.create(MylistType.mylist, username, myshowname)
-        self.assertEqual(expect_showname, showname.name)
-
-        # 異常系
-        # 入力がどちらもNone
-        with self.assertRaises(ValueError):
-            showname = Showname.create(MylistType.uploaded, None, None)
-
-        # usernameのみNone
-        with self.assertRaises(ValueError):
-            showname = Showname.create(MylistType.uploaded, None, myshowname)
+        for params in params_list:
+            if expect := params.result:
+                actual = Showname.create(
+                    params.mylist_type,
+                    params.username,
+                    params.myshowname if params.myshowname else None,
+                )
+                self.assertEqual(expect, actual.name)
+            else:
+                with self.assertRaises(ValueError):
+                    actual = Showname.create(
+                        params.mylist_type,
+                        params.username,
+                        params.myshowname if params.myshowname else None,
+                    )
 
 
 if __name__ == "__main__":

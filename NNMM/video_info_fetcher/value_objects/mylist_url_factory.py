@@ -9,7 +9,8 @@ class MylistURLFactory:
     _class_list: list[MylistURL] = [UploadedURL, UserMylistURL, SeriesURL]
 
     def __init__(self) -> None:
-        pass
+        class_name = self.__class__.__name__
+        raise ValueError(f"{class_name} cannot make instance, use classmethod {class_name}.create().")
 
     @classmethod
     def create(cls, url: str | URL) -> MylistURL:

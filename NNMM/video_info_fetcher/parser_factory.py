@@ -13,7 +13,8 @@ class ParserFactory:
     }
 
     def __init__(self) -> None:
-        pass
+        class_name = self.__class__.__name__
+        raise ValueError(f"{class_name} cannot make instance, use classmethod {class_name}.create().")
 
     @classmethod
     def create(cls, mylist_type: MylistType, url: str, response_text: str) -> ParserBase:
@@ -26,4 +27,7 @@ class ParserFactory:
 
 
 if __name__ == "__main__":
-    pass
+    mylist_url = "https://www.nicovideo.jp/user/11111111/series/123456"
+    response_text = r'{"key": "value"}'
+    parser: ParserBase = ParserFactory.create(MylistType.series, mylist_url, response_text)
+    print(parser)
