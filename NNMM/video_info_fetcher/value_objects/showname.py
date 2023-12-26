@@ -12,13 +12,14 @@ class Showname:
     """マイリスト表示名
 
     実際にNNMM上でマイリストペインに表示される際の表示名
+    空文字列は許容しない
 
     Raises:
         TypeError: 引数が文字列でない場合
         ValueError: 引数が表示名のパターンでない場合
 
     Returns:
-        _type_: _description_
+        Showname: Showname インスタンス
     """
 
     _name: str  # マイリスト表示名

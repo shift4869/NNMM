@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from typing import Self
 
 from NNMM.video_info_fetcher.value_objects.url import URL
 from NNMM.video_info_fetcher.value_objects.videoid import Videoid
@@ -71,7 +72,7 @@ class VideoURL:
         return Videoid(video_id)
 
     @classmethod
-    def create(cls, url: str | URL) -> "VideoURL":
+    def create(cls, url: str | URL) -> Self:
         """VideoURL インスタンスを作成する
 
         URL インスタンスを作成して

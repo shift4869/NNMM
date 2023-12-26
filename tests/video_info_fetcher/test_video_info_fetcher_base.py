@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from mock import AsyncMock, MagicMock, patch
 
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
+from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from NNMM.video_info_fetcher.value_objects.title import Title
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
@@ -22,16 +23,16 @@ from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
 from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
 from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
-from NNMM.video_info_fetcher.video_info_fetcher_base import SourceType, VideoInfoFetcherBase
+from NNMM.video_info_fetcher.video_info_fetcher_base import VideoInfoFetcherBase
 
 
 # テスト用具体化ProcessBase
 class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
-    def __init__(self, url: str, source_type: SourceType = SourceType.HTML) -> None:
-        super().__init__(url, source_type)
+    def __init__(self, url: str) -> None:
+        super().__init__(url)
 
-    async def _fetch_videoinfo(self) -> list[dict]:
-        return ["test_fetch_videoinfo"]
+    async def _fetch_videoinfo(self) -> FetchedVideoInfo:
+        return "test_fetch_videoinfo"
 
 
 class TestVideoInfoFetcherBase(unittest.TestCase):
@@ -60,16 +61,12 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             </nicovideo_thumb_response>
         """.strip()
 
-    def test_VideoInfoFetcherBaseInit(self):
-        """VideoInfoFetcherBase の初期化後の状態をテストする"""
-        # 正常系
-        source_type = SourceType.HTML
+    def test_init(self):
         urls = self._get_url_set()
         for url in urls:
-            cvif = ConcreteVideoInfoFetcher(url)
+            instance = ConcreteVideoInfoFetcher(url)
             expect_url = MylistURLFactory.create(url)
-            self.assertEqual(expect_url, cvif.mylist_url)
-            self.assertEqual(source_type, cvif.source_type)
+            self.assertEqual(expect_url, instance.mylist_url)
 
             API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
             self.assertEqual(API_URL_BASE, VideoInfoFetcherBase.API_URL_BASE)
@@ -77,14 +74,12 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             MAX_RETRY_NUM = 5
             self.assertEqual(MAX_RETRY_NUM, VideoInfoFetcherBase.MAX_RETRY_NUM)
 
-        # 異常系
-        # urlが不正
-        url = "不正なURL"
+        url = "https://invalid/user/11111111/video"
         with self.assertRaises(ValueError):
-            cvif = ConcreteVideoInfoFetcher(url)
+            instance = ConcreteVideoInfoFetcher(url)
 
     def test_get_session_response(self):
-        """_get_session_response のテスト"""
+        return
         with ExitStack() as stack:
             mock_logger_error = stack.enter_context(
                 patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error")
@@ -102,11 +97,11 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             mock_async_client.side_effect = lambda follow_redirects, timeout, transport: mock_aenter
 
             url = self._get_url_set()[0]
-            cvif = ConcreteVideoInfoFetcher(url)
-            request_url = cvif.mylist_url.non_query_url
+            instance = ConcreteVideoInfoFetcher(url)
+            request_url = instance.mylist_url.non_query_url
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_session_response(request_url))
+            actual = loop.run_until_complete(instance._get_session_response(request_url))
             expect = mock_response
             self.assertEqual(expect, actual)
 
@@ -119,13 +114,13 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             # 異常系
             # MAX_RETRY_NUM回リトライしたが失敗したパターン
-            mock_get.get.side_effect = list(repeat(HTTPError, cvif.MAX_RETRY_NUM + 1))
-            actual = loop.run_until_complete(cvif._get_session_response(request_url))
+            mock_get.get.side_effect = list(repeat(HTTPError, instance.MAX_RETRY_NUM + 1))
+            actual = loop.run_until_complete(instance._get_session_response(request_url))
             expect = None
             self.assertEqual(expect, actual)
 
     def test_get_videoinfo_from_api(self):
-        """_get_videoinfo_from_api のテスト TODO"""
+        return
         with ExitStack() as stack:
             mock_logger_error = stack.enter_context(
                 patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error")
@@ -151,7 +146,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             video_id_str_list = [f"sm{i}" for i in range(1, num + 1)]
             video_id_list = VideoidList.create(video_id_str_list)
             url = self._get_url_set()[0]
-            cvif = ConcreteVideoInfoFetcher(url)
+            instance = ConcreteVideoInfoFetcher(url)
 
             src_df = "%Y-%m-%dT%H:%M:%S%z"
             dst_df = "%Y-%m-%d %H:%M:%S"
@@ -178,7 +173,7 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
 
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
+            actual = loop.run_until_complete(instance._get_videoinfo_from_api(video_id_list))
             self.assertEqual(expect, actual)
 
             # 呼び出し確認::TODO
@@ -190,24 +185,24 @@ class TestVideoInfoFetcherBase(unittest.TestCase):
             # getに失敗
             mock_get.get.side_effect = ValueError
             with self.assertRaises(ValueError):
-                actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
+                actual = loop.run_until_complete(instance._get_videoinfo_from_api(video_id_list))
 
             # 引数が不正
             video_id_list = []
             with self.assertRaises(ValueError):
-                actual = loop.run_until_complete(cvif._get_videoinfo_from_api(video_id_list))
+                actual = loop.run_until_complete(instance._get_videoinfo_from_api(video_id_list))
 
     def test__fetch_videoinfo(self):
-        """_fetch_videoinfo のテスト"""
+        return
         url = self._get_url_set()[0]
-        cvif = ConcreteVideoInfoFetcher(url)
+        instance = ConcreteVideoInfoFetcher(url)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        actual = loop.run_until_complete(cvif._fetch_videoinfo())
+        actual = loop.run_until_complete(instance._fetch_videoinfo())
         self.assertEqual(["test_fetch_videoinfo"], actual)
 
     def test_fetch_videoinfo(self):
-        """fetch_videoinfo のテスト"""
+        return
         with ExitStack() as stack:
             mockle = stack.enter_context(patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error"))
 

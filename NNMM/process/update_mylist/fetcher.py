@@ -8,7 +8,7 @@ from NNMM.process.update_mylist.value_objects.payload_list import PayloadList
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.video_info_rss_fetcher import VideoInfoRssFetcher
+from NNMM.video_info_fetcher.video_info_fetcher import VideoInfoFetcher
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -66,7 +66,7 @@ class Fetcher(ExecutorBase):
         mylist_url, all_index_num = argv
         result = Result.failed
         try:
-            result = asyncio.run(VideoInfoRssFetcher.fetch_videoinfo(mylist_url))
+            result = asyncio.run(VideoInfoFetcher.fetch_videoinfo(mylist_url))
         except Exception as e:
             pass
 

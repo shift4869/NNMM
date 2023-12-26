@@ -5,12 +5,12 @@ import traceback
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
 from logging import INFO, getLogger
 
 import httpx
 import xmltodict
 
+from NNMM.util import Result
 from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
@@ -31,23 +31,15 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-# URLタイプ
-class SourceType(Enum):
-    HTML = "html"
-    RSS = "rss"
-
-
 @dataclass
 class VideoInfoFetcherBase(ABC):
     mylist_url: MylistURL
-    source_type: SourceType
 
     API_URL_BASE = "https://ext.nicovideo.jp/api/getthumbinfo/"
     MAX_RETRY_NUM = 5
 
-    def __init__(self, url: str, source_type: SourceType):
+    def __init__(self, url: str):
         self.mylist_url = MylistURLFactory.create(url)
-        self.source_type = source_type
 
     async def _get_session_response(self, request_url: str) -> httpx.Response | None:
         """非同期でページ取得する
@@ -150,18 +142,18 @@ class VideoInfoFetcherBase(ABC):
         return FetchedAPIVideoInfo(**res)
 
     @abstractmethod
-    async def _fetch_videoinfo(self) -> list[dict]:
-        return []
+    async def _fetch_videoinfo(self) -> FetchedVideoInfo:
+        raise NotImplementedError
 
     @classmethod
-    async def fetch_videoinfo(cls, url: str) -> FetchedVideoInfo:
+    async def fetch_videoinfo(cls, url: str) -> FetchedVideoInfo | Result:
         res = []
         try:
             fetcher = cls(url)
             res = await fetcher._fetch_videoinfo()
         except Exception:
             logger.error(traceback.format_exc())
-            return []
+            return Result.failed
         return res
 
 
@@ -175,7 +167,7 @@ if __name__ == "__main__":
 
     class ConcreteVideoInfoFetcher(VideoInfoFetcherBase):
         def __init__(self, url: str):
-            super().__init__(url, SourceType.HTML)
+            super().__init__(url)
 
         async def _fetch_videoinfo(self) -> list[dict]:
             return await self._get_videoinfo_from_api(

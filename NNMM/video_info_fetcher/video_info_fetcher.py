@@ -7,31 +7,33 @@ from logging import INFO, getLogger
 from pathlib import Path
 
 from NNMM.process import config as process_config
-from NNMM.video_info_fetcher.rss_parser import RSSParser
+from NNMM.video_info_fetcher.parser_base import ParserBase
+from NNMM.video_info_fetcher.parser_factory import ParserFactory
 from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.video_info_fetcher_base import SourceType, VideoInfoFetcherBase
+from NNMM.video_info_fetcher.video_info_fetcher_base import VideoInfoFetcherBase
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 @dataclass
-class VideoInfoRssFetcher(VideoInfoFetcherBase):
+class VideoInfoFetcher(VideoInfoFetcherBase):
     def __init__(self, url: str):
-        super().__init__(url, SourceType.RSS)
+        super().__init__(url)
 
-    async def _analysis_rss(self, xml_text: str) -> FetchedPageVideoInfo:
+    async def _analysis_response_text(self, response_text: str) -> FetchedPageVideoInfo:
         try:
             mylist_url = self.mylist_url.non_query_url
-            parser: RSSParser = RSSParser(mylist_url, xml_text)
+            mylist_type = self.mylist_url.mylist_type
+            parser: ParserBase = ParserFactory.create(mylist_type, mylist_url, response_text)
             res = await parser.parse()
         except Exception:
-            logger.error(f"{self.mylist_url.non_query_url}: rss parse error.")
-            raise ValueError("rss analysis failed.")
+            logger.error(f"{self.mylist_url.non_query_url}: response text parse error.")
+            raise ValueError("response text analysis failed.")
         return res
 
-    async def _fetch_videoinfo_from_rss(self) -> FetchedVideoInfo:
+    async def _fetch_videoinfo_from_fetch_url(self) -> FetchedVideoInfo:
         """投稿動画/マイリストページアドレスから掲載されている動画の情報を取得する
 
         Notes:
@@ -46,35 +48,34 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
         Returns:
             video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照, エラー時 空リスト
         """
-        VF = VideoInfoRssFetcher
-
-        # RSS取得
+        # fetch_url を元に動画情報を fetch
         response = await self._get_session_response(self.mylist_url.fetch_url)
         if not response:
-            raise ValueError("rss request failed.")
+            raise ValueError("fetch request failed.")
 
-        # RSSから必要な情報を収集する
-        rss_d = await self._analysis_rss(response.text)
+        # RSS/APIから必要な情報を収集する
+        fetched_d = await self._analysis_response_text(response.text)
 
-        userid = rss_d.userid
-        mylistid = rss_d.mylistid
-        video_id_list = rss_d.video_id_list
+        userid = fetched_d.userid
+        mylistid = fetched_d.mylistid
+        video_id_list = fetched_d.video_id_list
 
         # 動画IDについてAPIを通して情報を取得する
         api_d = await self._get_videoinfo_from_api(video_id_list)
 
         # バリデーション
-        if rss_d.title_list != api_d.title_list:
-            raise ValueError("video title from rss and from api is different.")
-        if rss_d.video_url_list != api_d.video_url_list:
-            raise ValueError("video url from rss and from api is different.")
+        if fetched_d.title_list != api_d.title_list:
+            raise ValueError("video title from fetched data and from api is different.")
+        if fetched_d.video_url_list != api_d.video_url_list:
+            raise ValueError("video url from fetched data and from api is different.")
 
         # config取得
         config = process_config.ConfigBase.get_config()
         if not config:
             raise ValueError("config read failed.")
 
-        # RSS保存
+        # fetch したデータを保存
+        # THINK:: jsonをfetchしてもxmlで保存される
         rd_str = config["general"].get("rss_save_path", "")
         rd_path = Path(rd_str)
         rd_path.mkdir(exist_ok=True, parents=True)
@@ -91,12 +92,11 @@ class VideoInfoRssFetcher(VideoInfoFetcherBase):
             pass  # 仮に書き込みに失敗しても以降の処理は続行する
 
         # 結合
-        video_d = FetchedVideoInfo.merge(rss_d, api_d)
-        # return video_d.result
+        video_d = FetchedVideoInfo.merge(fetched_d, api_d)
         return video_d
 
-    async def _fetch_videoinfo(self) -> list[dict]:
-        return await self._fetch_videoinfo_from_rss()
+    async def _fetch_videoinfo(self) -> FetchedVideoInfo:
+        return await self._fetch_videoinfo_from_fetch_url()
 
 
 if __name__ == "__main__":
@@ -106,15 +106,17 @@ if __name__ == "__main__":
     urls = [
         # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
         # "https://www.nicovideo.jp/user/31784111/video",  # 投稿動画0件
-        "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト
+        # "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト
         # "https://www.nicovideo.jp/user/31784111/mylist/73141814",  # 0件マイリスト
         # "https://www.nicovideo.jp/user/12899156/mylist/99999999",  # 存在しないマイリスト
+        "https://www.nicovideo.jp/user/12899156/series/442402",  # シリーズ
     ]
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     for url in urls:
-        video_list = loop.run_until_complete(VideoInfoRssFetcher.fetch_videoinfo(url))
-        pprint.pprint(video_list)
-
-    pass
+        try:
+            video_list = loop.run_until_complete(VideoInfoFetcher.fetch_videoinfo(url))
+            pprint.pprint(video_list)
+        except Exception:
+            pass
