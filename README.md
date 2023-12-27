@@ -1,5 +1,6 @@
 # NNMM
 
+![Coverage reports](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/shift4869/ad61760f15c4a67a5c421cf479e3c7e7/raw/02_NNMM.json)
 
 ## 概要
 NNMM = NicoNicoMylistManager  
@@ -30,7 +31,7 @@ NNMM = NicoNicoMylistManager
 
 
 ## 前提として必要なもの
-- Pythonの実行環境(3.10以上)
+- Pythonの実行環境(3.11以上)
 
 
 ## 使い方
