@@ -96,7 +96,8 @@ class CreateMylist(ProcessBase):
             "https://www.nicovideo.jp/user/*******/mylist/********",
             "https://www.nicovideo.jp/user/*******/series/********",
         ]
-        message = f"追加するマイリストのURLを入力\n{'\n'.join(sample_url_list)}"
+        sample_url_str = "\n".join(sample_url_list)
+        message = "追加するマイリストのURLを入力\n" + sample_url_str
         mylist_url = popup_get_text(message, title="追加URL")
 
         # キャンセルされた場合
