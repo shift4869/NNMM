@@ -54,15 +54,7 @@ class TestMoveUp(unittest.TestCase):
                     mock_selected_mylist_row.side_effect = f
 
                 mock_selected_mylist_row_index.reset_mock()
-                if s_src_index == -1:
-                    s_src_index = s_max_index
-                    mock_selected_mylist_row_index.side_effect = lambda: 0
-                else:
-
-                    def f():
-                        return SelectedMylistRowIndex(s_src_index)
-
-                    mock_selected_mylist_row_index.side_effect = lambda: s_src_index
+                mock_selected_mylist_row_index.side_effect = lambda: s_src_index
 
                 if s_src_v != "":
                     s_dst_index = s_src_index - 1
@@ -111,11 +103,7 @@ class TestMoveUp(unittest.TestCase):
                     mock_update_mylist_pane.assert_not_called()
                     return
 
-                if s_src_index == -1:
-                    s_src_index = s_max_index
-                    s_dst_index = s_src_index - 1
-                else:
-                    s_dst_index = s_src_index - 1
+                s_dst_index = s_src_index - 1
                 self.assertEqual(
                     [
                         call.__getitem__("-LIST-"),

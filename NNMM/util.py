@@ -106,9 +106,6 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
     with sd_path.open("r", encoding="utf_8_sig") as fin:
         fin.readline()  # 項目行読み飛ばし
         for line in fin:
-            if line == "":
-                break
-
             elements = re.split("[,\n]", line)[:-1]
 
             # データ列の個数が不整合
@@ -141,29 +138,6 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
             r["is_include_new"],
         )
     return 0
-
-
-def get_mylist_type(url: str) -> MylistType | None:
-    """マイリストのタイプを返す
-
-    Args:
-        url (str): 判定対象URL
-
-    Returns:
-        MylistType: マイリストのタイプ 以下のタイプのいずれでもない場合、Noneを返す
-                    "uploaded": 投稿動画
-                    "mylist": 通常のマイリスト
-    """
-    pattern = "^https://www.nicovideo.jp/user/[0-9]+/video$"
-    if re.search(pattern, url):
-        return MylistType.uploaded
-    pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-    if re.search(pattern, url):
-        return MylistType.mylist
-    pattern = "^https://www.nicovideo.jp/user/([0-9]+)/series/([0-9]+)$"
-    if re.search(pattern, url):
-        return MylistType.series
-    return None
 
 
 def get_now_datetime() -> str:

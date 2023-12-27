@@ -12,18 +12,8 @@ from mock import mock_open, patch
 
 from NNMM.model import Mylist, MylistInfo
 from NNMM.mylist_db_controller import MylistDBController
-from NNMM.util import (
-    MylistType,
-    Result,
-    find_values,
-    get_mylist_type,
-    get_now_datetime,
-    interval_translate,
-    is_mylist_include_new_video,
-    load_mylist,
-    popup_get_text,
-    save_mylist,
-)
+from NNMM.util import IncludeNewStatus, MylistType, Result, find_values, get_now_datetime, interval_translate
+from NNMM.util import is_mylist_include_new_video, load_mylist, popup_get_text, save_mylist
 
 TEST_DB_PATH = ":memory:"
 CSV_PATH = "./tests/result.csv"
@@ -107,6 +97,7 @@ class TestUtil(unittest.TestCase):
             "https://www.nicovideo.jp/user/11111111/mylist/00000011",
             "https://www.nicovideo.jp/user/11111111/mylist/00000012",
             "https://www.nicovideo.jp/user/33333333/mylist/00000031",
+            "https://www.nicovideo.jp/user/11111111/series/00000011",
         ]
         return url_info
 
@@ -227,6 +218,16 @@ class TestUtil(unittest.TestCase):
     def test_Result(self):
         self.assertEqual(True, hasattr(Result, "success"))
         self.assertEqual(True, hasattr(Result, "failed"))
+
+    def test_MylistType(self):
+        self.assertEqual(True, hasattr(MylistType, "none"))
+        self.assertEqual(True, hasattr(MylistType, "uploaded"))
+        self.assertEqual(True, hasattr(MylistType, "mylist"))
+        self.assertEqual(True, hasattr(MylistType, "series"))
+
+    def test_IncludeNewStatus(self):
+        self.assertEqual(True, hasattr(IncludeNewStatus, "yes"))
+        self.assertEqual(True, hasattr(IncludeNewStatus, "no"))
 
     def test_find_values(self):
         cache_filepath = Path("./tests/cache/test_notes_with_reactions.json")
@@ -439,36 +440,15 @@ class TestUtil(unittest.TestCase):
             actual = m_cont.select()
             self.assertEqual(expect, actual)
 
-    def test_get_mylist_type(self):
-        """マイリストのタイプを返す機能のテスト"""
-        # 正常系
-        # 投稿動画ページのURL
-        url = "https://www.nicovideo.jp/user/11111111/video"
-        actual = get_mylist_type(url)
-        expect = MylistType.uploaded
-        self.assertEqual(expect, actual)
+            # データ列の個数が不整合
+            mockio = stack.enter_context(patch("pathlib.Path.open", mock_open(read_data="invalid\ninvalid")))
+            res = load_mylist(m_cont, CSV_PATH)
+            self.assertEqual(res, -1)
 
-        # マイリストURL
-        url = "https://www.nicovideo.jp/user/11111111/mylist/00000011"
-        actual = get_mylist_type(url)
-        expect = MylistType.mylist
-        self.assertEqual(expect, actual)
-
-        # 異常系
-        # マイリストのURLだがリダイレクト元のURL
-        url = "https://www.nicovideo.jp/mylist/00000011"
-        actual = get_mylist_type(url)
-        self.assertEqual(None, actual)
-
-        # 全く関係ないURL
-        url = "https://www.google.co.jp/"
-        actual = get_mylist_type(url)
-        self.assertEqual(None, actual)
-
-        # ニコニコの別サービスのURL
-        url = "https://seiga.nicovideo.jp/seiga/im11111111"
-        actual = get_mylist_type(url)
-        self.assertEqual(None, actual)
+            # 重複して挿入を試みる
+            mockio = stack.enter_context(patch("pathlib.Path.open", mock_open(read_data="".join(readdata))))
+            res = load_mylist(m_cont, CSV_PATH)
+            self.assertEqual(res, 0)
 
     def test_get_now_datetime(self):
         """タイムスタンプを返す機能のテスト"""
@@ -607,7 +587,19 @@ class TestUtil(unittest.TestCase):
         actual = interval_translate(interval_str)
         expect = -1
         self.assertEqual(expect, actual)
-        pass
+
+    def test_popup_get_text(self):
+        """sg.popup_get_text のラッパーのテスト"""
+        mock_window = self.enterContext(patch("NNMM.util.sg.Window"))
+        message = "message"
+
+        mock_window.return_value.read.side_effect = lambda: ("Ok", {"-INPUT-": "path"})
+        actual = popup_get_text(message)
+        self.assertEqual("path", actual)
+
+        mock_window.return_value.read.side_effect = lambda: ("Cancel", None)
+        actual = popup_get_text(message)
+        self.assertEqual(None, actual)
 
 
 if __name__ == "__main__":

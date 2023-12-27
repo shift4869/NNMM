@@ -10,7 +10,8 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.create_mylist import CreateMylist, CreateMylistThreadDone
 from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import MylistType, Result, get_mylist_type
+from NNMM.util import MylistType, Result
+from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 
 
 class TestCreateMylist(unittest.TestCase):
@@ -175,7 +176,6 @@ class TestCreateMylist(unittest.TestCase):
 
             def pre_run(
                 s_mylist_url,
-                s_url_type,
                 s_prev_mylist,
                 get_config_value,
                 s_username,
@@ -206,7 +206,6 @@ class TestCreateMylist(unittest.TestCase):
 
             def post_run(
                 s_mylist_url,
-                s_url_type,
                 s_prev_mylist,
                 get_config_value,
                 s_username,
@@ -234,6 +233,9 @@ class TestCreateMylist(unittest.TestCase):
                     mock_window.assert_not_called()
                     return
 
+                mylist_url = MylistURLFactory.create(s_mylist_url)
+                non_query_url = mylist_url.non_query_url
+                mylist_type = mylist_url.mylist_type
                 mock_select_from_url.assert_called_once_with(s_mylist_url)
                 if s_prev_mylist:
                     mock_get_config.assert_not_called()
@@ -274,17 +276,17 @@ class TestCreateMylist(unittest.TestCase):
                 mylistname = ""
                 showname = ""
                 is_include_new = False
-                if url_type == MylistType.uploaded:
+                if mylist_type == MylistType.uploaded:
                     username = s_username
                     mylistname = "投稿動画"
                     showname = f"{username}さんの投稿動画"
                     is_include_new = False
-                elif url_type == MylistType.mylist:
+                elif mylist_type == MylistType.mylist:
                     username = s_username
                     mylistname = s_mylistname
                     showname = f"「{mylistname}」-{username}さんのマイリスト"
                     is_include_new = False
-                elif url_type == MylistType.series:
+                elif mylist_type == MylistType.series:
                     username = s_username
                     mylistname = s_mylistname
                     showname = f"「{mylistname}」-{username}さんのシリーズ"
@@ -297,7 +299,7 @@ class TestCreateMylist(unittest.TestCase):
                             id_index,
                             username,
                             mylistname,
-                            url_type.value,
+                            mylist_type.value,
                             showname,
                             s_mylist_url,
                             dst,
@@ -312,7 +314,6 @@ class TestCreateMylist(unittest.TestCase):
 
             mylist_url_list = self._get_mylist_url_list()
             for mylist_url in mylist_url_list:
-                url_type = get_mylist_type(mylist_url)
                 prev_mylist = []
                 mylist_info = self._get_mylist_info(mylist_url)
                 username = mylist_info[2]
@@ -320,7 +321,6 @@ class TestCreateMylist(unittest.TestCase):
                 params_list = [
                     (
                         mylist_url,
-                        url_type,
                         prev_mylist,
                         "(使用しない)",
                         username,
@@ -328,11 +328,10 @@ class TestCreateMylist(unittest.TestCase):
                         "-REGISTER-",
                         Result.success,
                     ),
-                    (mylist_url, url_type, prev_mylist, "10分毎", username, mylistname, "-REGISTER-", Result.success),
-                    ("", url_type, prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
+                    (mylist_url, prev_mylist, "10分毎", username, mylistname, "-REGISTER-", Result.success),
+                    ("", prev_mylist, "(使用しない)", username, mylistname, "-REGISTER-", Result.failed),
                     (
                         "invalid",
-                        url_type,
                         prev_mylist,
                         "(使用しない)",
                         username,
@@ -342,7 +341,6 @@ class TestCreateMylist(unittest.TestCase):
                     ),
                     (
                         mylist_url,
-                        url_type,
                         ["prev_mylist_exist"],
                         "(使用しない)",
                         username,
@@ -350,11 +348,10 @@ class TestCreateMylist(unittest.TestCase):
                         "-REGISTER-",
                         Result.failed,
                     ),
-                    (mylist_url, url_type, prev_mylist, "invalid", username, mylistname, "-REGISTER-", Result.failed),
-                    (mylist_url, url_type, prev_mylist, "(使用しない)", "", mylistname, "-REGISTER-", Result.failed),
+                    (mylist_url, prev_mylist, "invalid", username, mylistname, "-REGISTER-", Result.failed),
+                    (mylist_url, prev_mylist, "(使用しない)", "", mylistname, "-REGISTER-", Result.failed),
                     (
                         mylist_url,
-                        url_type,
                         prev_mylist,
                         "(使用しない)",
                         username,
@@ -364,11 +361,11 @@ class TestCreateMylist(unittest.TestCase):
                     ),
                 ]
                 for params in params_list:
-                    pre_run(params[0], params[1], params[2], params[3], params[4], params[5], params[6])
+                    pre_run(params[0], params[1], params[2], params[3], params[4], params[5])
                     actual = instance.run()
                     expect = params[-1]
                     self.assertIs(expect, actual)
-                    post_run(params[0], params[1], params[2], params[3], params[4], params[5], params[6])
+                    post_run(params[0], params[1], params[2], params[3], params[4], params[5])
         pass
 
     def test_CreateMylistThreadDone_init(self):
