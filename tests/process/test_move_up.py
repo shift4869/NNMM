@@ -9,7 +9,6 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.move_up import MoveUp
 from NNMM.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
-from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 

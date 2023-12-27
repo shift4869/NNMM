@@ -9,7 +9,6 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process.move_down import MoveDown
 from NNMM.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
-from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 
@@ -60,10 +59,6 @@ class TestMoveDown(unittest.TestCase):
                     s_src_index = 0
                     mock_selected_mylist_row_index.side_effect = lambda: 0
                 else:
-
-                    def f():
-                        return SelectedMylistRowIndex(s_src_index)
-
                     mock_selected_mylist_row_index.side_effect = lambda: s_src_index
 
                 if s_src_v != "":
