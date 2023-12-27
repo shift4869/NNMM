@@ -10,8 +10,7 @@ sequenceDiagram
     participant update_mylist as Update Mylist Process
     participant fetcher as Fetcher
     participant database_updater as DataBase Updater
-    # participant db as fav_db_controller.py\<br/>retweet_db_controller.py
-    participant parser as RSS Parser.py
+    participant parser as Parser
 
     box DarkGreen External Network
     participant niconico as Niconico
@@ -34,9 +33,9 @@ sequenceDiagram
     ui ->> update_mylist : delegate.
     update_mylist ->> fetcher : make instance.
     par fetch
-        fetcher ->> niconico : fetch rss data.
-        niconico ->> fetcher : return rss data.
-        fetcher ->> parser : delegate rss parse.
+        fetcher ->> niconico : fetch video list data.
+        niconico ->> fetcher : return video list data.
+        fetcher ->> parser : delegate parse.
         parser ->> fetcher : return parsed data.
         fetcher ->> niconico : request videoinfo api.
         niconico ->> fetcher : return videoinfo.
