@@ -64,11 +64,11 @@ class Timer(ProcessBase):
             logger.info("-ALL_UPDATE- running now ... skip this auto-reload cycle.")
         else:
             # 更新処理起動
+            logger.info("Auto-reload start.")
             # すべて更新ボタンが押された場合の処理を起動する
             # self.window.write_event_value("-ALL_UPDATE-", "")
             # 一部更新ボタンが押された場合の処理を起動する
             self.window.write_event_value("-PARTIAL_UPDATE-", "")
-            logger.info("Auto-reload start.")
 
         # 現在タイマー待機中のものがあればキャンセルする
         self._timer_cancel()

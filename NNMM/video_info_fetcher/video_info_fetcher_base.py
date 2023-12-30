@@ -66,6 +66,7 @@ class VideoInfoFetcherBase(ABC):
                 response = await client.get(request_url)
                 response.raise_for_status()
         except Exception:
+            logger.error(request_url)
             logger.error(traceback.format_exc())
             return None
         return response

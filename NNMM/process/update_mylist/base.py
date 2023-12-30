@@ -101,7 +101,7 @@ class Base(ProcessBase):
 
         process_info = ProcessInfo.create("-UPDATE_THREAD_DONE-", self)
         pb = self.post_process(process_info)
-        pb.run()
+        threading.Thread(target=pb.run, daemon=False).start()
 
         logger.info(f"{self.L_KIND} update post process done.")
         return Result.success
