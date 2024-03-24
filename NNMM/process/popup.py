@@ -111,7 +111,7 @@ class PopupMylistWindow(PopupWindowBase):
 
         # 子ウィンドウの初期値設定
         self.title = "マイリスト情報"
-        self.size = (580, 450)
+        self.size = (580, 490)
         self.process_dict = {
             "-SAVE-": PopupMylistWindowSave,
         }

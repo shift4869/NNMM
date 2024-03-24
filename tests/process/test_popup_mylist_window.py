@@ -212,7 +212,7 @@ class TestPopupMylistWindow(unittest.TestCase):
 
                 self.assertEqual(s_record, instance.record)
                 self.assertEqual("マイリスト情報", instance.title)
-                self.assertEqual((580, 450), instance.size)
+                self.assertEqual((580, 490), instance.size)
                 self.assertEqual(
                     {
                         "-SAVE-": PopupMylistWindowSave,
