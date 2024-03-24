@@ -3,6 +3,7 @@ import unittest
 from collections import namedtuple
 from dataclasses import FrozenInstanceError
 
+from NNMM.process.update_mylist.value_objects.check_failed_count import CheckFailedCount
 from NNMM.process.update_mylist.value_objects.check_interval import CheckInterval
 from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
@@ -29,6 +30,7 @@ class TestTypedMylist(unittest.TestCase):
         updated_at = UpdatedAt("2023-12-22 12:34:56")
         checked_at = CheckedAt("2023-12-22 12:34:56")
         check_interval = CheckInterval.create("15分")
+        check_failed_count = CheckFailedCount(0)
         is_include_new = IncludeNewStatus(IncludeNewStatus.yes)
 
         instance = TypedMylist(
@@ -42,6 +44,7 @@ class TestTypedMylist(unittest.TestCase):
             updated_at,
             checked_at,
             check_interval,
+            check_failed_count,
             is_include_new,
         )
         self.assertEqual(row_index, instance.id)
@@ -70,6 +73,7 @@ class TestTypedMylist(unittest.TestCase):
             "updated_at",
             "checked_at",
             "check_interval",
+            "check_failed_count",
             "is_include_new",
         ]
         Params = namedtuple("Params", cols)
@@ -86,6 +90,7 @@ class TestTypedMylist(unittest.TestCase):
                 updated_at,
                 checked_at,
                 check_interval,
+                check_failed_count,
                 is_include_new,
             ]
             t[index] = "invalid"
@@ -108,6 +113,7 @@ class TestTypedMylist(unittest.TestCase):
             "updated_at": "2023-12-22 12:34:56",
             "checked_at": "2023-12-22 12:34:56",
             "check_interval": "15分",
+            "check_failed_count": 0,
             "is_include_new": True,
         }
         actual = TypedMylist.create(mylist_dict)
@@ -122,6 +128,7 @@ class TestTypedMylist(unittest.TestCase):
             UpdatedAt("2023-12-22 12:34:56"),
             CheckedAt("2023-12-22 12:34:56"),
             CheckInterval.create("15分"),
+            CheckFailedCount(0),
             IncludeNewStatus(True),
         )
         self.assertEqual(expect, actual)
@@ -137,6 +144,7 @@ class TestTypedMylist(unittest.TestCase):
             "updated_at": "2023-12-22 12:34:56",
             "checked_at": "2023-12-22 12:34:56",
             "check_interval": "15分",
+            "check_failed_count": 0,
             "is_include_new": False,
         }
         actual = TypedMylist.create(mylist_dict)
@@ -151,6 +159,7 @@ class TestTypedMylist(unittest.TestCase):
             UpdatedAt("2023-12-22 12:34:56"),
             CheckedAt("2023-12-22 12:34:56"),
             CheckInterval.create("15分"),
+            CheckFailedCount(0),
             IncludeNewStatus(False),
         )
         self.assertEqual(expect, actual)

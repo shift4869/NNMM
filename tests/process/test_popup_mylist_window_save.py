@@ -33,6 +33,7 @@ class TestPopupMylistWindowSave(unittest.TestCase):
             "-CREATED_AT-": "2023-12-13 12:34:56",
             "-UPDATED_AT-": "2023-12-13 12:34:56",
             "-CHECKED_AT-": "2023-12-13 12:34:56",
+            "-CHECK_FAILED_COUNT-": 0,
             "-IS_INCLUDE_NEW-": True,
             "-CHECK_INTERVAL_NUM-": interval_num,
             "-CHECK_INTERVAL_UNIT-": "分",
@@ -87,6 +88,7 @@ class TestPopupMylistWindowSave(unittest.TestCase):
                 created_at = s_record["-CREATED_AT-"]
                 updated_at = s_record["-UPDATED_AT-"]
                 checked_at = s_record["-CHECKED_AT-"]
+                check_failed_count = s_record["-CHECK_FAILED_COUNT-"]
                 is_include_new = str(s_record["-IS_INCLUDE_NEW-"]) == "True"
                 check_interval_num = s_record["-CHECK_INTERVAL_NUM-"]
                 check_interval_unit = s_record["-CHECK_INTERVAL_UNIT-"]
@@ -110,6 +112,7 @@ class TestPopupMylistWindowSave(unittest.TestCase):
                             updated_at,
                             checked_at,
                             check_interval,
+                            check_failed_count,
                             is_include_new,
                         )
                     ],

@@ -275,6 +275,7 @@ class TestCreateMylist(unittest.TestCase):
                 username = ""
                 mylistname = ""
                 showname = ""
+                check_failed_count = 0
                 is_include_new = False
                 if mylist_type == MylistType.uploaded:
                     username = s_username
@@ -306,6 +307,7 @@ class TestCreateMylist(unittest.TestCase):
                             dst,
                             dst,
                             check_interval,
+                            check_failed_count,
                             is_include_new,
                         ),
                     ],

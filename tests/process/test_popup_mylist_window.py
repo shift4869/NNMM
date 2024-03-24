@@ -55,6 +55,7 @@ class TestPopupMylistWindow(unittest.TestCase):
         created_at = r["created_at"]
         updated_at = r["updated_at"]
         checked_at = r["checked_at"]
+        check_failed_count = r["check_failed_count"]
         is_include_new = "True" if r["is_include_new"] else "False"
 
         unit_list = ["分", "時間", "日", "週間", "ヶ月"]
@@ -109,6 +110,10 @@ class TestPopupMylistWindow(unittest.TestCase):
                     background_color="light goldenrod",
                     size=thsize,
                 ),
+            ],
+            [
+                sg.Text("更新確認失敗カウント", size=csize),
+                sg.Input(f"{check_failed_count}", key="-CHECK_FAILED_COUNT-", readonly=True, size=tsize),
             ],
             [
                 sg.Text("未視聴フラグ", size=csize),

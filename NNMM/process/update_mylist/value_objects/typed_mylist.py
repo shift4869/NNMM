@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 
 from NNMM.process.update_mylist.value_objects.check_interval import CheckInterval
+from NNMM.process.update_mylist.value_objects.check_failed_count import CheckFailedCount
 from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
 from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
 from NNMM.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
@@ -26,6 +27,7 @@ class TypedMylist:
     updated_at: UpdatedAt
     checked_at: CheckedAt
     check_interval: CheckInterval
+    check_failed_count: CheckFailedCount
     is_include_new: IncludeNewStatus
 
     def __post_init__(self) -> None:
@@ -49,6 +51,8 @@ class TypedMylist:
             raise ValueError("checked_at must be CheckedAt.")
         if not isinstance(self.check_interval, CheckInterval):
             raise ValueError("check_interval must be CheckInterval.")
+        if not isinstance(self.check_failed_count, CheckFailedCount):
+            raise ValueError("check_interval must be CheckFailedCount.")
         if not isinstance(self.is_include_new, IncludeNewStatus):
             raise ValueError("is_include_new must be IncludeNewStatus.")
 
@@ -63,6 +67,7 @@ class TypedMylist:
         updated_at = UpdatedAt(mylist_dict["updated_at"])
         checked_at = CheckedAt(mylist_dict["checked_at"])
         check_interval = CheckInterval.create(mylist_dict["check_interval"])
+        check_failed_count = CheckFailedCount(int(mylist_dict["check_failed_count"]))
         is_include_new = IncludeNewStatus(mylist_dict["is_include_new"])
 
         mylist_url = MylistURLFactory.create(mylist_dict["url"])
@@ -78,6 +83,7 @@ class TypedMylist:
             updated_at,
             checked_at,
             check_interval,
+            check_failed_count,
             is_include_new,
         )
 
@@ -94,6 +100,7 @@ if __name__ == "__main__":
         "updated_at": "2023-12-22 12:34:56",
         "checked_at": "2023-12-22 12:34:56",
         "check_interval": "15分",
+        "check_failed_count": 0,
         "is_include_new": True,
     }
     typed_mylist = TypedMylist.create(mylist_dict)

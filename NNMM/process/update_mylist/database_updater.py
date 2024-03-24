@@ -76,11 +76,19 @@ class DatabaseUpdater(ExecutorBase):
         fetched_info: FetchedVideoInfo | Result = argv[2]
         all_index_num: int = argv[3]
 
+        # マルチスレッド内では各々のスレッドごとに新しくDBセッションを張る
+        mylist_db = MylistDBController(self.mylist_db.dbname)
+        mylist_info_db = MylistInfoDBController(self.mylist_info_db.dbname)
+
         mylist_url = mylist.url.non_query_url
         if fetched_info == Result.failed:
             # 新規マイリスト取得でレンダリングが失敗した場合など
             logger.info(mylist_url + f" : no records ... ({self.done_count}/{all_index_num}).")
+            mylist_db.update_check_failed_count(mylist_url)
             return Result.failed
+        else:
+            # マイリスト更新に成功しているのでカウントをリセット
+            mylist_db.reset_check_failed_count(mylist_url)
 
         # fetched_info から TypedVideoList を作成
         dst = get_now_datetime()
@@ -128,9 +136,6 @@ class DatabaseUpdater(ExecutorBase):
         #         logger.info(f"Mylist username changed , {prev_username} -> {now_username}")
 
         # DBに格納
-        # マルチスレッド内では各々のスレッドごとに新しくDBセッションを張る
-        mylist_db = MylistDBController(self.mylist_db.dbname)
-        mylist_info_db = MylistInfoDBController(self.mylist_info_db.dbname)
         records = [m.to_dict() for m in now_video_list]
         mylist_info_db.upsert_from_list(records)
 

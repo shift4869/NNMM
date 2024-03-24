@@ -28,11 +28,13 @@ class Partial(Base):
 
         Notes:
             Partialにおいては対象は複数のマイリストとなる
-            前回更新確認時からインターバル分だけ経過しているもののみ更新対象とする
+            前回更新確認時からインターバル分だけ経過している、かつ
+            更新確認失敗カウントが MAX_CHECK_FAILED_COUNT 未満 のマイリストのみ更新対象とする
 
         Returns:
             list[dict]: 更新対象のマイリストのリスト、エラー時空リスト
         """
+        MAX_CHECK_FAILED_COUNT = 10
         result = []
         m_list = self.mylist_db.select()
 
@@ -41,10 +43,19 @@ class Partial(Base):
         now_dst = datetime.now()
         try:
             for m in m_list:
-                # 前回チェック時日時取得
                 checked_dst = datetime.strptime(m["checked_at"], dst_df)
-                # インターバル文字列取得
                 interval_str = str(m["check_interval"])
+                check_failed_count = int(m["check_failed_count"])
+
+                if check_failed_count >= MAX_CHECK_FAILED_COUNT:
+                    # 更新確認失敗カウントが MAX_CHECK_FAILED_COUNT 以上なら更新対象としない
+                    # この条件に当てはまるマイリストはPartialにおいては更新が停止したor削除されたマイリストとみなす
+                    # このマイリストを再び更新対象としたい場合はDBの check_failed_count を手動更新すること
+                    mylist_url = m["url"]
+                    showname = m["showname"]
+                    warning_str = "{} get_target_mylist warning, exceed MAX_CHECK_FAILED_COUNT retry for {} : {}."
+                    logger.warning(warning_str.format(self.L_KIND, mylist_url, showname))
+                    continue
 
                 dt = interval_translate(interval_str) - 1
                 if dt < -1:

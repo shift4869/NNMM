@@ -211,6 +211,66 @@ class MylistDBController(DBControllerBase):
 
         return 0
 
+    def update_check_failed_count(self, mylist_url: str) -> int:
+        """Mylistの特定のレコードについて更新確認失敗カウントを更新する
+
+        Note:
+            "update Mylist set check_failed_count = {+1} where mylist_url = {}"
+
+        Args:
+            mylist_url (str): マイリストURL
+
+        Returns:
+            int: 更新確認失敗カウントを更新した場合0, その他失敗時-1
+        """
+        # UPDATE対象をSELECT
+        Session = sessionmaker(bind=self.engine, autoflush=False)
+        session = Session()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).with_for_update().first()
+
+        # 存在しない場合はエラー
+        if not record:
+            session.close()
+            return -1
+
+        # 更新する
+        record.check_failed_count = record.check_failed_count + 1
+
+        session.commit()
+        session.close()
+
+        return 0
+
+    def reset_check_failed_count(self, mylist_url: str) -> int:
+        """Mylistの特定のレコードについて更新確認失敗カウントを0にする
+
+        Note:
+            "update Mylist set check_failed_count = 0 where mylist_url = {}"
+
+        Args:
+            mylist_url (str): マイリストURL
+
+        Returns:
+            int: 更新確認失敗カウントを更新した場合0, その他失敗時-1
+        """
+        # UPDATE対象をSELECT
+        Session = sessionmaker(bind=self.engine, autoflush=False)
+        session = Session()
+        record = session.query(Mylist).filter(Mylist.url == mylist_url).with_for_update().first()
+
+        # 存在しない場合はエラー
+        if not record:
+            session.close()
+            return -1
+
+        # 更新する
+        record.check_failed_count = 0
+
+        session.commit()
+        session.close()
+
+        return 0
+
     def update_username(self, mylist_url: str, now_username: str) -> int:
         """Mylistの特定のレコードについてusernameを更新する
 

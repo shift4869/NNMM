@@ -17,13 +17,13 @@ from NNMM.process.update_mylist.value_objects.typed_video_list import TypedVideo
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
 from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
 from NNMM.video_info_fetcher.value_objects.showname import Showname
 from NNMM.video_info_fetcher.value_objects.title_list import TitleList
 from NNMM.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
+from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from NNMM.video_info_fetcher.value_objects.userid import Userid
 from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
 from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
@@ -51,6 +51,7 @@ class TestDatabaseUpdater(unittest.TestCase):
             "updated_at": "2023-12-22 12:34:56",
             "checked_at": "2023-12-22 12:34:56",
             "check_interval": "15分",
+            "check_failed_count": 0,
             "is_include_new": True,
         }
         return TypedMylist.create(mylist_dict)
@@ -180,15 +181,19 @@ class TestDatabaseUpdater(unittest.TestCase):
                 instance.done_count = 0
 
             def post_run(payload, is_valid_fetched_info, add_new_video_flag):
+                mylist_url = payload[0].url.non_query_url
                 if not is_valid_fetched_info:
-                    mock_mylist_db.assert_not_called()
-                    mock_mylist_info_db.assert_not_called()
+                    self.assertEqual(
+                        [call("mylist_db.dbname"), call().update_check_failed_count(mylist_url)],
+                        mock_mylist_db.mock_calls,
+                    )
+                    self.assertEqual([call("mylist_info_db.dbname")], mock_mylist_info_db.mock_calls)
                     instance.window.assert_not_called()
                     return
 
-                mylist_url = payload[0].url.non_query_url
                 expect_mylist_db_calls = [
                     call("mylist_db.dbname"),
+                    call().reset_check_failed_count(mylist_url),
                     call().update_checked_at(mylist_url, dst),
                 ]
                 if add_new_video_flag:

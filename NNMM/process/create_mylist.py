@@ -143,6 +143,7 @@ class CreateMylist(ProcessBase):
         username = ""
         mylistname = ""
         showname = ""
+        check_failed_count = 0
         is_include_new = False
 
         layout = self.make_layout(mylist_type, non_query_url, window_title)
@@ -193,6 +194,7 @@ class CreateMylist(ProcessBase):
             dst,
             dst,
             check_interval,
+            check_failed_count,
             is_include_new,
         )
 

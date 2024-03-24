@@ -35,6 +35,7 @@ class TestBase(unittest.TestCase):
             "updated_at": "2023-12-22 12:34:56",
             "checked_at": "2023-12-22 12:34:56",
             "check_interval": "15分",
+            "check_failed_count": 0,
             "is_include_new": True,
         }
         return mylist_dict

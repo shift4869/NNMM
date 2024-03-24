@@ -153,6 +153,7 @@ class PopupMylistWindow(PopupWindowBase):
         created_at = r["created_at"]
         updated_at = r["updated_at"]
         checked_at = r["checked_at"]
+        check_failed_count = r["check_failed_count"]
         is_include_new = "True" if r["is_include_new"] else "False"
 
         # インターバル文字列をパース
@@ -220,6 +221,10 @@ class PopupMylistWindow(PopupWindowBase):
                 ),
             ],
             [
+                sg.Text("更新確認失敗カウント", size=csize),
+                sg.Input(f"{check_failed_count}", key="-CHECK_FAILED_COUNT-", readonly=True, size=tsize),
+            ],
+            [
                 sg.Text("未視聴フラグ", size=csize),
                 sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize),
             ],
@@ -259,6 +264,7 @@ class PopupMylistWindowSave(ProcessBase):
             "-CREATED_AT-",
             "-UPDATED_AT-",
             "-CHECKED_AT-",
+            "-CHECK_FAILED_COUNT-",
             "-IS_INCLUDE_NEW-",
             "-CHECK_INTERVAL_NUM-",
             "-CHECK_INTERVAL_UNIT-",
@@ -279,6 +285,7 @@ class PopupMylistWindowSave(ProcessBase):
         created_at = self.popup_window["-CREATED_AT-"].get()
         updated_at = self.popup_window["-UPDATED_AT-"].get()
         checked_at = self.popup_window["-CHECKED_AT-"].get()
+        check_failed_count = self.popup_window["-CHECK_FAILED_COUNT-"].get()
         is_include_new = str(self.popup_window["-IS_INCLUDE_NEW-"].get()) == "True"
 
         # インターバル文字列を結合して解釈できるかどうか確認する
@@ -304,6 +311,7 @@ class PopupMylistWindowSave(ProcessBase):
             updated_at,
             checked_at,
             check_interval,
+            check_failed_count,
             is_include_new,
         )
         logger.info("マイリスト情報Saved")
