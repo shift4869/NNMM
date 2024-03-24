@@ -49,15 +49,18 @@ class TestPartial(unittest.TestCase):
         with ExitStack() as stack:
             f_now = "2023-12-23 12:34:56"
             freeze_gun = stack.enter_context(freezegun.freeze_time(f_now))
-            mock_logger = stack.enter_context(patch("NNMM.process.update_mylist.partial.logger.error"))
+            mock_logger = stack.enter_context(patch("NNMM.process.update_mylist.partial.logger"))
 
-            mylist_dict_list = [self._get_mylist_dict(i) for i in range(3)]
+            MAX_CHECK_FAILED_COUNT = 10
+            mylist_dict_list = [self._get_mylist_dict(i) for i in range(4)]
             # 更新対象となるmylist_dict
             mylist_dict_list[0]["checked_at"] = "2023-12-20 12:34:56"
             # 更新対象とならないmylist_dict
             mylist_dict_list[1]["checked_at"] = "2023-12-23 12:34:56"
             # インターバル文字列解釈エラーとなるmylist_dict
             mylist_dict_list[2]["check_interval"] = "invalid"
+            # 更新確認失敗カウント超過となるmylist_dict
+            mylist_dict_list[3]["check_failed_count"] = MAX_CHECK_FAILED_COUNT
 
             instance = Partial(self.process_info)
             instance.mylist_db.select = lambda: mylist_dict_list

@@ -322,6 +322,40 @@ class TestMylistDBController(unittest.TestCase):
         res = controller.update_checked_at("https://www.nicovideo.jp/user/99999999/video", dst)
         self.assertEqual(res, -1)
 
+    def test_update_check_failed_count(self):
+        controller = self.controller
+        expect = self._load_table()
+
+        url_info = self._get_mylist_url_list()
+        mylist_url = url_info[0]
+        actual = controller.update_check_failed_count(mylist_url)
+        self.assertEqual(0, actual)
+
+        actual = controller.select()
+        expect[0]["check_failed_count"] = expect[0]["check_failed_count"] + 1
+        self.assertEqual(expect, actual)
+
+        actual = controller.update_check_failed_count("invalid_mylist_url")
+        self.assertEqual(-1, actual)
+
+    def test_reset_check_failed_count(self):
+        controller = self.controller
+        expect = self._load_table()
+
+        url_info = self._get_mylist_url_list()
+        mylist_url = url_info[0]
+        actual = controller.update_check_failed_count(mylist_url)
+        self.assertEqual(0, actual)
+
+        actual = controller.reset_check_failed_count(mylist_url)
+        self.assertEqual(0, actual)
+
+        actual = controller.select()
+        self.assertEqual(expect, actual)
+
+        actual = controller.reset_check_failed_count("invalid_mylist_url")
+        self.assertEqual(-1, actual)
+
     def test_update_username(self):
         """Mylistの特定のレコードについてusernameを更新する機能のテスト"""
         controller = self.controller
