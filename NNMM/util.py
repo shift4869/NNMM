@@ -135,6 +135,7 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
             r["updated_at"],
             r["checked_at"],
             r["check_interval"],
+            r["check_failed_count"],
             r["is_include_new"],
         )
     return 0

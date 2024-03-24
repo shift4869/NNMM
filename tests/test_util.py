@@ -36,6 +36,7 @@ class TestUtil(unittest.TestCase):
                 "2021-10-16 00:00:11",
                 "2021-10-17 00:00:11",
                 "15分",
+                0,
                 False,
             ),
             (
@@ -48,6 +49,7 @@ class TestUtil(unittest.TestCase):
                 "2021-10-16 00:00:22",
                 "2021-10-17 00:00:22",
                 "15分",
+                0,
                 False,
             ),
             (
@@ -60,6 +62,7 @@ class TestUtil(unittest.TestCase):
                 "2021-10-16 00:11:11",
                 "2021-10-17 00:11:11",
                 "15分",
+                0,
                 False,
             ),
             (
@@ -72,6 +75,7 @@ class TestUtil(unittest.TestCase):
                 "2021-10-16 00:22:11",
                 "2021-10-17 00:22:11",
                 "15分",
+                0,
                 False,
             ),
             (
@@ -84,6 +88,7 @@ class TestUtil(unittest.TestCase):
                 "2021-10-16 00:11:33",
                 "2021-10-17 00:11:33",
                 "15分",
+                0,
                 False,
             ),
         ]
@@ -128,7 +133,7 @@ class TestUtil(unittest.TestCase):
         """
         ml = self._get_mylist_info_list()[id]
         mylist_url = self._get_mylist_url_list()[id]
-        r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9])
+        r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9], ml[10])
         return r
 
     def _get_video_info_list(self) -> list[tuple]:
@@ -344,6 +349,7 @@ class TestUtil(unittest.TestCase):
                     r.updated_at,
                     r.checked_at,
                     r.check_interval,
+                    r.check_failed_count,
                     r.is_include_new,
                 )
                 d = r.to_dict()
@@ -398,6 +404,7 @@ class TestUtil(unittest.TestCase):
                     r.updated_at,
                     r.checked_at,
                     r.check_interval,
+                    r.check_failed_count,
                     r.is_include_new,
                 )
                 d = r.to_dict()

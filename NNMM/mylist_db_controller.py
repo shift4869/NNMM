@@ -36,6 +36,7 @@ class MylistDBController(DBControllerBase):
         updated_at: str,
         checked_at: str,
         check_interval: str,
+        check_failed_count: int,
         is_include_new: bool,
     ) -> int:
         """MylistにUPSERTする
@@ -59,6 +60,7 @@ class MylistDBController(DBControllerBase):
             updated_at (str): 更新日時("%Y-%m-%d %H:%M:%S")
             checked_at (str): 更新確認日時("%Y-%m-%d %H:%M:%S")
             check_interval (str): 最低更新間隔
+            check_failed_count (int): 更新確認失敗カウント
             is_include_new (boolean): 未視聴動画を含むかどうか
 
         Returns:
@@ -79,6 +81,7 @@ class MylistDBController(DBControllerBase):
             updated_at,
             checked_at,
             check_interval,
+            check_failed_count,
             is_include_new,
         )
 
@@ -101,6 +104,7 @@ class MylistDBController(DBControllerBase):
             p.updated_at = r.updated_at
             p.checked_at = r.checked_at
             p.check_interval = r.check_interval
+            p.check_failed_count = r.check_failed_count
             p.is_include_new = r.is_include_new
             res = 1
 

@@ -35,6 +35,7 @@ class TestPopupMylistWindow(unittest.TestCase):
             "updated_at": "2023-12-13 12:34:56",
             "checked_at": "2023-12-13 12:34:56",
             "check_interval": s_check_interval,
+            "check_failed_count": 0,
             "is_include_new": s_is_include_new,
         }
 

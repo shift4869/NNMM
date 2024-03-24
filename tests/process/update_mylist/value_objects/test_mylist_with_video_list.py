@@ -25,6 +25,7 @@ class TestMylistWithVideoList(unittest.TestCase):
             "updated_at": "2023-12-21 12:34:56",
             "checked_at": "2023-12-21 12:34:56",
             "check_interval": "15分",
+            "check_failed_count": 0,
             "is_include_new": False,
         }
 
@@ -41,6 +42,7 @@ class TestMylistWithVideoList(unittest.TestCase):
             mylist["updated_at"],
             mylist["checked_at"],
             mylist["check_interval"],
+            mylist["check_failed_count"],
             mylist["is_include_new"],
         )
 

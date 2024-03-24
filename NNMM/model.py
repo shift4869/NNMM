@@ -96,6 +96,7 @@ class Mylist(Base):
     updated_at = Column(String(256))
     checked_at = Column(String(256))
     check_interval = Column(String(256))
+    check_failed_count = Column(Integer)
     is_include_new = Column(Boolean, server_default=text("True"))
 
     def __init__(
@@ -110,6 +111,7 @@ class Mylist(Base):
         updated_at,
         checked_at,
         check_interval,
+        check_failed_count,
         is_include_new,
     ):
         self.id = id
@@ -122,6 +124,7 @@ class Mylist(Base):
         self.updated_at = updated_at
         self.checked_at = checked_at
         self.check_interval = check_interval
+        self.check_failed_count = check_failed_count
         self.is_include_new = is_include_new
 
     def __repr__(self):
@@ -142,6 +145,7 @@ class Mylist(Base):
             "updated_at": self.updated_at,
             "checked_at": self.checked_at,
             "check_interval": self.check_interval,
+            "check_failed_count": self.check_failed_count,
             "is_include_new": self.is_include_new,
         }
 
@@ -164,6 +168,7 @@ if __name__ == "__main__":
             "2022-05-01 12:33:21",
             "2022-05-01 12:33:21",
             "15分",
+            0,
             False,
         ),
         (
@@ -176,6 +181,7 @@ if __name__ == "__main__":
             "2022-05-01 13:48:17",
             "2022-07-05 17:17:17",
             "15分",
+            0,
             True,
         ),
         (
@@ -188,6 +194,7 @@ if __name__ == "__main__":
             "2022-05-01 22:49:57",
             "2022-08-06 22:35:46",
             "15分",
+            0,
             False,
         ),
         (
@@ -200,6 +207,7 @@ if __name__ == "__main__":
             "2022-05-01 22:49:38",
             "2022-07-05 17:17:18",
             "15分",
+            0,
             False,
         ),
         (
@@ -212,6 +220,7 @@ if __name__ == "__main__":
             "2022-05-14 21:06:47",
             "2022-07-05 17:17:18",
             "15分",
+            0,
             False,
         ),
     ]
@@ -228,7 +237,8 @@ if __name__ == "__main__":
             updated_at=data[6],
             checked_at=data[7],
             check_interval=data[8],
-            is_include_new=data[9],
+            check_failed_count=data[9],
+            is_include_new=data[10],
         )
         session.add(mylist_record)
     session.commit()
