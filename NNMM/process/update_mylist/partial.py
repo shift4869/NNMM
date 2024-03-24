@@ -47,16 +47,6 @@ class Partial(Base):
                 interval_str = str(m["check_interval"])
                 check_failed_count = int(m["check_failed_count"])
 
-                if check_failed_count >= MAX_CHECK_FAILED_COUNT:
-                    # 更新確認失敗カウントが MAX_CHECK_FAILED_COUNT 以上なら更新対象としない
-                    # この条件に当てはまるマイリストはPartialにおいては更新が停止したor削除されたマイリストとみなす
-                    # このマイリストを再び更新対象としたい場合はDBの check_failed_count を手動更新すること
-                    mylist_url = m["url"]
-                    showname = m["showname"]
-                    warning_str = "{} get_target_mylist warning, exceed MAX_CHECK_FAILED_COUNT retry for {} : {}."
-                    logger.warning(warning_str.format(self.L_KIND, mylist_url, showname))
-                    continue
-
                 dt = interval_translate(interval_str) - 1
                 if dt < -1:
                     # インターバル文字列解釈エラー
@@ -69,9 +59,17 @@ class Partial(Base):
 
                 # 予測次回チェック日時取得
                 predict_dst = checked_dst + timedelta(minutes=dt)
-
-                # 現在日時が予測次回チェック日時を過ぎているなら更新対象とする
                 if predict_dst < now_dst:
+                    # 現在日時が予測次回チェック日時を過ぎている場合
+                    if check_failed_count >= MAX_CHECK_FAILED_COUNT:
+                        # 更新確認失敗カウントが MAX_CHECK_FAILED_COUNT 以上なら更新対象としない
+                        # この条件に当てはまるマイリストはPartialにおいては更新が停止したor削除されたマイリストとみなす
+                        # このマイリストを再び更新対象としたい場合はDBの check_failed_count を手動更新すること
+                        mylist_url = m["url"]
+                        showname = m["showname"]
+                        warning_str = "{} get_target_mylist warning, exceed MAX_CHECK_FAILED_COUNT retry for {} : {}."
+                        logger.warning(warning_str.format(self.L_KIND, mylist_url, showname))
+                        continue
                     result.append(m)
         except (KeyError, ValueError):
             # マイリストオブジェクトのキーエラーなど
