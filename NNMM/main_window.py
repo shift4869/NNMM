@@ -8,9 +8,9 @@ import PySimpleGUI as sg
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process import base, config, create_mylist, delete_mylist, move_down, move_up, not_watched, popup, search
-from NNMM.process import show_mylist_info, show_mylist_info_all, timer, video_play, watched, watched_all_mylist
-from NNMM.process import watched_mylist
+from NNMM.process import base, config, copy_mylist_url, copy_video_url, create_mylist, delete_mylist, move_down
+from NNMM.process import move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer
+from NNMM.process import video_play, watched, watched_all_mylist, watched_mylist
 from NNMM.process.update_mylist import every, partial, single
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
@@ -70,12 +70,14 @@ class MainWindow:
         # イベントと処理の辞書
         self.dict = {
             "ブラウザで開く::-TR-": video_play.VideoPlay,
+            "動画URLをクリップボードにコピー::-TR-": copy_video_url.CopyVideoUrl,
             "視聴済にする::-TR-": watched.Watched,
             "未視聴にする::-TR-": not_watched.NotWatched,
             "検索（動画名）::-TR-": search.VideoSearch,
             "強調表示を解除::-TR-": search.VideoSearchClear,
             "情報表示::-TR-": popup.PopupVideoWindow,
             "全動画表示::-MR-": show_mylist_info_all.ShowMylistInfoAll,
+            "マイリストURLをクリップボードにコピー::-MR-": copy_mylist_url.CopyMylistUrl,
             "視聴済にする（選択）::-MR-": watched_mylist.WatchedMylist,
             "視聴済にする（全て）::-MR-": watched_all_mylist.WatchedAllMylist,
             "上に移動::-MR-": move_up.MoveUp,
@@ -118,6 +120,7 @@ class MainWindow:
                 "! ",
                 "---",
                 "全動画表示::-MR-",
+                "マイリストURLをクリップボードにコピー::-MR-",
                 "---",
                 "視聴済にする（選択）::-MR-",
                 "視聴済にする（全て）::-MR-",
@@ -175,6 +178,7 @@ class MainWindow:
                 "! ",
                 "---",
                 "ブラウザで開く::-TR-",
+                "動画URLをクリップボードにコピー::-TR-",
                 "---",
                 "視聴済にする::-TR-",
                 "未視聴にする::-TR-",
