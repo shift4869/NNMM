@@ -1,12 +1,12 @@
-"""FetchedVideoInfo のテスト
-
-FetchedVideoInfo の各種機能をテストする
-"""
-
 import sys
 import unittest
 from dataclasses import FrozenInstanceError
+from datetime import datetime
 
+import freezegun
+
+from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
+from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
 from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
@@ -22,22 +22,21 @@ from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class TestFetchedVideoInfo(unittest.TestCase):
-    def test_FetchedVideoInfoInit(self):
-        """FetchedVideoInfo の初期化後の状態をテストする"""
-        userid = Userid("1234567")
-        mylistid = Mylistid("12345678")
-        showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
-        myshowname = Myshowname("「まとめマイリスト」")
-        mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
-        title_list = TitleList.create(["テスト動画"])
-        uploaded_at_list = UploadedAtList.create(["2022-05-06 00:00:01"])
-        registered_at_list = RegisteredAtList.create(["2022-05-06 00:01:01"])
-        video_url_list = VideoURLList.create(["https://www.nicovideo.jp/watch/sm12345678"])
+    def make_instance(self, max_index_num: int = 5) -> FetchedVideoInfo:
+        n = max_index_num
+        userid = Userid(str(n) * 7)
+        mylistid = Mylistid(str(n) * 8)
+        showname = Showname("「testマイリスト」-test_userさんのマイリスト")
+        myshowname = Myshowname("「testマイリスト」")
+        mylist_url = UserMylistURL.create(f"https://www.nicovideo.jp/user/{userid.id}/mylist/{mylistid.id}")
+        title_list = TitleList.create([f"テスト動画_{i}" for i in range(n)])
+        uploaded_at_list = UploadedAtList.create([f"2023-03-28 00:00:{i % 10:02}" for i in range(n)])
+        registered_at_list = RegisteredAtList.create([f"2023-03-28 00:01:{i % 10:02}" for i in range(n)])
+        video_url_list = VideoURLList.create([f"https://www.nicovideo.jp/watch/sm{i + 10000000}" for i in range(n)])
         video_id_list = VideoidList.create(video_url_list.video_id_list)
-        username_list = UsernameList.create(["投稿者1"])
+        username_list = UsernameList.create(["投稿者1" for i in range(n)])
         no = list(range(1, len(video_id_list) + 1))
 
-        # 正常系
         fvi = FetchedVideoInfo(
             no,
             userid,
@@ -52,6 +51,24 @@ class TestFetchedVideoInfo(unittest.TestCase):
             video_url_list,
             username_list,
         )
+        return fvi
+
+    def test_init(self):
+        n = 5
+        userid = Userid(str(n) * 7)
+        mylistid = Mylistid(str(n) * 8)
+        showname = Showname("「testマイリスト」-test_userさんのマイリスト")
+        myshowname = Myshowname("「testマイリスト」")
+        mylist_url = UserMylistURL.create(f"https://www.nicovideo.jp/user/{userid.id}/mylist/{mylistid.id}")
+        title_list = TitleList.create([f"テスト動画_{i}" for i in range(n)])
+        uploaded_at_list = UploadedAtList.create([f"2023-03-28 00:00:{i % 10:02}" for i in range(n)])
+        registered_at_list = RegisteredAtList.create([f"2023-03-28 00:01:{i % 10:02}" for i in range(n)])
+        video_url_list = VideoURLList.create([f"https://www.nicovideo.jp/watch/sm{i + 10000000}" for i in range(n)])
+        video_id_list = VideoidList.create(video_url_list.video_id_list)
+        username_list = UsernameList.create(["投稿者1" for i in range(n)])
+        no = list(range(1, len(video_id_list) + 1))
+
+        fvi = self.make_instance()
         self.assertEqual(no, fvi.no)
         self.assertEqual(userid, fvi.userid)
         self.assertEqual(mylistid, fvi.mylistid)
@@ -100,299 +117,85 @@ class TestFetchedVideoInfo(unittest.TestCase):
             ]
             expect_result_dict.append(dict(zip(EXPECT_RESULT_DICT_COLS, value_list)))
         self.assertEqual(expect_result_dict, fvi.result_dict)
+        self.assertEqual(len(no), len(fvi))
 
-        # 異常系
         # インスタンス変数を後から変えようとする -> frozen違反
         with self.assertRaises(FrozenInstanceError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
+            fvi = self.make_instance()
             fvi.title_list = TitleList.create(["テスト動画2"])
 
     def test_is_valid(self):
-        """_is_valid のテスト"""
-        userid = Userid("1234567")
-        mylistid = Mylistid("12345678")
-        showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
-        myshowname = Myshowname("「まとめマイリスト」")
-        mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
-        title_list = TitleList.create(["テスト動画"])
-        uploaded_at_list = UploadedAtList.create(["2022-05-06 00:00:01"])
-        registered_at_list = RegisteredAtList.create(["2022-05-06 00:01:01"])
-        video_url_list = VideoURLList.create(["https://www.nicovideo.jp/watch/sm12345678"])
-        video_id_list = VideoidList.create(video_url_list.video_id_list)
-        username_list = UsernameList.create(["投稿者1"])
-        no = list(range(1, len(video_id_list) + 1))
+        instance = self.make_instance(5)
+        another_title_list = TitleList.create(["テスト動画1", "テスト動画2"])
 
-        # 正常系
-        fvi = FetchedVideoInfo(
-            no,
-            userid,
-            mylistid,
-            showname,
-            myshowname,
-            mylist_url,
-            video_id_list,
-            title_list,
-            uploaded_at_list,
-            registered_at_list,
-            video_url_list,
-            username_list,
+        p = (
+            instance.no,
+            instance.userid,
+            instance.mylistid,
+            instance.showname,
+            instance.myshowname,
+            instance.mylist_url,
+            instance.video_id_list,
+            instance.title_list,
+            instance.uploaded_at_list,
+            instance.registered_at_list,
+            instance.video_url_list,
+            instance.username_list,
         )
-        self.assertEqual(True, fvi._is_valid())
+        params_list = [
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
+            (None, p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
+            (p[0], None, p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
+            (p[0], p[1], None, p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
+            (p[0], p[1], p[2], None, p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
+            (p[0], p[1], p[2], p[3], None, p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
+            (p[0], p[1], p[2], p[3], p[4], None, p[6], p[7], p[8], p[9], p[10], p[11]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], None, p[7], p[8], p[9], p[10], p[11]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], None, p[8], p[9], p[10], p[11]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], None, p[9], p[10], p[11]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], None, p[10], p[11]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], None, p[11]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], None),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], another_title_list, p[8], p[9], p[10], p[11]),
+        ]
 
-        # 異常系
-        # userid 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                None,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # mylistid 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                None,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # showname 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                None,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # myshowname 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                None,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # mylist_url 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                None,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # video_id_list 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                None,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # title_list 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                None,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # uploaded_at_list 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                None,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # registered_at_list 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                None,
-                video_url_list,
-                username_list,
-            )
-        # video_url_list 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                None,
-                username_list,
-            )
-        # username_list 指定が不正
-        with self.assertRaises(TypeError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                None,
-            )
-        # no 指定が不正
-        with self.assertRaises(ValueError):
-            fvi = FetchedVideoInfo(
-                [],
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
-        # list の長さが同じでない
-        title_list = TitleList.create(["テスト動画1", "テスト動画2"])
-        with self.assertRaises(ValueError):
-            fvi = FetchedVideoInfo(
-                no,
-                userid,
-                mylistid,
-                showname,
-                myshowname,
-                mylist_url,
-                video_id_list,
-                title_list,
-                uploaded_at_list,
-                registered_at_list,
-                video_url_list,
-                username_list,
-            )
+        for i, params in enumerate(params_list):
+            if i == 0:
+                fvi = FetchedVideoInfo(
+                    params[0],
+                    params[1],
+                    params[2],
+                    params[3],
+                    params[4],
+                    params[5],
+                    params[6],
+                    params[7],
+                    params[8],
+                    params[9],
+                    params[10],
+                    params[11],
+                )
+                self.assertEqual(True, fvi._is_valid())
+            else:
+                with self.assertRaises((TypeError, ValueError)):
+                    fvi = FetchedVideoInfo(
+                        params[0],
+                        params[1],
+                        params[2],
+                        params[3],
+                        params[4],
+                        params[5],
+                        params[6],
+                        params[7],
+                        params[8],
+                        params[9],
+                        params[10],
+                        params[11],
+                    )
 
     def test_make_result_dict(self):
-        """_make_result_dict のテスト"""
-        userid = Userid("1234567")
-        mylistid = Mylistid("12345678")
-        showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
-        myshowname = Myshowname("「まとめマイリスト」")
-        mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
-        title_list = TitleList.create(["テスト動画"])
-        uploaded_at_list = UploadedAtList.create(["2022-05-06 00:00:01"])
-        registered_at_list = RegisteredAtList.create(["2022-05-06 00:01:01"])
-        video_url_list = VideoURLList.create(["https://www.nicovideo.jp/watch/sm12345678"])
-        video_id_list = VideoidList.create(video_url_list.video_id_list)
-        username_list = UsernameList.create(["投稿者1"])
-        no = list(range(1, len(video_id_list) + 1))
-
-        fvi = FetchedVideoInfo(
-            no,
-            userid,
-            mylistid,
-            showname,
-            myshowname,
-            mylist_url,
-            video_id_list,
-            title_list,
-            uploaded_at_list,
-            registered_at_list,
-            video_url_list,
-            username_list,
-        )
-
+        self.enterContext(freezegun.freeze_time("2023-04-01 00:01:00"))
+        instance = self.make_instance(5)
         EXPECT_RESULT_DICT_COLS = (
             "no",
             "video_id",
@@ -406,46 +209,57 @@ class TestFetchedVideoInfo(unittest.TestCase):
             "showname",
             "mylistname",
         )
+        for is_future_time in [False, True]:
+            if is_future_time:
+                self.enterContext(freezegun.freeze_time("2023-03-28 00:01:00"))
+            expect_result_dict = []
+            now_date = datetime.now()
+            zipped_list = zip(
+                instance.no,
+                instance.video_id_list,
+                instance.title_list,
+                instance.uploaded_at_list,
+                instance.registered_at_list,
+                instance.username_list,
+                instance.video_url_list,
+            )
+            for n, video_id, title, uploaded_at, registered_at, username, video_url in zipped_list:
+                if now_date < datetime.strptime(registered_at.dt_str, RegisteredAtList.DESTINATION_DATETIME_FORMAT):
+                    continue
+                value_list = [
+                    n,
+                    video_id.id,
+                    title.name,
+                    username.name,
+                    "",
+                    uploaded_at.dt_str,
+                    registered_at.dt_str,
+                    video_url.video_url,
+                    instance.mylist_url.non_query_url,
+                    instance.showname.name,
+                    instance.myshowname.name,
+                ]
+                expect_result_dict.append(dict(zip(EXPECT_RESULT_DICT_COLS, value_list)))
+            self.assertEqual(expect_result_dict, instance._make_result_dict())
 
-        expect_result_dict = []
-        zipped_list = zip(
-            no, video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list
-        )
-        for n, video_id, title, uploaded_at, registered_at, username, video_url in zipped_list:
-            value_list = [
-                n,
-                video_id.id,
-                title.name,
-                username.name,
-                "",
-                uploaded_at.dt_str,
-                registered_at.dt_str,
-                video_url.video_url,
-                mylist_url.non_query_url,
-                showname.name,
-                myshowname.name,
-            ]
-            expect_result_dict.append(dict(zip(EXPECT_RESULT_DICT_COLS, value_list)))
-        self.assertEqual(expect_result_dict, fvi._make_result_dict())
+        self.enterContext(freezegun.freeze_time("2023-04-01 00:01:00"))
+        instance = self.make_instance(5)
+        actual_result_dict = instance._make_result_dict()
+        self.assertEqual(instance.result_dict, actual_result_dict)
+        self.assertEqual(instance.result, actual_result_dict)
 
     def test_to_dict(self):
-        """to_dict のテスト"""
-        userid = Userid("1234567")
-        mylistid = Mylistid("12345678")
-        showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
-        myshowname = Myshowname("「まとめマイリスト」")
-        mylist_url = UserMylistURL.create("https://www.nicovideo.jp/user/1234567/mylist/12345678")
-        title_list = TitleList.create(["テスト動画"])
-        uploaded_at_list = UploadedAtList.create(["2022-05-06 00:00:01"])
-        registered_at_list = RegisteredAtList.create(["2022-05-06 00:01:01"])
-        video_url_list = VideoURLList.create(["https://www.nicovideo.jp/watch/sm12345678"])
-        video_id_list = VideoidList.create(video_url_list.video_id_list)
-        username_list = UsernameList.create(["投稿者1"])
-        no = list(range(1, len(video_id_list) + 1))
+        instance = self.make_instance(5)
 
         expect_result_dict = []
         zipped_list = zip(
-            no, video_id_list, title_list, uploaded_at_list, registered_at_list, username_list, video_url_list
+            instance.no,
+            instance.video_id_list,
+            instance.title_list,
+            instance.uploaded_at_list,
+            instance.registered_at_list,
+            instance.username_list,
+            instance.video_url_list,
         )
         for n, video_id, title, uploaded_at, registered_at, username, video_url in zipped_list:
             value_list = [
@@ -457,44 +271,54 @@ class TestFetchedVideoInfo(unittest.TestCase):
                 uploaded_at.dt_str,
                 registered_at.dt_str,
                 video_url.video_url,
-                mylist_url.non_query_url,
-                showname.name,
-                myshowname.name,
+                instance.mylist_url.non_query_url,
+                instance.showname.name,
+                instance.myshowname.name,
             ]
             expect_result_dict.append(dict(zip(FetchedVideoInfo.RESULT_DICT_COLS, value_list)))
 
-        # 正常系
-        fvi = FetchedVideoInfo(
-            no,
-            userid,
-            mylistid,
-            showname,
-            myshowname,
-            mylist_url,
-            video_id_list,
-            title_list,
-            uploaded_at_list,
-            registered_at_list,
-            video_url_list,
-            username_list,
-        )
         expect = {
-            "no": no,
-            "userid": userid,
-            "mylistid": mylistid,
-            "showname": showname,
-            "myshowname": myshowname,
-            "mylist_url": mylist_url,
-            "video_id_list": video_id_list,
-            "title_list": title_list,
-            "uploaded_at_list": uploaded_at_list,
-            "registered_at_list": registered_at_list,
-            "video_url_list": video_url_list,
-            "username_list": username_list,
+            "no": instance.no,
+            "userid": instance.userid,
+            "mylistid": instance.mylistid,
+            "showname": instance.showname,
+            "myshowname": instance.myshowname,
+            "mylist_url": instance.mylist_url,
+            "video_id_list": instance.video_id_list,
+            "title_list": instance.title_list,
+            "uploaded_at_list": instance.uploaded_at_list,
+            "registered_at_list": instance.registered_at_list,
+            "video_url_list": instance.video_url_list,
+            "username_list": instance.username_list,
             "result_dict": expect_result_dict,
         }
-        actual = fvi.to_dict()
+        actual = instance.to_dict()
         self.assertEqual(expect, actual)
+
+    def test_merge(self):
+        instance = self.make_instance(5)
+        fvi_page = FetchedPageVideoInfo(
+            instance.no,
+            instance.userid,
+            instance.mylistid,
+            instance.showname,
+            instance.myshowname,
+            instance.mylist_url,
+            instance.video_id_list,
+            instance.title_list,
+            instance.registered_at_list,
+            instance.video_url_list,
+        )
+        fvi_api = FetchedAPIVideoInfo(
+            instance.no,
+            instance.video_id_list,
+            instance.title_list,
+            instance.uploaded_at_list,
+            instance.video_url_list,
+            instance.username_list,
+        )
+        fvi_d = FetchedVideoInfo.merge(fvi_page, fvi_api)
+        self.assertEqual(instance, fvi_d)
 
 
 if __name__ == "__main__":

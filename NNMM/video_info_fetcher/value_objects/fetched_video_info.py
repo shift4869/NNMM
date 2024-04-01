@@ -138,13 +138,14 @@ class FetchedVideoInfo:
             self.registered_at_list,
             self.username_list,
             self.video_url_list,
+            strict=True,
         )
         for no, video_id, title, uploaded_at, registered_at, username, video_url in zipped_list:
             # 登録日時が未来日の場合、登録しない（投稿予約など）
             if now_date < datetime.strptime(registered_at.dt_str, RegisteredAtList.DESTINATION_DATETIME_FORMAT):
                 continue
 
-            # 出力インターフェイスチェック
+            # 出力用の値を整形
             value_list = [
                 no,
                 video_id.id,
@@ -158,11 +159,8 @@ class FetchedVideoInfo:
                 self.showname.name,
                 self.myshowname.name,
             ]
-            if len(FetchedVideoInfo.RESULT_DICT_COLS) != len(value_list):
-                continue
-
             # 登録
-            res.append(dict(zip(FetchedVideoInfo.RESULT_DICT_COLS, value_list)))
+            res.append(dict(zip(FetchedVideoInfo.RESULT_DICT_COLS, value_list, strict=True)))
 
         # 重複削除
         seen = []
@@ -226,7 +224,7 @@ if __name__ == "__main__":
     no = list(range(1, len(video_id_list) + 1))
 
     fvi = FetchedVideoInfo(
-        [1],
+        no,
         userid,
         mylistid,
         showname,
@@ -239,9 +237,8 @@ if __name__ == "__main__":
         video_url_list,
         username_list,
     )
-    # pprint(fvi.to_dict())
     fvi_page = FetchedPageVideoInfo(
-        [1],
+        no,
         userid,
         mylistid,
         showname,
@@ -252,7 +249,7 @@ if __name__ == "__main__":
         registered_at_list,
         video_url_list,
     )
-    fvi_api = FetchedAPIVideoInfo([1], video_id_list, title_list, uploaded_at_list, video_url_list, username_list)
+    fvi_api = FetchedAPIVideoInfo(no, video_id_list, title_list, uploaded_at_list, video_url_list, username_list)
     fvi_d = FetchedVideoInfo.merge(fvi_page, fvi_api)
     print(fvi == fvi_d)
     pprint(fvi.result)
