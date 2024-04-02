@@ -1,8 +1,10 @@
 import copy
 import sys
 import unittest
+from collections import namedtuple
 from contextlib import ExitStack
 from pathlib import Path
+from unittest.mock import call
 
 import PySimpleGUI as sg
 from mock import MagicMock, mock_open, patch
@@ -17,13 +19,21 @@ CONFIG_FILE_PATH = "./config/config.ini"
 
 
 class TestConfigSave(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=sg.Window)
         self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
+        self.save_path = Path("./tests/dummy_db.db")
+        self.save_new_path = Path("./tests/new_db.db")
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        self.save_path.unlink(missing_ok=True)
+        self.save_new_path.unlink(missing_ok=True)
+        return super().tearDown()
 
     def test_init(self):
         process_mylist_save = ConfigSave(self.process_info)
@@ -31,104 +41,153 @@ class TestConfigSave(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockcp = stack.enter_context(patch("NNMM.process.config.configparser.ConfigParser"))
-            mockfp = stack.enter_context(patch("NNMM.process.config.Path.open", mock_open()))
-            mocksc = stack.enter_context(patch("NNMM.process.config.ConfigBase.set_config"))
-            mockmc = stack.enter_context(patch("NNMM.process.config.MylistDBController"))
-            mockmbc = stack.enter_context(patch("NNMM.process.config.MylistInfoDBController"))
+            mock_configparser = stack.enter_context(patch("NNMM.process.config.configparser.ConfigParser"))
+            mock_path_open = stack.enter_context(patch("NNMM.process.config.Path.open", mock_open()))
+            mock_config_base = stack.enter_context(patch("NNMM.process.config.ConfigBase.set_config"))
+            mock_mylist_db = stack.enter_context(patch("NNMM.process.config.MylistDBController"))
+            mock_mylist_info_db = stack.enter_context(patch("NNMM.process.config.MylistInfoDBController"))
 
-            mockread = MagicMock()
-            TEST_PREV_SAVE_PATH = "./tests/p_test.db"
-            TEST_NEXT_SAVE_PATH = "./tests/n_test.db"
-            expect_prev_dict = {
-                "general": {
-                    "browser_path": "p_browser_path",
-                    "auto_reload": "p_auto_reload",
-                    "rss_save_path": "p_rss_save_path",
-                },
-                "db": {
-                    "save_path": TEST_PREV_SAVE_PATH,
-                },
-            }
-            mockccp = MagicMock()
-            mockread.side_effect = [expect_prev_dict]
-            mockccp.read = mockread
-            mockccp.__getitem__.side_effect = expect_prev_dict.__getitem__
-            mockccp.__iter__.side_effect = expect_prev_dict.__iter__
-            mockccp.__contains__.side_effect = expect_prev_dict.__contains__
-
-            mockcp.side_effect = [mockccp]
-
-            def getmock(str):
+            def get_property_mock(value):
                 r = MagicMock()
-                r.get = lambda: str
+                r.get.side_effect = lambda: value
                 return r
 
-            expect_next_dict = {
-                "general": {
-                    "browser_path": "n_browser_path",
-                    "auto_reload": "n_auto_reload",
-                    "rss_save_path": "n_rss_save_path",
-                },
-                "db": {
-                    "save_path": TEST_NEXT_SAVE_PATH,
-                },
-            }
-            mock_dict = {
-                "-C_BROWSER_PATH-": getmock(expect_next_dict["general"]["browser_path"]),
-                "-C_AUTO_RELOAD-": getmock(expect_next_dict["general"]["auto_reload"]),
-                "-C_RSS_PATH-": getmock(expect_next_dict["general"]["rss_save_path"]),
-                "-C_DB_PATH-": getmock(expect_next_dict["db"]["save_path"]),
-            }
-            mockwin = MagicMock()
-            mockwev = MagicMock()
-            mockwin.write_event_value = mockwev
-            mockwin.__getitem__.side_effect = mock_dict.__getitem__
-            mockwin.__iter__.side_effect = mock_dict.__iter__
-            mockwin.__contains__.side_effect = mock_dict.__contains__
+            def pre_run(instance, is_focus, is_db_path_update):
+                self.save_path.unlink(missing_ok=True)
+                self.save_new_path.unlink(missing_ok=True)
 
-            self.process_info.window = mockwin
-            self.process_info.db_fullpath = None
-            self.process_info.mylist_db = None
-            self.process_info.mylist_info_db = None
+                def general_dict(key):
+                    window_dict = {
+                        "-C_BROWSER_PATH-": get_property_mock("dummy_browser_path"),
+                        "-C_FOCUS_ON_VIDEO_PLAY-": get_property_mock(is_focus),
+                        "-C_RSS_PATH-": get_property_mock("dummy_rss_path"),
+                        "-C_AUTO_RELOAD-": get_property_mock("dummy_auto_reload"),
+                        "-C_DB_PATH-": get_property_mock(str(self.save_new_path)),
+                    }
+                    return window_dict[key]
 
-            # dbのパス先にダミーファイルを作っておく
-            Path(TEST_PREV_SAVE_PATH).touch()
+                instance.window.reset_mock()
+                instance.window.__getitem__.side_effect = general_dict
 
-            # 実行
-            process_mylist_save = ConfigSave(self.process_info)
-            actual = process_mylist_save.run()
-            self.assertIs(Result.success, actual)
+                mock_configparser.reset_mock(return_value=True)
+                if is_db_path_update:
 
-            # 呼び出し確認
-            # rcal[{n回目の呼び出し}][args=0]
-            # rcal[{n回目の呼び出し}][kwargs=1]
-            rcal = mockread.call_args_list
-            self.assertEqual(len(rcal), 1)
-            self.assertEqual((CONFIG_FILE_PATH,), rcal[0][0])
-            self.assertEqual({"encoding": "utf-8"}, rcal[0][1])
+                    def config_dict(key):
+                        c_dict = {
+                            "general": {
+                                "browser_path": "dummy_browser_path",
+                                "focus_on_video_play": is_focus,
+                                "rss_save_path": "dummy_rss_path",
+                                "auto_reload": "dummy_auto_reload",
+                            },
+                            "db": {"save_path": str(self.save_path)},
+                        }
+                        return c_dict[key]
 
-            # wcal[{n回目の呼び出し}][args=0]
-            wcal = mockwev.call_args_list
-            self.assertEqual(len(wcal), 1)
-            self.assertEqual(("-TIMER_SET-", "-FIRST_SET-"), wcal[0][0])
+                    mock_configparser.return_value.__getitem__.side_effect = config_dict
+                    self.save_path.touch()
+                else:
+                    pass
 
-            mockfp.assert_called()
-            mocksc.assert_called()
+                mock_path_open.reset_mock()
+                mock_config_base.reset_mock()
+                mock_mylist_db.reset_mock()
+                mock_mylist_info_db.reset_mock()
 
-            # 設定更新結果比較
-            actual_next_dict = copy.deepcopy(expect_next_dict)
-            self.assertEqual(expect_prev_dict, actual_next_dict)
+            def post_run(instance, is_focus, is_db_path_update):
+                if is_db_path_update:
+                    self.assertFalse(self.save_path.is_file())
+                    self.assertTrue(self.save_new_path.is_file())
+                    self.assertEqual(
+                        [
+                            call(),
+                            call().read("./config/config.ini", encoding="utf-8"),
+                            call().__getitem__("general"),
+                            call().__getitem__("general"),
+                            call().__getitem__("general"),
+                            call().__getitem__("general"),
+                            call().__getitem__("db"),
+                            call().__getitem__("db"),
+                            call().write(mock_path_open.return_value),
+                        ],
+                        mock_configparser.mock_calls,
+                    )
+                    db_fullpath = str(self.save_new_path)
+                    self.assertEqual(db_fullpath, instance.db_fullpath)
+                    mock_mylist_db.assert_called_once_with(db_fullpath=str(db_fullpath))
+                    mock_mylist_info_db.assert_called_once_with(db_fullpath=str(db_fullpath))
+                    self.assertEqual(
+                        [
+                            call.__getitem__("-C_BROWSER_PATH-"),
+                            call.__getitem__("-C_FOCUS_ON_VIDEO_PLAY-"),
+                            call.__getitem__("-C_RSS_PATH-"),
+                            call.__getitem__("-C_AUTO_RELOAD-"),
+                            call.write_event_value("-TIMER_SET-", "-FIRST_SET-"),
+                            call.__getitem__("-C_DB_PATH-"),
+                            call.__getitem__("-C_DB_PATH-"),
+                        ],
+                        instance.window.mock_calls,
+                    )
+                else:
+                    focus_on_video_play = "True" if is_focus else "False"
+                    self.assertEqual(
+                        [
+                            call(),
+                            call().read("./config/config.ini", encoding="utf-8"),
+                            call().__getitem__("general"),
+                            call().__getitem__().__setitem__("browser_path", "dummy_browser_path"),
+                            call().__getitem__("general"),
+                            call().__getitem__().__setitem__("focus_on_video_play", focus_on_video_play),
+                            call().__getitem__("general"),
+                            call().__getitem__().__setitem__("rss_save_path", "dummy_rss_path"),
+                            call().__getitem__("general"),
+                            call().__getitem__().__setitem__("auto_reload", "dummy_auto_reload"),
+                            call().__getitem__("db"),
+                            call().__getitem__().__getitem__("save_path"),
+                            call().__getitem__().__getitem__().__fspath__(),
+                            call().write(mock_path_open.return_value),
+                        ],
+                        mock_configparser.mock_calls,
+                    )
+                    mock_mylist_db.assert_not_called()
+                    mock_mylist_info_db.assert_not_called()
+                    self.assertEqual(
+                        [
+                            call.__getitem__("-C_BROWSER_PATH-"),
+                            call.__getitem__("-C_FOCUS_ON_VIDEO_PLAY-"),
+                            call.__getitem__("-C_RSS_PATH-"),
+                            call.__getitem__("-C_AUTO_RELOAD-"),
+                            call.write_event_value("-TIMER_SET-", "-FIRST_SET-"),
+                            call.__getitem__("-C_DB_PATH-"),
+                        ],
+                        instance.window.mock_calls,
+                    )
 
-            # 新しい場所のDBへ繋ぎ変えができているか
-            self.assertIsNotNone(process_mylist_save.db_fullpath)
-            self.assertIsNotNone(process_mylist_save.process_info.mylist_db)
-            self.assertIsNotNone(process_mylist_save.process_info.mylist_info_db)
+                self.assertEqual(
+                    [
+                        call("w", encoding="utf-8"),
+                        call().__enter__(),
+                        call().__exit__(None, None, None),
+                        call().close(),
+                    ],
+                    mock_path_open.mock_calls,
+                )
+                self.assertEqual([call()], mock_config_base.mock_calls)
 
-            # 後始末
-            Path(TEST_PREV_SAVE_PATH).unlink(missing_ok=True)
-            Path(TEST_NEXT_SAVE_PATH).unlink(missing_ok=True)
-        pass
+            Params = namedtuple("Params", ["is_focus", "is_db_path_update", "result"])
+            params_list = [
+                Params(False, False, Result.success),
+                Params(False, True, Result.success),
+                Params(True, False, Result.success),
+                Params(True, True, Result.success),
+            ]
+
+            for params in params_list:
+                instance = ConfigSave(self.process_info)
+                pre_run(instance, params.is_focus, params.is_db_path_update)
+                actual = instance.run()
+                self.assertIs(params.result, actual)
+                post_run(instance, params.is_focus, params.is_db_path_update)
 
 
 if __name__ == "__main__":

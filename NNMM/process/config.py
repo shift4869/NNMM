@@ -38,13 +38,20 @@ class ConfigBase(ProcessBase):
             key="-C_AUTO_RELOAD-",
             size=(20, 10),
         )
-
+        # 動画再生時に画面フォーカスを戻すかどうかのチェックボックス
+        focus_on_video_play_checkbox = sg.Checkbox(
+            "有効",
+            default=False,
+            key="-C_FOCUS_ON_VIDEO_PLAY-",
+            size=(20, 10),
+        )
         horizontal_line = "-" * 100
-
         cf = [
             [sg.Text(horizontal_line)],
             [sg.Text("・「ブラウザで再生」時に使用するブラウザパス")],
             [sg.Input(key="-C_BROWSER_PATH-"), sg.FileBrowse()],
+            [sg.Text("・「ブラウザで再生」選択後に画面にフォーカスを戻す")],
+            [focus_on_video_play_checkbox],
             [sg.Text("・オートリロードする間隔")],
             [auto_reload_combo_box],
             [sg.Text("・RSS保存先パス")],
@@ -61,7 +68,7 @@ class ConfigBase(ProcessBase):
             [sg.Text("")],
             [sg.Column([[sg.Button("設定保存", key="-C_CONFIG_SAVE-")]], justification="right")],
         ]
-        layout = [[sg.Frame("Config", cf, size=(500, 580))]]
+        layout = [[sg.Frame("Config", cf, size=(500, 600))]]
         return layout
 
     @classmethod
@@ -184,6 +191,7 @@ class ConfigLoad(ConfigBase):
 
         # General
         window["-C_BROWSER_PATH-"].update(value=c["general"]["browser_path"])
+        window["-C_FOCUS_ON_VIDEO_PLAY-"].update(value=c["general"].getboolean("focus_on_video_play"))
         window["-C_AUTO_RELOAD-"].update(value=c["general"]["auto_reload"])
         window["-C_RSS_PATH-"].update(value=c["general"]["rss_save_path"])
 
@@ -212,6 +220,7 @@ class ConfigSave(ConfigBase):
 
         # General
         c["general"]["browser_path"] = window["-C_BROWSER_PATH-"].get()
+        c["general"]["focus_on_video_play"] = "True" if window["-C_FOCUS_ON_VIDEO_PLAY-"].get() else "False"
         c["general"]["rss_save_path"] = window["-C_RSS_PATH-"].get()
         # タイマーセットイベントを登録
         c["general"]["auto_reload"] = window["-C_AUTO_RELOAD-"].get()
@@ -220,26 +229,21 @@ class ConfigSave(ConfigBase):
         # DB
         db_prev = c["db"]["save_path"]
         db_new = window["-C_DB_PATH-"].get()
-        db_move_success = False
-        if db_prev != db_new:
-            sd_prev = Path(db_prev)
-            sd_new = Path(db_new)
+        sd_prev = Path(db_prev)
+        sd_new = Path(db_new)
+        if sd_prev.is_file() and sd_prev.resolve() != sd_new.resolve():
+            # 移動先のディレクトリを作成する
+            sd_new.parent.mkdir(exist_ok=True, parents=True)
 
-            if sd_prev.is_file():
-                # 移動先のディレクトリを作成する
-                sd_new.parent.mkdir(exist_ok=True, parents=True)
+            # DB移動
+            shutil.move(sd_prev, sd_new)
 
-                # DB移動
-                shutil.move(sd_prev, sd_new)
+            # 以降の処理で新しいパスに移動させたDBを参照するように再設定
+            self.db_fullpath = str(sd_new)
+            self.process_info.mylist_db = MylistDBController(db_fullpath=str(sd_new))
+            self.process_info.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
 
-                # 以降の処理で新しいパスに移動させたDBを参照するように再設定
-                self.db_fullpath = str(sd_new)
-                self.process_info.mylist_db = MylistDBController(db_fullpath=str(sd_new))
-                self.process_info.mylist_info_db = MylistInfoDBController(db_fullpath=str(sd_new))
-
-                # 移動成功
-                db_move_success = True
-        if db_move_success:
+            # 移動成功したため、configファイルのパスも更新する
             c["db"]["save_path"] = window["-C_DB_PATH-"].get()
 
         # ファイルを保存する

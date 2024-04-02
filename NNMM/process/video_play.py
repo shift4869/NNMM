@@ -1,5 +1,6 @@
 from logging import INFO, getLogger
 from pathlib import Path
+from time import sleep
 
 import PySimpleGUI as sg
 
@@ -50,6 +51,12 @@ class VideoPlay(ProcessBase):
             # logger.info(sg.execute_get_results(sp)[0])
             logger.info(f"{cmd} -> valid browser path.")
             logger.info(f"{video_url} -> video page opened with browser.")
+
+            # 画面にフォーカスを戻す設定ならばフォーカスを戻す
+            is_focus_on_video_play = config["general"].getboolean("focus_on_video_play")
+            if is_focus_on_video_play:
+                sleep(0.5)
+                self.window.force_focus()
         else:
             # ブラウザパスが不正
             sg.popup_ok("ブラウザパスが不正です。設定タブから設定してください。")

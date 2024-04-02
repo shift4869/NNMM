@@ -38,6 +38,7 @@ class TestConfigBase(unittest.TestCase):
         self.assertEqual(self.process_info, process_config_base.process_info)
         self.assertEqual(CONFIG_FILE_PATH, ConfigBase.CONFIG_FILE_PATH)
         self.assertEqual(None, ConfigBase.config)
+        self.assertEqual(Result.success, process_config_base.run())
 
     def test_make_layout(self):
         def expect_config_layout() -> sg.Frame:
@@ -47,13 +48,19 @@ class TestConfigBase(unittest.TestCase):
                 key="-C_AUTO_RELOAD-",
                 size=(20, 10),
             )
-
+            focus_on_video_play_checkbox = sg.Checkbox(
+                "有効",
+                default=False,
+                key="-C_FOCUS_ON_VIDEO_PLAY-",
+                size=(20, 10),
+            )
             horizontal_line = "-" * 100
-
             cf = [
                 [sg.Text(horizontal_line)],
                 [sg.Text("・「ブラウザで再生」時に使用するブラウザパス")],
                 [sg.Input(key="-C_BROWSER_PATH-"), sg.FileBrowse()],
+                [sg.Text("・「ブラウザで再生」選択後に画面にフォーカスを戻す")],
+                [focus_on_video_play_checkbox],
                 [sg.Text("・オートリロードする間隔")],
                 [auto_reload_combo_box],
                 [sg.Text("・RSS保存先パス")],
