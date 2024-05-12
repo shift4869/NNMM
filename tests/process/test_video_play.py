@@ -165,7 +165,7 @@ class TestVideoPlay(unittest.TestCase):
             mylist_url = m_list[0]["url"]
             def_data = self._make_table_data(mylist_url)
 
-            def pre_run(s_values, is_cmd, is_watched, is_focus):
+            def pre_run(s_values, is_cmd, is_watched):
                 dummy_path.touch()
                 s_def_data = deepcopy(def_data)
                 mock_selected_table_row_index_list.reset_mock()
@@ -211,26 +211,18 @@ class TestVideoPlay(unittest.TestCase):
                     def f(key, default):
                         return dummy_path
 
-                    def g(key):
-                        return is_focus
-
                     mock_config.return_value.__getitem__.return_value.get.side_effect = f
-                    mock_config.return_value.__getitem__.return_value.getboolean.side_effect = g
                 else:
 
                     def f(key, default):
                         return ""
 
-                    def g(key):
-                        return is_focus
-
                     mock_config.return_value.__getitem__.return_value.get.side_effect = f
-                    mock_config.return_value.__getitem__.return_value.getboolean.side_effect = g
                 mock_execute.reset_mock()
                 mock_popup.reset_mock()
                 mock_watched.reset_mock()
 
-            def post_run(s_values, is_cmd, is_watched, is_focus):
+            def post_run(s_values, is_cmd, is_watched):
                 dummy_path.unlink(missing_ok=True)
                 self.assertEqual([call()], mock_selected_table_row_index_list.mock_calls)
                 if not isinstance(s_values, int):
@@ -253,26 +245,16 @@ class TestVideoPlay(unittest.TestCase):
                 video_id = s_def_data[s_values][1]
                 self.assertEqual([call.select_from_video_id(video_id)], instance.mylist_info_db.mock_calls)
 
+                self.assertEqual(
+                    [call(), call().__getitem__("general"), call().__getitem__().get("browser_path", "")],
+                    mock_config.mock_calls,
+                )
                 if is_cmd:
-                    self.assertEqual(
-                        [
-                            call(),
-                            call().__getitem__("general"),
-                            call().__getitem__().get("browser_path", ""),
-                            call().__getitem__("general"),
-                            call().__getitem__().getboolean("focus_on_video_play"),
-                        ],
-                        mock_config.mock_calls,
-                    )
                     table_dict = self._convert_table_data_to_dict(s_def_data)
                     video_url = table_dict[s_values].get("video_url")
                     mock_execute.assert_called_once_with(dummy_path, video_url)
                     mock_popup.assert_not_called()
                 else:
-                    self.assertEqual(
-                        [call(), call().__getitem__("general"), call().__getitem__().get("browser_path", "")],
-                        mock_config.mock_calls,
-                    )
                     mock_execute.assert_not_called()
                     mock_popup.assert_called_once_with("ブラウザパスが不正です。設定タブから設定してください。")
                     return
@@ -282,19 +264,19 @@ class TestVideoPlay(unittest.TestCase):
                 else:
                     mock_watched.assert_not_called()
 
-            Params = namedtuple("Params", ["s_values", "is_cmd", "is_watched", "is_focus", "result"])
+            Params = namedtuple("Params", ["s_values", "is_cmd", "is_watched", "result"])
             params_list = [
-                Params(0, True, True, False, Result.success),
-                Params(0, True, False, False, Result.success),
-                Params(0, False, True, False, Result.failed),
-                Params("invalid", True, True, False, Result.failed),
+                Params(0, True, True, Result.success),
+                Params(0, True, False, Result.success),
+                Params(0, False, True, Result.failed),
+                Params("invalid", True, True, Result.failed),
             ]
             for params in params_list:
-                pre_run(params.s_values, params.is_cmd, params.is_watched, params.is_focus)
+                pre_run(params.s_values, params.is_cmd, params.is_watched)
                 actual = instance.run()
                 expect = params.result
                 self.assertIs(expect, actual)
-                post_run(params.s_values, params.is_cmd, params.is_watched, params.is_focus)
+                post_run(params.s_values, params.is_cmd, params.is_watched)
 
 
 if __name__ == "__main__":

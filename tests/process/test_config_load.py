@@ -3,7 +3,7 @@ import unittest
 from contextlib import ExitStack
 
 import PySimpleGUI as sg
-from mock import MagicMock, call, patch
+from mock import MagicMock, patch
 
 from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
@@ -29,50 +29,51 @@ class TestConfigLoad(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mock_config_base = stack.enter_context(patch("NNMM.process.config.ConfigBase"))
+            mocksc = stack.enter_context(patch("NNMM.process.config.ConfigBase.set_config"))
+            mockgc = stack.enter_context(patch("NNMM.process.config.ConfigBase.get_config"))
 
-            instance = ConfigLoad(self.process_info)
-            actual = instance.run()
+            expect_dict = {
+                "general": {
+                    "browser_path": "browser_path",
+                    "auto_reload": "auto_reload",
+                    "rss_save_path": "rss_save_path",
+                },
+                "db": {
+                    "save_path": "save_path",
+                },
+            }
+            mockgc.side_effect = [expect_dict]
+
+            mockup = MagicMock()
+            mockd = MagicMock()
+            type(mockd).update = mockup
+            mock_dict = {
+                "-C_BROWSER_PATH-": mockd,
+                "-C_AUTO_RELOAD-": mockd,
+                "-C_RSS_PATH-": mockd,
+                "-C_DB_PATH-": mockd,
+                "-C_ACCOUNT_EMAIL-": mockd,
+                "-C_ACCOUNT_PASSWORD-": mockd,
+            }
+
+            self.process_info.window = mock_dict
+            process_config_load = ConfigLoad(self.process_info)
+            actual = process_config_load.run()
             self.assertIs(Result.success, actual)
 
-            getitem_value = mock_config_base.get_config.return_value.__getitem__.return_value.__getitem__.return_value
-            getboolean_value = (
-                mock_config_base.get_config.return_value.__getitem__.return_value.getboolean.return_value
-            )
-            self.assertEqual(
-                [
-                    call.__getitem__("-C_BROWSER_PATH-"),
-                    call.__getitem__().update(value=getitem_value),
-                    call.__getitem__("-C_FOCUS_ON_VIDEO_PLAY-"),
-                    call.__getitem__().update(value=getboolean_value),
-                    call.__getitem__("-C_AUTO_RELOAD-"),
-                    call.__getitem__().update(value=getitem_value),
-                    call.__getitem__("-C_RSS_PATH-"),
-                    call.__getitem__().update(value=getitem_value),
-                    call.__getitem__("-C_DB_PATH-"),
-                    call.__getitem__().update(value=getitem_value),
-                    call.__getitem__("-C_BROWSER_PATH-"),
-                    call.__getitem__().update(select=False),
-                ],
-                instance.window.mock_calls,
-            )
-            self.assertEqual(
-                [
-                    call.set_config(),
-                    call.get_config(),
-                    call.get_config().__getitem__("general"),
-                    call.get_config().__getitem__().__getitem__("browser_path"),
-                    call.get_config().__getitem__("general"),
-                    call.get_config().__getitem__().getboolean("focus_on_video_play"),
-                    call.get_config().__getitem__("general"),
-                    call.get_config().__getitem__().__getitem__("auto_reload"),
-                    call.get_config().__getitem__("general"),
-                    call.get_config().__getitem__().__getitem__("rss_save_path"),
-                    call.get_config().__getitem__("db"),
-                    call.get_config().__getitem__().__getitem__("save_path"),
-                ],
-                mock_config_base.mock_calls,
-            )
+            # ucal[{n回目の呼び出し}][args=0]
+            # ucal[{n回目の呼び出し}][kwargs=1]
+            ucal = mockup.call_args_list
+            self.assertEqual(len(ucal), 5)
+            self.assertEqual({"value": expect_dict["general"]["browser_path"]}, ucal[0][1])
+            self.assertEqual({"value": expect_dict["general"]["auto_reload"]}, ucal[1][1])
+            self.assertEqual({"value": expect_dict["general"]["rss_save_path"]}, ucal[2][1])
+            self.assertEqual({"value": expect_dict["db"]["save_path"]}, ucal[3][1])
+            # self.assertEqual({"value": expect_dict["niconico"]["email"]}, ucal[4][1])
+            # self.assertEqual({"value": expect_dict["niconico"]["password"]}, ucal[5][1])
+            self.assertEqual({"select": False}, ucal[4][1])
+            mockup.reset_mock()
+        pass
 
 
 if __name__ == "__main__":
