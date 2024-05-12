@@ -10,7 +10,7 @@ from NNMM.mylist_db_controller import MylistDBController
 from NNMM.mylist_info_db_controller import MylistInfoDBController
 from NNMM.process import base, config, copy_mylist_url, copy_video_url, create_mylist, delete_mylist, move_down
 from NNMM.process import move_up, not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer
-from NNMM.process import video_play, watched, watched_all_mylist, watched_mylist
+from NNMM.process import video_play, video_play_with_focus_back, watched, watched_all_mylist, watched_mylist
 from NNMM.process.update_mylist import every, partial, single
 from NNMM.process.value_objects.process_info import ProcessInfo
 from NNMM.util import Result
@@ -70,6 +70,7 @@ class MainWindow:
         # イベントと処理の辞書
         self.dict = {
             "ブラウザで開く::-TR-": video_play.VideoPlay,
+            "ブラウザで開く（フォーカスを戻す）::-TR-": video_play_with_focus_back.VideoPlayWithFocusBack,
             "動画URLをクリップボードにコピー::-TR-": copy_video_url.CopyVideoUrl,
             "視聴済にする::-TR-": watched.Watched,
             "未視聴にする::-TR-": not_watched.NotWatched,
@@ -178,6 +179,7 @@ class MainWindow:
                 "! ",
                 "---",
                 "ブラウザで開く::-TR-",
+                "ブラウザで開く（フォーカスを戻す）::-TR-",
                 "動画URLをクリップボードにコピー::-TR-",
                 "---",
                 "視聴済にする::-TR-",
