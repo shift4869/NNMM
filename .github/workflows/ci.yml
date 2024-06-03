@@ -17,6 +17,9 @@ on:
     # */1 17:00 , run
     # - cron:  "0 8 1 * *"
 
+env:
+  PySimpleGUI_license: ${{ secrets.PYSIMPLEGUI_LICENSE }}
+
 jobs:
   build:
     runs-on: windows-latest
@@ -51,10 +54,7 @@ jobs:
 
     - name: Test with unittest
       run: |
-        echo ${{ secrets.PYSIMPLEGUI_LICENSE }} > ${{ env.PySimpleGUI_license }}
         python -m unittest
-      env:
-        PySimpleGUI_license: ${{ secrets.PYSIMPLEGUI_LICENSE }}
       working-directory: ./
 
     - name: Coverage report
@@ -62,8 +62,6 @@ jobs:
         python -m coverage run --source=. --rcfile=./.github/.coveragerc -m unittest discover
         python -m coverage report --rcfile=./.github/.coveragerc --format=total --precision=2
         echo coverage=$(python -m coverage report --rcfile=./.github/.coveragerc --format=total --precision=2) >> $env:GITHUB_ENV
-      env:
-        PySimpleGUI_license: ${{ secrets.PYSIMPLEGUI_LICENSE }}
       working-directory: ./
 
     - name: Create Coverage Badge
