@@ -7,16 +7,16 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
-from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
-from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
-from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
-from NNMM.video_info_fetcher.value_objects.showname import Showname
-from NNMM.video_info_fetcher.value_objects.title_list import TitleList
-from NNMM.video_info_fetcher.value_objects.userid import Userid
-from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
+from nnmm.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
+from nnmm.video_info_fetcher.value_objects.mylistid import Mylistid
+from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
+from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
+from nnmm.video_info_fetcher.value_objects.showname import Showname
+from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from nnmm.video_info_fetcher.value_objects.userid import Userid
+from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
+from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class TestFetchedPageVideoInfo(unittest.TestCase):

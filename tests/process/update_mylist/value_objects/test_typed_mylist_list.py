@@ -5,8 +5,8 @@ from typing import Iterator
 
 from mock import MagicMock
 
-from NNMM.process.update_mylist.value_objects.typed_mylist import TypedMylist
-from NNMM.process.update_mylist.value_objects.typed_mylist_list import TypedMylistList
+from nnmm.process.update_mylist.value_objects.typed_mylist import TypedMylist
+from nnmm.process.update_mylist.value_objects.typed_mylist_list import TypedMylistList
 
 
 class TestTypedMylistList(unittest.TestCase):

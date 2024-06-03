@@ -6,11 +6,11 @@ from pathlib import Path
 import PySimpleGUI as sg
 from mock import MagicMock, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.config import MylistLoadCSV
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.config import MylistLoadCSV
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -30,10 +30,10 @@ class TestMylistLoadCSV(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockpgf = stack.enter_context(patch("NNMM.process.config.sg.popup_get_file"))
-            mockpu = stack.enter_context(patch("NNMM.process.config.sg.popup"))
-            mocklml = stack.enter_context(patch("NNMM.process.config.load_mylist"))
-            mockums = stack.enter_context(patch("NNMM.process.config.ProcessBase.update_mylist_pane"))
+            mockpgf = stack.enter_context(patch("nnmm.process.config.sg.popup_get_file"))
+            mockpu = stack.enter_context(patch("nnmm.process.config.sg.popup"))
+            mocklml = stack.enter_context(patch("nnmm.process.config.load_mylist"))
+            mockums = stack.enter_context(patch("nnmm.process.config.ProcessBase.update_mylist_pane"))
 
             TEST_INPUT_PATH = "./tests/input.csv"
             mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH, TEST_INPUT_PATH]

@@ -2,7 +2,7 @@ import sys
 import unittest
 from collections import namedtuple
 
-from NNMM.process.update_mylist.value_objects.check_interval import CheckInterval
+from nnmm.process.update_mylist.value_objects.check_interval import CheckInterval
 
 
 class TestCheckInterval(unittest.TestCase):

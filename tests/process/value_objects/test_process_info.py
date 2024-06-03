@@ -4,10 +4,10 @@ import unittest
 import PySimpleGUI as sg
 from mock import MagicMock
 
-from NNMM.main_window import MainWindow
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.value_objects.process_info import ProcessInfo
+from nnmm.main_window import MainWindow
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.value_objects.process_info import ProcessInfo
 
 
 class TestProcessInfo(unittest.TestCase):

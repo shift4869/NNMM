@@ -7,12 +7,12 @@ import freezegun
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.timer import Timer
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.textbox_bottom import BottomTextbox
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.timer import Timer
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.textbox_bottom import BottomTextbox
+from nnmm.util import Result
 
 
 class TestTimer(unittest.TestCase):
@@ -45,12 +45,12 @@ class TestTimer(unittest.TestCase):
         with ExitStack() as stack:
             f_now = "2021-11-23 01:00:00"
             mockfg = stack.enter_context(freezegun.freeze_time(f_now))
-            mockli = stack.enter_context(patch("NNMM.process.timer.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.timer.logger.error"))
-            mock_config = stack.enter_context(patch("NNMM.process.timer.ConfigBase.get_config"))
-            mock_threading_timer = stack.enter_context(patch("NNMM.process.timer.threading.Timer"))
-            mock_timer_cancel = stack.enter_context(patch("NNMM.process.timer.Timer._timer_cancel"))
-            mock_bottom_textbox = stack.enter_context(patch("NNMM.process.timer.ProcessBase.get_bottom_textbox"))
+            mockli = stack.enter_context(patch("nnmm.process.timer.logger.info"))
+            mockle = stack.enter_context(patch("nnmm.process.timer.logger.error"))
+            mock_config = stack.enter_context(patch("nnmm.process.timer.ConfigBase.get_config"))
+            mock_threading_timer = stack.enter_context(patch("nnmm.process.timer.threading.Timer"))
+            mock_timer_cancel = stack.enter_context(patch("nnmm.process.timer.Timer._timer_cancel"))
+            mock_bottom_textbox = stack.enter_context(patch("nnmm.process.timer.ProcessBase.get_bottom_textbox"))
             mock_timer_thread = MagicMock()
 
             instance = Timer(self.process_info)

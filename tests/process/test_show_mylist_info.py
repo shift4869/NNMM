@@ -6,12 +6,12 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.show_mylist_info import ShowMylistInfo
-from NNMM.process.value_objects.mylist_row import SelectedMylistRow
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.show_mylist_info import ShowMylistInfo
+from nnmm.process.value_objects.mylist_row import SelectedMylistRow
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 class TestShowMylistInfo(unittest.TestCase):
@@ -65,12 +65,12 @@ class TestShowMylistInfo(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.show_mylist_info.logger.info"))
+            mockli = stack.enter_context(patch("nnmm.process.show_mylist_info.logger.info"))
             mock_update_table_pane = stack.enter_context(
-                patch("NNMM.process.show_mylist_info.ProcessBase.update_table_pane")
+                patch("nnmm.process.show_mylist_info.ProcessBase.update_table_pane")
             )
             mock_selected_mylist_row = stack.enter_context(
-                patch("NNMM.process.show_mylist_info.ProcessBase.get_selected_mylist_row")
+                patch("nnmm.process.show_mylist_info.ProcessBase.get_selected_mylist_row")
             )
 
             instance = ShowMylistInfo(self.process_info)

@@ -7,7 +7,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
+from nnmm.video_info_fetcher.value_objects.registered_at import RegisteredAt
 
 
 class TestRegisteredAt(unittest.TestCase):

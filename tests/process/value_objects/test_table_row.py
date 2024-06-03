@@ -4,15 +4,15 @@ from collections import namedtuple
 from copy import deepcopy
 from dataclasses import FrozenInstanceError
 
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
-from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
-from NNMM.process.value_objects.table_row import Status, TableRow, TableRowTuple
-from NNMM.video_info_fetcher.value_objects.title import Title
-from NNMM.video_info_fetcher.value_objects.uploaded_at import UploadedAt
-from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
-from NNMM.video_info_fetcher.value_objects.username import Username
-from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
-from NNMM.video_info_fetcher.value_objects.videoid import Videoid
+from nnmm.process.value_objects.table_row import Status, TableRow, TableRowTuple
+from nnmm.video_info_fetcher.value_objects.registered_at import RegisteredAt
+from nnmm.video_info_fetcher.value_objects.title import Title
+from nnmm.video_info_fetcher.value_objects.uploaded_at import UploadedAt
+from nnmm.video_info_fetcher.value_objects.uploaded_url import UploadedURL
+from nnmm.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.video_url import VideoURL
+from nnmm.video_info_fetcher.value_objects.videoid import Videoid
 
 
 class TestTableRow(unittest.TestCase):

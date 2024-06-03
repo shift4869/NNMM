@@ -7,11 +7,11 @@ from pathlib import Path
 import PySimpleGUI as sg
 from mock import MagicMock, mock_open, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.config import ConfigSave
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.config import ConfigSave
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -31,11 +31,11 @@ class TestConfigSave(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockcp = stack.enter_context(patch("NNMM.process.config.configparser.ConfigParser"))
-            mockfp = stack.enter_context(patch("NNMM.process.config.Path.open", mock_open()))
-            mocksc = stack.enter_context(patch("NNMM.process.config.ConfigBase.set_config"))
-            mockmc = stack.enter_context(patch("NNMM.process.config.MylistDBController"))
-            mockmbc = stack.enter_context(patch("NNMM.process.config.MylistInfoDBController"))
+            mockcp = stack.enter_context(patch("nnmm.process.config.configparser.ConfigParser"))
+            mockfp = stack.enter_context(patch("nnmm.process.config.Path.open", mock_open()))
+            mocksc = stack.enter_context(patch("nnmm.process.config.ConfigBase.set_config"))
+            mockmc = stack.enter_context(patch("nnmm.process.config.MylistDBController"))
+            mockmbc = stack.enter_context(patch("nnmm.process.config.MylistInfoDBController"))
 
             mockread = MagicMock()
             TEST_PREV_SAVE_PATH = "./tests/p_test.db"

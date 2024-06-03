@@ -7,20 +7,20 @@ from urllib.parse import urlparse
 
 from mock import AsyncMock, MagicMock, patch
 
-from NNMM.util import Result
-from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
-from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
-from NNMM.video_info_fetcher.value_objects.title import Title
-from NNMM.video_info_fetcher.value_objects.title_list import TitleList
-from NNMM.video_info_fetcher.value_objects.uploaded_at import UploadedAt
-from NNMM.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
-from NNMM.video_info_fetcher.value_objects.username import Username
-from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
-from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
-from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
-from NNMM.video_info_fetcher.video_info_fetcher_base import VideoInfoFetcherBase
+from nnmm.util import Result
+from nnmm.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
+from nnmm.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
+from nnmm.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
+from nnmm.video_info_fetcher.value_objects.title import Title
+from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.uploaded_at import UploadedAt
+from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
+from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
+from nnmm.video_info_fetcher.value_objects.video_url import VideoURL
+from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
+from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
+from nnmm.video_info_fetcher.video_info_fetcher_base import VideoInfoFetcherBase
 
 
 # テスト用具体化ProcessBase
@@ -75,9 +75,9 @@ class TestVideoInfoFetcherBase(unittest.IsolatedAsyncioTestCase):
             instance = ConcreteVideoInfoFetcher(url)
 
     async def test_get_session_response(self):
-        mock_logger_error = self.enterContext(patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error"))
+        mock_logger_error = self.enterContext(patch("nnmm.video_info_fetcher.video_info_fetcher_base.logger.error"))
         mock_async_client = self.enterContext(
-            patch("NNMM.video_info_fetcher.video_info_fetcher_base.httpx.AsyncClient")
+            patch("nnmm.video_info_fetcher.video_info_fetcher_base.httpx.AsyncClient")
         )
 
         # 正常系
@@ -110,9 +110,9 @@ class TestVideoInfoFetcherBase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(expect, actual)
 
     async def test_get_videoinfo_from_api(self):
-        mock_logger_error = self.enterContext(patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error"))
+        mock_logger_error = self.enterContext(patch("nnmm.video_info_fetcher.video_info_fetcher_base.logger.error"))
         mock_async_client = self.enterContext(
-            patch("NNMM.video_info_fetcher.video_info_fetcher_base.httpx.AsyncClient")
+            patch("nnmm.video_info_fetcher.video_info_fetcher_base.httpx.AsyncClient")
         )
 
         def make_response(request_url):
@@ -183,7 +183,7 @@ class TestVideoInfoFetcherBase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("test_fetch_videoinfo", actual)
 
     async def test_fetch_videoinfo(self):
-        mock_logger_error = self.enterContext(patch("NNMM.video_info_fetcher.video_info_fetcher_base.logger.error"))
+        mock_logger_error = self.enterContext(patch("nnmm.video_info_fetcher.video_info_fetcher_base.logger.error"))
 
         url = self._get_url_set()[0]
         actual = await ConcreteVideoInfoFetcher.fetch_videoinfo(url)

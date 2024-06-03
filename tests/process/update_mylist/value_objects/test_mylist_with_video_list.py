@@ -6,10 +6,10 @@ from typing import Iterator
 
 from mock import MagicMock, patch
 
-from NNMM.model import Mylist
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
-from NNMM.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
+from nnmm.model import Mylist
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
+from nnmm.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
 
 
 class TestMylistWithVideoList(unittest.TestCase):
@@ -70,7 +70,7 @@ class TestMylistWithVideoList(unittest.TestCase):
     def test_create(self):
         with ExitStack() as stack:
             mock_create = stack.enter_context(
-                patch("NNMM.process.update_mylist.value_objects.mylist_with_video_list.MylistWithVideo.create")
+                patch("nnmm.process.update_mylist.value_objects.mylist_with_video_list.MylistWithVideo.create")
             )
             mock_mylist_with_video = MagicMock(spec=MylistWithVideo)
             mock_create.side_effect = lambda m, db: mock_mylist_with_video

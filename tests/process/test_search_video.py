@@ -7,13 +7,13 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.search import VideoSearch
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.table_row_index_list import TableRowIndexList
-from NNMM.process.value_objects.table_row_list import TableRowList
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.search import VideoSearch
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.table_row_index_list import TableRowIndexList
+from nnmm.process.value_objects.table_row_list import TableRowList
+from nnmm.util import Result
 
 
 class TestVideoSearch(unittest.TestCase):
@@ -85,12 +85,12 @@ class TestVideoSearch(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
-            mock_popup_get_text = stack.enter_context(patch("NNMM.process.search.popup_get_text"))
+            mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))
+            mock_popup_get_text = stack.enter_context(patch("nnmm.process.search.popup_get_text"))
             mock_table_row_index_list = stack.enter_context(
-                patch("NNMM.process.search.ProcessBase.get_selected_table_row_index_list")
+                patch("nnmm.process.search.ProcessBase.get_selected_table_row_index_list")
             )
-            mock_all_table_row = stack.enter_context(patch("NNMM.process.search.ProcessBase.get_all_table_row"))
+            mock_all_table_row = stack.enter_context(patch("nnmm.process.search.ProcessBase.get_all_table_row"))
 
             instance = VideoSearch(self.process_info)
 

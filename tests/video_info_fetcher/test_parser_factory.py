@@ -3,11 +3,11 @@ import unittest
 
 from mock import call, patch
 
-from NNMM.util import MylistType
-from NNMM.video_info_fetcher.mylist_rss_xml_parser import MylistRSSXmlParser
-from NNMM.video_info_fetcher.parser_factory import ParserFactory
-from NNMM.video_info_fetcher.series_api_response_json_parser import SeriesAPIResponseJsonParser
-from NNMM.video_info_fetcher.uploaded_rss_xml_parser import UploadedRSSXmlParser
+from nnmm.util import MylistType
+from nnmm.video_info_fetcher.mylist_rss_xml_parser import MylistRSSXmlParser
+from nnmm.video_info_fetcher.parser_factory import ParserFactory
+from nnmm.video_info_fetcher.series_api_response_json_parser import SeriesAPIResponseJsonParser
+from nnmm.video_info_fetcher.uploaded_rss_xml_parser import UploadedRSSXmlParser
 
 
 class TestParserFactory(unittest.TestCase):
@@ -26,7 +26,7 @@ class TestParserFactory(unittest.TestCase):
             instance = ParserFactory()
 
     def test_create(self):
-        mock_dict = self.enterContext(patch("NNMM.video_info_fetcher.parser_factory.ParserFactory._class_dict"))
+        mock_dict = self.enterContext(patch("nnmm.video_info_fetcher.parser_factory.ParserFactory._class_dict"))
         response_text = "response_text"
         url = "url"
         for mylist_type in MylistType:

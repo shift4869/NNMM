@@ -7,12 +7,12 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
-from NNMM.video_info_fetcher.value_objects.title_list import TitleList
-from NNMM.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
-from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
-from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
+from nnmm.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
+from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
+from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
+from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
+from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class TestFetchedAPIVideoInfo(unittest.TestCase):

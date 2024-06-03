@@ -6,13 +6,13 @@ import httpx
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist.fetcher import Fetcher
-from NNMM.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
-from NNMM.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.update_mylist.fetcher import Fetcher
+from nnmm.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
+from nnmm.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 class TestFetcher(unittest.TestCase):
@@ -34,8 +34,8 @@ class TestFetcher(unittest.TestCase):
 
     def test_execute(self):
         with ExitStack() as stack:
-            mock_thread = stack.enter_context(patch("NNMM.process.update_mylist.fetcher.ThreadPoolExecutor"))
-            mock_create = stack.enter_context(patch("NNMM.process.update_mylist.fetcher.PayloadList.create"))
+            mock_thread = stack.enter_context(patch("nnmm.process.update_mylist.fetcher.ThreadPoolExecutor"))
+            mock_create = stack.enter_context(patch("nnmm.process.update_mylist.fetcher.PayloadList.create"))
 
             mock_thread.return_value.__enter__.return_value.submit.return_value.result.return_value = (
                 "executor.submit().result()"
@@ -64,9 +64,9 @@ class TestFetcher(unittest.TestCase):
 
     def test_execute_worker(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("NNMM.process.update_mylist.fetcher.logger.info"))
+            mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.fetcher.logger.info"))
             mock_fetch_videoinfo = stack.enter_context(
-                patch("NNMM.process.update_mylist.fetcher.VideoInfoFetcher.fetch_videoinfo")
+                patch("nnmm.process.update_mylist.fetcher.VideoInfoFetcher.fetch_videoinfo")
             )
             mock_fetch_videoinfo.side_effect = lambda url: "VideoInfoFetcher.fetch_videoinfo()"
             mylist_with_video_list = MagicMock(spec=MylistWithVideoList)

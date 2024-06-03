@@ -7,8 +7,8 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.video_info_fetcher.value_objects.videoid import Videoid
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
+from nnmm.video_info_fetcher.value_objects.videoid import Videoid
+from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class TestVideoidList(unittest.TestCase):

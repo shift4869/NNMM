@@ -4,21 +4,21 @@ from datetime import datetime
 
 import orjson
 
-from NNMM.util import MylistType, find_values
-from NNMM.video_info_fetcher.series_api_response_json_parser import SeriesAPIResponseJsonParser
-from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
-from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
-from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
-from NNMM.video_info_fetcher.value_objects.series_url import SeriesURL
-from NNMM.video_info_fetcher.value_objects.showname import Showname
-from NNMM.video_info_fetcher.value_objects.title import Title
-from NNMM.video_info_fetcher.value_objects.title_list import TitleList
-from NNMM.video_info_fetcher.value_objects.url import URL
-from NNMM.video_info_fetcher.value_objects.username import Username
-from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
-from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
-from NNMM.video_info_fetcher.value_objects.videoid import Videoid
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
+from nnmm.util import MylistType, find_values
+from nnmm.video_info_fetcher.series_api_response_json_parser import SeriesAPIResponseJsonParser
+from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
+from nnmm.video_info_fetcher.value_objects.registered_at import RegisteredAt
+from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
+from nnmm.video_info_fetcher.value_objects.series_url import SeriesURL
+from nnmm.video_info_fetcher.value_objects.showname import Showname
+from nnmm.video_info_fetcher.value_objects.title import Title
+from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.url import URL
+from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.video_url import VideoURL
+from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
+from nnmm.video_info_fetcher.value_objects.videoid import Videoid
+from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class TestUploadedRSSXmlParser(unittest.TestCase):

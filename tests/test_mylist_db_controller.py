@@ -4,8 +4,8 @@ import sys
 import unittest
 from datetime import datetime
 
-from NNMM.model import Mylist
-from NNMM.mylist_db_controller import MylistDBController
+from nnmm.model import Mylist
+from nnmm.mylist_db_controller import MylistDBController
 
 
 class TestMylistDBController(unittest.TestCase):

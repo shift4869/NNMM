@@ -6,12 +6,12 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.popup import PopupMylistWindow, PopupMylistWindowSave
-from NNMM.process.value_objects.mylist_row import SelectedMylistRow
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.popup import PopupMylistWindow, PopupMylistWindowSave
+from nnmm.process.value_objects.mylist_row import SelectedMylistRow
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 class TestPopupMylistWindow(unittest.TestCase):
@@ -154,9 +154,9 @@ class TestPopupMylistWindow(unittest.TestCase):
 
     def test_init(self):
         with ExitStack() as stack:
-            mock_logger_error = stack.enter_context(patch("NNMM.process.popup.logger.error"))
+            mock_logger_error = stack.enter_context(patch("nnmm.process.popup.logger.error"))
             mock_selected_mylist_row = stack.enter_context(
-                patch("NNMM.process.popup.ProcessBase.get_selected_mylist_row")
+                patch("nnmm.process.popup.ProcessBase.get_selected_mylist_row")
             )
 
             instance = PopupMylistWindow(self.process_info)

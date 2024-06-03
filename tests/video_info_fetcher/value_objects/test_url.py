@@ -2,7 +2,7 @@ import sys
 import unittest
 import urllib.parse
 
-from NNMM.video_info_fetcher.value_objects.url import URL
+from nnmm.video_info_fetcher.value_objects.url import URL
 
 
 class TestURL(unittest.TestCase):

@@ -7,8 +7,8 @@ from pathlib import Path
 
 from mock import MagicMock, call, mock_open, patch
 
-from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
-from NNMM.video_info_fetcher.video_info_fetcher import VideoInfoFetcher
+from nnmm.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
+from nnmm.video_info_fetcher.video_info_fetcher import VideoInfoFetcher
 
 RSS_PATH = "./tests/rss/"
 
@@ -41,8 +41,8 @@ class TestVideoInfoFetcher(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(expect_mylist_url, instance.mylist_url)
 
     async def test_analysis_response_text(self):
-        self.enterContext(patch("NNMM.video_info_fetcher.video_info_fetcher.logger.error"))
-        mock_create = self.enterContext(patch("NNMM.video_info_fetcher.video_info_fetcher.ParserFactory.create"))
+        self.enterContext(patch("nnmm.video_info_fetcher.video_info_fetcher.logger.error"))
+        mock_create = self.enterContext(patch("nnmm.video_info_fetcher.video_info_fetcher.ParserFactory.create"))
 
         async def f():
             return "parser.parse()"
@@ -71,21 +71,21 @@ class TestVideoInfoFetcher(unittest.IsolatedAsyncioTestCase):
             actual = await instance._analysis_response_text(response_text)
 
     async def test_fetch_videoinfo_from_fetch_url(self):
-        self.enterContext(patch("NNMM.video_info_fetcher.video_info_fetcher.logger.error"))
-        mock_config = self.enterContext(patch("NNMM.process.config.ConfigBase.get_config"))
+        self.enterContext(patch("nnmm.video_info_fetcher.video_info_fetcher.logger.error"))
+        mock_config = self.enterContext(patch("nnmm.process.config.ConfigBase.get_config"))
         mock_session = self.enterContext(
-            patch("NNMM.video_info_fetcher.video_info_fetcher.VideoInfoFetcher._get_session_response")
+            patch("nnmm.video_info_fetcher.video_info_fetcher.VideoInfoFetcher._get_session_response")
         )
         mock_analysis = self.enterContext(
-            patch("NNMM.video_info_fetcher.video_info_fetcher.VideoInfoFetcher._analysis_response_text")
+            patch("nnmm.video_info_fetcher.video_info_fetcher.VideoInfoFetcher._analysis_response_text")
         )
         mock_api = self.enterContext(
-            patch("NNMM.video_info_fetcher.video_info_fetcher.VideoInfoFetcher._get_videoinfo_from_api")
+            patch("nnmm.video_info_fetcher.video_info_fetcher.VideoInfoFetcher._get_videoinfo_from_api")
         )
         mock_path: MagicMock = self.enterContext(
-            patch("NNMM.video_info_fetcher.video_info_fetcher.Path.open", mock_open())
+            patch("nnmm.video_info_fetcher.video_info_fetcher.Path.open", mock_open())
         )
-        mock_video_info = self.enterContext(patch("NNMM.video_info_fetcher.video_info_fetcher.FetchedVideoInfo.merge"))
+        mock_video_info = self.enterContext(patch("nnmm.video_info_fetcher.video_info_fetcher.FetchedVideoInfo.merge"))
 
         response_text = "response_text"
         urls = self._get_url_set()
@@ -258,7 +258,7 @@ class TestVideoInfoFetcher(unittest.IsolatedAsyncioTestCase):
 
     async def test_fetch_videoinfo(self):
         mock_fetch_videoinfo_from_fetch_url = self.enterContext(
-            patch("NNMM.video_info_fetcher.video_info_fetcher.VideoInfoFetcher._fetch_videoinfo_from_fetch_url")
+            patch("nnmm.video_info_fetcher.video_info_fetcher.VideoInfoFetcher._fetch_videoinfo_from_fetch_url")
         )
         urls = self._get_url_set()
         url = urls[0]

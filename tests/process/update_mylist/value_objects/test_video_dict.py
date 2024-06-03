@@ -4,7 +4,7 @@ from contextlib import ExitStack
 
 from mock import patch
 
-from NNMM.process.update_mylist.value_objects.video_dict import VideoDict
+from nnmm.process.update_mylist.value_objects.video_dict import VideoDict
 
 
 class TestVideoDict(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestVideoDict(unittest.TestCase):
     def test_to_typed_video(self):
         with ExitStack() as stack:
             mock_typed_video = stack.enter_context(
-                patch("NNMM.process.update_mylist.value_objects.video_dict.TypedVideo.create")
+                patch("nnmm.process.update_mylist.value_objects.video_dict.TypedVideo.create")
             )
             mock_typed_video.side_effect = lambda m: "TypedVideo.create()"
 

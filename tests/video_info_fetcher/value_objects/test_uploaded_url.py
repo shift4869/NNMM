@@ -8,10 +8,10 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
-from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
-from NNMM.video_info_fetcher.value_objects.url import URL
-from NNMM.video_info_fetcher.value_objects.userid import Userid
+from nnmm.video_info_fetcher.value_objects.mylistid import Mylistid
+from nnmm.video_info_fetcher.value_objects.uploaded_url import UploadedURL
+from nnmm.video_info_fetcher.value_objects.url import URL
+from nnmm.video_info_fetcher.value_objects.userid import Userid
 
 
 class TestUploadedURL(unittest.TestCase):

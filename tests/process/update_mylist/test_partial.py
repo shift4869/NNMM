@@ -6,10 +6,10 @@ import freezegun
 import PySimpleGUI as sg
 from mock import MagicMock, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist.partial import Partial, PartialThreadDone
-from NNMM.process.value_objects.process_info import ProcessInfo
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.update_mylist.partial import Partial, PartialThreadDone
+from nnmm.process.value_objects.process_info import ProcessInfo
 
 
 class TestPartial(unittest.TestCase):
@@ -49,7 +49,7 @@ class TestPartial(unittest.TestCase):
         with ExitStack() as stack:
             f_now = "2023-12-23 12:34:56"
             freeze_gun = stack.enter_context(freezegun.freeze_time(f_now))
-            mock_logger = stack.enter_context(patch("NNMM.process.update_mylist.partial.logger"))
+            mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.partial.logger"))
 
             MAX_CHECK_FAILED_COUNT = 10
             mylist_dict_list = [self._get_mylist_dict(i) for i in range(4)]

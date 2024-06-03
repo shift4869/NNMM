@@ -5,8 +5,8 @@ from typing import Iterator
 
 from mock import MagicMock, patch
 
-from NNMM.process.value_objects.mylist_row import MylistRow
-from NNMM.process.value_objects.mylist_row_list import MylistRowList
+from nnmm.process.value_objects.mylist_row import MylistRow
+from nnmm.process.value_objects.mylist_row_list import MylistRowList
 
 
 class TestMylistRowList(unittest.TestCase):
@@ -43,7 +43,7 @@ class TestMylistRowList(unittest.TestCase):
 
     def test_create(self):
         with ExitStack() as stack:
-            mock_mylist_row = stack.enter_context(patch("NNMM.process.value_objects.mylist_row_list.MylistRow.create"))
+            mock_mylist_row = stack.enter_context(patch("nnmm.process.value_objects.mylist_row_list.MylistRow.create"))
             mylist_row = MagicMock(spec=MylistRow)
             mock_mylist_row.side_effect = lambda m: mylist_row
 

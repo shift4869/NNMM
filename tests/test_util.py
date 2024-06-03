@@ -10,10 +10,10 @@ import freezegun
 import orjson
 from mock import mock_open, patch
 
-from NNMM.model import Mylist, MylistInfo
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.util import IncludeNewStatus, MylistType, Result, find_values, get_now_datetime, interval_translate
-from NNMM.util import is_mylist_include_new_video, load_mylist, popup_get_text, save_mylist
+from nnmm.model import Mylist, MylistInfo
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.util import IncludeNewStatus, MylistType, Result, find_values, get_now_datetime, interval_translate
+from nnmm.util import is_mylist_include_new_video, load_mylist, popup_get_text, save_mylist
 
 TEST_DB_PATH = ":memory:"
 CSV_PATH = "./tests/result.csv"
@@ -597,7 +597,7 @@ class TestUtil(unittest.TestCase):
 
     def test_popup_get_text(self):
         """sg.popup_get_text のラッパーのテスト"""
-        mock_window = self.enterContext(patch("NNMM.util.sg.Window"))
+        mock_window = self.enterContext(patch("nnmm.util.sg.Window"))
         message = "message"
 
         mock_window.return_value.read.side_effect = lambda: ("Ok", {"-INPUT-": "path"})

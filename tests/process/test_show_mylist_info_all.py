@@ -6,13 +6,13 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.show_mylist_info_all import ShowMylistInfoAll
-from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.table_row_list import TableRowList
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.show_mylist_info_all import ShowMylistInfoAll
+from nnmm.process.value_objects.mylist_row_index import SelectedMylistRowIndex
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.table_row_list import TableRowList
+from nnmm.util import Result
 
 
 class TestShowMylistInfoAll(unittest.TestCase):
@@ -65,9 +65,9 @@ class TestShowMylistInfoAll(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.show_mylist_info_all.logger.info"))
+            mockli = stack.enter_context(patch("nnmm.process.show_mylist_info_all.logger.info"))
             mock_selected_mylist_row_index = stack.enter_context(
-                patch("NNMM.process.show_mylist_info_all.ProcessBase.get_selected_mylist_row_index")
+                patch("nnmm.process.show_mylist_info_all.ProcessBase.get_selected_mylist_row_index")
             )
 
             instance = ShowMylistInfoAll(self.process_info)

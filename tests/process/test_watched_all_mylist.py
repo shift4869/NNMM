@@ -7,14 +7,14 @@ from copy import deepcopy
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.table_row import Status
-from NNMM.process.value_objects.table_row_list import TableRowList
-from NNMM.process.value_objects.textbox_upper import UpperTextbox
-from NNMM.process.watched_all_mylist import WatchedAllMylist
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.table_row import Status
+from nnmm.process.value_objects.table_row_list import TableRowList
+from nnmm.process.value_objects.textbox_upper import UpperTextbox
+from nnmm.process.watched_all_mylist import WatchedAllMylist
+from nnmm.util import Result
 
 
 class TestWatchedAllMylist(unittest.TestCase):
@@ -114,18 +114,18 @@ class TestWatchedAllMylist(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.watched_all_mylist.logger.info"))
+            mockli = stack.enter_context(patch("nnmm.process.watched_all_mylist.logger.info"))
             mock_update_mylist_pane = stack.enter_context(
-                patch("NNMM.process.watched_all_mylist.ProcessBase.update_mylist_pane")
+                patch("nnmm.process.watched_all_mylist.ProcessBase.update_mylist_pane")
             )
             mock_update_table_pane = stack.enter_context(
-                patch("NNMM.process.watched_all_mylist.ProcessBase.update_table_pane")
+                patch("nnmm.process.watched_all_mylist.ProcessBase.update_table_pane")
             )
             mock_upper_textbox = stack.enter_context(
-                patch("NNMM.process.watched_all_mylist.ProcessBase.get_upper_textbox")
+                patch("nnmm.process.watched_all_mylist.ProcessBase.get_upper_textbox")
             )
             mock_all_table_row = stack.enter_context(
-                patch("NNMM.process.watched_all_mylist.ProcessBase.get_all_table_row")
+                patch("nnmm.process.watched_all_mylist.ProcessBase.get_all_table_row")
             )
 
             instance = WatchedAllMylist(self.process_info)

@@ -5,14 +5,14 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.delete_mylist import DeleteMylist
-from NNMM.process.value_objects.mylist_row import SelectedMylistRow
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.textbox_bottom import BottomTextbox
-from NNMM.process.value_objects.textbox_upper import UpperTextbox
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.delete_mylist import DeleteMylist
+from nnmm.process.value_objects.mylist_row import SelectedMylistRow
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.textbox_bottom import BottomTextbox
+from nnmm.process.value_objects.textbox_upper import UpperTextbox
+from nnmm.util import Result
 
 
 class TestDeleteMylist(unittest.TestCase):
@@ -26,21 +26,21 @@ class TestDeleteMylist(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.delete_mylist.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.delete_mylist.logger.error"))
+            mockli = stack.enter_context(patch("nnmm.process.delete_mylist.logger.info"))
+            mockle = stack.enter_context(patch("nnmm.process.delete_mylist.logger.error"))
             mock_update_mylist_pane = stack.enter_context(
-                patch("NNMM.process.delete_mylist.ProcessBase.update_mylist_pane")
+                patch("nnmm.process.delete_mylist.ProcessBase.update_mylist_pane")
             )
             mock_get_selected_mylist_row = stack.enter_context(
-                patch("NNMM.process.delete_mylist.ProcessBase.get_selected_mylist_row")
+                patch("nnmm.process.delete_mylist.ProcessBase.get_selected_mylist_row")
             )
             mock_get_upper_textbox = stack.enter_context(
-                patch("NNMM.process.delete_mylist.ProcessBase.get_upper_textbox")
+                patch("nnmm.process.delete_mylist.ProcessBase.get_upper_textbox")
             )
             mock_get_bottom_textbox = stack.enter_context(
-                patch("NNMM.process.delete_mylist.ProcessBase.get_bottom_textbox")
+                patch("nnmm.process.delete_mylist.ProcessBase.get_bottom_textbox")
             )
-            mock_popup_ok_cancel = stack.enter_context(patch("NNMM.process.delete_mylist.sg.popup_ok_cancel"))
+            mock_popup_ok_cancel = stack.enter_context(patch("nnmm.process.delete_mylist.sg.popup_ok_cancel"))
             mock_mylist_db = MagicMock()
 
             instance = DeleteMylist(self.process_info)

@@ -5,8 +5,8 @@ from typing import Iterator
 
 from mock import MagicMock, patch
 
-from NNMM.process.update_mylist.value_objects.mylist_dict import MylistDict
-from NNMM.process.update_mylist.value_objects.mylist_dict_list import MylistDictList
+from nnmm.process.update_mylist.value_objects.mylist_dict import MylistDict
+from nnmm.process.update_mylist.value_objects.mylist_dict_list import MylistDictList
 
 
 class TestMylistDictList(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestMylistDictList(unittest.TestCase):
     def test_typed_mylist_list(self):
         with ExitStack() as stack:
             mock_typed_mylist_list = stack.enter_context(
-                patch("NNMM.process.update_mylist.value_objects.mylist_dict_list.TypedMylistList.create")
+                patch("nnmm.process.update_mylist.value_objects.mylist_dict_list.TypedMylistList.create")
             )
             mock_typed_mylist_list.side_effect = lambda m: "TypedMylistList.create()"
             mylist_dict = MagicMock(spec=MylistDict)
@@ -44,7 +44,7 @@ class TestMylistDictList(unittest.TestCase):
     def test_create(self):
         with ExitStack() as stack:
             mock_mylist_dict = stack.enter_context(
-                patch("NNMM.process.update_mylist.value_objects.mylist_dict_list.MylistDict.create")
+                patch("nnmm.process.update_mylist.value_objects.mylist_dict_list.MylistDict.create")
             )
             mylist_dict = MagicMock(spec=MylistDict)
             mock_mylist_dict.side_effect = lambda m: mylist_dict

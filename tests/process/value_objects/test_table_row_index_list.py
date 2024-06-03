@@ -4,8 +4,8 @@ from typing import Iterator
 
 from mock import MagicMock
 
-from NNMM.process.value_objects.table_row_index import TableRowIndex
-from NNMM.process.value_objects.table_row_index_list import SelectedTableRowIndexList, TableRowIndexList
+from nnmm.process.value_objects.table_row_index import TableRowIndex
+from nnmm.process.value_objects.table_row_index_list import SelectedTableRowIndexList, TableRowIndexList
 
 
 class TestTableRowIndexList(unittest.TestCase):

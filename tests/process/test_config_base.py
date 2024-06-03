@@ -5,11 +5,11 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.config import ConfigBase
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.config import ConfigBase
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -91,7 +91,7 @@ class TestConfigBase(unittest.TestCase):
 
     def test_get_config(self):
         with ExitStack() as stack:
-            mock_set_config = stack.enter_context(patch("NNMM.process.config.ConfigBase.set_config"))
+            mock_set_config = stack.enter_context(patch("nnmm.process.config.ConfigBase.set_config"))
 
             # 初回取得
             ConfigBase.config = None
@@ -109,7 +109,7 @@ class TestConfigBase(unittest.TestCase):
 
     def test_set_config(self):
         with ExitStack() as stack:
-            mock_configparser = stack.enter_context(patch("NNMM.process.config.configparser.ConfigParser"))
+            mock_configparser = stack.enter_context(patch("nnmm.process.config.configparser.ConfigParser"))
             mock_config = MagicMock()
             mock_configparser.side_effect = lambda: mock_config
 

@@ -3,12 +3,12 @@ import unittest
 
 from mock import MagicMock
 
-from NNMM.model import Mylist
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
-from NNMM.process.update_mylist.value_objects.typed_mylist import TypedMylist
-from NNMM.process.update_mylist.value_objects.typed_video_list import TypedVideoList
-from NNMM.process.update_mylist.value_objects.video_dict_list import VideoDictList
+from nnmm.model import Mylist
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
+from nnmm.process.update_mylist.value_objects.typed_mylist import TypedMylist
+from nnmm.process.update_mylist.value_objects.typed_video_list import TypedVideoList
+from nnmm.process.update_mylist.value_objects.video_dict_list import VideoDictList
 
 
 class TestMylistWithVideoList(unittest.TestCase):

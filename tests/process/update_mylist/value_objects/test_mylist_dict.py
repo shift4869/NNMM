@@ -4,7 +4,7 @@ from contextlib import ExitStack
 
 from mock import patch
 
-from NNMM.process.update_mylist.value_objects.mylist_dict import MylistDict
+from nnmm.process.update_mylist.value_objects.mylist_dict import MylistDict
 
 
 class TestMylistDict(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestMylistDict(unittest.TestCase):
     def test_typed_mylist(self):
         with ExitStack() as stack:
             mock_typed_mylist = stack.enter_context(
-                patch("NNMM.process.update_mylist.value_objects.mylist_dict.TypedMylist.create")
+                patch("nnmm.process.update_mylist.value_objects.mylist_dict.TypedMylist.create")
             )
             mock_typed_mylist.side_effect = lambda m: "TypedMylist.create()"
 

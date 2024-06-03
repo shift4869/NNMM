@@ -1,7 +1,7 @@
 import sys
 import unittest
 
-from NNMM.process.update_mylist.value_objects.check_failed_count import CheckFailedCount
+from nnmm.process.update_mylist.value_objects.check_failed_count import CheckFailedCount
 
 
 class TestCheckFailedCount(unittest.TestCase):

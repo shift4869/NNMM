@@ -6,15 +6,15 @@ from collections import namedtuple
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.main_window import MainWindow
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.base import ProcessBase
-from NNMM.process.value_objects.mylist_row import MylistRow
-from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.table_row import TableRowTuple
-from NNMM.util import Result
+from nnmm.main_window import MainWindow
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.base import ProcessBase
+from nnmm.process.value_objects.mylist_row import MylistRow
+from nnmm.process.value_objects.mylist_row_index import SelectedMylistRowIndex
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.table_row import TableRowTuple
+from nnmm.util import Result
 
 
 class ConcreteProcessBase(ProcessBase):
@@ -163,7 +163,7 @@ class TestProcessBase(unittest.TestCase):
         self.assertIsNone(actual)
 
     def test_get_selected_mylist_row(self):
-        mock_create = self.enterContext(patch("NNMM.process.base.SelectedMylistRow.create"))
+        mock_create = self.enterContext(patch("nnmm.process.base.SelectedMylistRow.create"))
         mock_create.side_effect = lambda showname: showname
         instance = ConcreteProcessBase(self.process_info)
         instance.values.__getitem__.side_effect = lambda key: ["values['-LIST-']"]
@@ -180,7 +180,7 @@ class TestProcessBase(unittest.TestCase):
         self.assertIsNone(actual)
 
     def test_get_all_mylist_row(self):
-        mock_create = self.enterContext(patch("NNMM.process.base.MylistRowList.create"))
+        mock_create = self.enterContext(patch("nnmm.process.base.MylistRowList.create"))
         mock_create.side_effect = lambda mylist_row_list: mylist_row_list
         instance = ConcreteProcessBase(self.process_info)
         instance.window.__getitem__.return_value.Values = "window['-LIST-'].Values"
@@ -193,7 +193,7 @@ class TestProcessBase(unittest.TestCase):
         self.assertIsNone(actual)
 
     def test_get_selected_table_row_index_list(self):
-        mock_create = self.enterContext(patch("NNMM.process.base.SelectedTableRowIndexList.create"))
+        mock_create = self.enterContext(patch("nnmm.process.base.SelectedTableRowIndexList.create"))
         mock_create.side_effect = lambda table_row_index_list: table_row_index_list
         instance = ConcreteProcessBase(self.process_info)
         instance.values.__getitem__.side_effect = lambda key: "values['-TABLE-']"
@@ -206,10 +206,10 @@ class TestProcessBase(unittest.TestCase):
         self.assertIsNone(actual)
 
     def test_get_selected_table_row_list(self):
-        mock_create = self.enterContext(patch("NNMM.process.base.SelectedTableRowList.create"))
-        mock_get_all_table_row = self.enterContext(patch("NNMM.process.base.ProcessBase.get_all_table_row"))
+        mock_create = self.enterContext(patch("nnmm.process.base.SelectedTableRowList.create"))
+        mock_get_all_table_row = self.enterContext(patch("nnmm.process.base.ProcessBase.get_all_table_row"))
         mock_get_selected_table_row_index_list = self.enterContext(
-            patch("NNMM.process.base.ProcessBase.get_selected_table_row_index_list")
+            patch("nnmm.process.base.ProcessBase.get_selected_table_row_index_list")
         )
         mock_create.side_effect = lambda table_row_list: table_row_list
 
@@ -235,7 +235,7 @@ class TestProcessBase(unittest.TestCase):
         self.assertIsNone(actual)
 
     def test_get_all_table_row(self):
-        mock_create = self.enterContext(patch("NNMM.process.base.TableRowList.create"))
+        mock_create = self.enterContext(patch("nnmm.process.base.TableRowList.create"))
         mock_create.side_effect = lambda table_row_list: table_row_list
         instance = ConcreteProcessBase(self.process_info)
         instance.window.__getitem__.return_value.Values = "window['-TABLE-']"
@@ -248,7 +248,7 @@ class TestProcessBase(unittest.TestCase):
         self.assertIsNone(actual)
 
     def test_get_upper_textbox(self):
-        mock_upper_textbox = self.enterContext(patch("NNMM.process.base.UpperTextbox"))
+        mock_upper_textbox = self.enterContext(patch("nnmm.process.base.UpperTextbox"))
         mock_upper_textbox.side_effect = lambda table_row_index_list: table_row_index_list
         instance = ConcreteProcessBase(self.process_info)
         instance.window.__getitem__.return_value.get.side_effect = lambda: "window['-INPUT1-']"
@@ -261,7 +261,7 @@ class TestProcessBase(unittest.TestCase):
         self.assertIsNone(actual)
 
     def test_get_bottom_textbox(self):
-        mock_bottom_textbox = self.enterContext(patch("NNMM.process.base.BottomTextbox"))
+        mock_bottom_textbox = self.enterContext(patch("nnmm.process.base.BottomTextbox"))
         mock_bottom_textbox.side_effect = lambda table_row_index_list: table_row_index_list
         instance = ConcreteProcessBase(self.process_info)
         instance.window.__getitem__.return_value.get.side_effect = lambda: "window['-INPUT2-']"

@@ -3,10 +3,10 @@ import unittest
 from collections import namedtuple
 from dataclasses import FrozenInstanceError
 
-from NNMM.util import MylistType
-from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
-from NNMM.video_info_fetcher.value_objects.showname import Showname
-from NNMM.video_info_fetcher.value_objects.username import Username
+from nnmm.util import MylistType
+from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
+from nnmm.video_info_fetcher.value_objects.showname import Showname
+from nnmm.video_info_fetcher.value_objects.username import Username
 
 
 class TestShowname(unittest.TestCase):

@@ -6,12 +6,12 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.copy_mylist_url import CopyMylistUrl
-from NNMM.process.value_objects.mylist_row import SelectedMylistRow
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.copy_mylist_url import CopyMylistUrl
+from nnmm.process.value_objects.mylist_row import SelectedMylistRow
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 class TestCopyMylistUrl(unittest.TestCase):
@@ -25,10 +25,10 @@ class TestCopyMylistUrl(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("NNMM.process.copy_mylist_url.logger"))
-            mock_pyperclip = stack.enter_context(patch("NNMM.process.copy_mylist_url.pyperclip"))
+            mock_logger = stack.enter_context(patch("nnmm.process.copy_mylist_url.logger"))
+            mock_pyperclip = stack.enter_context(patch("nnmm.process.copy_mylist_url.pyperclip"))
             mock_selected_mylist_row = stack.enter_context(
-                patch("NNMM.process.copy_mylist_url.ProcessBase.get_selected_mylist_row")
+                patch("nnmm.process.copy_mylist_url.ProcessBase.get_selected_mylist_row")
             )
             instance = CopyMylistUrl(self.process_info)
 

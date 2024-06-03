@@ -2,7 +2,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.process.value_objects.textbox_bottom import BottomTextbox
+from nnmm.process.value_objects.textbox_bottom import BottomTextbox
 
 
 class TestBottomTextbox(unittest.TestCase):

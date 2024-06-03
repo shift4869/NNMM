@@ -5,11 +5,11 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.search import MylistSearchClear
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.search import MylistSearchClear
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 class TestMylistSearchClear(unittest.TestCase):
@@ -23,8 +23,8 @@ class TestMylistSearchClear(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
-            mock_update_mylist_pane = stack.enter_context(patch("NNMM.process.search.ProcessBase.update_mylist_pane"))
+            mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))
+            mock_update_mylist_pane = stack.enter_context(patch("nnmm.process.search.ProcessBase.update_mylist_pane"))
             instance = MylistSearchClear(self.process_info)
             actual = instance.run()
             self.assertIs(Result.success, actual)

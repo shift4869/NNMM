@@ -7,7 +7,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.video_info_fetcher.value_objects.title import Title
+from nnmm.video_info_fetcher.value_objects.title import Title
 
 
 class TestTitle(unittest.TestCase):

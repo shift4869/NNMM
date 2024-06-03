@@ -7,8 +7,8 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
-from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
+from nnmm.video_info_fetcher.value_objects.video_url import VideoURL
+from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 
 
 class TestVideoURLList(unittest.TestCase):

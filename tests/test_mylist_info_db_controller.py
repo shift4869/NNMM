@@ -3,8 +3,8 @@ import random
 import sys
 import unittest
 
-from NNMM.model import MylistInfo
-from NNMM.mylist_info_db_controller import MylistInfoDBController
+from nnmm.model import MylistInfo
+from nnmm.mylist_info_db_controller import MylistInfoDBController
 
 
 class TestMylistInfoDBController(unittest.TestCase):

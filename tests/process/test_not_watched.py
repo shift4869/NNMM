@@ -7,15 +7,15 @@ from copy import deepcopy
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.not_watched import NotWatched
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.table_row import Status
-from NNMM.process.value_objects.table_row_index_list import SelectedTableRowIndexList
-from NNMM.process.value_objects.table_row_list import TableRowList
-from NNMM.process.value_objects.textbox_upper import UpperTextbox
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.not_watched import NotWatched
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.table_row import Status
+from nnmm.process.value_objects.table_row_index_list import SelectedTableRowIndexList
+from nnmm.process.value_objects.table_row_list import TableRowList
+from nnmm.process.value_objects.textbox_upper import UpperTextbox
+from nnmm.util import Result
 
 
 class TestNotWatched(unittest.TestCase):
@@ -116,18 +116,18 @@ class TestNotWatched(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.not_watched.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.not_watched.logger.error"))
+            mockli = stack.enter_context(patch("nnmm.process.not_watched.logger.info"))
+            mockle = stack.enter_context(patch("nnmm.process.not_watched.logger.error"))
             mock_selected_table_row_index_list = stack.enter_context(
-                patch("NNMM.process.not_watched.ProcessBase.get_selected_table_row_index_list")
+                patch("nnmm.process.not_watched.ProcessBase.get_selected_table_row_index_list")
             )
-            mock_all_table_row = stack.enter_context(patch("NNMM.process.not_watched.ProcessBase.get_all_table_row"))
-            mock_upper_textbox = stack.enter_context(patch("NNMM.process.not_watched.ProcessBase.get_upper_textbox"))
+            mock_all_table_row = stack.enter_context(patch("nnmm.process.not_watched.ProcessBase.get_all_table_row"))
+            mock_upper_textbox = stack.enter_context(patch("nnmm.process.not_watched.ProcessBase.get_upper_textbox"))
             mock_update_table_pane = stack.enter_context(
-                patch("NNMM.process.not_watched.ProcessBase.update_table_pane")
+                patch("nnmm.process.not_watched.ProcessBase.update_table_pane")
             )
             mock_update_mylist_pane = stack.enter_context(
-                patch("NNMM.process.not_watched.ProcessBase.update_mylist_pane")
+                patch("nnmm.process.not_watched.ProcessBase.update_mylist_pane")
             )
 
             instance = NotWatched(self.process_info)

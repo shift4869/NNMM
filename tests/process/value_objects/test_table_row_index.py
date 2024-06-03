@@ -2,7 +2,7 @@ import sys
 import unittest
 from collections import namedtuple
 
-from NNMM.process.value_objects.table_row_index import TableRowIndex
+from nnmm.process.value_objects.table_row_index import TableRowIndex
 
 
 class TestTableRowIndex(unittest.TestCase):

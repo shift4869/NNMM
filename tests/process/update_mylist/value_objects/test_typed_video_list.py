@@ -5,8 +5,8 @@ from typing import Iterator
 
 from mock import MagicMock
 
-from NNMM.process.update_mylist.value_objects.typed_video import TypedVideo
-from NNMM.process.update_mylist.value_objects.typed_video_list import TypedVideoList
+from nnmm.process.update_mylist.value_objects.typed_video import TypedVideo
+from nnmm.process.update_mylist.value_objects.typed_video_list import TypedVideoList
 
 
 class TestTypedVideoList(unittest.TestCase):

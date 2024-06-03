@@ -5,12 +5,12 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.move_down import MoveDown
-from NNMM.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.move_down import MoveDown
+from nnmm.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 class TestMoveDown(unittest.TestCase):
@@ -24,18 +24,18 @@ class TestMoveDown(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.move_down.logger.info"))
-            mockle = stack.enter_context(patch("NNMM.process.move_down.logger.error"))
+            mockli = stack.enter_context(patch("nnmm.process.move_down.logger.info"))
+            mockle = stack.enter_context(patch("nnmm.process.move_down.logger.error"))
             mock_update_mylist_pane = stack.enter_context(
-                patch("NNMM.process.move_down.ProcessBase.update_mylist_pane")
+                patch("nnmm.process.move_down.ProcessBase.update_mylist_pane")
             )
             mock_selected_mylist_row = stack.enter_context(
-                patch("NNMM.process.move_down.ProcessBase.get_selected_mylist_row")
+                patch("nnmm.process.move_down.ProcessBase.get_selected_mylist_row")
             )
             mock_selected_mylist_row_index = stack.enter_context(
-                patch("NNMM.process.move_down.ProcessBase.get_selected_mylist_row_index")
+                patch("nnmm.process.move_down.ProcessBase.get_selected_mylist_row_index")
             )
-            mock_all_mylist_row = stack.enter_context(patch("NNMM.process.move_down.ProcessBase.get_all_mylist_row"))
+            mock_all_mylist_row = stack.enter_context(patch("nnmm.process.move_down.ProcessBase.get_all_mylist_row"))
 
             instance = MoveDown(self.process_info)
 

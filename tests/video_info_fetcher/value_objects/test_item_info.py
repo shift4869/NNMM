@@ -6,11 +6,11 @@ ItemInfo の各種機能をテストする
 import sys
 import unittest
 
-from NNMM.video_info_fetcher.value_objects.item_info import ItemInfo
-from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
-from NNMM.video_info_fetcher.value_objects.title import Title
-from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
-from NNMM.video_info_fetcher.value_objects.videoid import Videoid
+from nnmm.video_info_fetcher.value_objects.item_info import ItemInfo
+from nnmm.video_info_fetcher.value_objects.registered_at import RegisteredAt
+from nnmm.video_info_fetcher.value_objects.title import Title
+from nnmm.video_info_fetcher.value_objects.video_url import VideoURL
+from nnmm.video_info_fetcher.value_objects.videoid import Videoid
 
 
 class TestItemInfo(unittest.TestCase):

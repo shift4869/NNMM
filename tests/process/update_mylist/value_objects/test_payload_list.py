@@ -6,10 +6,10 @@ from typing import Iterator
 
 from mock import MagicMock, patch
 
-from NNMM.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
-from NNMM.process.update_mylist.value_objects.payload import Payload
-from NNMM.process.update_mylist.value_objects.payload_list import PayloadList
-from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
+from nnmm.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
+from nnmm.process.update_mylist.value_objects.payload import Payload
+from nnmm.process.update_mylist.value_objects.payload_list import PayloadList
+from nnmm.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 
 
 class TestPayloadList(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestPayloadList(unittest.TestCase):
     def test_create(self):
         with ExitStack() as stack:
             mock_create = stack.enter_context(
-                patch("NNMM.process.update_mylist.value_objects.payload_list.Payload.create")
+                patch("nnmm.process.update_mylist.value_objects.payload_list.Payload.create")
             )
             payload = MagicMock(spec=Payload)
             mock_create.side_effect = lambda mylist_with_videolist, fetched_info: payload

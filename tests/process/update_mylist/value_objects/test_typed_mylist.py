@@ -3,19 +3,19 @@ import unittest
 from collections import namedtuple
 from dataclasses import FrozenInstanceError
 
-from NNMM.process.update_mylist.value_objects.check_failed_count import CheckFailedCount
-from NNMM.process.update_mylist.value_objects.check_interval import CheckInterval
-from NNMM.process.update_mylist.value_objects.checked_at import CheckedAt
-from NNMM.process.update_mylist.value_objects.created_at import CreatedAt
-from NNMM.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
-from NNMM.process.update_mylist.value_objects.typed_mylist import TypedMylist
-from NNMM.process.update_mylist.value_objects.updated_at import UpdatedAt
-from NNMM.util import IncludeNewStatus, MylistType
-from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
-from NNMM.video_info_fetcher.value_objects.showname import Showname
-from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
-from NNMM.video_info_fetcher.value_objects.username import Username
+from nnmm.process.update_mylist.value_objects.check_failed_count import CheckFailedCount
+from nnmm.process.update_mylist.value_objects.check_interval import CheckInterval
+from nnmm.process.update_mylist.value_objects.checked_at import CheckedAt
+from nnmm.process.update_mylist.value_objects.created_at import CreatedAt
+from nnmm.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
+from nnmm.process.update_mylist.value_objects.typed_mylist import TypedMylist
+from nnmm.process.update_mylist.value_objects.updated_at import UpdatedAt
+from nnmm.util import IncludeNewStatus, MylistType
+from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
+from nnmm.video_info_fetcher.value_objects.showname import Showname
+from nnmm.video_info_fetcher.value_objects.uploaded_url import UploadedURL
+from nnmm.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from nnmm.video_info_fetcher.value_objects.username import Username
 
 
 class TestTypedMylist(unittest.TestCase):

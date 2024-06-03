@@ -8,13 +8,13 @@ from pathlib import Path
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.copy_video_url import CopyVideoUrl
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.table_row_index_list import SelectedTableRowIndexList
-from NNMM.process.value_objects.table_row_list import SelectedTableRowList
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.copy_video_url import CopyVideoUrl
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.table_row_index_list import SelectedTableRowIndexList
+from nnmm.process.value_objects.table_row_list import SelectedTableRowList
+from nnmm.util import Result
 
 
 class TestCopyVideoUrl(unittest.TestCase):
@@ -141,13 +141,13 @@ class TestCopyVideoUrl(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("NNMM.process.copy_video_url.logger.info"))
-            mock_pyperclip = stack.enter_context(patch("NNMM.process.copy_video_url.pyperclip"))
+            mock_logger = stack.enter_context(patch("nnmm.process.copy_video_url.logger.info"))
+            mock_pyperclip = stack.enter_context(patch("nnmm.process.copy_video_url.pyperclip"))
             mock_selected_table_row_index_list = stack.enter_context(
-                patch("NNMM.process.copy_video_url.ProcessBase.get_selected_table_row_index_list")
+                patch("nnmm.process.copy_video_url.ProcessBase.get_selected_table_row_index_list")
             )
             mock_selected_table_row_list = stack.enter_context(
-                patch("NNMM.process.copy_video_url.ProcessBase.get_selected_table_row_list")
+                patch("nnmm.process.copy_video_url.ProcessBase.get_selected_table_row_list")
             )
 
             instance = CopyVideoUrl(self.process_info)

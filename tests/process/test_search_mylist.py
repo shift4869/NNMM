@@ -7,12 +7,12 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.search import MylistSearch
-from NNMM.process.value_objects.mylist_row_index import SelectedMylistRowIndex
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.search import MylistSearch
+from nnmm.process.value_objects.mylist_row_index import SelectedMylistRowIndex
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 class TestMylistSearch(unittest.TestCase):
@@ -66,10 +66,10 @@ class TestMylistSearch(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.search.logger.info"))
-            mock_popup_get_text = stack.enter_context(patch("NNMM.process.search.popup_get_text"))
+            mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))
+            mock_popup_get_text = stack.enter_context(patch("nnmm.process.search.popup_get_text"))
             mock_selected_mylist_row_index = stack.enter_context(
-                patch("NNMM.process.search.ProcessBase.get_selected_mylist_row_index")
+                patch("nnmm.process.search.ProcessBase.get_selected_mylist_row_index")
             )
             mock_mylist_db = MagicMock()
 

@@ -6,11 +6,11 @@ from pathlib import Path
 import PySimpleGUI as sg
 from mock import MagicMock, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.config import MylistSaveCSV
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.config import MylistSaveCSV
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 CONFIG_FILE_PATH = "./config/config.ini"
 
@@ -30,9 +30,9 @@ class TestMylistSaveCSV(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockpgf = stack.enter_context(patch("NNMM.process.config.sg.popup_get_file"))
-            mocksml = stack.enter_context(patch("NNMM.process.config.save_mylist"))
-            mockpu = stack.enter_context(patch("NNMM.process.config.sg.popup"))
+            mockpgf = stack.enter_context(patch("nnmm.process.config.sg.popup_get_file"))
+            mocksml = stack.enter_context(patch("nnmm.process.config.save_mylist"))
+            mockpu = stack.enter_context(patch("nnmm.process.config.sg.popup"))
 
             TEST_RESULT_PATH = "./tests/result.csv"
             mockpgf.side_effect = [TEST_RESULT_PATH, None, TEST_RESULT_PATH]

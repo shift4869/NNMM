@@ -2,7 +2,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.process.update_mylist.value_objects.updated_at import UpdatedAt
+from nnmm.process.update_mylist.value_objects.updated_at import UpdatedAt
 
 
 class TestUpdatedAt(unittest.TestCase):

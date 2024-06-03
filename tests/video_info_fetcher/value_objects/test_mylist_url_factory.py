@@ -3,12 +3,12 @@ import unittest
 
 from mock import call, patch
 
-from NNMM.video_info_fetcher.value_objects.mylist_url import MylistURL
-from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
-from NNMM.video_info_fetcher.value_objects.series_url import SeriesURL
-from NNMM.video_info_fetcher.value_objects.uploaded_url import UploadedURL
-from NNMM.video_info_fetcher.value_objects.url import URL
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from nnmm.video_info_fetcher.value_objects.mylist_url import MylistURL
+from nnmm.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
+from nnmm.video_info_fetcher.value_objects.series_url import SeriesURL
+from nnmm.video_info_fetcher.value_objects.uploaded_url import UploadedURL
+from nnmm.video_info_fetcher.value_objects.url import URL
+from nnmm.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 
 
 class TestMylistURLFactory(unittest.TestCase):

@@ -5,10 +5,10 @@ from dataclasses import FrozenInstanceError
 
 from mock import MagicMock
 
-from NNMM.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
-from NNMM.process.update_mylist.value_objects.payload import Payload
-from NNMM.util import Result
-from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
+from nnmm.process.update_mylist.value_objects.mylist_with_video import MylistWithVideo
+from nnmm.process.update_mylist.value_objects.payload import Payload
+from nnmm.util import Result
+from nnmm.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 
 
 class TestPayload(unittest.TestCase):

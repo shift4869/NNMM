@@ -5,20 +5,20 @@ from datetime import datetime
 
 import xmltodict
 
-from NNMM.util import MylistType, find_values
-from NNMM.video_info_fetcher.mylist_rss_xml_parser import MylistRSSXmlParser
-from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
-from NNMM.video_info_fetcher.value_objects.registered_at import RegisteredAt
-from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
-from NNMM.video_info_fetcher.value_objects.showname import Showname
-from NNMM.video_info_fetcher.value_objects.title import Title
-from NNMM.video_info_fetcher.value_objects.title_list import TitleList
-from NNMM.video_info_fetcher.value_objects.url import URL
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
-from NNMM.video_info_fetcher.value_objects.username import Username
-from NNMM.video_info_fetcher.value_objects.video_url import VideoURL
-from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
+from nnmm.util import MylistType, find_values
+from nnmm.video_info_fetcher.mylist_rss_xml_parser import MylistRSSXmlParser
+from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
+from nnmm.video_info_fetcher.value_objects.registered_at import RegisteredAt
+from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
+from nnmm.video_info_fetcher.value_objects.showname import Showname
+from nnmm.video_info_fetcher.value_objects.title import Title
+from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.url import URL
+from nnmm.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.video_url import VideoURL
+from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
+from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class TestMylistRSSXmlParser(unittest.TestCase):
@@ -159,9 +159,7 @@ class TestMylistRSSXmlParser(unittest.TestCase):
             video_id_list = [video_url.video_id for video_url in video_url_list]
             title_list = [Title(title) for title in find_values(items_dict, "title", False, [], [])]
             registered_at_list = [
-                RegisteredAt(
-                    datetime.strptime(pub_date, SOURCE_DATETIME_FORMAT).strftime(DESTINATION_DATETIME_FORMAT)
-                )
+                RegisteredAt(datetime.strptime(pub_date, SOURCE_DATETIME_FORMAT).strftime(DESTINATION_DATETIME_FORMAT))
                 for pub_date in find_values(items_dict, "pubDate", False, [], [])
             ]
 

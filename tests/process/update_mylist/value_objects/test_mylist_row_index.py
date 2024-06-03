@@ -2,7 +2,7 @@ import sys
 import unittest
 from collections import namedtuple
 
-from NNMM.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
+from nnmm.process.update_mylist.value_objects.mylist_row_index import MylistRowIndex
 
 
 class TestMylistRowIndex(unittest.TestCase):

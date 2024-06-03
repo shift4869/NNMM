@@ -2,7 +2,7 @@ import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
-from NNMM.process.value_objects.textbox_upper import UpperTextbox
+from nnmm.process.value_objects.textbox_upper import UpperTextbox
 
 
 class TestUpperTextbox(unittest.TestCase):

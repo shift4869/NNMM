@@ -5,8 +5,8 @@ from typing import Iterator
 
 from mock import MagicMock, patch
 
-from NNMM.process.update_mylist.value_objects.video_dict import VideoDict
-from NNMM.process.update_mylist.value_objects.video_dict_list import VideoDictList
+from nnmm.process.update_mylist.value_objects.video_dict import VideoDict
+from nnmm.process.update_mylist.value_objects.video_dict_list import VideoDictList
 
 
 class TestVideoDictList(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestVideoDictList(unittest.TestCase):
     def test_to_typed_video_list(self):
         with ExitStack() as stack:
             mock_typed_video_list = stack.enter_context(
-                patch("NNMM.process.update_mylist.value_objects.video_dict_list.TypedVideoList.create")
+                patch("nnmm.process.update_mylist.value_objects.video_dict_list.TypedVideoList.create")
             )
             mock_typed_video_list.side_effect = lambda m: "TypedVideoList.create()"
             video_dict = MagicMock(spec=VideoDict)
@@ -44,7 +44,7 @@ class TestVideoDictList(unittest.TestCase):
     def test_create(self):
         with ExitStack() as stack:
             mock_video_dict = stack.enter_context(
-                patch("NNMM.process.update_mylist.value_objects.video_dict_list.VideoDict.create")
+                patch("nnmm.process.update_mylist.value_objects.video_dict_list.VideoDict.create")
             )
             video_dict = MagicMock(spec=VideoDict)
             mock_video_dict.side_effect = lambda m: video_dict

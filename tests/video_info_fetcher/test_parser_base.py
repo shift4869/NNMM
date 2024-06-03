@@ -4,15 +4,15 @@ import warnings
 
 from mock import MagicMock, patch
 
-from NNMM.video_info_fetcher.parser_base import ParserBase
-from NNMM.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
-from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
-from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
-from NNMM.video_info_fetcher.value_objects.showname import Showname
-from NNMM.video_info_fetcher.value_objects.title_list import TitleList
-from NNMM.video_info_fetcher.value_objects.username import Username
-from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
+from nnmm.video_info_fetcher.parser_base import ParserBase
+from nnmm.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
+from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
+from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
+from nnmm.video_info_fetcher.value_objects.showname import Showname
+from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
+from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class ConcreteParser(ParserBase):
@@ -77,7 +77,7 @@ class TestParserBase(unittest.IsolatedAsyncioTestCase):
 
     async def test_parse(self):
         mock_fetched_page_video_info = self.enterContext(
-            patch("NNMM.video_info_fetcher.parser_base.FetchedPageVideoInfo")
+            patch("nnmm.video_info_fetcher.parser_base.FetchedPageVideoInfo")
         )
 
         def f(**kwargs):

@@ -6,16 +6,16 @@ from pathlib import Path
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.main_window import MainWindow
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process import config, copy_mylist_url, copy_video_url, create_mylist, delete_mylist, move_down, move_up
-from NNMM.process import not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, video_play
-from NNMM.process import video_play_with_focus_back, watched, watched_all_mylist, watched_mylist
-from NNMM.process.base import ProcessBase
-from NNMM.process.update_mylist import every, partial, single
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.main_window import MainWindow
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process import config, copy_mylist_url, copy_video_url, create_mylist, delete_mylist, move_down, move_up
+from nnmm.process import not_watched, popup, search, show_mylist_info, show_mylist_info_all, timer, video_play
+from nnmm.process import video_play_with_focus_back, watched, watched_all_mylist, watched_mylist
+from nnmm.process.base import ProcessBase
+from nnmm.process.update_mylist import every, partial, single
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 TEST_DB_PATH = ":memory:"
 
@@ -41,21 +41,21 @@ class ConcreteErrorProcessBase(ProcessBase):
 class TestWindowMain(unittest.TestCase):
     def _get_instance(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
-            mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window", spec=sg.Window))
-            mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
-            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.get_config"))
-            mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController", spec=MylistDBController))
+            mockli = stack.enter_context(patch("nnmm.main_window.logger.info"))
+            mockwd = stack.enter_context(patch("nnmm.main_window.sg.Window", spec=sg.Window))
+            mockcps = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.set_config"))
+            mockcpg = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.get_config"))
+            mockmdbc = stack.enter_context(patch("nnmm.main_window.MylistDBController", spec=MylistDBController))
             mockmidbc = stack.enter_context(
-                patch("NNMM.main_window.MylistInfoDBController", spec=MylistInfoDBController)
+                patch("nnmm.main_window.MylistInfoDBController", spec=MylistInfoDBController)
             )
-            mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
+            mockmmwl = stack.enter_context(patch("nnmm.main_window.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
             mock_logger_dict = stack.enter_context(patch("logging.root.manager.loggerDict"))
-            mockump = stack.enter_context(patch("NNMM.main_window.MainWindow.update_mylist_pane"))
-            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.make_layout"))
-            mockcmpcl = stack.enter_context(patch("NNMM.main_window.config.ConfigLoad"))
-            mockpi = stack.enter_context(patch("NNMM.main_window.ProcessInfo.create"))
+            mockump = stack.enter_context(patch("nnmm.main_window.MainWindow.update_mylist_pane"))
+            mockcmgcl = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.make_layout"))
+            mockcmpcl = stack.enter_context(patch("nnmm.main_window.config.ConfigLoad"))
+            mockpi = stack.enter_context(patch("nnmm.main_window.ProcessInfo.create"))
             mw = MainWindow()
             return mw
 
@@ -77,14 +77,14 @@ class TestWindowMain(unittest.TestCase):
     def test_init(self):
         """WindowMainの初期化後の状態をテストする"""
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
-            mockwd = stack.enter_context(patch("NNMM.main_window.sg.Window"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
-            mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
-            mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
-            mockmmwl = stack.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
+            mockli = stack.enter_context(patch("nnmm.main_window.logger.info"))
+            mockwd = stack.enter_context(patch("nnmm.main_window.sg.Window"))
+            mockcps = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.set_config"))
+            mockmdbc = stack.enter_context(patch("nnmm.main_window.MylistDBController"))
+            mockmidbc = stack.enter_context(patch("nnmm.main_window.MylistInfoDBController"))
+            mockmmwl = stack.enter_context(patch("nnmm.main_window.MainWindow.make_layout"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockump = stack.enter_context(patch("NNMM.main_window.MainWindow.update_mylist_pane"))
+            mockump = stack.enter_context(patch("nnmm.main_window.MainWindow.update_mylist_pane"))
 
             mockmmwl.return_value = [["dummy layout"]]
 
@@ -199,17 +199,17 @@ class TestWindowMain(unittest.TestCase):
     def test_make_layout(self):
         """WindowMainのレイアウトをテストする"""
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.main_window.logger.info"))
-            mockcps = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.set_config"))
-            mockcpg = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.get_config"))
-            mockmdbc = stack.enter_context(patch("NNMM.main_window.MylistDBController"))
-            mockmidbc = stack.enter_context(patch("NNMM.main_window.MylistInfoDBController"))
+            mockli = stack.enter_context(patch("nnmm.main_window.logger.info"))
+            mockcps = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.set_config"))
+            mockcpg = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.get_config"))
+            mockmdbc = stack.enter_context(patch("nnmm.main_window.MylistDBController"))
+            mockmidbc = stack.enter_context(patch("nnmm.main_window.MylistInfoDBController"))
             mocklcfc = stack.enter_context(patch("logging.config.fileConfig"))
-            mockump = stack.enter_context(patch("NNMM.main_window.MainWindow.update_mylist_pane"))
-            mockcmgcl = stack.enter_context(patch("NNMM.main_window.config.ConfigBase.make_layout"))
+            mockump = stack.enter_context(patch("nnmm.main_window.MainWindow.update_mylist_pane"))
+            mockcmgcl = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.make_layout"))
 
             # sg.Outputだけは標準エラー等に干渉するためdummyに置き換える
-            mockop = stack.enter_context(patch("NNMM.main_window.sg.Output"))
+            mockop = stack.enter_context(patch("nnmm.main_window.sg.Output"))
             mockop.side_effect = lambda size, echo_stdout_stderr: sg.Text("dummy")
 
             # configレイアウトのdummy
@@ -222,8 +222,8 @@ class TestWindowMain(unittest.TestCase):
             # インスタンス生成
             mw = None
             with ExitStack() as stack2:
-                mockwd = stack2.enter_context(patch("NNMM.main_window.sg.Window"))
-                mockmmwl = stack2.enter_context(patch("NNMM.main_window.MainWindow.make_layout"))
+                mockwd = stack2.enter_context(patch("nnmm.main_window.sg.Window"))
+                mockmmwl = stack2.enter_context(patch("nnmm.main_window.MainWindow.make_layout"))
                 mw = MainWindow()
 
             # レイアウト予測値生成
@@ -478,8 +478,8 @@ class TestWindowMain(unittest.TestCase):
     def test_run(self):
         """WindowMainのメインベントループをテストする"""
         with ExitStack() as stack:
-            mock_config_load = stack.enter_context(patch("NNMM.main_window.config.ConfigLoad"))
-            mock_logger = stack.enter_context(patch("NNMM.main_window.logger.error"))
+            mock_config_load = stack.enter_context(patch("nnmm.main_window.config.ConfigLoad"))
+            mock_logger = stack.enter_context(patch("nnmm.main_window.logger.error"))
 
             mw = self._get_instance()
             mw.window.read.side_effect = [

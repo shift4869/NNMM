@@ -6,12 +6,12 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist.base import ThreadDoneBase
-from NNMM.process.update_mylist.value_objects.video_dict_list import VideoDictList
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.update_mylist.base import ThreadDoneBase
+from nnmm.process.update_mylist.value_objects.video_dict_list import VideoDictList
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 class TestBase(unittest.TestCase):
@@ -62,18 +62,18 @@ class TestBase(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("NNMM.process.update_mylist.base.logger.info"))
+            mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.base.logger.info"))
             mock_get_upper_textbox = stack.enter_context(
-                patch("NNMM.process.update_mylist.base.ProcessBase.get_upper_textbox")
+                patch("nnmm.process.update_mylist.base.ProcessBase.get_upper_textbox")
             )
             mock_update_table_pane = stack.enter_context(
-                patch("NNMM.process.update_mylist.base.ProcessBase.update_table_pane")
+                patch("nnmm.process.update_mylist.base.ProcessBase.update_table_pane")
             )
             mock_is_mylist_include_new_video = stack.enter_context(
-                patch("NNMM.process.update_mylist.base.is_mylist_include_new_video")
+                patch("nnmm.process.update_mylist.base.is_mylist_include_new_video")
             )
             mock_update_mylist_pane = stack.enter_context(
-                patch("NNMM.process.update_mylist.base.ProcessBase.update_mylist_pane")
+                patch("nnmm.process.update_mylist.base.ProcessBase.update_mylist_pane")
             )
 
             instance = ThreadDoneBase(self.process_info)

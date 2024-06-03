@@ -5,10 +5,10 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist.single import Single, SingleThreadDone
-from NNMM.process.value_objects.process_info import ProcessInfo
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.update_mylist.single import Single, SingleThreadDone
+from nnmm.process.value_objects.process_info import ProcessInfo
 
 
 class TestSingle(unittest.TestCase):
@@ -46,7 +46,7 @@ class TestSingle(unittest.TestCase):
     def test_get_target_mylist(self):
         with ExitStack() as stack:
             mock_get_upper_textbox = stack.enter_context(
-                patch("NNMM.process.update_mylist.single.Base.get_upper_textbox")
+                patch("nnmm.process.update_mylist.single.Base.get_upper_textbox")
             )
 
             mylist_dict_list = [self._get_mylist_dict()]

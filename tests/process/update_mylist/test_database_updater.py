@@ -6,28 +6,28 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.update_mylist.database_updater import DatabaseUpdater
-from NNMM.process.update_mylist.value_objects.payload import Payload
-from NNMM.process.update_mylist.value_objects.payload_list import PayloadList
-from NNMM.process.update_mylist.value_objects.typed_mylist import TypedMylist
-from NNMM.process.update_mylist.value_objects.typed_video import TypedVideo
-from NNMM.process.update_mylist.value_objects.typed_video_list import TypedVideoList
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
-from NNMM.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
-from NNMM.video_info_fetcher.value_objects.mylistid import Mylistid
-from NNMM.video_info_fetcher.value_objects.myshowname import Myshowname
-from NNMM.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
-from NNMM.video_info_fetcher.value_objects.showname import Showname
-from NNMM.video_info_fetcher.value_objects.title_list import TitleList
-from NNMM.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
-from NNMM.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
-from NNMM.video_info_fetcher.value_objects.userid import Userid
-from NNMM.video_info_fetcher.value_objects.username_list import UsernameList
-from NNMM.video_info_fetcher.value_objects.video_url_list import VideoURLList
-from NNMM.video_info_fetcher.value_objects.videoid_list import VideoidList
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.update_mylist.database_updater import DatabaseUpdater
+from nnmm.process.update_mylist.value_objects.payload import Payload
+from nnmm.process.update_mylist.value_objects.payload_list import PayloadList
+from nnmm.process.update_mylist.value_objects.typed_mylist import TypedMylist
+from nnmm.process.update_mylist.value_objects.typed_video import TypedVideo
+from nnmm.process.update_mylist.value_objects.typed_video_list import TypedVideoList
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
+from nnmm.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
+from nnmm.video_info_fetcher.value_objects.mylistid import Mylistid
+from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
+from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
+from nnmm.video_info_fetcher.value_objects.showname import Showname
+from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
+from nnmm.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
+from nnmm.video_info_fetcher.value_objects.userid import Userid
+from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
+from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
+from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 
 class TestDatabaseUpdater(unittest.TestCase):
@@ -111,7 +111,7 @@ class TestDatabaseUpdater(unittest.TestCase):
 
     def test_execute(self):
         with ExitStack() as stack:
-            mock_thread = stack.enter_context(patch("NNMM.process.update_mylist.database_updater.ThreadPoolExecutor"))
+            mock_thread = stack.enter_context(patch("nnmm.process.update_mylist.database_updater.ThreadPoolExecutor"))
 
             mock_thread.return_value.__enter__.return_value.submit.return_value.result.return_value = (
                 "executor.submit().result()"
@@ -139,15 +139,15 @@ class TestDatabaseUpdater(unittest.TestCase):
 
     def test_execute_worker(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("NNMM.process.update_mylist.database_updater.logger.info"))
+            mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.database_updater.logger.info"))
             mock_mylist_db = stack.enter_context(
-                patch("NNMM.process.update_mylist.database_updater.MylistDBController")
+                patch("nnmm.process.update_mylist.database_updater.MylistDBController")
             )
             mock_mylist_info_db = stack.enter_context(
-                patch("NNMM.process.update_mylist.database_updater.MylistInfoDBController")
+                patch("nnmm.process.update_mylist.database_updater.MylistInfoDBController")
             )
             mock_get_now_datetime = stack.enter_context(
-                patch("NNMM.process.update_mylist.database_updater.get_now_datetime")
+                patch("nnmm.process.update_mylist.database_updater.get_now_datetime")
             )
             dst = "2023-12-23 15:49:43"
             mock_get_now_datetime.return_value = dst

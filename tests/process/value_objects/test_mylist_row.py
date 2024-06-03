@@ -6,8 +6,8 @@ from dataclasses import FrozenInstanceError
 
 from mock import patch
 
-from NNMM.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
-from NNMM.video_info_fetcher.value_objects.showname import Showname
+from nnmm.process.value_objects.mylist_row import MylistRow, SelectedMylistRow
+from nnmm.video_info_fetcher.value_objects.showname import Showname
 
 
 class TestMylistRow(unittest.TestCase):
@@ -43,7 +43,7 @@ class TestMylistRow(unittest.TestCase):
     def test_is_new_mark(self):
         with ExitStack() as stack:
             mock_without_new_mark_name = stack.enter_context(
-                patch("NNMM.process.value_objects.mylist_row.MylistRow.without_new_mark_name")
+                patch("nnmm.process.value_objects.mylist_row.MylistRow.without_new_mark_name")
             )
             showname = "投稿者1さんの投稿動画"
             mock_without_new_mark_name.side_effect = lambda: showname
@@ -70,7 +70,7 @@ class TestMylistRow(unittest.TestCase):
     def test_with_new_mark_name(self):
         with ExitStack() as stack:
             mock_without_new_mark_name = stack.enter_context(
-                patch("NNMM.process.value_objects.mylist_row.MylistRow.without_new_mark_name")
+                patch("nnmm.process.value_objects.mylist_row.MylistRow.without_new_mark_name")
             )
             showname = "投稿者1さんの投稿動画"
             mock_without_new_mark_name.side_effect = lambda: showname

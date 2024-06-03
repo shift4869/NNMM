@@ -6,11 +6,11 @@ from contextlib import ExitStack
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.popup import PopupWindowBase
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.popup import PopupWindowBase
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.util import Result
 
 
 # テスト用具体化PopupWindowBase
@@ -51,12 +51,12 @@ class TestPopupWindowBase(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger_info = stack.enter_context(patch("NNMM.process.popup.logger.info"))
-            mock_window = stack.enter_context(patch("NNMM.process.popup.sg.Window"))
-            mock_init = stack.enter_context(patch("NNMM.process.popup.PopupWindowBase.init"))
-            mock_layout = stack.enter_context(patch("NNMM.process.popup.PopupWindowBase.make_window_layout"))
-            mock_popup_ok = stack.enter_context(patch("NNMM.process.popup.sg.popup_ok"))
-            mock_process_info = stack.enter_context(patch("NNMM.process.popup.ProcessInfo"))
+            mock_logger_info = stack.enter_context(patch("nnmm.process.popup.logger.info"))
+            mock_window = stack.enter_context(patch("nnmm.process.popup.sg.Window"))
+            mock_init = stack.enter_context(patch("nnmm.process.popup.PopupWindowBase.init"))
+            mock_layout = stack.enter_context(patch("nnmm.process.popup.PopupWindowBase.make_window_layout"))
+            mock_popup_ok = stack.enter_context(patch("nnmm.process.popup.sg.popup_ok"))
+            mock_process_info = stack.enter_context(patch("nnmm.process.popup.ProcessInfo"))
             mock_process_base = MagicMock()
 
             event_list = [("-DO-", "value1"), ("-DO_NOTHING-", "value2"), ("-EXIT-", "value3")]

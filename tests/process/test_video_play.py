@@ -8,13 +8,13 @@ from pathlib import Path
 import PySimpleGUI as sg
 from mock import MagicMock, call, patch
 
-from NNMM.mylist_db_controller import MylistDBController
-from NNMM.mylist_info_db_controller import MylistInfoDBController
-from NNMM.process.value_objects.process_info import ProcessInfo
-from NNMM.process.value_objects.table_row_index_list import SelectedTableRowIndexList
-from NNMM.process.value_objects.table_row_list import SelectedTableRowList
-from NNMM.process.video_play import VideoPlay
-from NNMM.util import Result
+from nnmm.mylist_db_controller import MylistDBController
+from nnmm.mylist_info_db_controller import MylistInfoDBController
+from nnmm.process.value_objects.process_info import ProcessInfo
+from nnmm.process.value_objects.table_row_index_list import SelectedTableRowIndexList
+from nnmm.process.value_objects.table_row_list import SelectedTableRowList
+from nnmm.process.video_play import VideoPlay
+from nnmm.util import Result
 
 
 class TestVideoPlay(unittest.TestCase):
@@ -144,16 +144,16 @@ class TestVideoPlay(unittest.TestCase):
 
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("NNMM.process.video_play.logger.info"))
-            mock_config = stack.enter_context(patch("NNMM.process.video_play.process_config.ConfigBase.get_config"))
-            mock_execute = stack.enter_context(patch("NNMM.process.video_play.sg.execute_command_subprocess"))
-            mock_popup = stack.enter_context(patch("NNMM.process.video_play.sg.popup_ok"))
-            mock_watched = stack.enter_context(patch("NNMM.process.video_play.Watched"))
+            mockli = stack.enter_context(patch("nnmm.process.video_play.logger.info"))
+            mock_config = stack.enter_context(patch("nnmm.process.video_play.process_config.ConfigBase.get_config"))
+            mock_execute = stack.enter_context(patch("nnmm.process.video_play.sg.execute_command_subprocess"))
+            mock_popup = stack.enter_context(patch("nnmm.process.video_play.sg.popup_ok"))
+            mock_watched = stack.enter_context(patch("nnmm.process.video_play.Watched"))
             mock_selected_table_row_index_list = stack.enter_context(
-                patch("NNMM.process.video_play.ProcessBase.get_selected_table_row_index_list")
+                patch("nnmm.process.video_play.ProcessBase.get_selected_table_row_index_list")
             )
             mock_selected_table_row_list = stack.enter_context(
-                patch("NNMM.process.video_play.ProcessBase.get_selected_table_row_list")
+                patch("nnmm.process.video_play.ProcessBase.get_selected_table_row_list")
             )
 
             instance = VideoPlay(self.process_info)
