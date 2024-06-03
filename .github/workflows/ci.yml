@@ -41,28 +41,28 @@ jobs:
     - name: Make config file
       run: |
         python EncryptConfig.py --type="decrypt" --path="./encrypt_config_ci.ini" --key="${{ secrets.SECRET_KEY }}"
-        dir
       working-directory: ./.github\workflows
 
     - name: Copy config file
       run: |
         copy decrypt.ini ../../config/config.ini
         cd ../../config/
-        dir
       working-directory: ./.github\workflows
 
     - name: Test with unittest
       run: |
-        dir
         python -m unittest
+      env:
+        PySimpleGUI_license: "${{ secrets.PYSIMPLEGUI_LICENSE }}"
       working-directory: ./
 
     - name: Coverage report
       run: |
-        dir
         python -m coverage run --source=. --rcfile=./.github/.coveragerc -m unittest discover
         python -m coverage report --rcfile=./.github/.coveragerc --format=total --precision=2
         echo coverage=$(python -m coverage report --rcfile=./.github/.coveragerc --format=total --precision=2) >> $env:GITHUB_ENV
+      env:
+        PySimpleGUI_license: "${{ secrets.PYSIMPLEGUI_LICENSE }}"
       working-directory: ./
 
     - name: Create Coverage Badge
