@@ -51,6 +51,7 @@ jobs:
 
     - name: Test with unittest
       run: |
+        echo ${{ secrets.PYSIMPLEGUI_LICENSE }}
         python -m unittest
       env:
         PySimpleGUI_license: ${{ secrets.PYSIMPLEGUI_LICENSE }}
