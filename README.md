@@ -35,7 +35,7 @@ NNMM = NicoNicoMylistManager
 
 
 ## 使い方
-1. `python NNMM.py` で起動
+1. `python ./src/nnmm/main.py` で起動
 1. 左下のプラスマーク「+」を押す
 1. 表示されたテキストボックス内に以下のいずれかの形式のURLを入力する
     - 投稿動画：https://www.nicovideo.jp/user/{user_id}/video

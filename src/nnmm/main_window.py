@@ -50,7 +50,7 @@ class MainWindow:
         # この設定の後からloggerが使用可能になる
         logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
         for name in logging.root.manager.loggerDict:
-            if "NNMM" not in name:
+            if "nnmm" not in name:
                 getLogger(name).disabled = True
 
         # Windows特有のruntimeError抑止

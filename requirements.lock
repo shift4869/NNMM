@@ -47,22 +47,18 @@ mock==5.1.0
     # via nnmm
 orjson==3.10.3
     # via nnmm
-pyasn1==0.6.0
-    # via rsa
 pycodestyle==2.11.1
     # via nnmm
 pycparser==2.22
     # via cffi
 pyperclip==1.8.2
     # via nnmm
-pysimplegui==5.0.5
+pysimplegui==4.60.5
     # via nnmm
 python-dateutil==2.9.0.post0
     # via freezegun
 requests==2.32.3
     # via nnmm
-rsa==4.9
-    # via pysimplegui
 ruff==0.4.7
     # via nnmm
 six==1.16.0

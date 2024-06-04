@@ -37,8 +37,8 @@ class DBControllerBase(metaclass=ABCMeta):
 
 
 if __name__ == "__main__":
-    import NNMM.mylist_info_db_controller
+    import nnmm.mylist_info_db_controller
 
     db_fullpath = Path(":memory:")
-    db_cont = NNMM.mylist_info_db_controller(db_fullpath=str(db_fullpath))
+    db_cont = nnmm.mylist_info_db_controller(db_fullpath=str(db_fullpath))
     pass
