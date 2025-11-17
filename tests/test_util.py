@@ -597,7 +597,7 @@ class TestUtil(unittest.TestCase):
 
     def test_popup_get_text(self):
         """sg.popup_get_text のラッパーのテスト"""
-        mock_window = self.enterContext(patch("nnmm.util.sg.Window"))
+        mock_window = self.enterContext(patch("nnmm.util.QDialog"))
         message = "message"
 
         mock_window.return_value.read.side_effect = lambda: ("Ok", {"-INPUT-": "path"})

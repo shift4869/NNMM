@@ -1,8 +1,8 @@
 import sys
 import unittest
 
-import PySimpleGUI as sg
 from mock import MagicMock
+from PySide6.QtWidgets import QDialog
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -28,7 +28,7 @@ class TestExecutorBase(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
-        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)

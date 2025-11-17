@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import PySimpleGUI as sg
+from PySide6.QtWidgets import QDialog
 
 from nnmm.model import Mylist
 from nnmm.mylist_db_controller import MylistDBController
@@ -260,7 +260,7 @@ def popup_get_text(
         [sg.Button("Ok", size=(6, 1), bind_return_key=True), sg.Button("Cancel", size=(6, 1))],
     ]
 
-    window = sg.Window(
+    window = QDialog(
         title=title or message,
         layout=layout,
         icon=icon,

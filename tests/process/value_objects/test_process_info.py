@@ -1,8 +1,8 @@
 import sys
 import unittest
 
-import PySimpleGUI as sg
 from mock import MagicMock
+from PySide6.QtWidgets import QDialog
 
 from nnmm.main_window import MainWindow
 from nnmm.mylist_db_controller import MylistDBController
@@ -13,7 +13,7 @@ from nnmm.process.value_objects.process_info import ProcessInfo
 class TestProcessInfo(unittest.TestCase):
     def test_init(self):
         process_name = "-TEST_PROCESS-"
-        window = MagicMock(spec=sg.Window)
+        window = MagicMock(spec=QDialog)
         values = MagicMock(spec=dict)
         mylist_db = MagicMock(spec=MylistDBController)
         mylist_info_db = MagicMock(spec=MylistInfoDBController)
@@ -37,7 +37,7 @@ class TestProcessInfo(unittest.TestCase):
 
     def test_repr(self):
         process_name = "-TEST_PROCESS-"
-        window = MagicMock(spec=sg.Window)
+        window = MagicMock(spec=QDialog)
         values = MagicMock(spec=dict)
         mylist_db = MagicMock(spec=MylistDBController)
         mylist_info_db = MagicMock(spec=MylistInfoDBController)
@@ -54,7 +54,7 @@ class TestProcessInfo(unittest.TestCase):
 
     def test_create(self):
         process_name = "-TEST_PROCESS-"
-        window = MagicMock(spec=sg.Window)
+        window = MagicMock(spec=QDialog)
         values = MagicMock(spec=dict)
         mylist_db = MagicMock(spec=MylistDBController)
         mylist_info_db = MagicMock(spec=MylistInfoDBController)

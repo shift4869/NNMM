@@ -1,10 +1,18 @@
 import asyncio
 import logging.config
+import sys
 import traceback
 from logging import INFO, getLogger
 from pathlib import Path
 
-import PySimpleGUI as sg
+from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtGui import QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QShortcut, QStandardItem
+from PySide6.QtGui import QStandardItemModel
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
+from PySide6.QtWidgets import QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QLineEdit, QListView, QMenu, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton
+from PySide6.QtWidgets import QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget
+from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -19,11 +27,12 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
-class MainWindow:
+class MainWindow(QDialog):
     """メインウィンドウクラス"""
 
     def __init__(self) -> None:
         """メインウィンドウクラスのコンストラクタ"""
+        super().__init__()
         # 設定値初期化
         self.config = config.ConfigBase.set_config()
 
@@ -31,7 +40,7 @@ class MainWindow:
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
         self.mylist_db = MylistDBController(db_fullpath=str(self.db_fullpath))
         self.mylist_info_db = MylistInfoDBController(db_fullpath=str(self.db_fullpath))
-
+        return
         # ウィンドウレイアウト作成
         layout = self.make_layout()
 
@@ -42,7 +51,7 @@ class MainWindow:
             icon_binary = fin.read()
 
         # ウィンドウオブジェクト作成
-        self.window = sg.Window("NNMM", layout, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
+        self.window = QDialog("NNMM", layout, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
         self.window["-LIST-"].bind("<Double-Button-1>", "+DOUBLE CLICK+")
 
         # ログ設定
@@ -108,7 +117,7 @@ class MainWindow:
 
         logger.info("window setup done.")
 
-    def make_layout(self) -> list[list[sg.Frame]] | None:
+    def make_layout(self):
         """画面のレイアウトを作成する
 
         Returns:

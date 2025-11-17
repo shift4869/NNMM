@@ -3,8 +3,8 @@ import unittest
 from contextlib import ExitStack
 from pathlib import Path
 
-import PySimpleGUI as sg
 from mock import MagicMock, call, patch
+from PySide6.QtWidgets import QDialog
 
 from nnmm.main_window import MainWindow
 from nnmm.mylist_db_controller import MylistDBController
@@ -42,7 +42,7 @@ class TestWindowMain(unittest.TestCase):
     def _get_instance(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("nnmm.main_window.logger.info"))
-            mockwd = stack.enter_context(patch("nnmm.main_window.sg.Window", spec=sg.Window))
+            mockwd = stack.enter_context(patch("nnmm.main_window.QDialog", spec=QDialog))
             mockcps = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.set_config"))
             mockcpg = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.get_config"))
             mockmdbc = stack.enter_context(patch("nnmm.main_window.MylistDBController", spec=MylistDBController))
@@ -78,7 +78,7 @@ class TestWindowMain(unittest.TestCase):
         """WindowMainの初期化後の状態をテストする"""
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("nnmm.main_window.logger.info"))
-            mockwd = stack.enter_context(patch("nnmm.main_window.sg.Window"))
+            mockwd = stack.enter_context(patch("nnmm.main_window.QDialog"))
             mockcps = stack.enter_context(patch("nnmm.main_window.config.ConfigBase.set_config"))
             mockmdbc = stack.enter_context(patch("nnmm.main_window.MylistDBController"))
             mockmidbc = stack.enter_context(patch("nnmm.main_window.MylistInfoDBController"))
@@ -222,7 +222,7 @@ class TestWindowMain(unittest.TestCase):
             # インスタンス生成
             mw = None
             with ExitStack() as stack2:
-                mockwd = stack2.enter_context(patch("nnmm.main_window.sg.Window"))
+                mockwd = stack2.enter_context(patch("nnmm.main_window.QDialog"))
                 mockmmwl = stack2.enter_context(patch("nnmm.main_window.MainWindow.make_layout"))
                 mw = MainWindow()
 

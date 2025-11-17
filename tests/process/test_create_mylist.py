@@ -3,8 +3,8 @@ import sys
 import unittest
 from contextlib import ExitStack
 
-import PySimpleGUI as sg
 from mock import MagicMock, call, patch
+from PySide6.QtWidgets import QDialog
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -18,7 +18,7 @@ class TestCreateMylist(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
-        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
@@ -166,7 +166,7 @@ class TestCreateMylist(unittest.TestCase):
             )
             mock_get_now_datetime = stack.enter_context(patch("nnmm.process.create_mylist.get_now_datetime"))
             mock_popup_get_text = stack.enter_context(patch("nnmm.process.create_mylist.popup_get_text"))
-            mock_window = stack.enter_context(patch("nnmm.process.create_mylist.sg.Window"))
+            mock_window = stack.enter_context(patch("nnmm.process.create_mylist.QDialog"))
             mock_make_layout = stack.enter_context(patch("nnmm.process.create_mylist.CreateMylist.make_layout"))
             mock_select_from_url = MagicMock()
             instance = CreateMylist(self.process_info)

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self
 
-import PySimpleGUI as sg
+from PySide6.QtWidgets import QDialog
 
 if TYPE_CHECKING:
     from nnmm.main_window import MainWindow
@@ -13,7 +13,7 @@ from nnmm.mylist_info_db_controller import MylistInfoDBController
 @dataclass(frozen=True)
 class ProcessInfo:
     name: str
-    window: sg.Window
+    window: QDialog
     values: dict
     mylist_db: MylistDBController
     mylist_info_db: MylistInfoDBController
@@ -21,8 +21,8 @@ class ProcessInfo:
     def __post_init__(self) -> None:
         if not isinstance(self.name, str):
             raise ValueError("name must be str.")
-        if not isinstance(self.window, sg.Window):
-            raise ValueError("window must be sg.Window.")
+        if not isinstance(self.window, QDialog):
+            raise ValueError("window must be QDialog.")
         if not isinstance(self.values, dict):
             raise ValueError("values must be dict.")
         if not isinstance(self.mylist_db, MylistDBController):

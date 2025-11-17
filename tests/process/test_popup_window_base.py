@@ -3,8 +3,8 @@ import unittest
 from collections import namedtuple
 from contextlib import ExitStack
 
-import PySimpleGUI as sg
 from mock import MagicMock, call, patch
+from PySide6.QtWidgets import QDialog
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -18,7 +18,7 @@ class ConcretePopupWindowBase(PopupWindowBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def make_window_layout(self) -> list[list[sg.Frame]] | None:
+    def make_window_layout(self):
         return [["layout"]]
 
     def init(self) -> Result:
@@ -29,7 +29,7 @@ class TestPopupWindowBase(unittest.TestCase):
     def setUp(self):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
-        self.process_info.window = MagicMock(spec=sg.Window)
+        self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
@@ -52,7 +52,7 @@ class TestPopupWindowBase(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             mock_logger_info = stack.enter_context(patch("nnmm.process.popup.logger.info"))
-            mock_window = stack.enter_context(patch("nnmm.process.popup.sg.Window"))
+            mock_window = stack.enter_context(patch("nnmm.process.popup.QDialog"))
             mock_init = stack.enter_context(patch("nnmm.process.popup.PopupWindowBase.init"))
             mock_layout = stack.enter_context(patch("nnmm.process.popup.PopupWindowBase.make_window_layout"))
             mock_popup_ok = stack.enter_context(patch("nnmm.process.popup.sg.popup_ok"))

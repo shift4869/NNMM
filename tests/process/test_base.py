@@ -3,8 +3,8 @@ import sys
 import unittest
 from collections import namedtuple
 
-import PySimpleGUI as sg
 from mock import MagicMock, call, patch
+from PySide6.QtWidgets import QDialog
 
 from nnmm.main_window import MainWindow
 from nnmm.mylist_db_controller import MylistDBController
@@ -29,7 +29,7 @@ class TestProcessBase(unittest.TestCase):
     def setUp(self) -> None:
         process_name = "-TEST_PROCESS-"
         main_window = MagicMock(spec=MainWindow)
-        main_window.window = MagicMock(spec=sg.Window)
+        main_window.window = MagicMock(spec=QDialog)
         main_window.values = MagicMock(spec=dict)
         main_window.mylist_db = MagicMock(spec=MylistDBController)
         main_window.mylist_info_db = MagicMock(spec=MylistInfoDBController)

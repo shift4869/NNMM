@@ -1,7 +1,7 @@
 import threading
 from abc import ABC, abstractmethod
 
-import PySimpleGUI as sg
+from PySide6.QtWidgets import QDialog
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -13,7 +13,7 @@ from nnmm.video_info_fetcher.value_objects.fetched_video_info import FetchedVide
 
 class ExecutorBase(ABC):
     process_info: ProcessInfo
-    window: sg.Window
+    window: QDialog
     values: dict
     mylist_db: MylistDBController
     mylist_info_db: MylistInfoDBController

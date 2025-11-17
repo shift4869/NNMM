@@ -1,7 +1,7 @@
 from logging import INFO, getLogger
 from pathlib import Path
 
-import PySimpleGUI as sg
+from PySide6.QtWidgets import QDialog
 
 from nnmm.process import config as process_config
 from nnmm.process.base import ProcessBase

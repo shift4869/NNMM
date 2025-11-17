@@ -1,7 +1,7 @@
 import re
 from logging import INFO, getLogger
 
-import PySimpleGUI as sg
+from PySide6.QtWidgets import QDialog
 
 from nnmm.process import config as process_config
 from nnmm.process.base import ProcessBase
@@ -17,7 +17,7 @@ class CreateMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def make_layout(self, mylist_type: MylistType, mylist_url: str, window_title: str) -> list[list[sg.Frame]]:
+    def make_layout(self, mylist_type: MylistType, mylist_url: str, window_title: str):
         horizontal_line = "-" * 132
         csize = (20, 1)
         tsize = (50, 1)
@@ -147,7 +147,7 @@ class CreateMylist(ProcessBase):
         is_include_new = False
 
         layout = self.make_layout(mylist_type, non_query_url, window_title)
-        window = sg.Window(title=window_title, layout=layout, auto_size_text=True, finalize=True)
+        window = QDialog(title=window_title, layout=layout, auto_size_text=True, finalize=True)
         window["-USERNAME-"].set_focus(True)
         button, values = window.read()
         window.close()

@@ -2,7 +2,7 @@ import configparser
 import shutil
 from pathlib import Path
 
-import PySimpleGUI as sg
+from PySide6.QtWidgets import QDialog
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -25,7 +25,7 @@ class ConfigBase(ProcessBase):
         super().__init__(process_info)
 
     @classmethod
-    def make_layout(cls) -> list[list[sg.Frame]]:
+    def make_layout(cls):
         """設定画面のレイアウトを作成する
 
         Returns:

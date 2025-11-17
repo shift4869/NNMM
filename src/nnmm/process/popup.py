@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from logging import INFO, getLogger
 
-import PySimpleGUI as sg
+from PySide6.QtWidgets import QDialog
 
 from nnmm.model import Mylist, MylistInfo
 from nnmm.process.base import ProcessBase
@@ -31,7 +31,7 @@ class PopupWindowBase(ProcessBase):
         raise NotImplementedError
 
     @abstractmethod
-    def make_window_layout(self) -> list[list[sg.Frame]] | None:
+    def make_window_layout(self):
         """画面のレイアウトを作成する
 
         Returns:
@@ -54,7 +54,7 @@ class PopupWindowBase(ProcessBase):
             return Result.failed
 
         # ウィンドウオブジェクト作成
-        self.popup_window = sg.Window(self.title, layout, size=self.size, finalize=True, resizable=True, modal=True)
+        self.popup_window = QDialog(self.title, layout, size=self.size, finalize=True, resizable=True, modal=True)
 
         # イベントのループ
         while True:
@@ -117,7 +117,7 @@ class PopupMylistWindow(PopupWindowBase):
         }
         return Result.success
 
-    def make_window_layout(self) -> list[list[sg.Frame]] | None:
+    def make_window_layout(self):
         """画面のレイアウトを作成する
 
         Notes:
@@ -251,7 +251,7 @@ class PopupMylistWindowSave(ProcessBase):
         Returns:
             Result: 成功時success, エラー時failed
         """
-        self.popup_window: sg.Window = self.window
+        self.popup_window: QDialog = self.window
 
         # キーチェック
         PMW_ROWS = [
@@ -353,7 +353,7 @@ class PopupVideoWindow(PopupWindowBase):
         self.size = (580, 400)
         return Result.success
 
-    def make_window_layout(self) -> list[list[sg.Frame]] | None:
+    def make_window_layout(self):
         """画面のレイアウトを作成する
 
         Notes:
