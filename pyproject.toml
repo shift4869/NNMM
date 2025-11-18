@@ -17,6 +17,7 @@ dependencies = [
     "orjson>=3.10.3",
     "pycodestyle>=2.11.1",
     "pyperclip>=1.8.2",
+    "pyqtdarktheme>=2.1.0",
     "pyside6>=6.10.0",
     "requests>=2.32.3",
     "ruff>=0.4.7",

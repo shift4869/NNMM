@@ -1,13 +1,51 @@
 import enum
 import re
 from datetime import datetime
+from logging import Logger
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtGui import QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QShortcut, QStandardItem
+from PySide6.QtGui import QStandardItemModel, QTextCursor
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
+from PySide6.QtWidgets import QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QLineEdit, QListView, QMenu, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton
+from PySide6.QtWidgets import QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget
+from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
 
 from nnmm.model import Mylist
 from nnmm.mylist_db_controller import MylistDBController
+
+
+class CustomLogger(Logger):
+    def info(self, msg: str, window: QDialog = None, *args, **kwargs):
+        # コンソールとファイル出力
+        if "stacklevel" not in kwargs:
+            # 呼び出し元の行番号を採用するためにstacklevelを設定
+            kwargs["stacklevel"] = 2
+        super().info(msg, *args, **kwargs)
+
+        # GUI画面表示
+        global window_cache
+        if window:
+            # windowが指定されていたらキャッシュとして保存
+            if not window_cache:
+                window_cache = window
+        else:
+            # windowが指定されていない場合
+            if window_cache:
+                # キャッシュがあるならそれを採用
+                window = window_cache
+            else:
+                # そうでない場合、画面更新は何もせず終了
+                return
+        textarea: QTextEdit = window.textarea
+        # old_text = textarea.document().toPlainText()
+        textarea.append(msg)
+        textarea.moveCursor(QTextCursor.MoveOperation.End)
+        textarea.repaint()
+        window.repaint()
 
 
 class Result(enum.Enum):

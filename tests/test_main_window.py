@@ -383,7 +383,7 @@ class TestWindowMain(unittest.TestCase):
                 return layout
 
             # 実行
-            actual = mw.make_layout()
+            actual = mw.create_layout()
             expect = make_layout()
 
             def check_layout(e, a):

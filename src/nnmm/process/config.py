@@ -1,8 +1,16 @@
-import configparser
 import shutil
 from pathlib import Path
 
-from PySide6.QtWidgets import QDialog
+import orjson
+from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtGui import QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QShortcut, QStandardItem
+from PySide6.QtGui import QStandardItemModel
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
+from PySide6.QtWidgets import QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QLineEdit, QListView, QListWidget, QMenu, QPlainTextEdit, QProgressBar, QPushButton
+from PySide6.QtWidgets import QRadioButton, QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory, QTableWidget
+from PySide6.QtWidgets import QTabWidget, QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout
+from PySide6.QtWidgets import QWidget
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -18,19 +26,20 @@ class ConfigBase(ProcessBase):
     このベースクラス自体は抽象メソッドであるrunを実装していないためインスタンスは作成できない
     """
 
-    CONFIG_FILE_PATH = "./config/config.ini"
+    CONFIG_FILE_PATH = "./config/config.json"
     config = None
 
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
     @classmethod
-    def make_layout(cls):
+    def create_config_tab_layout(cls, window_w: int, window_h: int) -> QGroupBox:
         """設定画面のレイアウトを作成する
 
         Returns:
-            list[list[sg.Frame]]: PySimpleGUIのレイアウトオブジェクト
+            QGroupBox: レイアウトオブジェクト
         """
+        return group
         # オートリロード間隔
         auto_reload_combo_box = sg.InputCombo(
             ("(使用しない)", "15分毎", "30分毎", "60分毎"),
@@ -65,7 +74,7 @@ class ConfigBase(ProcessBase):
         return layout
 
     @classmethod
-    def get_config(cls) -> configparser.ConfigParser:
+    def get_config(cls) -> dict:
         """クラス変数configを返す
 
         Notes:
@@ -79,7 +88,7 @@ class ConfigBase(ProcessBase):
         return cls.config
 
     @classmethod
-    def set_config(cls) -> configparser.ConfigParser:
+    def set_config(cls) -> dict:
         """クラス変数configを設定する
 
         Notes:
@@ -88,8 +97,12 @@ class ConfigBase(ProcessBase):
         Returns:
             ConfigParser: クラス変数config
         """
-        cls.config = configparser.ConfigParser()
-        cls.config.read(cls.CONFIG_FILE_PATH, encoding="utf-8")
+        cls.config = dict()
+        if not Path(cls.CONFIG_FILE_PATH).exists():
+            raise IOError("Config file not found.")
+        cls.config = orjson.loads(Path(cls.CONFIG_FILE_PATH).read_bytes())
+        if not cls.config:
+            raise IOError("Config file is invalid.")
         return cls.config
 
 
@@ -206,7 +219,7 @@ class ConfigSave(ConfigBase):
             "-C_CONFIG_SAVE-"
             GUIで設定された値をconfig.iniに保存する
         """
-        c = configparser.ConfigParser()
+        c = dict()
         c.read(ConfigBase.CONFIG_FILE_PATH, encoding="utf-8")
         window = self.window
 

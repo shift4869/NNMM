@@ -26,6 +26,8 @@ coverage==7.11.3
     # via nnmm
 cryptography==46.0.3
     # via nnmm
+darkdetect==0.7.1
+    # via pyqtdarktheme
 emoji==2.15.0
     # via nnmm
 freezegun==1.5.5
@@ -53,6 +55,8 @@ pycodestyle==2.14.0
 pycparser==2.23
     # via cffi
 pyperclip==1.11.0
+    # via nnmm
+pyqtdarktheme==2.1.0
     # via nnmm
 pyside6==6.10.0
     # via nnmm

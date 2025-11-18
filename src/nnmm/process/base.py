@@ -20,7 +20,6 @@ class ProcessBase(ABC):
     process_info: ProcessInfo
     name: str
     window: QDialog
-    values: dict
     mylist_db: MylistDBController
     mylist_info_db: MylistInfoDBController
 
@@ -30,7 +29,6 @@ class ProcessBase(ABC):
         self.process_info = process_info
         self.name = process_info.name
         self.window = process_info.window
-        self.values = process_info.values
         self.mylist_db = process_info.mylist_db
         self.mylist_info_db = process_info.mylist_info_db
 

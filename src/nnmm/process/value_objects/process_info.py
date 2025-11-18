@@ -14,7 +14,6 @@ from nnmm.mylist_info_db_controller import MylistInfoDBController
 class ProcessInfo:
     name: str
     window: QDialog
-    values: dict
     mylist_db: MylistDBController
     mylist_info_db: MylistInfoDBController
 
@@ -23,8 +22,6 @@ class ProcessInfo:
             raise ValueError("name must be str.")
         if not isinstance(self.window, QDialog):
             raise ValueError("window must be QDialog.")
-        if not isinstance(self.values, dict):
-            raise ValueError("values must be dict.")
         if not isinstance(self.mylist_db, MylistDBController):
             raise ValueError("mylist_db must be MylistDBController.")
         if not isinstance(self.mylist_info_db, MylistInfoDBController):
@@ -33,19 +30,12 @@ class ProcessInfo:
     def __repr__(self) -> str:
         name_str = f"name={self.name}"
         window_str = f"window={id(self.window)}"
-        values_str = f"values={id(self.values)}"
         mylist_db_str = f"mylist_db={id(self.mylist_db)}"
         mylist_info_db_str = f"mylist_info_db={id(self.mylist_info_db)}"
-        return f"ProcessInfo({name_str}, {window_str}, {values_str}, {mylist_db_str}, {mylist_info_db_str})"
+        return f"ProcessInfo({name_str}, {window_str}, {mylist_db_str}, {mylist_info_db_str})"
 
     @classmethod
     def create(cls, process_name: str, main_window: "MainWindow") -> Self:
-        # if not isinstance(main_window, MainWindow):
-        #     raise ValueError("main_window must be MainWindow.")
-        if not hasattr(main_window, "window"):
-            raise ValueError("main_window must have 'window' attribute.")
-        if not hasattr(main_window, "values"):
-            raise ValueError("main_window must have 'values' attribute.")
         if not hasattr(main_window, "mylist_db"):
             raise ValueError("main_window must have 'mylist_db' attribute.")
         if not hasattr(main_window, "mylist_info_db"):
@@ -53,8 +43,7 @@ class ProcessInfo:
 
         return ProcessInfo(
             process_name,
-            main_window.window,
-            main_window.values,
+            main_window,
             main_window.mylist_db,
             main_window.mylist_info_db,
         )

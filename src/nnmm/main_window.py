@@ -5,14 +5,16 @@ import traceback
 from logging import INFO, getLogger
 from pathlib import Path
 
+import qdarktheme
 from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
-from PySide6.QtGui import QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QShortcut, QStandardItem
-from PySide6.QtGui import QStandardItemModel
+from PySide6.QtGui import QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QPalette, QShortcut
+from PySide6.QtGui import QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
 from PySide6.QtWidgets import QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout, QLabel
-from PySide6.QtWidgets import QLineEdit, QListView, QMenu, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton
-from PySide6.QtWidgets import QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget
-from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLayoutItem, QLineEdit, QListView, QListWidget, QMenu, QPlainTextEdit, QProgressBar
+from PySide6.QtWidgets import QPushButton, QRadioButton, QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory
+from PySide6.QtWidgets import QTableWidget, QTabWidget, QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -21,8 +23,17 @@ from nnmm.process import move_up, not_watched, popup, search, show_mylist_info, 
 from nnmm.process import video_play, video_play_with_focus_back, watched, watched_all_mylist, watched_mylist
 from nnmm.process.update_mylist import every, partial, single
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.util import Result
+from nnmm.util import CustomLogger, Result
 
+APP_NAME = "NNMM"
+ICON_PATH = "./image/icon.png"
+
+# ログ設定
+logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
+for name in logging.root.manager.loggerDict:
+    if "nnmm" not in name:
+        getLogger(name).disabled = True
+logging.setLoggerClass(CustomLogger)
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
@@ -40,27 +51,21 @@ class MainWindow(QDialog):
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
         self.mylist_db = MylistDBController(db_fullpath=str(self.db_fullpath))
         self.mylist_info_db = MylistInfoDBController(db_fullpath=str(self.db_fullpath))
-        return
-        # ウィンドウレイアウト作成
-        layout = self.make_layout()
 
         # アイコン画像取得
-        ICON_PATH = "./image/icon.png"
-        icon_binary = None
-        with Path(ICON_PATH).open("rb") as fin:
-            icon_binary = fin.read()
+        if Path(ICON_PATH).exists():
+            self.setWindowIcon(QIcon(ICON_PATH))
+
+        # ウィンドウタイトル設定
+        qv = qVersion()
+        self.setWindowTitle(f"{APP_NAME} by pyside {qv}")
 
         # ウィンドウオブジェクト作成
-        self.window = QDialog("NNMM", layout, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
-        self.window["-LIST-"].bind("<Double-Button-1>", "+DOUBLE CLICK+")
-
-        # ログ設定
-        # ウィンドウレイアウト作成後に行わないとstdout,stderrへの出力がうまくキャッチされない
-        # この設定の後からloggerが使用可能になる
-        logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
-        for name in logging.root.manager.loggerDict:
-            if "nnmm" not in name:
-                getLogger(name).disabled = True
+        # self.window = sg.Window("NNMM", layout, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
+        # self.window["-LIST-"].bind("<Double-Button-1>", "+DOUBLE CLICK+")
+        # ウィンドウレイアウト作成
+        layout = self.create_layout()
+        self.setLayout(layout)
 
         # Windows特有のruntimeError抑止
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -68,6 +73,8 @@ class MainWindow(QDialog):
         # マイリスト一覧初期化
         # DBからマイリスト一覧を取得する
         self.update_mylist_pane()
+
+        return
 
         # テーブル初期化
         def_data = [[]]
@@ -117,12 +124,38 @@ class MainWindow(QDialog):
 
         logger.info("window setup done.")
 
-    def make_layout(self):
+    def create_layout(self) -> QVBoxLayout:
         """画面のレイアウトを作成する
 
         Returns:
-            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
+            QVBoxLayout | None: 成功時レイアウトオブジェクト、失敗時None
         """
+        WINDOW_WIDTH = 1200  # 1330
+        WINDOW_HEIGHT = 850  # 900
+        # 全体レイアウト
+        layout = QVBoxLayout()
+        # タブバー
+        tabs = QTabWidget()
+
+        # マイリストタブ
+        tab1 = self.create_mylist_tab_layout(WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        # 設定タブ
+        tab2 = self.create_config_tab_layout(WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        # ログ出力用テキストエリア
+        tab3 = QLabel("タブ3の内容")
+        self.textarea = QTextEdit()
+        self.textarea.setMinimumHeight(300)
+
+        # タブにウィジェットを追加
+        tabs.addTab(tab1, "マイリスト")
+        tabs.addTab(tab2, "設定")
+        tabs.addTab(self.textarea, "ログ")
+
+        layout.addWidget(tabs)
+        return layout
+
         # 左ペイン
         listbox_right_click_menu = [
             "-LISTBOX_RIGHT_CLICK_MENU-",
@@ -275,12 +308,127 @@ class MainWindow(QDialog):
 
         return layout
 
+    def create_mylist_tab_layout(self, window_w: int, window_h: int) -> QGroupBox:
+        group = QGroupBox("マイリスト")
+
+        leftpane = QVBoxLayout()
+        update_button = QHBoxLayout()
+        all_update_button = QPushButton("すべて更新")
+        partial_update_button = QPushButton("インターバル更新")
+        single_update_button = QPushButton("更新")
+        update_button.addWidget(all_update_button)
+        update_button.addWidget(partial_update_button)
+        update_button.addWidget(single_update_button)
+        self.list_widget = QListWidget()
+        self.list_widget.setMinimumWidth(window_w * 1 / 3)
+        self.list_widget.setMinimumHeight(window_h)
+        self.list_widget.setStyleSheet("QListWidget {background-color: #121213;}")
+        mylist_control_button = QHBoxLayout()
+        add_mylist_button = QPushButton("マイリスト追加")
+        del_mylist_button = QPushButton("マイリスト削除")
+        mylist_control_button.addWidget(add_mylist_button)
+        mylist_control_button.addWidget(del_mylist_button)
+        self.oneline_log = QLineEdit()
+        leftpane.addLayout(update_button)
+        leftpane.addWidget(self.list_widget)
+        leftpane.addLayout(mylist_control_button)
+        leftpane.addWidget(self.oneline_log)
+
+        rightpane = QVBoxLayout()
+        self.tbox_mylist_url = QLineEdit()
+        self.table_widget = QTableWidget()
+        self.table_widget.setMinimumWidth(window_w * 2 / 3)
+        self.table_widget.setMinimumHeight(window_h)
+        rightpane.addWidget(self.tbox_mylist_url)
+        rightpane.addWidget(self.table_widget)
+
+        pane = QGridLayout(group)
+        pane.addLayout(leftpane, 0, 0)
+        pane.addLayout(rightpane, 0, 1)
+        return group
+
+    def create_config_tab_layout(self, window_w: int, window_h: int) -> QGroupBox:
+        group = QGroupBox("設定")
+        group.setMinimumWidth(window_w / 4)
+        group.setMaximumWidth(window_w / 2)
+        group.setMinimumHeight(window_h / 2)
+        group.setMaximumHeight(window_h * 2 / 3)
+        vbox = QVBoxLayout(group)
+
+        c_group1 = QGroupBox("ブラウザパス")
+        vbox1 = QVBoxLayout(c_group1)
+        label1 = QLabel("「ブラウザで再生」時に使用するブラウザパス")
+        hbox1 = QHBoxLayout()
+        self.tbox_browser_path = QLineEdit()
+        button1 = QPushButton("参照")
+        hbox1.addWidget(self.tbox_browser_path)
+        hbox1.addWidget(button1)
+        vbox1.addWidget(label1)
+        vbox1.addLayout(hbox1)
+
+        c_group2 = QGroupBox("オートリロード")
+        vbox2 = QVBoxLayout(c_group2)
+        label2 = QLabel("オートリロードする間隔")
+        self.cbox = QComboBox()
+        combo_box_text = ("(使用しない)", "15分毎", "30分毎", "60分毎")
+        self.cbox.addItems(combo_box_text)
+        vbox2.addWidget(label2)
+        vbox2.addWidget(self.cbox)
+
+        c_group3 = QGroupBox("RSS")
+        vbox3 = QVBoxLayout(c_group3)
+        label3 = QLabel("RSS保存先パス")
+        hbox3 = QHBoxLayout()
+        self.tbox_rss_save_path = QLineEdit()
+        button3 = QPushButton("参照")
+        hbox3.addWidget(self.tbox_rss_save_path)
+        hbox3.addWidget(button3)
+        vbox3.addWidget(label3)
+        vbox3.addLayout(hbox3)
+
+        c_group4 = QGroupBox("マイリスト一覧")
+        vbox4 = QVBoxLayout(c_group4)
+        label41 = QLabel("マイリスト一覧保存")
+        button41 = QPushButton("保存")
+        label42 = QLabel("マイリスト一覧読込")
+        button42 = QPushButton("読込")
+        vbox4.addWidget(label41)
+        vbox4.addWidget(button41, alignment=Qt.AlignmentFlag.AlignLeft)
+        vbox4.addWidget(label42)
+        vbox4.addWidget(button42, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        c_group5 = QGroupBox("情報保存DB")
+        vbox5 = QVBoxLayout(c_group5)
+        label5 = QLabel("マイリスト・動画情報保存DBのパス")
+        hbox5 = QHBoxLayout()
+        self.tbox_db_path = QLineEdit()
+        button5 = QPushButton("参照")
+        hbox5.addWidget(self.tbox_db_path)
+        hbox5.addWidget(button5)
+        vbox5.addWidget(label5)
+        vbox5.addLayout(hbox5)
+
+        button5 = QPushButton("設定保存")
+
+        vbox.addWidget(c_group1)
+        vbox.addWidget(c_group2)
+        vbox.addWidget(c_group3)
+        vbox.addWidget(c_group4)
+        vbox.addWidget(c_group5)
+        vbox.addStretch(1)
+        vbox.addWidget(button5, alignment=Qt.AlignmentFlag.AlignRight)
+
+        return group
+
     def update_mylist_pane(self) -> Result:
         """マイリストペインの初期表示
 
         Returns:
             Result: 成功時success
         """
+        if not hasattr(self, "list_widget"):
+            return Result.failed
+
         index = 0
 
         # マイリスト画面表示更新
@@ -292,15 +440,16 @@ class MainWindow(QDialog):
                 m["showname"] = NEW_MARK + m["showname"]
                 include_new_index_list.append(i)
         list_data = [m["showname"] for m in m_list]
-        self.window["-LIST-"].update(values=list_data)
+        self.list_widget.addItems(list_data)
+        # self.window["-LIST-"].update(values=list_data)
 
         # 新着マイリストの背景色とテキスト色を変更する
-        for i in include_new_index_list:
-            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
+        # for i in include_new_index_list:
+        #     self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
 
         # indexをセットしてスクロール
-        self.window["-LIST-"].Widget.see(index)
-        self.window["-LIST-"].update(set_to_index=index)
+        # self.window["-LIST-"].Widget.see(index)
+        # self.window["-LIST-"].update(set_to_index=index)
         return Result.success
 
     def run(self) -> Result:
@@ -346,5 +495,8 @@ class MainWindow(QDialog):
 
 
 if __name__ == "__main__":
-    mw = MainWindow()
-    mw.run()
+    app = QApplication()
+    qdarktheme.setup_theme()
+    window_main = MainWindow()
+    window_main.show()
+    sys.exit(app.exec())
