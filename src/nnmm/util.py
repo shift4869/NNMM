@@ -9,13 +9,16 @@ from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, 
 from PySide6.QtGui import QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QShortcut, QStandardItem
 from PySide6.QtGui import QStandardItemModel, QTextCursor
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
-from PySide6.QtWidgets import QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout, QLabel
-from PySide6.QtWidgets import QLineEdit, QListView, QMenu, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton
-from PySide6.QtWidgets import QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget
-from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout, QInputDialog
+from PySide6.QtWidgets import QLabel, QLineEdit, QListView, QMenu, QMessageBox, QPlainTextEdit, QProgressBar
+from PySide6.QtWidgets import QPushButton, QRadioButton, QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory
+from PySide6.QtWidgets import QTableWidget, QTabWidget, QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from nnmm.model import Mylist
 from nnmm.mylist_db_controller import MylistDBController
+
+window_cache: QDialog = None
 
 
 class CustomLogger(Logger):
@@ -267,64 +270,52 @@ def interval_translate(interval_str: str) -> int:
     return -1
 
 
-def popup_get_text(
-    message,
-    title=None,
-    default_text="",
-    password_char="",
-    size=(None, None),
-    button_color=None,
-    background_color=None,
-    text_color=None,
-    icon=None,
-    font=None,
-    no_titlebar=False,
-    grab_anywhere=False,
-    keep_on_top=None,
-    location=(None, None),
-    relative_location=(None, None),
-    image=None,
-    modal=True,
-):
-    """sg.popup_get_text のラッパー
+def popup_get_text(message: str, title: str = None) -> str | None:
+    """ユーザーにテキストを問い合わせるポップアップを表示する
 
-    Notes:
-        テキストボックスにデフォルトでフォーカスをセットする
-        image はサポートしていないので利用するときは追加すること
+    Args:
+        message (str): 表示メッセージ
+        title (str): タイトル
+
+    Returns:
+        str: 成功時 ユーザーが入力した文字列、キャンセル時 None
     """
-    layout = [
-        [sg.Text(message, auto_size_text=True, text_color=text_color, background_color=background_color)],
-        [sg.Input(default_text=default_text, size=size, key="-INPUT-", password_char=password_char, focus=True)],
-        [sg.Button("Ok", size=(6, 1), bind_return_key=True), sg.Button("Cancel", size=(6, 1))],
-    ]
+    input_text, result = QInputDialog.getText(None, title, message)
 
-    window = QDialog(
-        title=title or message,
-        layout=layout,
-        icon=icon,
-        auto_size_text=True,
-        button_color=button_color,
-        no_titlebar=no_titlebar,
-        background_color=background_color,
-        grab_anywhere=grab_anywhere,
-        keep_on_top=keep_on_top,
-        location=location,
-        relative_location=relative_location,
-        finalize=True,
-        modal=modal,
-        font=font,
-    )
-
-    window["-INPUT-"].set_focus(True)
-
-    button, values = window.read()
-    window.close()
-    del window
-    if button != "Ok":
-        return None
+    if result:
+        return input_text
     else:
-        path = values["-INPUT-"]
-        return path
+        return None
+
+
+def popup(message: str, title: str = None, yes_no: bool = False) -> QMessageBox.StandardButton | None:
+    """ユーザーにメッセージを伝えるポップアップを表示する
+
+    Args:
+        message (str): 表示メッセージ
+        title (str): タイトル
+        yes_no (bool): yes/noを問い合わせるかのフラグ
+
+    Returns:
+        QMessageBox.StandardButton: 成功時 ユーザーが入力したyes/no、指定しない場合は None
+    """
+    msgbox = QMessageBox()
+    msgbox.setText(message)
+    if title:
+        msgbox.setWindowTitle(title)
+    else:
+        # 空白指定するとデフォルト値の "python" が表示されるため
+        # 半角スペースのみをタイトルとして表示する
+        msgbox.setWindowTitle(" ")
+
+    if yes_no:
+        msgbox.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+    result = msgbox.exec()
+
+    if yes_no:
+        return result
+    else:
+        return None
 
 
 if __name__ == "__main__":

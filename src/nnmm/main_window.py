@@ -2,20 +2,23 @@ import asyncio
 import logging.config
 import sys
 import traceback
+from collections import namedtuple
 from logging import INFO, getLogger
 from pathlib import Path
 
 import qdarktheme
-from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
-from PySide6.QtGui import QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QPalette, QShortcut
-from PySide6.QtGui import QStandardItem, QStandardItemModel
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
-from PySide6.QtWidgets import QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout, QLabel
-from PySide6.QtWidgets import QLayoutItem, QLineEdit, QListView, QListWidget, QMenu, QPlainTextEdit, QProgressBar
-from PySide6.QtWidgets import QPushButton, QRadioButton, QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory
-from PySide6.QtWidgets import QTableWidget, QTabWidget, QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView
-from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtCore import QDateTime, QDir, QItemSelectionModel, QLibraryInfo, QPoint, QSysInfo, Qt, QTimer, Slot
+from PySide6.QtCore import qVersion
+from PySide6.QtGui import QAction, QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QPalette
+from PySide6.QtGui import QShortcut, QStandardItem, QStandardItemModel
+from PySide6.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit
+from PySide6.QtWidgets import QDial, QDialog, QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout
+from PySide6.QtWidgets import QLabel, QLayoutItem, QLineEdit, QListView, QListWidget, QMenu, QPlainTextEdit
+from PySide6.QtWidgets import QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy, QSlider, QSpinBox
+from PySide6.QtWidgets import QStyleFactory, QTableWidget, QTabWidget, QTextBrowser, QTextEdit, QToolBox, QToolButton
+from PySide6.QtWidgets import QTreeView, QVBoxLayout, QWidget
 
+from nnmm.model import MylistInfo
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process import base, config, copy_mylist_url, copy_video_url, create_mylist, delete_mylist, move_down
@@ -147,6 +150,7 @@ class MainWindow(QDialog):
         tab3 = QLabel("タブ3の内容")
         self.textarea = QTextEdit()
         self.textarea.setMinimumHeight(300)
+        logger.info("---ここにログが表示されます---", window=self)
 
         # タブにウィジェットを追加
         tabs.addTab(tab1, "マイリスト")
@@ -319,12 +323,19 @@ class MainWindow(QDialog):
         update_button.addWidget(all_update_button)
         update_button.addWidget(partial_update_button)
         update_button.addWidget(single_update_button)
+
         self.list_widget = QListWidget()
-        self.list_widget.setMinimumWidth(window_w * 1 / 3)
+        self.list_widget.setMinimumWidth(window_w * 1 / 4)
         self.list_widget.setMinimumHeight(window_h)
         self.list_widget.setStyleSheet("QListWidget {background-color: #121213;}")
+        self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list_widget.customContextMenuRequested.connect(self.list_context_menu)
+        self.list_widget.doubleClicked.connect(
+            lambda: show_mylist_info.ShowMylistInfo(ProcessInfo.create("動画情報レコード表示", self)).callback()
+        )
+
         mylist_control_button = QHBoxLayout()
-        add_mylist_button = QPushButton("マイリスト追加")
+        add_mylist_button = create_mylist.CreateMylist(ProcessInfo.create("マイリスト追加", self)).create_component()
         del_mylist_button = QPushButton("マイリスト削除")
         mylist_control_button.addWidget(add_mylist_button)
         mylist_control_button.addWidget(del_mylist_button)
@@ -336,9 +347,25 @@ class MainWindow(QDialog):
 
         rightpane = QVBoxLayout()
         self.tbox_mylist_url = QLineEdit()
+        table_cols_name = [
+            "No.",
+            "動画ID",
+            "動画名",
+            "投稿者",
+            "状況",
+            "投稿日時",
+            "登録日時",
+            "動画URL",
+            "所属マイリストURL",
+        ]
         self.table_widget = QTableWidget()
-        self.table_widget.setMinimumWidth(window_w * 2 / 3)
+        self.table_widget.setMinimumWidth(window_w * 3 / 4)
         self.table_widget.setMinimumHeight(window_h)
+        self.table_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.table_widget.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table_widget.setAlternatingRowColors(True)
+        self.table_widget.customContextMenuRequested.connect(self.table_context_menu)
         rightpane.addWidget(self.tbox_mylist_url)
         rightpane.addWidget(self.table_widget)
 
@@ -346,6 +373,77 @@ class MainWindow(QDialog):
         pane.addLayout(leftpane, 0, 0)
         pane.addLayout(rightpane, 0, 1)
         return group
+
+    @Slot(QPoint)
+    def list_context_menu(self, pos):
+        menu = QMenu(self.list_widget)
+        Process = namedtuple("Process", ["name", "func"])
+        process_list = [
+            Process("---", None),
+            Process("全動画表示", lambda: logger.info("dummy")),
+            Process("マイリストURLをクリップボードにコピー", lambda: logger.info("dummy")),
+            Process("---", None),
+            Process("視聴済にする（選択）", lambda: logger.info("dummy")),
+            Process("視聴済にする（全て）", lambda: logger.info("dummy")),
+            Process("---", None),
+            Process("上に移動", lambda: logger.info("dummy")),
+            Process("下に移動", lambda: logger.info("dummy")),
+            Process("---", None),
+            Process("マイリスト追加", lambda: logger.info("dummy")),
+            Process("マイリスト削除", lambda: logger.info("dummy")),
+            Process("---", None),
+            Process("検索（マイリスト名）", lambda: logger.info("dummy")),
+            Process("検索（動画名）", lambda: logger.info("dummy")),
+            Process("検索（URL）", lambda: logger.info("dummy")),
+            Process("強調表示を解除", lambda: logger.info("dummy")),
+            Process("---", None),
+            Process("情報表示", lambda: logger.info("dummy")),
+        ]
+
+        for process in process_list:
+            if process.name == "---":
+                menu.addSeparator()
+            else:
+                action: QAction = menu.addAction(process.name)
+                action.triggered.connect(process.func)
+
+        # subMenu = menu.addMenu("SubMenu")
+        # action_03 = subMenu.addAction("さぶめにゅー1")
+        # action_03.triggered.connect(lambda: print("C"))
+
+        menu.exec(self.list_widget.mapToGlobal(pos))
+
+    @Slot(QPoint)
+    def table_context_menu(self, pos):
+        menu = QMenu(self.table_widget)
+        Process = namedtuple("Process", ["name", "func"])
+        process_list = [
+            Process("---", None),
+            Process("ブラウザで開く", lambda: logger.info("dummy")),
+            Process("ブラウザで開く（フォーカスを戻す）", lambda: logger.info("dummy")),
+            Process("動画URLをクリップボードにコピー", lambda: logger.info("dummy")),
+            Process("---", None),
+            Process("視聴済にする", lambda: logger.info("dummy")),
+            Process("未視聴にする", lambda: logger.info("dummy")),
+            Process("---", None),
+            Process("検索（動画名）", lambda: logger.info("dummy")),
+            Process("強調表示を解除", lambda: logger.info("dummy")),
+            Process("---", None),
+            Process("情報表示", lambda: logger.info("dummy")),
+        ]
+
+        for process in process_list:
+            if process.name == "---":
+                menu.addSeparator()
+            else:
+                action: QAction = menu.addAction(process.name)
+                action.triggered.connect(process.func)
+
+        # subMenu = menu.addMenu("SubMenu")
+        # action_03 = subMenu.addAction("さぶめにゅー1")
+        # action_03.triggered.connect(lambda: print("C"))
+
+        menu.exec(self.table_widget.mapToGlobal(pos))
 
     def create_config_tab_layout(self, window_w: int, window_h: int) -> QGroupBox:
         group = QGroupBox("設定")

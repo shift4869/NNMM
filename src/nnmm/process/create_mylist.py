@@ -1,12 +1,14 @@
 import re
 from logging import INFO, getLogger
+from typing import Callable
 
-from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
 
 from nnmm.process import config as process_config
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.util import MylistType, Result, get_now_datetime, popup_get_text
+from nnmm.util import MylistType, Result, get_now_datetime, popup, popup_get_text
 from nnmm.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 
 logger = getLogger(__name__)
@@ -17,68 +19,107 @@ class CreateMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def make_layout(self, mylist_type: MylistType, mylist_url: str, window_title: str):
+    def popup_for_detail(self, mylist_type: MylistType, mylist_url: str, window_title: str) -> dict:
         horizontal_line = "-" * 132
-        csize = (20, 1)
-        tsize = (50, 1)
-        cf = []
-        if mylist_type == MylistType.uploaded:
-            cf = [
-                [sg.Text(horizontal_line)],
-                [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
-                [
-                    sg.Text("URLタイプ", size=csize),
-                    sg.Input(mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
-                ],
-                [
-                    sg.Text("ユーザー名", size=csize),
-                    sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
-                ],
-                [sg.Text(horizontal_line)],
-                [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
-            ]
-        elif mylist_type == MylistType.mylist:
-            cf = [
-                [sg.Text(horizontal_line)],
-                [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
-                [
-                    sg.Text("URLタイプ", size=csize),
-                    sg.Input(mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
-                ],
-                [
-                    sg.Text("ユーザー名", size=csize),
-                    sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
-                ],
-                [
-                    sg.Text("マイリスト名", size=csize),
-                    sg.Input("", key="-MYLISTNAME-", background_color="light goldenrod", size=tsize),
-                ],
-                [sg.Text(horizontal_line)],
-                [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
-            ]
-        elif mylist_type == MylistType.series:
-            cf = [
-                [sg.Text(horizontal_line)],
-                [sg.Text("URL", size=csize), sg.Input(mylist_url, key="-URL-", readonly=True, size=tsize)],
-                [
-                    sg.Text("URLタイプ", size=csize),
-                    sg.Input(mylist_type.value, key="-URL_TYPE-", readonly=True, size=tsize),
-                ],
-                [
-                    sg.Text("ユーザー名", size=csize),
-                    sg.Input("", key="-USERNAME-", background_color="light goldenrod", size=tsize),
-                ],
-                [
-                    sg.Text("シリーズ名", size=csize),
-                    sg.Input("", key="-SERIESNAME-", background_color="light goldenrod", size=tsize),
-                ],
-                [sg.Text(horizontal_line)],
-                [sg.Button("登録", key="-REGISTER-"), sg.Button("キャンセル", key="-CANCEL-")],
-            ]
-        layout = [[sg.Frame(window_title, cf)]]
-        return layout
+        dialog = QDialog()
+        dialog.setWindowTitle(window_title)
+        vbox = QVBoxLayout()
+        label1 = QLabel(horizontal_line)
 
-    def run(self) -> Result:
+        hbox2 = QHBoxLayout()
+        label2 = QLabel("URL")
+        tbox2 = QLineEdit(mylist_url, readOnly=True)
+        hbox2.addWidget(label2)
+        hbox2.addWidget(tbox2)
+
+        hbox3 = QHBoxLayout()
+        label3 = QLabel("URLタイプ")
+        tbox3 = QLineEdit(mylist_type.value, readOnly=True)
+        hbox3.addWidget(label3)
+        hbox3.addWidget(tbox3)
+
+        hbox4 = QHBoxLayout()
+        label4 = QLabel("ユーザー名")
+        self.tbox_username = QLineEdit()
+        self.tbox_username.setStyleSheet("QLineEdit {background-color: olive;}")
+        hbox4.addWidget(label4)
+        hbox4.addWidget(self.tbox_username)
+
+        if mylist_type == MylistType.uploaded:
+            hbox5 = None
+        elif mylist_type == MylistType.mylist:
+            hbox5 = QHBoxLayout()
+            label5 = QLabel("マイリスト名")
+            self.tbox_mylistname = QLineEdit()
+            self.tbox_mylistname.setStyleSheet("QLineEdit {background-color: olive;}")
+            hbox5.addWidget(label5)
+            hbox5.addWidget(self.tbox_mylistname)
+        elif mylist_type == MylistType.series:
+            hbox5 = QHBoxLayout()
+            label5 = QLabel("シリーズ名")
+            self.tbox_mylistname = QLineEdit()
+            self.tbox_mylistname.setStyleSheet("QLineEdit {background-color: olive;}")
+            hbox5.addWidget(label5)
+            hbox5.addWidget(self.tbox_mylistname)
+
+        label6 = QLabel(horizontal_line)
+
+        hbox7 = QHBoxLayout()
+        button_register = QPushButton("登録")
+        button_cancel = QPushButton("キャンセル")
+        self.register_or_cancel = "cancel"
+
+        def register_or_cancel(args: str) -> None:
+            self.register_or_cancel = args
+            dialog.close()
+
+        button_register.clicked.connect(lambda: register_or_cancel("register"))
+        button_cancel.clicked.connect(lambda: register_or_cancel("cancel"))
+        hbox7.addWidget(button_register)
+        hbox7.addWidget(button_cancel)
+
+        vbox.addWidget(label1)
+        vbox.addLayout(hbox2)
+        vbox.addLayout(hbox3)
+        vbox.addLayout(hbox4)
+        vbox.addLayout(hbox5) if hbox5 else ""
+        vbox.addWidget(label6)
+        vbox.addLayout(hbox7)
+
+        dialog.setLayout(vbox)
+        dialog.exec()
+        result = self.register_or_cancel
+
+        if mylist_type == MylistType.uploaded:
+            username = self.tbox_username.text()
+            mylistname = "投稿動画"
+            showname = f"{username}さんの投稿動画"
+            is_include_new = False
+        elif mylist_type == MylistType.mylist:
+            username = self.tbox_username.text()
+            mylistname = self.tbox_mylistname.text()
+            showname = f"「{mylistname}」-{username}さんのマイリスト"
+            is_include_new = False
+        elif mylist_type == MylistType.series:
+            username = self.tbox_username.text()
+            mylistname = self.tbox_mylistname.text()
+            showname = f"「{mylistname}」-{username}さんのシリーズ"
+            is_include_new = False
+        return {
+            "result": result,
+            "username": username,
+            "mylistname": mylistname,
+            "showname": showname,
+            "is_include_new": is_include_new,
+        }
+
+    def create_component(self) -> QWidget:
+        add_mylist_button = QPushButton("マイリスト追加")
+        add_mylist_button.clicked.connect(lambda: self.callback())
+        return add_mylist_button
+
+    @Slot()
+    def callback(self) -> Callable:
         """マイリスト追加ボタン押下時の処理
 
         Notes:
@@ -96,7 +137,7 @@ class CreateMylist(ProcessBase):
         ]
         sample_url_str = "\n".join(sample_url_list)
         message = "追加するマイリストのURLを入力\n" + sample_url_str
-        mylist_url = popup_get_text(message, title="追加URL")
+        mylist_url = popup_get_text(message, title="追加マイリストURL")
 
         # キャンセルされた場合
         if mylist_url is None or mylist_url == "":
@@ -107,7 +148,7 @@ class CreateMylist(ProcessBase):
         try:
             mylist_url = MylistURLFactory.create(mylist_url)
         except Exception:
-            sg.popup("入力されたURLには対応していません\n新規追加処理を終了します", title="")
+            popup("入力されたURLには対応していません\n新規追加処理を終了します")
             logger.info(f"Create mylist failed, '{mylist_url}' is invalid url.")
             return Result.failed
         non_query_url = mylist_url.non_query_url
@@ -116,13 +157,12 @@ class CreateMylist(ProcessBase):
         # 既存マイリストと重複していた場合何もしない
         prev_mylist = self.mylist_db.select_from_url(non_query_url)
         if prev_mylist:
-            sg.popup("既存マイリスト一覧に含まれています\n新規追加処理を終了します", title="")
+            popup("既存マイリスト一覧に含まれています\n新規追加処理を終了します")
             logger.info(f"Create mylist canceled, '{non_query_url}' is already included.")
             return Result.failed
 
         # マイリスト情報収集開始
-        self.window["-INPUT2-"].update(value="ロード中")
-        self.window.refresh()
+        self.set_bottom_textbox("ロード中")
 
         # オートリロード間隔を取得する
         check_interval = ""
@@ -146,35 +186,20 @@ class CreateMylist(ProcessBase):
         check_failed_count = 0
         is_include_new = False
 
-        layout = self.make_layout(mylist_type, non_query_url, window_title)
-        window = QDialog(title=window_title, layout=layout, auto_size_text=True, finalize=True)
-        window["-USERNAME-"].set_focus(True)
-        button, values = window.read()
-        window.close()
-        del window
-        if button != "-REGISTER-":
+        detail_dict = self.popup_for_detail(mylist_type, non_query_url, window_title)
+
+        if detail_dict["result"] != "register":
             logger.info("Create mylist canceled.")
             return Result.failed
         else:
-            if mylist_type == MylistType.uploaded:
-                username = values["-USERNAME-"]
-                mylistname = "投稿動画"
-                showname = f"{username}さんの投稿動画"
-                is_include_new = False
-            elif mylist_type == MylistType.mylist:
-                username = values["-USERNAME-"]
-                mylistname = values["-MYLISTNAME-"]
-                showname = f"「{mylistname}」-{username}さんのマイリスト"
-                is_include_new = False
-            elif mylist_type == MylistType.series:
-                username = values["-USERNAME-"]
-                mylistname = values["-SERIESNAME-"]
-                showname = f"「{mylistname}」-{username}さんのシリーズ"
-                is_include_new = False
+            username = detail_dict["username"]
+            mylistname = detail_dict["mylistname"]
+            showname = detail_dict["showname"]
+            is_include_new = detail_dict["is_include_new"]
 
         # ユーザー入力値が不正の場合は登録しない
         if any([username == "", mylistname == "", showname == "", check_interval == ""]):
-            sg.popup("入力されたマイリスト情報が不正です\n新規追加処理を終了します", title="")
+            popup("入力されたマイリスト情報が不正です\n新規追加処理を終了します")
             logger.info(f"Create mylist canceled, can't retrieve the required information.")
             return Result.failed
 
@@ -198,10 +223,18 @@ class CreateMylist(ProcessBase):
             is_include_new,
         )
 
-        # 後続処理へ
-        self.window["-INPUT1-"].update(value=non_query_url)
-        self.window["-INPUT2-"].update(value="マイリスト追加完了")
-        self.window.write_event_value("-CREATE_THREAD_DONE-", "")
+        # テキストボックス表示更新
+        self.set_upper_textbox(non_query_url)
+        self.set_bottom_textbox("マイリスト追加完了")
+
+        # マイリスト画面表示更新
+        self.update_mylist_pane()
+
+        # テーブル表示更新
+        mylist_url = self.get_upper_textbox().to_str()
+        self.update_table_pane(mylist_url)
+
+        logger.info("Create mylist success.")
         return Result.success
 
 
@@ -228,7 +261,15 @@ class CreateMylistThreadDone(ProcessBase):
 
 
 if __name__ == "__main__":
-    from nnmm import main_window
+    import sys
 
-    mw = main_window.MainWindow()
-    mw.run()
+    import qdarktheme
+    from PySide6.QtWidgets import QApplication
+
+    from nnmm.main_window import MainWindow
+
+    app = QApplication()
+    qdarktheme.setup_theme()
+    window_main = MainWindow()
+    window_main.show()
+    sys.exit(app.exec())

@@ -152,7 +152,7 @@ class TestCreateMylist(unittest.TestCase):
             (None, mylist_url, window_title),
         ]
         for params in params_list:
-            actual = instance.make_layout(params[0], params[1], params[2])
+            actual = instance.popup_for_detail(params[0], params[1], params[2])
             expect = make_layout(params[0], params[1], params[2])
             self.assertEqual(0, check_layout(expect, actual))
 

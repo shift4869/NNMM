@@ -52,7 +52,15 @@ class MoveDown(ProcessBase):
 
 
 if __name__ == "__main__":
-    from nnmm import main_window
+    import sys
 
-    mw = main_window.MainWindow()
-    mw.run()
+    import qdarktheme
+    from PySide6.QtWidgets import QApplication
+
+    from nnmm.main_window import MainWindow
+
+    app = QApplication()
+    qdarktheme.setup_theme()
+    window_main = MainWindow()
+    window_main.show()
+    sys.exit(app.exec())

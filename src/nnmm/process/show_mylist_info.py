@@ -1,5 +1,8 @@
 from logging import INFO, getLogger
 
+from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.mylist_row import SelectedMylistRow
 from nnmm.process.value_objects.process_info import ProcessInfo
@@ -13,11 +16,15 @@ class ShowMylistInfo(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """動画情報レコード表示はListWidgetダブルクリックから起動"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """選択されたマイリストに含まれる動画情報レコードを表示する
 
         Notes:
-            "-LIST-+DOUBLE CLICK+"
             リストボックスの項目がダブルクリックされた場合（単一）
 
         Returns:
@@ -36,7 +43,7 @@ class ShowMylistInfo(ProcessBase):
 
         # 対象マイリストのアドレスをテキストボックスに表示
         mylist_url = record.get("url")
-        self.window["-INPUT1-"].update(value=mylist_url)
+        self.set_upper_textbox(mylist_url)
 
         # テーブル更新
         self.update_table_pane(mylist_url)
@@ -47,7 +54,15 @@ class ShowMylistInfo(ProcessBase):
 
 
 if __name__ == "__main__":
-    from nnmm import main_window
+    import sys
 
-    mw = main_window.MainWindow()
-    mw.run()
+    import qdarktheme
+    from PySide6.QtWidgets import QApplication
+
+    from nnmm.main_window import MainWindow
+
+    app = QApplication()
+    qdarktheme.setup_theme()
+    window_main = MainWindow()
+    window_main.show()
+    sys.exit(app.exec())
