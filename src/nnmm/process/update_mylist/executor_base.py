@@ -14,7 +14,6 @@ from nnmm.video_info_fetcher.value_objects.fetched_video_info import FetchedVide
 class ExecutorBase(ABC):
     process_info: ProcessInfo
     window: QDialog
-    values: dict
     mylist_db: MylistDBController
     mylist_info_db: MylistInfoDBController
     lock: threading.Lock
@@ -25,7 +24,6 @@ class ExecutorBase(ABC):
             raise ValueError("process_info must be ProcessInfo.")
         self.process_info = process_info
         self.window = process_info.window
-        self.values = process_info.values
         self.mylist_db = process_info.mylist_db
         self.mylist_info_db = process_info.mylist_info_db
 

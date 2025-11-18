@@ -5,18 +5,19 @@ import traceback
 from collections import namedtuple
 from logging import INFO, getLogger
 from pathlib import Path
+from typing import Callable
 
 import qdarktheme
-from PySide6.QtCore import QDateTime, QDir, QItemSelectionModel, QLibraryInfo, QPoint, QSysInfo, Qt, QTimer, Slot
-from PySide6.QtCore import qVersion
-from PySide6.QtGui import QAction, QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QPalette
+from PySide6.QtCore import QDateTime, QDir, QItemSelectionModel, QLibraryInfo, QModelIndex, QPoint, QSysInfo, Qt
+from PySide6.QtCore import QTimer, Slot, qVersion
+from PySide6.QtGui import QAction, QColor, QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QPalette
 from PySide6.QtGui import QShortcut, QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit
 from PySide6.QtWidgets import QDial, QDialog, QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout
-from PySide6.QtWidgets import QLabel, QLayoutItem, QLineEdit, QListView, QListWidget, QMenu, QPlainTextEdit
-from PySide6.QtWidgets import QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy, QSlider, QSpinBox
-from PySide6.QtWidgets import QStyleFactory, QTableWidget, QTabWidget, QTextBrowser, QTextEdit, QToolBox, QToolButton
-from PySide6.QtWidgets import QTreeView, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHeaderView, QLabel, QLayoutItem, QLineEdit, QListView, QListWidget, QListWidgetItem
+from PySide6.QtWidgets import QMenu, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy
+from PySide6.QtWidgets import QSlider, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QTabWidget
+from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
 
 from nnmm.model import MylistInfo
 from nnmm.mylist_db_controller import MylistDBController
@@ -312,14 +313,20 @@ class MainWindow(QDialog):
 
         return layout
 
+    def get_callback(self, name, process_base_class) -> Callable:
+        return lambda: process_base_class(ProcessInfo.create(name, self)).callback()
+
+    def get_component(self, name, process_base_class) -> QWidget:
+        return process_base_class(ProcessInfo.create(name, self)).create_component()
+
     def create_mylist_tab_layout(self, window_w: int, window_h: int) -> QGroupBox:
         group = QGroupBox("マイリスト")
 
         leftpane = QVBoxLayout()
         update_button = QHBoxLayout()
-        all_update_button = QPushButton("すべて更新")
-        partial_update_button = QPushButton("インターバル更新")
-        single_update_button = QPushButton("更新")
+        all_update_button = self.get_component("すべて更新", every.Every)
+        partial_update_button = self.get_component("インターバル更新", partial.Partial)
+        single_update_button = self.get_component("更新", single.Single)
         update_button.addWidget(all_update_button)
         update_button.addWidget(partial_update_button)
         update_button.addWidget(single_update_button)
@@ -327,15 +334,20 @@ class MainWindow(QDialog):
         self.list_widget = QListWidget()
         self.list_widget.setMinimumWidth(window_w * 1 / 4)
         self.list_widget.setMinimumHeight(window_h)
-        self.list_widget.setStyleSheet("QListWidget {background-color: #121213;}")
+        # self.list_widget.setAlternatingRowColors(True)
+        self.list_widget.setStyleSheet("""
+                                       QListWidget {
+                                        background-color: #121213;
+                                       }
+                                       """)
         self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self.list_context_menu)
         self.list_widget.doubleClicked.connect(
-            lambda: show_mylist_info.ShowMylistInfo(ProcessInfo.create("動画情報レコード表示", self)).callback()
+            self.get_callback("動画情報レコード表示", show_mylist_info.ShowMylistInfo)
         )
 
         mylist_control_button = QHBoxLayout()
-        add_mylist_button = create_mylist.CreateMylist(ProcessInfo.create("マイリスト追加", self)).create_component()
+        add_mylist_button = self.get_component("マイリスト追加", create_mylist.CreateMylist)
         del_mylist_button = QPushButton("マイリスト削除")
         mylist_control_button.addWidget(add_mylist_button)
         mylist_control_button.addWidget(del_mylist_button)
@@ -378,9 +390,16 @@ class MainWindow(QDialog):
     def list_context_menu(self, pos):
         menu = QMenu(self.list_widget)
         Process = namedtuple("Process", ["name", "func"])
+
+        def get_process(name, process_base_class) -> Process:
+            return Process(
+                name,
+                lambda: process_base_class(ProcessInfo.create(name, self)).callback(),
+            )
+
         process_list = [
             Process("---", None),
-            Process("全動画表示", lambda: logger.info("dummy")),
+            get_process("全動画表示", show_mylist_info_all.ShowMylistInfoAll),
             Process("マイリストURLをクリップボードにコピー", lambda: logger.info("dummy")),
             Process("---", None),
             Process("視聴済にする（選択）", lambda: logger.info("dummy")),
@@ -538,16 +557,21 @@ class MainWindow(QDialog):
                 m["showname"] = NEW_MARK + m["showname"]
                 include_new_index_list.append(i)
         list_data = [m["showname"] for m in m_list]
-        self.list_widget.addItems(list_data)
-        # self.window["-LIST-"].update(values=list_data)
 
         # 新着マイリストの背景色とテキスト色を変更する
-        # for i in include_new_index_list:
-        #     self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
+        list_widget: QListWidget = self.list_widget
+        list_widget.clear()
+        for i, data in enumerate(list_data):
+            if i not in include_new_index_list:
+                list_widget.addItem(data)
+            else:
+                # 新着マイリストの背景色とテキスト色を変更する
+                item = QListWidgetItem(data)
+                item.setBackground(QColor.fromRgb(233, 91, 107))
+                list_widget.addItem(item)
 
         # indexをセットしてスクロール
-        # self.window["-LIST-"].Widget.see(index)
-        # self.window["-LIST-"].update(set_to_index=index)
+        list_widget.setCurrentRow(index)
         return Result.success
 
     def run(self) -> Result:

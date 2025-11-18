@@ -1,5 +1,9 @@
 from logging import INFO, getLogger
 
+from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton
+from PySide6.QtWidgets import QTableWidget, QVBoxLayout, QWidget
+
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.process.value_objects.table_row_list import TableRowList
@@ -13,7 +17,12 @@ class ShowMylistInfoAll(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """動画情報レコード表示はListWidgetダブルクリックから起動"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """すべてのマイリストを横断的に探索し、含まれる動画情報レコードを100件まで表示する
 
         Notes:
@@ -59,16 +68,19 @@ class ShowMylistInfoAll(ProcessBase):
         def_data = TableRowList.create(table_row_list)
 
         # 右上のマイリストURLは空白にする
-        self.window["-INPUT1-"].update(value="")
+        self.set_upper_textbox("")
 
         # テーブル更新
         # update_table_paneはリフレッシュには使えるが初回は別に設定が必要なため使用できない
-        self.window["-LIST-"].update(set_to_index=index)
-        self.window["-TABLE-"].update(values=def_data.to_table_data())
+        list_widget: QListWidget = self.window.list_widget
+        list_widget.setCurrentRow(index)
+
+        table_widget: QTableWidget = self.window.table_widget
+        self.set_all_table_row(def_data)
         if len(def_data) > 0:
-            self.window["-TABLE-"].update(select_rows=[0])
+            table_widget.selectRow(0)
         # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き
-        self.window["-TABLE-"].update(row_colors=[(0, "", "")])
+        # self.window["-TABLE-"].update(row_colors=[(0, "", "")])
 
         logger.info("ShowMylistInfoAll success.")
         return Result.success

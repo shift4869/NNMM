@@ -1,6 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process.update_mylist.executor_base import ExecutorBase
@@ -152,7 +154,9 @@ class DatabaseUpdater(ExecutorBase):
         with self.lock:
             self.done_count = self.done_count + 1
             p_str = f"更新中({self.done_count}/{all_index_num})"
-            self.window["-INPUT2-"].update(value=p_str)
+            oneline_log: QLineEdit = self.window.oneline_log
+            oneline_log.setText(p_str)
+            oneline_log.update()
             logger.info(mylist_url + f" : update done ... ({self.done_count}/{all_index_num}).")
         return Result.success
 

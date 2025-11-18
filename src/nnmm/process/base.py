@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Self
 
 from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QModelIndex, QSysInfo, Qt, QTimer, Slot, qVersion
 from PySide6.QtGui import QColor
@@ -42,7 +41,7 @@ class ProcessBase(ABC):
 
     @abstractmethod
     @Slot()
-    def callback(self) -> Callable:
+    def callback(self) -> Result:
         raise NotImplementedError
 
     def get_selected_mylist_row_index(self) -> SelectedMylistRowIndex | None:
@@ -204,13 +203,16 @@ class ProcessBase(ABC):
         except Exception:
             return None
 
-    def set_upper_textbox(self, text: str) -> UpperTextbox:
+    def set_upper_textbox(self, text: str, is_repaint: bool = True) -> UpperTextbox:
         if not hasattr(self.window, "tbox_mylist_url"):
             return None
         try:
             tbox_mylist_url: QLineEdit = self.window.tbox_mylist_url
             tbox_mylist_url.setText(text)
-            tbox_mylist_url.repaint()
+            if is_repaint:
+                tbox_mylist_url.repaint()
+            else:
+                tbox_mylist_url.update()
             return UpperTextbox(text)
         except Exception:
             return None
@@ -224,13 +226,16 @@ class ProcessBase(ABC):
         except Exception:
             return None
 
-    def set_bottom_textbox(self, text: str) -> BottomTextbox:
+    def set_bottom_textbox(self, text: str, is_repaint: bool = True) -> BottomTextbox:
         if not hasattr(self.window, "oneline_log"):
             return None
         try:
             oneline_log: QLineEdit = self.window.oneline_log
             oneline_log.setText(text)
-            oneline_log.repaint()
+            if is_repaint:
+                oneline_log.repaint()
+            else:
+                oneline_log.update()
             return BottomTextbox(text)
         except Exception:
             return None

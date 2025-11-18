@@ -119,7 +119,7 @@ class CreateMylist(ProcessBase):
         return add_mylist_button
 
     @Slot()
-    def callback(self) -> Callable:
+    def callback(self) -> Result:
         """マイリスト追加ボタン押下時の処理
 
         Notes:

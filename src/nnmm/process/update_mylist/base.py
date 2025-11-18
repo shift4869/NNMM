@@ -3,6 +3,9 @@ import time
 from abc import abstractmethod
 from logging import INFO, getLogger
 
+from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+
 from nnmm.process.base import ProcessBase
 from nnmm.process.update_mylist.database_updater import DatabaseUpdater
 from nnmm.process.update_mylist.fetcher import Fetcher
@@ -45,12 +48,17 @@ class Base(ProcessBase):
         """
         raise NotImplementedError
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        add_mylist_button = QPushButton(self.name)
+        add_mylist_button.clicked.connect(lambda: self.callback())
+        return add_mylist_button
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリスト情報を更新する"""
         logger.info(f"{self.L_KIND} update start.")
 
-        self.window["-INPUT2-"].update(value="更新中")
-        self.window.refresh()
+        self.set_bottom_textbox("更新中", False)
 
         # 現在のマイリスト情報を取得する
         # 処理中もGUIイベントを処理するため別スレッドで起動
@@ -67,7 +75,7 @@ class Base(ProcessBase):
         m_list = self.get_target_mylist()
         if not m_list:
             logger.info("Target Mylist is nothing.")
-            self.window.write_event_value(self.E_DONE, "")
+            # self.window.write_event_value(self.E_DONE, "")
             return Result.failed
 
         now_mylist_with_video_list = MylistWithVideoList.create(m_list, self.mylist_info_db)
@@ -99,9 +107,9 @@ class Base(ProcessBase):
         """
         logger.info(f"{self.L_KIND} update post process start.")
 
-        process_info = ProcessInfo.create("-UPDATE_THREAD_DONE-", self)
+        process_info = ProcessInfo.create("-UPDATE_THREAD_DONE-", self.window)
         pb = self.post_process(process_info)
-        threading.Thread(target=pb.run, daemon=False).start()
+        threading.Thread(target=pb.callback, daemon=False).start()
 
         logger.info(f"{self.L_KIND} update post process done.")
         return Result.success
@@ -118,10 +126,15 @@ class ThreadDoneBase(ProcessBase):
 
         self.L_KIND = "UpdateMylist Base"
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        "後続処理なのでコンポーネントは作成しない"
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリスト情報を更新後の後処理"""
         # 左下の表示を更新する
-        self.window["-INPUT2-"].update(value="更新完了！")
+        self.set_bottom_textbox("更新完了！", False)
 
         # テーブルの表示を更新する
         mylist_url = self.get_upper_textbox().to_str()
