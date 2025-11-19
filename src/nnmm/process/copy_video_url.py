@@ -1,6 +1,8 @@
 from logging import INFO, getLogger
 
 import pyperclip
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QTableWidget, QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
@@ -14,7 +16,12 @@ class CopyVideoUrl(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QTableWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """選択された動画のURLをクリップボードにコピーする
 
         "動画URLをクリップボードにコピー::-TR-"
@@ -38,9 +45,9 @@ class CopyVideoUrl(ProcessBase):
 
         # クリップボードに保存
         pyperclip.copy(video_url)
-        self.window["-INPUT2-"].update(value=f"動画URLコピー成功！")
+        self.set_bottom_textbox("動画URLコピー成功！")
 
-        logger.info(f"CopyVideoUrl success.")
+        logger.info(f"CopyVideoUrl done.")
         return Result.success
 
 

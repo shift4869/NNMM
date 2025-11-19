@@ -1,7 +1,7 @@
-
 from logging import INFO, getLogger
 
 from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
 from PySide6.QtWidgets import QTableWidget, QWidget
 
 from nnmm.process.base import ProcessBase
@@ -11,7 +11,6 @@ from nnmm.process.value_objects.table_row_index_list import SelectedTableRowInde
 from nnmm.process.value_objects.table_row_list import TableRowList
 from nnmm.util import Result, is_mylist_include_new_video
 
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 

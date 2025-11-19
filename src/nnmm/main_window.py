@@ -246,7 +246,7 @@ class MainWindow(QDialog):
         self.table_widget.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_widget.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table_widget.setAlternatingRowColors(True)
+        # self.table_widget.setAlternatingRowColors(True)
         self.table_widget.customContextMenuRequested.connect(self.table_context_menu)
         rightpane.addWidget(self.tbox_mylist_url)
         rightpane.addWidget(self.table_widget)
@@ -304,15 +304,15 @@ class MainWindow(QDialog):
             self.process_helper(
                 "ブラウザで開く（フォーカスを戻す）", video_play_with_focus_back.VideoPlayWithFocusBack
             ),
-            # Process("動画URLをクリップボードにコピー", lambda: logger.info("dummy")),
+            self.process_helper("動画URLをクリップボードにコピー", copy_video_url.CopyVideoUrl),
             self.process_helper("---", None),
             self.process_helper("視聴済にする", watched.Watched),
             self.process_helper("未視聴にする", not_watched.NotWatched),
             self.process_helper("---", None),
-            # Process("検索（動画名）", lambda: logger.info("dummy")),
-            # Process("強調表示を解除", lambda: logger.info("dummy")),
-            # self.process_helper("---", None),
-            # Process("情報表示", lambda: logger.info("dummy")),
+            self.process_helper("検索（動画名）", search.VideoSearch),
+            self.process_helper("強調表示を解除", search.VideoSearchClear),
+            self.process_helper("---", None),
+            self.process_helper("情報表示", popup.PopupVideoWindow),
         ]
 
         for process in process_list:

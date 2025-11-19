@@ -1,5 +1,10 @@
 import re
+import time
 from logging import INFO, getLogger
+
+from PySide6.QtCore import Slot
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QDialog, QHeaderView, QTableWidget, QTableWidgetItem, QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.mylist_row import MylistRow
@@ -29,7 +34,7 @@ class MylistSearch(ProcessBase):
 
         pattern = popup_get_text("マイリスト名検索（正規表現可）")
         if pattern is None or pattern == "":
-            logger.info("MylistSearch is canceled or target word is null.")
+            logger.info("MylistSearch is canceled or target word is empty.")
             return Result.failed
 
         logger.info(f"search word -> {pattern}.")
@@ -104,7 +109,7 @@ class MylistSearchFromVideo(ProcessBase):
 
         pattern = popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
-            logger.info("MylistSearchFromVideo is canceled or target word is null.")
+            logger.info("MylistSearchFromVideo is canceled or target word is empty.")
             return Result.failed
 
         logger.info(f"search word -> {pattern}.")
@@ -183,7 +188,7 @@ class MylistSearchFromMylistURL(ProcessBase):
 
         search_mylist_url = popup_get_text("マイリストURL入力（完全一致）")
         if search_mylist_url is None or search_mylist_url == "":
-            logger.info("MylistSearchFromMylistURL is canceled or target word is null.")
+            logger.info("MylistSearchFromMylistURL is canceled or target word is empty.")
             return Result.failed
 
         logger.info(f"search word -> {search_mylist_url}.")
@@ -244,7 +249,12 @@ class VideoSearch(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QTableWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリストの中に含んでいる動画名でマイリストを検索
 
         Notes:
@@ -260,7 +270,7 @@ class VideoSearch(ProcessBase):
         # 検索対象ワードをユーザーに問い合わせる
         pattern = popup_get_text("動画名検索（正規表現可）")
         if pattern is None or pattern == "":
-            logger.info("VideoSearch is canceled or target word is null.")
+            logger.info("VideoSearch is canceled or target word is empty.")
             return Result.failed
 
         logger.info(f"search word -> {pattern}.")
@@ -271,33 +281,83 @@ class VideoSearch(ProcessBase):
         if selected_table_row_index_list:
             index = min([int(v) for v in selected_table_row_index_list.to_int_list()])
 
-        # マイリスト内の動画情報を探索
-        records = self.get_all_table_row()
-        match_index_list = []
-        for i, r in enumerate(records):
-            if re.findall(pattern, r.title.name):
-                match_index_list.append(i)
-                index = i  # 更新後にスクロールするインデックスを更新
+        # 既存のテーブルの内容を取得
+        table_row_list = self.get_all_table_row()
 
-        # 検索でヒットした項目の背景色とテキスト色を変更する
-        self.window["-TABLE-"].update(row_colors=[(i, "black", "light goldenrod") for i in match_index_list])
+        # 既存テーブルが空の場合は何もせず返す
+        # window: QDialog = self.window
+        n = len(table_row_list)
+        if n == 0:
+            self.set_bottom_textbox("該当なし")
+            return Result.failed
+        m = len(table_row_list[0].to_row())
+        if m == 0:
+            self.set_bottom_textbox("該当なし")
+            return Result.failed
+
+        # マイリスト内の動画情報を探索
+        table_cols_name = [
+            "No.",
+            "動画ID",
+            "動画名",
+            "投稿者",
+            "状況",
+            "投稿日時",
+            "登録日時",
+            "動画URL",
+            "所属マイリストURL",
+        ]
+        table_widget: QTableWidget = self.window.table_widget
+        table_widget.clearContents()
+        table_widget.setRowCount(0)
+        table_widget.setColumnCount(0)
+
+        table_widget.setRowCount(n)
+        table_widget.setColumnCount(m)
+        table_widget.setHorizontalHeaderLabels(table_cols_name)
+        table_widget.verticalHeader().hide()
+
+        # ヘッダーの列幅調整を確実に反映させるために少し遅延させる
+        time.sleep(0.1)
+
+        cols_width = [35, 100, 350, 100, 60, 120, 120, 30, 30]
+        for i, section_size in enumerate(cols_width):
+            table_widget.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
+            table_widget.horizontalHeader().resizeSection(i, section_size)
+
+        # 検索しながらテーブルに値を戻していく
+        match_index_list = []
+        for i, table_row in enumerate(table_row_list):
+            # 動画タイトルが検索条件にヒットするか
+            if is_hit := re.findall(pattern, table_row.title.name):
+                match_index_list.append(i)
+            row = table_row.to_row()
+            for j, text in enumerate(row):
+                if is_hit:
+                    # 背景色を変える
+                    item = QTableWidgetItem(text)
+                    item.setBackground(QColor.fromRgb(96, 96, 0))
+                    table_widget.setItem(i, j, item)
+                else:
+                    # そのまま追加
+                    table_widget.setItem(i, j, QTableWidgetItem(text))
 
         # indexをセットしてスクロール
-        self.window["-TABLE-"].Widget.see(index + 1)
         if match_index_list:
-            self.window["-TABLE-"].update(select_rows=match_index_list)
-        else:
-            self.window["-TABLE-"].update(select_rows=[index])
+            for match_index in match_index_list:
+                table_widget.selectRow(match_index)
+        # else:
+        #     table_widget.selectRow(index)
 
         # 検索結果表示
         if len(match_index_list) > 0:
             logger.info(f"search result -> {len(match_index_list)} record(s) found.")
-            self.window["-INPUT2-"].update(value=f"{len(match_index_list)}件ヒット！")
+            self.set_bottom_textbox(f"{len(match_index_list)}件ヒット！")
         else:
             logger.info(f"search result -> Nothing record found.")
-            self.window["-INPUT2-"].update(value="該当なし")
+            self.set_bottom_textbox("該当なし")
 
-        logger.info("VideoSearch success.")
+        logger.info("VideoSearch done.")
         return Result.success
 
 
@@ -328,8 +388,13 @@ class VideoSearchClear(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
-        """マイリスト表示のハイライトを解除する
+    def create_component(self) -> QWidget:
+        """QTableWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
+        """テーブル表示のハイライトを解除する
 
         Notes:
             "強調表示を解除::-TR-"
@@ -348,7 +413,7 @@ class VideoSearchClear(ProcessBase):
         mylist_url = self.get_upper_textbox().to_str()
         self.update_table_pane(mylist_url)
 
-        logger.info("VideoSearchClear success.")
+        logger.info("VideoSearchClear done.")
         return Result.success
 
 

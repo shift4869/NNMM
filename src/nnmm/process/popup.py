@@ -1,12 +1,21 @@
 from abc import abstractmethod
 from logging import INFO, getLogger
 
-from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import QDateTime, QDir, QItemSelectionModel, QLibraryInfo, QModelIndex, QPoint, QSysInfo, Qt
+from PySide6.QtCore import QTimer, Slot, qVersion
+from PySide6.QtGui import QAction, QColor, QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QPalette
+from PySide6.QtGui import QShortcut, QStandardItem, QStandardItemModel
+from PySide6.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit
+from PySide6.QtWidgets import QDial, QDialog, QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout
+from PySide6.QtWidgets import QHeaderView, QLabel, QLayoutItem, QLineEdit, QListView, QListWidget, QListWidgetItem
+from PySide6.QtWidgets import QMenu, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy
+from PySide6.QtWidgets import QSlider, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QTabWidget
+from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
 
 from nnmm.model import Mylist, MylistInfo
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.util import Result, interval_translate
+from nnmm.util import Result, interval_translate, popup
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -21,6 +30,10 @@ class PopupWindowBase(ProcessBase):
         self.size = (100, 100)
         self.process_dict = {}
 
+    def create_component(self) -> QWidget:
+        """右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
     @abstractmethod
     def init(self) -> Result:
         """初期化
@@ -31,7 +44,7 @@ class PopupWindowBase(ProcessBase):
         raise NotImplementedError
 
     @abstractmethod
-    def make_window_layout(self):
+    def create_window_layout(self):
         """画面のレイアウトを作成する
 
         Returns:
@@ -39,42 +52,45 @@ class PopupWindowBase(ProcessBase):
         """
         raise NotImplementedError
 
-    def run(self) -> Result:
+    @Slot()
+    def callback(self) -> Result:
         """子windowイベントループ"""
         # 初期化
         res = self.init()
         if res == Result.failed:
-            sg.popup_ok("情報ウィンドウの初期化に失敗しました。")
+            popup("情報ウィンドウの初期化に失敗しました。")
             return Result.failed
 
         # ウィンドウレイアウト作成
-        layout = self.make_window_layout()
+        layout = self.create_window_layout()
         if not layout:
-            sg.popup_ok("情報ウィンドウのレイアウト表示に失敗しました。")
+            popup("情報ウィンドウのレイアウト表示に失敗しました。")
             return Result.failed
 
         # ウィンドウオブジェクト作成
-        self.popup_window = QDialog(self.title, layout, size=self.size, finalize=True, resizable=True, modal=True)
+        self.popup_window = QDialog()
+        self.popup_window.setLayout(layout)
+        self.popup_window.exec()
 
-        # イベントのループ
-        while True:
-            # イベントの読み込み
-            event, values = self.popup_window.read()
+        # # イベントのループ
+        # while True:
+        #     # イベントの読み込み
+        #     event, values = self.popup_window.read()
 
-            if event in [sg.WIN_CLOSED, "-EXIT-"]:
-                # 終了ボタンかウィンドウの×ボタンが押されれば終了
-                logger.info(self.title + " window exit.")
-                break
+        #     if event in [sg.WIN_CLOSED, "-EXIT-"]:
+        #         # 終了ボタンかウィンドウの×ボタンが押されれば終了
+        #         logger.info(self.title + " window exit.")
+        #         break
 
-            # イベント処理
-            if self.process_dict.get(event):
-                self.values = values
-                process_info = ProcessInfo(event, self.popup_window, self.values, self.mylist_db, self.mylist_info_db)
-                pb: ProcessBase = self.process_dict.get(event)(process_info)
-                pb.run()
+        #     # イベント処理
+        #     if self.process_dict.get(event):
+        #         self.values = values
+        #         process_info = ProcessInfo(event, self.popup_window, self.values, self.mylist_db, self.mylist_info_db)
+        #         pb: ProcessBase = self.process_dict.get(event)(process_info)
+        #         pb.run()
 
-        # ウィンドウ終了処理
-        self.popup_window.close()
+        # # ウィンドウ終了処理
+        # self.popup_window.close()
         return Result.success
 
 
@@ -117,7 +133,7 @@ class PopupMylistWindow(PopupWindowBase):
         }
         return Result.success
 
-    def make_window_layout(self):
+    def create_window_layout(self):
         """画面のレイアウトを作成する
 
         Notes:
@@ -353,18 +369,14 @@ class PopupVideoWindow(PopupWindowBase):
         self.size = (580, 400)
         return Result.success
 
-    def make_window_layout(self):
+    def create_window_layout(self):
         """画面のレイアウトを作成する
 
         Notes:
             先にInitを実行し、self.recordを設定しておく必要がある
-
-        Returns:
-            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
         """
         horizontal_line = "-" * 132
-        csize = (20, 1)
-        tsize = (50, 1)
+        csize = 100
 
         # self.recordが設定されていない場合はNoneを返して終了
         if not hasattr(self, "record") or self.record is None:
@@ -401,32 +413,71 @@ class PopupVideoWindow(PopupWindowBase):
         mylist_url = r["mylist_url"]
         created_at = r["created_at"]
 
-        cf = [
-            [sg.Text(horizontal_line)],
-            [
-                sg.Text("ID", size=csize, visible=False),
-                sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize),
-            ],
-            [sg.Text("動画ID", size=csize), sg.Input(f"{video_id}", key="-USERNAME-", readonly=True, size=tsize)],
-            [sg.Text("動画名", size=csize), sg.Input(f"{title}", key="-MYLISTNAME-", readonly=True, size=tsize)],
-            [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
-            [sg.Text("状況", size=csize), sg.Input(f"{status}", key="-SHOWNAME-", readonly=True, size=tsize)],
-            [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
-            [sg.Text("登録日時", size=csize), sg.Input(f"{registered_at}", key="-URL-", readonly=True, size=tsize)],
-            [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
-            [
-                sg.Text("マイリストURL", size=csize),
-                sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize),
-            ],
-            [
-                sg.Text("作成日時", size=csize),
-                sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize),
-            ],
-            [sg.Text(horizontal_line)],
-            [sg.Text("")],
-            [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
-        ]
-        layout = [[sg.Frame(self.title, cf)]]
+        layout = QVBoxLayout()
+
+        def hbox_helper(key: str, value: str) -> QHBoxLayout:
+            hbox = QHBoxLayout()
+            label = QLabel(str(key))
+            label.setMinimumWidth(csize)
+            tbox = QLineEdit(str(value), readOnly=True)
+            hbox.addWidget(label)
+            hbox.addWidget(tbox)
+            return hbox
+
+        label1 = QLabel(horizontal_line)
+        hbox2 = hbox_helper("ID", id_index)
+        hbox3 = hbox_helper("動画ID", video_id)
+        hbox4 = hbox_helper("動画名", title)
+        hbox5 = hbox_helper("投稿者", username)
+        hbox6 = hbox_helper("状況", status)
+        hbox7 = hbox_helper("投稿日時", uploaded_at)
+        hbox8 = hbox_helper("登録日時", registered_at)
+        hbox9 = hbox_helper("動画URL", video_url)
+        hbox9 = hbox_helper("マイリストURL", mylist_url)
+        hbox9 = hbox_helper("作成日時", created_at)
+        label10 = QLabel(horizontal_line)
+        label11 = QLabel(" ")
+        button12 = QPushButton("閉じる")
+        button12.clicked.connect(lambda: self.popup_window.close())
+
+        layout.addWidget(label1)
+        layout.addLayout(hbox2)
+        layout.addLayout(hbox3)
+        layout.addLayout(hbox4)
+        layout.addLayout(hbox5)
+        layout.addLayout(hbox6)
+        layout.addLayout(hbox7)
+        layout.addLayout(hbox8)
+        layout.addLayout(hbox9)
+        layout.addWidget(label10)
+        layout.addWidget(label11)
+        layout.addWidget(button12, alignment=Qt.AlignmentFlag.AlignRight)
+        # cf = [
+        #     [sg.Text(horizontal_line)],
+        #     [
+        #         sg.Text("ID", size=csize, visible=False),
+        #         sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize),
+        #     ],
+        #     [sg.Text("動画ID", size=csize), sg.Input(f"{video_id}", key="-USERNAME-", readonly=True, size=tsize)],
+        #     [sg.Text("動画名", size=csize), sg.Input(f"{title}", key="-MYLISTNAME-", readonly=True, size=tsize)],
+        #     [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
+        #     [sg.Text("状況", size=csize), sg.Input(f"{status}", key="-SHOWNAME-", readonly=True, size=tsize)],
+        #     [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
+        #     [sg.Text("登録日時", size=csize), sg.Input(f"{registered_at}", key="-URL-", readonly=True, size=tsize)],
+        #     [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
+        #     [
+        #         sg.Text("マイリストURL", size=csize),
+        #         sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize),
+        #     ],
+        #     [
+        #         sg.Text("作成日時", size=csize),
+        #         sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize),
+        #     ],
+        #     [sg.Text(horizontal_line)],
+        #     [sg.Text("")],
+        #     [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
+        # ]
+        # layout = [[sg.Frame(self.title, cf)]]
         return layout
 
 

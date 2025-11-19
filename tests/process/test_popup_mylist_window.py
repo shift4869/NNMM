@@ -269,7 +269,7 @@ class TestPopupMylistWindow(unittest.TestCase):
         ]
         for params in params_list:
             pre_run(params.has_record_flag, params.valid_record_flag, params.s_check_interval, params.s_is_include_new)
-            actual = instance.make_window_layout()
+            actual = instance.create_window_layout()
             record = self._make_record(params.s_check_interval, params.s_is_include_new)
             if callable(params.result_func):
                 expect = params.result_func(record, instance.title)

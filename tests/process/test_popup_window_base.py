@@ -18,7 +18,7 @@ class ConcretePopupWindowBase(PopupWindowBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def make_window_layout(self):
+    def create_window_layout(self):
         return [["layout"]]
 
     def init(self) -> Result:
@@ -47,7 +47,7 @@ class TestPopupWindowBase(unittest.TestCase):
 
     def test_make_window_layout(self):
         instance = ConcretePopupWindowBase(self.process_info)
-        self.assertEqual([["layout"]], instance.make_window_layout())
+        self.assertEqual([["layout"]], instance.create_window_layout())
 
     def test_run(self):
         with ExitStack() as stack:
@@ -69,7 +69,7 @@ class TestPopupWindowBase(unittest.TestCase):
 
                 mock_layout.reset_mock()
                 mock_layout.return_value = s_layout
-                instance.make_window_layout = mock_layout
+                instance.create_window_layout = mock_layout
 
                 mock_window.reset_mock()
                 mock_window.return_value.read.side_effect = event_list

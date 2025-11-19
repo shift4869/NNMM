@@ -193,7 +193,7 @@ class ProcessBase(ABC):
             # ヘッダーの列幅調整を確実に反映させるために少し遅延させる
             time.sleep(0.1)
 
-            cols_width = [30, 100, 350, 100, 60, 120, 120, 30, 30]
+            cols_width = [35, 100, 350, 100, 60, 120, 120, 30, 30]
             for i, section_size in enumerate(cols_width):
                 table_widget.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
                 table_widget.horizontalHeader().resizeSection(i, section_size)
