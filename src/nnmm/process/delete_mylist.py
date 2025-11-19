@@ -1,10 +1,11 @@
 from logging import INFO, getLogger
 
-from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.util import Result
+from nnmm.util import Result, popup
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -14,7 +15,13 @@ class DeleteMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        del_mylist_button = QPushButton(self.name)
+        del_mylist_button.clicked.connect(lambda: self.callback())
+        return del_mylist_button
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリスト削除ボタン押下時の処理
 
         Notes:
@@ -57,9 +64,9 @@ class DeleteMylist(ProcessBase):
         # 確認
         showname = prev_mylist.get("showname", "")
         msg = f"{showname}\n{mylist_url}\nマイリスト削除します"
-        res = sg.popup_ok_cancel(msg, title="削除確認")
-        if res == "Cancel":
-            self.window["-INPUT2-"].update(value="マイリスト削除キャンセル")
+        res = popup(message=msg, title="削除確認", ok_cancel=True)
+        if res != "OK":
+            self.set_bottom_textbox("マイリスト削除キャンセル")
             logger.error("Delete mylist canceled.")
             return Result.failed
 
@@ -73,10 +80,10 @@ class DeleteMylist(ProcessBase):
         self.update_mylist_pane()
 
         # マイリスト情報テーブルの表示を初期化する
-        self.window["-TABLE-"].update(values=[[]])
-        self.window["-INPUT1-"].update(value="")
+        self.set_all_table_row([])
+        self.set_upper_textbox("")
 
-        self.window["-INPUT2-"].update(value="マイリスト削除完了")
+        self.set_bottom_textbox("マイリスト削除完了")
         logger.info("Delete mylist success.")
         return Result.success
 

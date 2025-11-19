@@ -1,3 +1,5 @@
+import logging.config
+import time
 from abc import ABC, abstractmethod
 
 from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QModelIndex, QSysInfo, Qt, QTimer, Slot, qVersion
@@ -16,7 +18,9 @@ from nnmm.process.value_objects.table_row_index_list import SelectedTableRowInde
 from nnmm.process.value_objects.table_row_list import SelectedTableRowList, TableRowList
 from nnmm.process.value_objects.textbox_bottom import BottomTextbox
 from nnmm.process.value_objects.textbox_upper import UpperTextbox
-from nnmm.util import Result
+from nnmm.util import CustomLogger, Result
+
+logging.setLoggerClass(CustomLogger)
 
 
 class ProcessBase(ABC):
@@ -101,34 +105,35 @@ class ProcessBase(ABC):
             SelectedTableRowIndexList | None: 選択テーブル行インデックスリスト
         """
         try:
-            return SelectedTableRowIndexList.create(self.values["-TABLE-"])
+            table_widget: QTableWidget = self.window.table_widget
+            # 選択されている各セルがそれぞれ行番号を返すので、列数分重複する
+            # 重複を排除するために一度setにいれてからlistとして取り出す
+            row_index_list = list(set([index.row() for index in table_widget.selectedIndexes()]))
+            return SelectedTableRowIndexList.create(row_index_list)
         except Exception:
             return None
 
     def get_selected_table_row_list(self) -> SelectedTableRowList | None:
         """選択されているテーブル行を取得する
 
-            直接とれない？ため
-            「全テーブル行のうち、選択されているインデックスのもの」を返す
-            複数選択される場合を考慮するため返り値は SelectedTableRowList.
-
         Returns:
             SelectedTableRowList | None: 選択されているテーブル行
         """
         try:
-            table_row_list = []
             selected_table_row_list = []
 
-            all_table_row = self.get_all_table_row()
-            selected_table_row_index_list = self.get_selected_table_row_index_list()
+            table_widget: QTableWidget = self.window.table_widget
+            column_count = table_widget.columnCount()
 
-            selected_index_list = selected_table_row_index_list.to_int_list()
-            for table_row in all_table_row:
-                if table_row.row_number - 1 in selected_index_list:
-                    table_row_list.append(table_row.to_row())
+            # すべてのセルの値がまとめて1次元配列として返されるので
+            # 列数ごとにスライスして2次元配列にする
+            selected_items = [items.text() for items in table_widget.selectedItems()]
+            selected_row_num = len(selected_items) // column_count
+            for i in range(selected_row_num):
+                selected_table_row = list(selected_items[i * column_count : (i + 1) * column_count])
+                selected_table_row_list.append(selected_table_row)
 
-            selected_table_row_list = SelectedTableRowList.create(table_row_list)
-            return selected_table_row_list
+            return SelectedTableRowList.create(selected_table_row_list)
         except Exception:
             return None
 
@@ -171,14 +176,22 @@ class ProcessBase(ABC):
         try:
             table_widget: QTableWidget = self.window.table_widget
             table_widget.clearContents()
+            table_widget.setRowCount(0)
+            table_widget.setColumnCount(0)
+
             n = len(table_row_list)
             if n == 0:
                 return None
             m = len(table_row_list[0].to_row())
+            if m == 0:
+                return None
             table_widget.setRowCount(n)
             table_widget.setColumnCount(m)
             table_widget.setHorizontalHeaderLabels(table_cols_name)
             table_widget.verticalHeader().hide()
+
+            # ヘッダーの列幅調整を確実に反映させるために少し遅延させる
+            time.sleep(0.1)
 
             cols_width = [30, 100, 350, 100, 60, 120, 120, 30, 30]
             for i, section_size in enumerate(cols_width):
@@ -189,6 +202,8 @@ class ProcessBase(ABC):
                 row = table_row.to_row()
                 for j, text in enumerate(row):
                     table_widget.setItem(i, j, QTableWidgetItem(text))
+
+            table_widget.update()
 
             return table_row_list
         except Exception:
@@ -342,8 +357,8 @@ class ProcessBase(ABC):
 
         table_widget: QTableWidget = self.window.table_widget
         self.set_all_table_row(def_data)
-        if len(def_data) > 0:
-            table_widget.selectRow(0)
+        # if len(def_data) > 0:
+        #     table_widget.selectRow(0)
         # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き
         # self.window["-TABLE-"].update(row_colors=[(0, "", "")])
         return Result.success

@@ -5,12 +5,12 @@ import traceback
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from logging import INFO, getLogger
+from logging import CRITICAL, INFO, getLogger
 
 import httpx
 import xmltodict
 
-from nnmm.util import Result
+from nnmm.util import CustomLogger, Result
 from nnmm.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
 from nnmm.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 from nnmm.video_info_fetcher.value_objects.mylist_url import MylistURL
@@ -26,9 +26,15 @@ from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
 for name in logging.root.manager.loggerDict:
-    getLogger(name).disabled = True
+    if "nnmm" not in name:
+        getLogger(name).disabled = True
+logging.setLoggerClass(CustomLogger)
 logger = getLogger(__name__)
 logger.setLevel(INFO)
+
+# httpx のログを抑制する
+httpx_logger = getLogger("httpx")
+httpx_logger.setLevel(CRITICAL)
 
 
 @dataclass
@@ -98,7 +104,7 @@ class VideoInfoFetcherBase(ABC):
         timeout = httpx.Timeout(60, read=10)
         transport = httpx.AsyncHTTPTransport(retries=self.MAX_RETRY_NUM)
         async with httpx.AsyncClient(
-            follow_redirects=follow_redirects, timeout=timeout, transport=transport
+            follow_redirects=follow_redirects, timeout=timeout, transport=transport, logger=logger
         ) as client:
             for video_id in video_id_list:
                 url = self.API_URL_BASE + video_id.id

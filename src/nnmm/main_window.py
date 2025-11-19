@@ -19,6 +19,7 @@ from PySide6.QtWidgets import QMenu, QPlainTextEdit, QProgressBar, QPushButton, 
 from PySide6.QtWidgets import QSlider, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QTabWidget
 from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
 
+import nnmm.util
 from nnmm.model import MylistInfo
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -78,6 +79,8 @@ class MainWindow(QDialog):
         # DBからマイリスト一覧を取得する
         self.update_mylist_pane()
 
+        self.activateWindow()
+        logger.info("window setup done.")
         return
 
         # テーブル初期化
@@ -126,8 +129,6 @@ class MainWindow(QDialog):
             "-TIMER_SET-": timer.Timer,
         }
 
-        logger.info("window setup done.")
-
     def create_layout(self) -> QVBoxLayout:
         """画面のレイアウトを作成する
 
@@ -148,10 +149,10 @@ class MainWindow(QDialog):
         tab2 = self.create_config_tab_layout(WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # ログ出力用テキストエリア
-        tab3 = QLabel("タブ3の内容")
         self.textarea = QTextEdit()
         self.textarea.setMinimumHeight(300)
-        logger.info("---ここにログが表示されます---", window=self)
+        nnmm.util.window_cache = self
+        logger.info("---ここにログが表示されます---")
 
         # タブにウィジェットを追加
         tabs.addTab(tab1, "マイリスト")
@@ -161,172 +162,31 @@ class MainWindow(QDialog):
         layout.addWidget(tabs)
         return layout
 
-        # 左ペイン
-        listbox_right_click_menu = [
-            "-LISTBOX_RIGHT_CLICK_MENU-",
-            [
-                "! ",
-                "---",
-                "全動画表示::-MR-",
-                "マイリストURLをクリップボードにコピー::-MR-",
-                "---",
-                "視聴済にする（選択）::-MR-",
-                "視聴済にする（全て）::-MR-",
-                "---",
-                "上に移動::-MR-",
-                "下に移動::-MR-",
-                "---",
-                "マイリスト追加::-MR-",
-                "マイリスト削除::-MR-",
-                "---",
-                "検索（マイリスト名）::-MR-",
-                "検索（動画名）::-MR-",
-                "検索（URL）::-MR-",
-                "強調表示を解除::-MR-",
-                "---",
-                "情報表示::-MR-",
-            ],
-        ]
-        l_pane = [
-            [
-                sg.Listbox(
-                    [],
-                    key="-LIST-",
-                    enable_events=False,
-                    size=(40, 44),
-                    auto_size_text=True,
-                    right_click_menu=listbox_right_click_menu,
-                )
-            ],
-            [sg.Button(" インターバル更新 ", key="-PARTIAL_UPDATE-"), sg.Button(" すべて更新 ", key="-ALL_UPDATE-")],
-            [
-                sg.Button("  +  ", key="-CREATE-"),
-                sg.Button("  -  ", key="-DELETE-"),
-                sg.Input("", key="-INPUT2-", size=(24, 10)),
-            ],
-        ]
-
-        # 右ペイン
-        table_cols_name = [
-            "No.",
-            "   動画ID   ",
-            "                動画名                ",
-            "   投稿者   ",
-            "  状況  ",
-            "     投稿日時      ",
-            "     登録日時      ",
-            "動画URL",
-            "所属マイリストURL",
-        ]
-        cols_width = [20, 20, 20, 20, 80, 100, 100, 0, 0]
-        def_data = [["", "", "", "", "", "", "", "", ""]]
-        table_right_click_menu = [
-            "-TABLE_RIGHT_CLICK_MENU-",
-            [
-                "! ",
-                "---",
-                "ブラウザで開く::-TR-",
-                "ブラウザで開く（フォーカスを戻す）::-TR-",
-                "動画URLをクリップボードにコピー::-TR-",
-                "---",
-                "視聴済にする::-TR-",
-                "未視聴にする::-TR-",
-                "---",
-                "検索（動画名）::-TR-",
-                "強調表示を解除::-TR-",
-                "---",
-                "情報表示::-TR-",
-                "---",
-                "!動画ダウンロード::-TR-",
-            ],
-        ]
-        table_style = {
-            "values": def_data,
-            "headings": table_cols_name,
-            "max_col_width": 600,
-            "def_col_width": cols_width,
-            "num_rows": 2400,
-            "auto_size_columns": True,
-            "bind_return_key": True,
-            "justification": "left",
-            "key": "-TABLE-",
-            "right_click_menu": table_right_click_menu,
-        }
-        t = sg.Table(**table_style)
-        r_pane = [
-            [
-                sg.Input("", key="-INPUT1-", size=(120, 100)),
-                sg.Button("更新", key="-UPDATE-"),
-                sg.Button("終了", key="-EXIT-"),
-            ],
-            [sg.Column([[t]], expand_x=True)],
-        ]
-
-        # ウィンドウのレイアウト
-        mf_layout = [
-            [
-                sg.Frame(
-                    "Main",
-                    [
-                        [
-                            sg.Column(l_pane, expand_x=True),
-                            sg.Column(r_pane, expand_x=True, element_justification="right"),
-                        ]
-                    ],
-                    size=(1370, 1000),
-                )
-            ]
-        ]
-        cf_layout = config.ConfigBase.make_layout()
-        lf_layout = [
-            [
-                sg.Frame(
-                    "ログ",
-                    [
-                        [
-                            sg.Column([
-                                [
-                                    sg.Multiline(
-                                        size=(1080, 100),
-                                        auto_refresh=True,
-                                        autoscroll=True,
-                                        reroute_stdout=True,
-                                        reroute_stderr=True,
-                                    )
-                                ]
-                            ])
-                        ]
-                    ],
-                    size=(1370, 1000),
-                )
-            ]
-        ]
-        layout = [
-            [
-                sg.TabGroup(
-                    [[sg.Tab("マイリスト", mf_layout), sg.Tab("設定", cf_layout), sg.Tab("ログ", lf_layout)]],
-                    key="-TAB_CHANGED-",
-                    enable_events=True,
-                )
-            ]
-        ]
-
-        return layout
-
-    def get_callback(self, name, process_base_class) -> Callable:
+    def callback_helper(self, name, process_base_class) -> Callable:
         return lambda: process_base_class(ProcessInfo.create(name, self)).callback()
 
-    def get_component(self, name, process_base_class) -> QWidget:
+    def component_helper(self, name, process_base_class) -> QWidget:
         return process_base_class(ProcessInfo.create(name, self)).create_component()
+
+    def process_helper(self, name, process_base_class) -> dict:
+        if name == "---":
+            return {
+                "name": None,
+                "func": None,
+            }
+        return {
+            "name": name,
+            "func": self.callback_helper(name, process_base_class),
+        }
 
     def create_mylist_tab_layout(self, window_w: int, window_h: int) -> QGroupBox:
         group = QGroupBox("マイリスト")
 
         leftpane = QVBoxLayout()
         update_button = QHBoxLayout()
-        all_update_button = self.get_component("すべて更新", every.Every)
-        partial_update_button = self.get_component("インターバル更新", partial.Partial)
-        single_update_button = self.get_component("更新", single.Single)
+        all_update_button = self.component_helper("すべて更新", every.Every)
+        partial_update_button = self.component_helper("インターバル更新", partial.Partial)
+        single_update_button = self.component_helper("更新", single.Single)
         update_button.addWidget(all_update_button)
         update_button.addWidget(partial_update_button)
         update_button.addWidget(single_update_button)
@@ -336,19 +196,23 @@ class MainWindow(QDialog):
         self.list_widget.setMinimumHeight(window_h)
         # self.list_widget.setAlternatingRowColors(True)
         self.list_widget.setStyleSheet("""
-                                       QListWidget {
-                                        background-color: #121213;
-                                       }
-                                       """)
+            QListWidget {
+              background-color: #121213;
+            }
+            QListWidget::item:disabled:hover,
+            QListWidget::item:hover:!selected,
+            QListWidget::item:hover:!active{
+              background: none;
+            }""")
         self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self.list_context_menu)
         self.list_widget.doubleClicked.connect(
-            self.get_callback("動画情報レコード表示", show_mylist_info.ShowMylistInfo)
+            self.callback_helper("動画情報レコード表示", show_mylist_info.ShowMylistInfo)
         )
 
         mylist_control_button = QHBoxLayout()
-        add_mylist_button = self.get_component("マイリスト追加", create_mylist.CreateMylist)
-        del_mylist_button = QPushButton("マイリスト削除")
+        add_mylist_button = self.component_helper("マイリスト追加", create_mylist.CreateMylist)
+        del_mylist_button = self.component_helper("マイリスト削除", delete_mylist.DeleteMylist)
         mylist_control_button.addWidget(add_mylist_button)
         mylist_control_button.addWidget(del_mylist_button)
         self.oneline_log = QLineEdit()
@@ -375,6 +239,7 @@ class MainWindow(QDialog):
         self.table_widget.setMinimumHeight(window_h)
         self.table_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.table_widget.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table_widget.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table_widget.setAlternatingRowColors(True)
         self.table_widget.customContextMenuRequested.connect(self.table_context_menu)
@@ -389,42 +254,35 @@ class MainWindow(QDialog):
     @Slot(QPoint)
     def list_context_menu(self, pos):
         menu = QMenu(self.list_widget)
-        Process = namedtuple("Process", ["name", "func"])
-
-        def get_process(name, process_base_class) -> Process:
-            return Process(
-                name,
-                lambda: process_base_class(ProcessInfo.create(name, self)).callback(),
-            )
 
         process_list = [
-            Process("---", None),
-            get_process("全動画表示", show_mylist_info_all.ShowMylistInfoAll),
-            Process("マイリストURLをクリップボードにコピー", lambda: logger.info("dummy")),
-            Process("---", None),
-            Process("視聴済にする（選択）", lambda: logger.info("dummy")),
-            Process("視聴済にする（全て）", lambda: logger.info("dummy")),
-            Process("---", None),
-            Process("上に移動", lambda: logger.info("dummy")),
-            Process("下に移動", lambda: logger.info("dummy")),
-            Process("---", None),
-            Process("マイリスト追加", lambda: logger.info("dummy")),
-            Process("マイリスト削除", lambda: logger.info("dummy")),
-            Process("---", None),
-            Process("検索（マイリスト名）", lambda: logger.info("dummy")),
-            Process("検索（動画名）", lambda: logger.info("dummy")),
-            Process("検索（URL）", lambda: logger.info("dummy")),
-            Process("強調表示を解除", lambda: logger.info("dummy")),
-            Process("---", None),
-            Process("情報表示", lambda: logger.info("dummy")),
+            self.process_helper("---", None),
+            self.process_helper("全動画表示", show_mylist_info_all.ShowMylistInfoAll),
+            # Process("マイリストURLをクリップボードにコピー", lambda: logger.info("dummy")),
+            self.process_helper("---", None),
+            # Process("視聴済にする（選択）", lambda: logger.info("dummy")),
+            # Process("視聴済にする（全て）", lambda: logger.info("dummy")),
+            self.process_helper("---", None),
+            # Process("上に移動", lambda: logger.info("dummy")),
+            # Process("下に移動", lambda: logger.info("dummy")),
+            self.process_helper("---", None),
+            self.process_helper("マイリスト追加", create_mylist.CreateMylist),
+            self.process_helper("マイリスト削除", delete_mylist.DeleteMylist),
+            self.process_helper("---", None),
+            # Process("検索（マイリスト名）", lambda: logger.info("dummy")),
+            # Process("検索（動画名）", lambda: logger.info("dummy")),
+            # Process("検索（URL）", lambda: logger.info("dummy")),
+            # Process("強調表示を解除", lambda: logger.info("dummy")),
+            self.process_helper("---", None),
+            # Process("情報表示", lambda: logger.info("dummy")),
         ]
 
         for process in process_list:
-            if process.name == "---":
+            if not process["func"]:
                 menu.addSeparator()
             else:
-                action: QAction = menu.addAction(process.name)
-                action.triggered.connect(process.func)
+                action: QAction = menu.addAction(process["name"])
+                action.triggered.connect(process["func"])
 
         # subMenu = menu.addMenu("SubMenu")
         # action_03 = subMenu.addAction("さぶめにゅー1")
@@ -435,28 +293,29 @@ class MainWindow(QDialog):
     @Slot(QPoint)
     def table_context_menu(self, pos):
         menu = QMenu(self.table_widget)
-        Process = namedtuple("Process", ["name", "func"])
         process_list = [
-            Process("---", None),
-            Process("ブラウザで開く", lambda: logger.info("dummy")),
-            Process("ブラウザで開く（フォーカスを戻す）", lambda: logger.info("dummy")),
-            Process("動画URLをクリップボードにコピー", lambda: logger.info("dummy")),
-            Process("---", None),
-            Process("視聴済にする", lambda: logger.info("dummy")),
-            Process("未視聴にする", lambda: logger.info("dummy")),
-            Process("---", None),
-            Process("検索（動画名）", lambda: logger.info("dummy")),
-            Process("強調表示を解除", lambda: logger.info("dummy")),
-            Process("---", None),
-            Process("情報表示", lambda: logger.info("dummy")),
+            self.process_helper("---", None),
+            self.process_helper("ブラウザで開く", video_play.VideoPlay),
+            self.process_helper(
+                "ブラウザで開く（フォーカスを戻す）", video_play_with_focus_back.VideoPlayWithFocusBack
+            ),
+            # Process("動画URLをクリップボードにコピー", lambda: logger.info("dummy")),
+            self.process_helper("---", None),
+            self.process_helper("視聴済にする", watched.Watched),
+            self.process_helper("未視聴にする", not_watched.NotWatched),
+            self.process_helper("---", None),
+            # Process("検索（動画名）", lambda: logger.info("dummy")),
+            # Process("強調表示を解除", lambda: logger.info("dummy")),
+            # self.process_helper("---", None),
+            # Process("情報表示", lambda: logger.info("dummy")),
         ]
 
         for process in process_list:
-            if process.name == "---":
+            if not process["func"]:
                 menu.addSeparator()
             else:
-                action: QAction = menu.addAction(process.name)
-                action.triggered.connect(process.func)
+                action: QAction = menu.addAction(process["name"])
+                action.triggered.connect(process["func"])
 
         # subMenu = menu.addMenu("SubMenu")
         # action_03 = subMenu.addAction("さぶめにゅー1")

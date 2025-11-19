@@ -1,3 +1,4 @@
+import logging.config
 from logging import INFO, getLogger
 
 from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
@@ -6,8 +7,9 @@ from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageB
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.mylist_row import SelectedMylistRow
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.util import Result
+from nnmm.util import CustomLogger, Result
 
+logging.setLoggerClass(CustomLogger)
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
@@ -17,7 +19,7 @@ class ShowMylistInfo(ProcessBase):
         super().__init__(process_info)
 
     def create_component(self) -> QWidget:
-        """動画情報レコード表示はListWidgetダブルクリックから起動"""
+        """動画情報レコード表示はQListWidgetダブルクリックから起動"""
         return None
 
     @Slot()

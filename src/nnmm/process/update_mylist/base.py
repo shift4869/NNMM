@@ -1,3 +1,4 @@
+import logging.config
 import threading
 import time
 from abc import abstractmethod
@@ -13,7 +14,7 @@ from nnmm.process.update_mylist.value_objects.mylist_dict_list import MylistDict
 from nnmm.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
 from nnmm.process.update_mylist.value_objects.video_dict_list import VideoDictList
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.util import Result, is_mylist_include_new_video
+from nnmm.util import CustomLogger, Result, is_mylist_include_new_video
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -93,10 +94,10 @@ class Base(ProcessBase):
         elapsed_time = time.time() - start
         logger.info(f"{self.L_KIND} update done elapsed time : {elapsed_time:.2f} [sec]")
 
+        logger.info(f"{self.L_KIND} update thread done.")
+
         # 後続処理へ
         threading.Thread(target=self.thread_done, daemon=False).start()
-
-        logger.info(f"{self.L_KIND} update thread done.")
         return Result.success
 
     def thread_done(self) -> Result:
@@ -111,7 +112,7 @@ class Base(ProcessBase):
         pb = self.post_process(process_info)
         threading.Thread(target=pb.callback, daemon=False).start()
 
-        logger.info(f"{self.L_KIND} update post process done.")
+        logger.info(f"{self.L_KIND} update post process start success.")
         return Result.success
 
 
@@ -164,7 +165,7 @@ class ThreadDoneBase(ProcessBase):
         # マイリスト画面表示更新
         self.update_mylist_pane()
 
-        logger.info(f"{self.L_KIND} update success.")
+        logger.info(f"{self.L_KIND} update post process done.")
         return Result.success
 
 

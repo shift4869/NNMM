@@ -1,14 +1,16 @@
+import subprocess
 from logging import INFO, getLogger
 from pathlib import Path
 
-from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QWidget
 
 from nnmm.process import config as process_config
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.process.value_objects.table_row import Status
 from nnmm.process.watched import Watched
-from nnmm.util import Result
+from nnmm.util import Result, popup
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -18,7 +20,12 @@ class VideoPlay(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QTableWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """選択された動画をブラウザで開く
 
         Notes:
@@ -46,13 +53,13 @@ class VideoPlay(ProcessBase):
         cmd = config["general"].get("browser_path", "")
         if cmd != "" and Path(cmd).is_file():
             # ブラウザに動画urlを渡す
-            sp = sg.execute_command_subprocess(cmd, video_url)
+            result = subprocess.run([cmd, video_url])
             # logger.info(sg.execute_get_results(sp)[0])
             logger.info(f"{cmd} -> valid browser path.")
             logger.info(f"{video_url} -> video page opened with browser.")
         else:
             # ブラウザパスが不正
-            sg.popup_ok("ブラウザパスが不正です。設定タブから設定してください。")
+            popup("ブラウザパスが不正です。設定タブから設定してください。")
             logger.info(f"{cmd} -> invalid browser path.")
             logger.info(f"{video_url} -> video page open failed.")
             return Result.failed
@@ -61,7 +68,7 @@ class VideoPlay(ProcessBase):
         if selected_table_row.status != Status.watched:
             # 視聴済にする
             pb = Watched(self.process_info)
-            pb.run()
+            pb.callback()
 
         logger.info(f"VideoPlay success.")
         return Result.success

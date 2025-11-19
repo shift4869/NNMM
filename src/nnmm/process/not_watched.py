@@ -1,5 +1,8 @@
 from logging import INFO, getLogger
 
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QTableWidget, QWidget
+
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.process.value_objects.table_row import Status
@@ -16,7 +19,12 @@ class NotWatched(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QTableWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """動画の状況ステータスを"未視聴"に設定する
 
         Notes:
@@ -63,12 +71,12 @@ class NotWatched(ProcessBase):
             self.mylist_db.update_include_flag(mylist_url, True)
 
         # テーブル更新を反映させる
-        self.window["-TABLE-"].update(values=table_row_list.to_table_data())
+        self.set_all_table_row(table_row_list)
 
         # テーブルの表示を更新する
         mylist_url = self.get_upper_textbox().to_str()
-        self.update_table_pane(mylist_url)
-        self.window["-TABLE-"].update(select_rows=[row_index])
+        table_widget: QTableWidget = self.window.table_widget
+        table_widget.selectRow(row_index)
 
         # マイリスト画面表示更新
         self.update_mylist_pane()

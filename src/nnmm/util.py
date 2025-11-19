@@ -22,12 +22,51 @@ window_cache: QDialog = None
 
 
 class CustomLogger(Logger):
-    def info(self, msg: str, window: QDialog = None, *args, **kwargs):
+    def __init__(self, name, level=0):
+        super().__init__(name, level)
+
+    def info(self, msg: str, *args, **kwargs):
         # コンソールとファイル出力
         if "stacklevel" not in kwargs:
             # 呼び出し元の行番号を採用するためにstacklevelを設定
             kwargs["stacklevel"] = 2
         super().info(msg, *args, **kwargs)
+
+        # GUI画面表示
+        global window_cache
+        window = window_cache
+        if window and isinstance(window, QDialog):
+            # windowが指定されていたらキャッシュとして保存
+            if not window_cache:
+                window_cache = window
+        else:
+            # windowが指定されていない場合
+            if window_cache:
+                # キャッシュがあるならそれを採用
+                window = window_cache
+            else:
+                # そうでない場合、画面更新は何もせず終了
+                return
+
+        if not isinstance(window, QDialog):
+            return
+        textarea: QTextEdit = window.textarea
+        # old_text = textarea.document().toPlainText()
+        now_datetime = get_now_datetime()
+        textarea.append(f"{now_datetime} {msg}")
+        textarea.moveCursor(QTextCursor.MoveOperation.End)
+        textarea.update()
+        # window.repaint()
+
+    def error(self, msg: str, window: QDialog = None, *args, **kwargs):
+        # コンソールとファイル出力
+        if "stacklevel" not in kwargs:
+            # 呼び出し元の行番号を採用するためにstacklevelを設定
+            kwargs["stacklevel"] = 2
+        super().error(msg, *args, **kwargs)
+
+        if not isinstance(window, QDialog):
+            return
 
         # GUI画面表示
         global window_cache
@@ -45,10 +84,11 @@ class CustomLogger(Logger):
                 return
         textarea: QTextEdit = window.textarea
         # old_text = textarea.document().toPlainText()
-        textarea.append(msg)
+        now_datetime = get_now_datetime()
+        textarea.append(f"{now_datetime} {msg}")
         textarea.moveCursor(QTextCursor.MoveOperation.End)
-        textarea.repaint()
-        window.repaint()
+        textarea.update()
+        # window.repaint()
 
 
 class Result(enum.Enum):
@@ -288,16 +328,16 @@ def popup_get_text(message: str, title: str = None) -> str | None:
         return None
 
 
-def popup(message: str, title: str = None, yes_no: bool = False) -> QMessageBox.StandardButton | None:
+def popup(message: str, title: str = None, ok_cancel: bool = False) -> str | None:
     """ユーザーにメッセージを伝えるポップアップを表示する
 
     Args:
         message (str): 表示メッセージ
         title (str): タイトル
-        yes_no (bool): yes/noを問い合わせるかのフラグ
+        ok_cancel (bool): yes/noを問い合わせるかのフラグ
 
     Returns:
-        QMessageBox.StandardButton: 成功時 ユーザーが入力したyes/no、指定しない場合は None
+        str: 成功時 ユーザーが入力した "OK" または "Cancel" 文字列、指定しない場合は None
     """
     msgbox = QMessageBox()
     msgbox.setText(message)
@@ -308,14 +348,16 @@ def popup(message: str, title: str = None, yes_no: bool = False) -> QMessageBox.
         # 半角スペースのみをタイトルとして表示する
         msgbox.setWindowTitle(" ")
 
-    if yes_no:
+    if ok_cancel:
         msgbox.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
     result = msgbox.exec()
 
-    if yes_no:
-        return result
-    else:
-        return None
+    if ok_cancel:
+        if result == QMessageBox.StandardButton.Ok:
+            return "OK"
+        elif result == QMessageBox.StandardButton.Cancel:
+            return "Cancel"
+    return None
 
 
 if __name__ == "__main__":
