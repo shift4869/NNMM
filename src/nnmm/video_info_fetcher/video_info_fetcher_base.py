@@ -104,7 +104,7 @@ class VideoInfoFetcherBase(ABC):
         timeout = httpx.Timeout(60, read=10)
         transport = httpx.AsyncHTTPTransport(retries=self.MAX_RETRY_NUM)
         async with httpx.AsyncClient(
-            follow_redirects=follow_redirects, timeout=timeout, transport=transport, logger=logger
+            follow_redirects=follow_redirects, timeout=timeout, transport=transport
         ) as client:
             for video_id in video_id_list:
                 url = self.API_URL_BASE + video_id.id

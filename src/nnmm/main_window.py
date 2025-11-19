@@ -79,7 +79,12 @@ class MainWindow(QDialog):
         # DBからマイリスト一覧を取得する
         self.update_mylist_pane()
 
+        # 設定タブの初期入力
+        self.init_config()
+
+        # 画面をアクティブにする
         self.activateWindow()
+
         logger.info("window setup done.")
         return
 
@@ -336,7 +341,7 @@ class MainWindow(QDialog):
         label1 = QLabel("「ブラウザで再生」時に使用するブラウザパス")
         hbox1 = QHBoxLayout()
         self.tbox_browser_path = QLineEdit()
-        button1 = QPushButton("参照")
+        button1 = self.component_helper("ブラウザパス参照", config.ConfigBrowserPath)
         hbox1.addWidget(self.tbox_browser_path)
         hbox1.addWidget(button1)
         vbox1.addWidget(label1)
@@ -356,7 +361,7 @@ class MainWindow(QDialog):
         label3 = QLabel("RSS保存先パス")
         hbox3 = QHBoxLayout()
         self.tbox_rss_save_path = QLineEdit()
-        button3 = QPushButton("参照")
+        button3 = self.component_helper("RSSパス参照", config.ConfigRSSSavePath)
         hbox3.addWidget(self.tbox_rss_save_path)
         hbox3.addWidget(button3)
         vbox3.addWidget(label3)
@@ -365,9 +370,9 @@ class MainWindow(QDialog):
         c_group4 = QGroupBox("マイリスト一覧")
         vbox4 = QVBoxLayout(c_group4)
         label41 = QLabel("マイリスト一覧保存")
-        button41 = QPushButton("保存")
+        button41 = self.component_helper("マイリスト一覧保存", config.MylistSaveCSV)
         label42 = QLabel("マイリスト一覧読込")
-        button42 = QPushButton("読込")
+        button42 = self.component_helper("マイリスト一覧読込", config.MylistLoadCSV)
         vbox4.addWidget(label41)
         vbox4.addWidget(button41, alignment=Qt.AlignmentFlag.AlignLeft)
         vbox4.addWidget(label42)
@@ -378,13 +383,13 @@ class MainWindow(QDialog):
         label5 = QLabel("マイリスト・動画情報保存DBのパス")
         hbox5 = QHBoxLayout()
         self.tbox_db_path = QLineEdit()
-        button5 = QPushButton("参照")
+        button5 = self.component_helper("DBパス参照", config.ConfigDBSavePath)
         hbox5.addWidget(self.tbox_db_path)
         hbox5.addWidget(button5)
         vbox5.addWidget(label5)
         vbox5.addLayout(hbox5)
 
-        button5 = QPushButton("設定保存")
+        button5 = self.component_helper("設定保存", config.ConfigSave)
 
         vbox.addWidget(c_group1)
         vbox.addWidget(c_group2)
@@ -433,46 +438,9 @@ class MainWindow(QDialog):
         list_widget.setCurrentRow(index)
         return Result.success
 
-    def run(self) -> Result:
-        """メインイベントループ"""
-        while True:
-            # イベントの読み込み
-            event, values = self.window.read()
-
-            if event in [sg.WIN_CLOSED, "-EXIT-"]:
-                # 終了ボタンかウィンドウの×ボタンが押されれば終了
-                logger.info("window exit.")
-                break
-
-            # イベント処理
-            if self.dict.get(event):
-                self.values = values
-                info = ProcessInfo.create(event, self)
-
-                try:
-                    pb: base.ProcessBase = self.dict.get(event)(info)
-
-                    if pb is None or not hasattr(pb, "run"):
-                        continue
-
-                    pb.run()
-                except Exception:
-                    logger.error(traceback.format_exc())
-                    logger.error("main event loop error.")
-
-            # タブ切り替え
-            if event == "-TAB_CHANGED-":
-                select_tab = values["-TAB_CHANGED-"]
-                if select_tab == "設定":
-                    # 設定タブを開いたときの処理
-                    self.values = values
-                    info = ProcessInfo.create(event, self)
-                    pb = config.ConfigLoad(info)
-                    pb.run()
-
-        # ウィンドウ終了処理
-        self.window.close()
-        return Result.success
+    def init_config(self) -> Result:
+        config_load = self.callback_helper("設定ロード", config.ConfigLoad)
+        config_load()
 
 
 if __name__ == "__main__":

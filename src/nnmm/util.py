@@ -58,18 +58,16 @@ class CustomLogger(Logger):
         textarea.update()
         # window.repaint()
 
-    def error(self, msg: str, window: QDialog = None, *args, **kwargs):
+    def error(self, msg: str, *args, **kwargs):
         # コンソールとファイル出力
         if "stacklevel" not in kwargs:
             # 呼び出し元の行番号を採用するためにstacklevelを設定
             kwargs["stacklevel"] = 2
         super().error(msg, *args, **kwargs)
 
-        if not isinstance(window, QDialog):
-            return
-
         # GUI画面表示
         global window_cache
+        window = window_cache
         if window:
             # windowが指定されていたらキャッシュとして保存
             if not window_cache:
@@ -146,7 +144,7 @@ def find_values(
     return result[0]
 
 
-def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> int:
+def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> Result:
     """MylistDBの内容をcsvファイルに書き出す
 
     Args:
@@ -154,7 +152,7 @@ def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> int:
         save_file_path (str): 保存先パス
 
     Returns:
-        int: 成功時0
+        Result: 成功時Result.success
     """
     sd_path = Path(save_file_path)
     records = mylist_db.select()
@@ -167,10 +165,10 @@ def save_mylist(mylist_db: MylistDBController, save_file_path: str) -> int:
         for r in records:
             param_list = [str(r.get(s)) for s in mylist_cols]
             fout.write(",".join(param_list) + "\n")
-    return 0
+    return Result.success
 
 
-def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
+def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> Result:
     """書き出したcsvファイルからMylistDBへレコードを反映させる
 
     Args:
@@ -178,30 +176,30 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
         load_file_path (str): 入力ファイルパス
 
     Returns:
-        int: 成功時0, データ不整合-1
+        Result: 成功時Result.success, データ不整合Result.failed
     """
     sd_path = Path(load_file_path)
     mylist_cols = Mylist.__table__.c.keys()
 
     records = []
-    with sd_path.open("r", encoding="utf_8_sig") as fin:
-        fin.readline()  # 項目行読み飛ばし
-        for line in fin:
-            elements = re.split("[,\n]", line)[:-1]
+    lines = str(sd_path.read_text(encoding="utf_8_sig"))
+    line_list = re.split("[\n]", lines)[1:]  # 項目行は読み飛ばす
+    for line in line_list:
+        elements = re.split("[,]", line)
 
-            # データ列の個数が不整合
-            if len(mylist_cols) != len(elements):
-                return -1
+        # データ列の個数が不整合
+        if len(mylist_cols) != len(elements):
+            continue 
 
-            param_dict = dict(zip(mylist_cols, elements))
-            r = mylist_db.select_from_url(param_dict["url"])
-            if r:
-                continue  # 既に存在しているなら登録せずに処理続行
+        param_dict = dict(zip(mylist_cols, elements))
+        r = mylist_db.select_from_url(param_dict["url"])
+        if r:
+            continue  # 既に存在しているなら登録せずに処理続行
 
-            # 型変換
-            param_dict["id"] = int(param_dict["id"])
-            param_dict["is_include_new"] = True if param_dict["is_include_new"] == "True" else False
-            records.append(param_dict)
+        # 型変換
+        param_dict["id"] = int(param_dict["id"])
+        param_dict["is_include_new"] = True if param_dict["is_include_new"] == "True" else False
+        records.append(param_dict)
 
     # THINK::Mylistにもrecords一括Upsertのメソッドを作る？
     for r in records:
@@ -219,7 +217,7 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> int:
             r["check_failed_count"],
             r["is_include_new"],
         )
-    return 0
+    return Result.success
 
 
 def get_now_datetime() -> str:

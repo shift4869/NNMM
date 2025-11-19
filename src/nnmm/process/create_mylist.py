@@ -28,18 +28,21 @@ class CreateMylist(ProcessBase):
 
         hbox2 = QHBoxLayout()
         label2 = QLabel("URL")
+        label2.setMinimumWidth(80)
         tbox2 = QLineEdit(mylist_url, readOnly=True)
         hbox2.addWidget(label2)
         hbox2.addWidget(tbox2)
 
         hbox3 = QHBoxLayout()
         label3 = QLabel("URLタイプ")
+        label3.setMinimumWidth(80)
         tbox3 = QLineEdit(mylist_type.value, readOnly=True)
         hbox3.addWidget(label3)
         hbox3.addWidget(tbox3)
 
         hbox4 = QHBoxLayout()
         label4 = QLabel("ユーザー名")
+        label4.setMinimumWidth(80)
         self.tbox_username = QLineEdit()
         self.tbox_username.setStyleSheet("QLineEdit {background-color: olive;}")
         hbox4.addWidget(label4)
@@ -50,6 +53,7 @@ class CreateMylist(ProcessBase):
         elif mylist_type == MylistType.mylist:
             hbox5 = QHBoxLayout()
             label5 = QLabel("マイリスト名")
+            label5.setMinimumWidth(80)
             self.tbox_mylistname = QLineEdit()
             self.tbox_mylistname.setStyleSheet("QLineEdit {background-color: olive;}")
             hbox5.addWidget(label5)
@@ -57,6 +61,7 @@ class CreateMylist(ProcessBase):
         elif mylist_type == MylistType.series:
             hbox5 = QHBoxLayout()
             label5 = QLabel("シリーズ名")
+            label5.setMinimumWidth(80)
             self.tbox_mylistname = QLineEdit()
             self.tbox_mylistname.setStyleSheet("QLineEdit {background-color: olive;}")
             hbox5.addWidget(label5)
