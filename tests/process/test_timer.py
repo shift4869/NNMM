@@ -26,20 +26,20 @@ class TestTimer(unittest.TestCase):
 
     def test_init(self):
         instance = Timer(self.process_info)
-        self.assertIsNone(instance.timer_thread)
+        self.assertIsNone(instance.timer)
 
     def test_timer_cancel(self):
         instance = Timer(self.process_info)
 
-        instance.timer_thread = MagicMock()
+        instance.timer = MagicMock()
         actual = instance._timer_cancel()
         self.assertIsNone(actual)
-        self.assertIsNone(instance.timer_thread)
+        self.assertIsNone(instance.timer)
 
-        instance.timer_thread = None
+        instance.timer = None
         actual = instance._timer_cancel()
         self.assertIsNone(actual)
-        self.assertIsNone(instance.timer_thread)
+        self.assertIsNone(instance.timer)
 
     def test_run(self):
         with ExitStack() as stack:
@@ -93,9 +93,9 @@ class TestTimer(unittest.TestCase):
 
                 mock_timer_thread.reset_mock()
                 if is_cancel:
-                    instance.timer_thread = mock_timer_thread
+                    instance.timer = mock_timer_thread
                 else:
-                    instance.timer_thread = None
+                    instance.timer = None
                 mock_threading_timer.reset_mock()
                 mock_timer_cancel.reset_mock()
 

@@ -43,11 +43,11 @@ class PopupWindowBase(ProcessBase):
         raise NotImplementedError
 
     @abstractmethod
-    def create_window_layout(self):
+    def create_window_layout(self) -> QVBoxLayout | None:
         """画面のレイアウトを作成する
 
         Returns:
-            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト, 失敗時None
+            QVBoxLayout | None: 成功時レイアウトオブジェクト, 失敗時None
         """
         raise NotImplementedError
 
@@ -114,7 +114,7 @@ class PopupMylistWindow(PopupWindowBase):
         self.title = "マイリスト情報"
         return Result.success
 
-    def create_window_layout(self):
+    def create_window_layout(self) -> QVBoxLayout | None:
         """画面のレイアウトを作成する
 
         Notes:
@@ -170,7 +170,9 @@ class PopupMylistWindow(PopupWindowBase):
         if check_interval_unit not in unit_list:
             return None  # 想定外の単位ならエラー
 
+        # 返り値取得用コンポーネントメンバ
         self.component = {}
+        # レイアウト
         layout = QVBoxLayout()
 
         def hbox_helper(key: str, value: str) -> QHBoxLayout:
@@ -257,9 +259,9 @@ class PopupMylistWindow(PopupWindowBase):
         layout.addLayout(hbox16)
         return layout
 
-    def update_mylist_info(self):
+    def update_mylist_info(self) -> Result:
         if not hasattr(self, "component"):
-            return None
+            return Result.failed
         component: dict[str, QPushButton] | dict[str, dict[str, QComboBox]] = self.component
 
         # キーチェック
@@ -278,7 +280,7 @@ class PopupMylistWindow(PopupWindowBase):
             "未視聴フラグ",
         ]
         if list(component.keys()) != COMPONENT_KEYS:
-            return None
+            return Result.failed
 
         # 値の設定
         id_index = component["ID"].text()
@@ -322,7 +324,7 @@ class PopupMylistWindow(PopupWindowBase):
         logger.info("マイリスト情報更新完了")
 
         self.popup_window.close()
-        return
+        return Result.success
 
 
 class PopupVideoWindow(PopupWindowBase):
@@ -360,7 +362,7 @@ class PopupVideoWindow(PopupWindowBase):
         self.title = "動画情報"
         return Result.success
 
-    def create_window_layout(self):
+    def create_window_layout(self) -> QVBoxLayout | None:
         """画面のレイアウトを作成する
 
         Notes:

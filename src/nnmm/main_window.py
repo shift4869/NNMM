@@ -47,8 +47,8 @@ class MainWindow(QDialog):
     """メインウィンドウクラス"""
 
     def __init__(self) -> None:
-        """メインウィンドウクラスのコンストラクタ"""
         super().__init__()
+
         # 設定値初期化
         self.config = config.ConfigBase.set_config()
 
@@ -57,7 +57,7 @@ class MainWindow(QDialog):
         self.mylist_db = MylistDBController(db_fullpath=str(self.db_fullpath))
         self.mylist_info_db = MylistInfoDBController(db_fullpath=str(self.db_fullpath))
 
-        # アイコン画像取得
+        # アイコン画像設定
         if Path(ICON_PATH).exists():
             self.setWindowIcon(QIcon(ICON_PATH))
 
@@ -65,12 +65,12 @@ class MainWindow(QDialog):
         qv = qVersion()
         self.setWindowTitle(f"{APP_NAME} by pyside {qv}")
 
-        # ウィンドウオブジェクト作成
-        # self.window = sg.Window("NNMM", layout, icon=icon_binary, size=(1330, 900), finalize=True, resizable=True)
-        # self.window["-LIST-"].bind("<Double-Button-1>", "+DOUBLE CLICK+")
         # ウィンドウレイアウト作成
         layout = self.create_layout()
         self.setLayout(layout)
+
+        # ウィンドウの初期位置を設定
+        self.setGeometry(320, 40, 1280, 900)
 
         # Windows特有のruntimeError抑止
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -81,6 +81,9 @@ class MainWindow(QDialog):
 
         # 設定タブの初期入力
         self.init_config()
+
+        # タイマーセットイベントを起動
+        self.time = timer.Timer(ProcessInfo.create("Timer", self)).callback()
 
         # 画面をアクティブにする
         self.activateWindow()

@@ -32,6 +32,9 @@ class CustomLogger(Logger):
             kwargs["stacklevel"] = 2
         super().info(msg, *args, **kwargs)
 
+        if args:
+            return
+
         # GUI画面表示
         global window_cache
         window = window_cache
@@ -64,6 +67,9 @@ class CustomLogger(Logger):
             # 呼び出し元の行番号を採用するためにstacklevelを設定
             kwargs["stacklevel"] = 2
         super().error(msg, *args, **kwargs)
+
+        if args:
+            return
 
         # GUI画面表示
         global window_cache

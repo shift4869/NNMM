@@ -3,8 +3,12 @@ import threading
 from datetime import datetime, timedelta
 from logging import INFO, getLogger
 
+from PySide6.QtCore import QTimer, Slot
+from PySide6.QtWidgets import QApplication, QWidget
+
 from nnmm.process.base import ProcessBase
 from nnmm.process.config import ConfigBase
+from nnmm.process.update_mylist import partial
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
 
@@ -15,15 +19,21 @@ logger.setLevel(INFO)
 class Timer(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
-        self.timer_thread = None
+        self.timer: QTimer | None = None
+        self.first_set = True
 
     def _timer_cancel(self) -> None:
         """現在タイマー待機中のものがあればキャンセルする"""
-        if self.timer_thread:
-            self.timer_thread.cancel()
-            self.timer_thread = None
+        if self.timer and self.timer.remainingTime() > 0:
+            self.timer.stop()
+            self.timer = None
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """タイマー関連はコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """タイマー実行時の処理
 
         Notes:
@@ -48,36 +58,33 @@ class Timer(ProcessBase):
             pattern = r"^([0-9]+)分毎$"
             interval = int(re.findall(pattern, i_str)[0])
         except IndexError:
-            logger.error("Timer Init failed, interval config error.")
+            logger.error("Timer Init failed, interval auto_reload is invalid.")
             return Result.failed
 
         # 更新処理スキップ判定
         pattern = r"^.*(取得中|更新中).*$"
         v = self.get_bottom_textbox().to_str()
-        if self.values.get("-TIMER_SET-") == "-FIRST_SET-":
+        if self.first_set:
+            self.first_set = False
             # 初回起動ならスキップ
-            self.values["-TIMER_SET-"] = ""
-            logger.info("Auto-reload -FIRST_SET- ... skip first auto-reload cycle.")
+            logger.info("Auto-reload first set, skip first auto-reload cycle.")
         elif re.search(pattern, v):
             # 既に更新処理中ならスキップ
-            self.values["-TIMER_SET-"] = ""
-            logger.info("-ALL_UPDATE- running now ... skip this auto-reload cycle.")
+            logger.info("Update running now ... skip this auto-reload cycle.")
         else:
             # 更新処理起動
             logger.info("Auto-reload start.")
-            # すべて更新ボタンが押された場合の処理を起動する
-            # self.window.write_event_value("-ALL_UPDATE-", "")
             # 一部更新ボタンが押された場合の処理を起動する
-            self.window.write_event_value("-PARTIAL_UPDATE-", "")
+            partial.Partial(ProcessInfo.create("インターバル更新", self.window)).callback()
 
         # 現在タイマー待機中のものがあればキャンセルする
         self._timer_cancel()
 
         # 次回起動タイマーをセット
-        s_interval = interval * 60  # [min] -> [sec]
-        self.timer_thread = threading.Timer(s_interval, self.run)
-        self.timer_thread.setDaemon(True)
-        self.timer_thread.start()
+        s_interval = interval * 60 * 1000  # [min] -> [msec]
+        self.timer = QTimer(singleShot=True)
+        self.timer.timeout.connect(lambda: self.callback())
+        self.timer.start(s_interval)
 
         # 次回起動時間の予測をログに出力
         dst_df = "%Y-%m-%d %H:%M:%S"
