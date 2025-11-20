@@ -1,5 +1,8 @@
 from logging import INFO, getLogger
 
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QListWidget, QWidget
+
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
@@ -12,13 +15,19 @@ class MoveUp(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリストの並び順を一つ上に移動させる
 
         Notes:
             "上に移動::-MR-"
             マイリスト右クリックで「上に移動」が選択された場合
         """
+        logger.info(f"MoveUp start.")
         selected_mylist_row = self.get_selected_mylist_row()
         if not selected_mylist_row:
             logger.error("MoveUp failed, no mylist selected.")
@@ -44,9 +53,11 @@ class MoveUp(ProcessBase):
         self.mylist_db.swap_id(src_record["id"], dst_record["id"])
 
         self.update_mylist_pane()
-        self.window["-LIST-"].update(set_to_index=dst_index)
+        list_widget: QListWidget = self.window.list_widget
+        list_widget.setCurrentRow(dst_index)
 
         logger.info(f"{src_v} -> index move up from {src_index} to {dst_index}.")
+        logger.info(f"MoveUp done.")
         return Result.success
 
 

@@ -1,5 +1,8 @@
 from logging import INFO, getLogger
 
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QWidget
+
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.process.value_objects.table_row import Status
@@ -13,7 +16,12 @@ class WatchedAllMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QQListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """すべてのマイリストに含まれる動画情報についてすべて"視聴済"にする
 
         Notes:
@@ -44,12 +52,12 @@ class WatchedAllMylist(ProcessBase):
             def_data = self.get_all_table_row()
             for i, record in enumerate(def_data):
                 def_data[i] = def_data[i].replace_from_typed_value(status=Status.watched)
-            self.window["-TABLE-"].update(values=def_data.to_table_data())
+            self.set_all_table_row(def_data)
 
         self.update_mylist_pane()
         self.update_table_pane(mylist_url)
 
-        logger.info(f"WatchedAllMylist success.")
+        logger.info(f"WatchedAllMylist done.")
         return Result.success
 
 

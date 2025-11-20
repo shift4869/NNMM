@@ -2,7 +2,7 @@ from logging import INFO, getLogger
 
 import pyperclip
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import QTableWidget, QWidget
+from PySide6.QtWidgets import QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo

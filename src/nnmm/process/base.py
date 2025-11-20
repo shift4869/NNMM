@@ -22,6 +22,8 @@ from nnmm.util import CustomLogger, Result
 
 logging.setLoggerClass(CustomLogger)
 
+NEW_MYLIST_COLOR = QColor.fromRgb(233, 91, 107)
+
 
 class ProcessBase(ABC):
     process_info: ProcessInfo
@@ -92,7 +94,10 @@ class ProcessBase(ABC):
             MylistRowList | None: すべてのマイリストを含むリスト
         """
         try:
-            return MylistRowList.create(self.window["-LIST-"].Values)
+            list_widget: QListWidget = self.window.list_widget
+            item_list: list[QListWidgetItem] = list_widget.findItems("*", Qt.MatchFlag.MatchWildcard)
+            mylist_row_list: list[str] = [item.text() for item in item_list]
+            return MylistRowList.create(mylist_row_list)
         except Exception:
             return None
 
@@ -286,7 +291,7 @@ class ProcessBase(ABC):
             else:
                 # 新着マイリストの背景色とテキスト色を変更する
                 item = QListWidgetItem(data)
-                item.setBackground(QColor.fromRgb(233, 91, 107))
+                item.setBackground(NEW_MYLIST_COLOR)
                 list_widget.addItem(item)
 
         # indexをセットしてスクロール

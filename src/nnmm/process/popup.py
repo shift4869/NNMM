@@ -27,8 +27,7 @@ class PopupWindowBase(ProcessBase):
 
         self.popup_window = None
         self.title = ""
-        self.size = (100, 100)
-        self.process_dict = {}
+        self.url = ""
 
     def create_component(self) -> QWidget:
         """右クリックメニューから起動するためコンポーネントは作成しない"""
@@ -54,7 +53,7 @@ class PopupWindowBase(ProcessBase):
 
     @Slot()
     def callback(self) -> Result:
-        """子windowイベントループ"""
+        logger.info("Popup information window start.")
         # 初期化
         res = self.init()
         if res == Result.failed:
@@ -67,30 +66,15 @@ class PopupWindowBase(ProcessBase):
             popup("情報ウィンドウのレイアウト表示に失敗しました。")
             return Result.failed
 
+        logger.info(f"Show information: {self.url}")
+
         # ウィンドウオブジェクト作成
         self.popup_window = QDialog()
+        self.popup_window.setWindowTitle(self.title)
         self.popup_window.setLayout(layout)
         self.popup_window.exec()
 
-        # # イベントのループ
-        # while True:
-        #     # イベントの読み込み
-        #     event, values = self.popup_window.read()
-
-        #     if event in [sg.WIN_CLOSED, "-EXIT-"]:
-        #         # 終了ボタンかウィンドウの×ボタンが押されれば終了
-        #         logger.info(self.title + " window exit.")
-        #         break
-
-        #     # イベント処理
-        #     if self.process_dict.get(event):
-        #         self.values = values
-        #         process_info = ProcessInfo(event, self.popup_window, self.values, self.mylist_db, self.mylist_info_db)
-        #         pb: ProcessBase = self.process_dict.get(event)(process_info)
-        #         pb.run()
-
-        # # ウィンドウ終了処理
-        # self.popup_window.close()
+        logger.info("Popup information window done.")
         return Result.success
 
 
@@ -122,15 +106,12 @@ class PopupMylistWindow(PopupWindowBase):
             logger.error("Mylist popup window Init failed, mylist is not found in mylist_db.")
             return Result.failed
 
-        # recordを設定(make_window_layoutで使用する)
+        # recordを設定(create_window_layoutで使用する)
         self.record = record
+        self.url = record["url"]
 
         # 子ウィンドウの初期値設定
         self.title = "マイリスト情報"
-        self.size = (580, 490)
-        self.process_dict = {
-            "-SAVE-": PopupMylistWindowSave,
-        }
         return Result.success
 
     def create_window_layout(self):
@@ -138,14 +119,10 @@ class PopupMylistWindow(PopupWindowBase):
 
         Notes:
             先にInitを実行し、self.recordを設定しておく必要がある
-
-        Returns:
-            list[list[sg.Frame]] | None: 成功時PySimpleGUIのレイアウトオブジェクト、失敗時None
         """
-        horizontal_line = "-" * 132
-        csize = (20, 1)
-        tsize = (50, 1)
-        thsize = (5, 1)
+        # horizontal_line = "-" * 132
+        horizontal_line = "-" * 100
+        csize = 120
 
         # self.recordが設定されていない場合はNoneを返して終了
         if not hasattr(self, "record") or self.record is None:
@@ -193,120 +170,132 @@ class PopupMylistWindow(PopupWindowBase):
         if check_interval_unit not in unit_list:
             return None  # 想定外の単位ならエラー
 
-        cf = [
-            [sg.Text(horizontal_line)],
-            [
-                sg.Text("ID", size=csize, visible=False),
-                sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize),
-            ],
-            [sg.Text("ユーザー名", size=csize), sg.Input(f"{username}", key="-USERNAME-", readonly=True, size=tsize)],
-            [
-                sg.Text("マイリスト名", size=csize),
-                sg.Input(f"{mylistname}", key="-MYLISTNAME-", readonly=True, size=tsize),
-            ],
-            [sg.Text("種別", size=csize), sg.Input(f"{typename}", key="-TYPE-", readonly=True, size=tsize)],
-            [sg.Text("表示名", size=csize), sg.Input(f"{showname}", key="-SHOWNAME-", readonly=True, size=tsize)],
-            [sg.Text("URL", size=csize), sg.Input(f"{url}", key="-URL-", readonly=True, size=tsize)],
-            [
-                sg.Text("作成日時", size=csize),
-                sg.Input(f"{created_at}", key="-CREATED_AT-", readonly=True, size=tsize),
-            ],
-            [
-                sg.Text("更新日時", size=csize),
-                sg.Input(f"{updated_at}", key="-UPDATED_AT-", readonly=True, size=tsize),
-            ],
-            [
-                sg.Text("更新確認日時", size=csize),
-                sg.Input(f"{checked_at}", key="-CHECKED_AT-", readonly=True, size=tsize),
-            ],
-            [
-                sg.Text("更新確認インターバル", size=csize),
-                sg.InputCombo(
-                    [i for i in range(1, 60)],
-                    default_value=check_interval_num,
-                    key="-CHECK_INTERVAL_NUM-",
-                    background_color="light goldenrod",
-                    size=thsize,
-                ),
-                sg.InputCombo(
-                    unit_list,
-                    default_value=check_interval_unit,
-                    key="-CHECK_INTERVAL_UNIT-",
-                    background_color="light goldenrod",
-                    size=thsize,
-                ),
-            ],
-            [
-                sg.Text("更新確認失敗カウント", size=csize),
-                sg.Input(f"{check_failed_count}", key="-CHECK_FAILED_COUNT-", readonly=True, size=tsize),
-            ],
-            [
-                sg.Text("未視聴フラグ", size=csize),
-                sg.Input(f"{is_include_new}", key="-IS_INCLUDE_NEW-", readonly=True, size=tsize),
-            ],
-            [sg.Text(horizontal_line)],
-            [sg.Text("")],
-            [sg.Text("")],
-            [sg.Column([[sg.Button("保存", key="-SAVE-"), sg.Button("閉じる", key="-EXIT-")]], justification="right")],
-        ]
-        layout = [[sg.Frame(self.title, cf)]]
+        self.component = {}
+        layout = QVBoxLayout()
+
+        def hbox_helper(key: str, value: str) -> QHBoxLayout:
+            hbox = QHBoxLayout()
+            label = QLabel(str(key))
+            label.setMinimumWidth(csize)
+            tbox = QLineEdit(str(value), readOnly=True)
+            hbox.addWidget(label)
+            hbox.addWidget(tbox)
+            self.component[key] = tbox
+            return hbox
+
+        label1 = QLabel(horizontal_line)
+        hbox2 = hbox_helper("ID", id_index)
+        hbox3 = hbox_helper("ユーザー名", username)
+        hbox4 = hbox_helper("マイリスト名", mylistname)
+        hbox5 = hbox_helper("種別", typename)
+        hbox6 = hbox_helper("表示名", showname)
+        hbox7 = hbox_helper("URL", url)
+        hbox8 = hbox_helper("作成日時", created_at)
+        hbox9 = hbox_helper("更新日時", updated_at)
+        hbox10 = hbox_helper("更新確認日時", checked_at)
+
+        hbox11 = QHBoxLayout()
+        label11 = QLabel("更新確認インターバル")
+        label11.setMinimumWidth(csize)
+        combobox111 = QComboBox()
+        combobox111.addItems([str(i) for i in range(1, 60)])
+        combobox111.setCurrentText(str(check_interval_num))
+        combobox111.setStyleSheet("QComboBox {background-color: olive;}")
+        combobox112 = QComboBox()
+        combobox112.addItems(unit_list)
+        combobox112.setCurrentText(check_interval_unit)
+        combobox112.setStyleSheet("QComboBox {background-color: olive;}")
+        hbox11.addWidget(label11)
+        hbox11.addWidget(combobox111)
+        hbox11.addWidget(combobox112)
+        hbox11.addStretch(1)
+        self.component["更新確認インターバル"] = {
+            "num": combobox111,
+            "unit": combobox112,
+        }
+
+        hbox12 = QHBoxLayout()
+        label12 = QLabel("更新確認失敗カウント")
+        label12.setMinimumWidth(csize)
+        tbox12 = QLineEdit(str(check_failed_count))
+        tbox12.setStyleSheet("QLineEdit {background-color: olive;}")
+        button12 = QPushButton("リセット")
+        button12.clicked.connect(lambda: tbox12.setText("0"))
+        hbox12.addWidget(label12)
+        hbox12.addWidget(tbox12)
+        hbox12.addWidget(button12)
+        self.component["更新確認失敗カウント"] = tbox12
+
+        hbox13 = hbox_helper("未視聴フラグ", is_include_new)
+        label14 = QLabel(horizontal_line)
+        label15 = QLabel(" ")
+
+        hbox16 = QHBoxLayout()
+        button161 = QPushButton("保存して閉じる")
+        button161.clicked.connect(lambda: self.update_mylist_info())
+        button162 = QPushButton("保存しないで閉じる")
+        button162.clicked.connect(lambda: self.popup_window.close())
+        hbox16.addStretch(0)
+        hbox16.addWidget(button161)
+        hbox16.addWidget(button162)
+
+        layout.addWidget(label1)
+        layout.addLayout(hbox2)
+        layout.addLayout(hbox3)
+        layout.addLayout(hbox4)
+        layout.addLayout(hbox5)
+        layout.addLayout(hbox6)
+        layout.addLayout(hbox7)
+        layout.addLayout(hbox8)
+        layout.addLayout(hbox9)
+        layout.addLayout(hbox10)
+        layout.addLayout(hbox11)
+        layout.addLayout(hbox12)
+        layout.addLayout(hbox13)
+        layout.addWidget(label14)
+        layout.addWidget(label15)
+        layout.addLayout(hbox16)
         return layout
 
-
-class PopupMylistWindowSave(ProcessBase):
-    def __init__(self, process_info: ProcessInfo) -> None:
-        super().__init__(process_info)
-
-    def run(self) -> Result:
-        """ポップアップwindow上の変更を保存する
-
-        Notes:
-            "-SAVE-"
-            マイリスト情報windowの保存ボタンが押された時呼び出される
-
-        Returns:
-            Result: 成功時success, エラー時failed
-        """
-        self.popup_window: QDialog = self.window
+    def update_mylist_info(self):
+        if not hasattr(self, "component"):
+            return None
+        component: dict[str, QPushButton] | dict[str, dict[str, QComboBox]] = self.component
 
         # キーチェック
-        PMW_ROWS = [
-            "-ID_INDEX-",
-            "-USERNAME-",
-            "-MYLISTNAME-",
-            "-TYPE-",
-            "-SHOWNAME-",
-            "-URL-",
-            "-CREATED_AT-",
-            "-UPDATED_AT-",
-            "-CHECKED_AT-",
-            "-CHECK_FAILED_COUNT-",
-            "-IS_INCLUDE_NEW-",
-            "-CHECK_INTERVAL_NUM-",
-            "-CHECK_INTERVAL_UNIT-",
+        COMPONENT_KEYS = [
+            "ID",
+            "ユーザー名",
+            "マイリスト名",
+            "種別",
+            "表示名",
+            "URL",
+            "作成日時",
+            "更新日時",
+            "更新確認日時",
+            "更新確認インターバル",
+            "更新確認失敗カウント",
+            "未視聴フラグ",
         ]
-        allkeys = list(self.popup_window.AllKeysDict.keys())
-        for k in PMW_ROWS:
-            if k not in allkeys:
-                logger.error("Mylist popup window layout key error.")
-                return Result.failed
+        if list(component.keys()) != COMPONENT_KEYS:
+            return None
 
         # 値の設定
-        id_index = self.popup_window["-ID_INDEX-"].get()
-        username = self.popup_window["-USERNAME-"].get()
-        mylistname = self.popup_window["-MYLISTNAME-"].get()
-        typename = self.popup_window["-TYPE-"].get()
-        showname = self.popup_window["-SHOWNAME-"].get()
-        url = self.popup_window["-URL-"].get()
-        created_at = self.popup_window["-CREATED_AT-"].get()
-        updated_at = self.popup_window["-UPDATED_AT-"].get()
-        checked_at = self.popup_window["-CHECKED_AT-"].get()
-        check_failed_count = self.popup_window["-CHECK_FAILED_COUNT-"].get()
-        is_include_new = str(self.popup_window["-IS_INCLUDE_NEW-"].get()) == "True"
+        id_index = component["ID"].text()
+        username = component["ユーザー名"].text()
+        mylistname = component["マイリスト名"].text()
+        typename = component["種別"].text()
+        showname = component["表示名"].text()
+        url = component["URL"].text()
+        created_at = component["作成日時"].text()
+        updated_at = component["更新日時"].text()
+        checked_at = component["更新確認日時"].text()
+        check_failed_count = component["更新確認失敗カウント"].text()
+        is_include_new = str(component["未視聴フラグ"].text()) == "True"
 
         # インターバル文字列を結合して解釈できるかどうか確認する
-        check_interval_num = self.popup_window["-CHECK_INTERVAL_NUM-"].get()
-        check_interval_unit = self.popup_window["-CHECK_INTERVAL_UNIT-"].get()
+        check_interval_num = component["更新確認インターバル"]["num"].currentText()
+        check_interval_unit = component["更新確認インターバル"]["unit"].currentText()
         check_interval = str(check_interval_num) + check_interval_unit
         interval_str = check_interval
         dt = interval_translate(interval_str) - 1
@@ -330,8 +319,10 @@ class PopupMylistWindowSave(ProcessBase):
             check_failed_count,
             is_include_new,
         )
-        logger.info("マイリスト情報Saved")
-        return Result.success
+        logger.info("マイリスト情報更新完了")
+
+        self.popup_window.close()
+        return
 
 
 class PopupVideoWindow(PopupWindowBase):
@@ -363,10 +354,10 @@ class PopupVideoWindow(PopupWindowBase):
             return Result.failed
 
         self.record = records[0]
+        self.url = records[0]["video_url"]
 
         # 子ウィンドウの初期値
         self.title = "動画情報"
-        self.size = (580, 400)
         return Result.success
 
     def create_window_layout(self):
@@ -375,7 +366,7 @@ class PopupVideoWindow(PopupWindowBase):
         Notes:
             先にInitを実行し、self.recordを設定しておく必要がある
         """
-        horizontal_line = "-" * 132
+        horizontal_line = "-" * 100
         csize = 100
 
         # self.recordが設定されていない場合はNoneを返して終了
@@ -433,12 +424,12 @@ class PopupVideoWindow(PopupWindowBase):
         hbox7 = hbox_helper("投稿日時", uploaded_at)
         hbox8 = hbox_helper("登録日時", registered_at)
         hbox9 = hbox_helper("動画URL", video_url)
-        hbox9 = hbox_helper("マイリストURL", mylist_url)
-        hbox9 = hbox_helper("作成日時", created_at)
-        label10 = QLabel(horizontal_line)
-        label11 = QLabel(" ")
-        button12 = QPushButton("閉じる")
-        button12.clicked.connect(lambda: self.popup_window.close())
+        hbox10 = hbox_helper("所属マイリストURL", mylist_url)
+        hbox11 = hbox_helper("作成日時", created_at)
+        label12 = QLabel(horizontal_line)
+        label13 = QLabel(" ")
+        button14 = QPushButton("閉じる")
+        button14.clicked.connect(lambda: self.popup_window.close())
 
         layout.addWidget(label1)
         layout.addLayout(hbox2)
@@ -449,35 +440,11 @@ class PopupVideoWindow(PopupWindowBase):
         layout.addLayout(hbox7)
         layout.addLayout(hbox8)
         layout.addLayout(hbox9)
-        layout.addWidget(label10)
-        layout.addWidget(label11)
-        layout.addWidget(button12, alignment=Qt.AlignmentFlag.AlignRight)
-        # cf = [
-        #     [sg.Text(horizontal_line)],
-        #     [
-        #         sg.Text("ID", size=csize, visible=False),
-        #         sg.Input(f"{id_index}", key="-ID_INDEX-", visible=False, readonly=True, size=tsize),
-        #     ],
-        #     [sg.Text("動画ID", size=csize), sg.Input(f"{video_id}", key="-USERNAME-", readonly=True, size=tsize)],
-        #     [sg.Text("動画名", size=csize), sg.Input(f"{title}", key="-MYLISTNAME-", readonly=True, size=tsize)],
-        #     [sg.Text("投稿者", size=csize), sg.Input(f"{username}", key="-TYPE-", readonly=True, size=tsize)],
-        #     [sg.Text("状況", size=csize), sg.Input(f"{status}", key="-SHOWNAME-", readonly=True, size=tsize)],
-        #     [sg.Text("投稿日時", size=csize), sg.Input(f"{uploaded_at}", key="-URL-", readonly=True, size=tsize)],
-        #     [sg.Text("登録日時", size=csize), sg.Input(f"{registered_at}", key="-URL-", readonly=True, size=tsize)],
-        #     [sg.Text("動画URL", size=csize), sg.Input(f"{video_url}", key="-CREATED_AT-", readonly=True, size=tsize)],
-        #     [
-        #         sg.Text("マイリストURL", size=csize),
-        #         sg.Input(f"{mylist_url}", key="-UPDATED_AT-", readonly=True, size=tsize),
-        #     ],
-        #     [
-        #         sg.Text("作成日時", size=csize),
-        #         sg.Input(f"{created_at}", key="-CHECKED_AT-", readonly=True, size=tsize),
-        #     ],
-        #     [sg.Text(horizontal_line)],
-        #     [sg.Text("")],
-        #     [sg.Column([[sg.Button("閉じる", key="-EXIT-")]], justification="right")],
-        # ]
-        # layout = [[sg.Frame(self.title, cf)]]
+        layout.addLayout(hbox10)
+        layout.addLayout(hbox11)
+        layout.addWidget(label12)
+        layout.addWidget(label13)
+        layout.addWidget(button14, alignment=Qt.AlignmentFlag.AlignRight)
         return layout
 
 

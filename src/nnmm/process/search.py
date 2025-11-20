@@ -4,9 +4,10 @@ from logging import INFO, getLogger
 
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QDialog, QHeaderView, QTableWidget, QTableWidgetItem, QWidget
+from PySide6.QtWidgets import QDialog, QHeaderView, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QWidget
 
-from nnmm.process.base import ProcessBase
+from nnmm.process.base import NEW_MYLIST_COLOR, ProcessBase
 from nnmm.process.value_objects.mylist_row import MylistRow
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result, popup_get_text
@@ -14,12 +15,19 @@ from nnmm.util import Result, popup_get_text
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
+MATCHED_MYLIST_COLOR = QColor.fromRgb(96, 96, 0)
+
 
 class MylistSearch(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリスト名でマイリストを検索
 
         Notes:
@@ -58,32 +66,32 @@ class MylistSearch(ProcessBase):
                 match_index_list.append(i)
                 index = i  # 更新後にスクロールするインデックスを更新
         list_data = [m["showname"] for m in m_list]
-        self.window["-LIST-"].update(values=list_data)
 
-        # 新着マイリストの背景色とテキスト色を変更する
-        # 強調したいindexのみ適用すればそれ以外はデフォルトになる
-        for i in include_new_index_list:
-            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
-
-        # 検索でヒットした項目の背景色とテキスト色を変更する
-        for i in match_index_list:
-            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light goldenrod")
+        # マイリストの背景色を変更する
+        list_widget: QListWidget = self.window.list_widget
+        list_widget.clear()
+        for i, data in enumerate(list_data):
+            item = QListWidgetItem(data)
+            if i in include_new_index_list:
+                # 新着マイリストの背景色を変更する
+                item.setBackground(NEW_MYLIST_COLOR)
+            if i in match_index_list:
+                # 検索でヒットした項目の背景色を変更する
+                item.setBackground(MATCHED_MYLIST_COLOR)
+            list_widget.addItem(item)
 
         # indexをセットしてスクロール
-        # scroll_to_indexは強制的にindexを一番上に表示するのでWidget.seeを使用
-        # window["-LIST-"].update(scroll_to_index=index)
-        self.window["-LIST-"].Widget.see(index)
-        self.window["-LIST-"].update(set_to_index=index)
+        list_widget.setCurrentRow(index)
 
         # 検索結果表示
         if len(match_index_list) > 0:
             logger.info(f"search result -> {len(match_index_list)} mylist(s) found.")
-            self.window["-INPUT2-"].update(value=f"{len(match_index_list)}件ヒット！")
+            self.set_bottom_textbox(f"{len(match_index_list)}件ヒット！")
         else:
             logger.info(f"search result -> Nothing mylist(s) found.")
-            self.window["-INPUT2-"].update(value="該当なし")
+            self.set_bottom_textbox("該当なし")
 
-        logger.info("MylistSearch success.")
+        logger.info("MylistSearch done.")
         return Result.success
 
 
@@ -91,7 +99,12 @@ class MylistSearchFromVideo(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリストの中に含んでいる動画名でマイリストを検索
 
         Notes:
@@ -139,33 +152,32 @@ class MylistSearchFromVideo(ProcessBase):
                     match_index_list.append(i)
                     index = i  # 更新後にスクロールするインデックスを更新
         list_data = [m["showname"] for m in m_list]
-        self.window["-LIST-"].update(values=list_data)
 
-        # 新着マイリストの背景色とテキスト色を変更する
-        # update(values=list_data)で更新されるとデフォルトに戻る？
-        # 強調したいindexのみ適用すればそれ以外はデフォルトになる
-        for i in include_new_index_list:
-            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
-
-        # 検索でヒットした項目の背景色とテキスト色を変更する
-        for i in match_index_list:
-            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light goldenrod")
+        # マイリストの背景色を変更する
+        list_widget: QListWidget = self.window.list_widget
+        list_widget.clear()
+        for i, data in enumerate(list_data):
+            item = QListWidgetItem(data)
+            if i in include_new_index_list:
+                # 新着マイリストの背景色を変更する
+                item.setBackground(NEW_MYLIST_COLOR)
+            if i in match_index_list:
+                # 検索でヒットした項目の背景色を変更する
+                item.setBackground(MATCHED_MYLIST_COLOR)
+            list_widget.addItem(item)
 
         # indexをセットしてスクロール
-        # scroll_to_indexは強制的にindexを一番上に表示するのでWidget.seeを使用
-        # window["-LIST-"].update(scroll_to_index=index)
-        self.window["-LIST-"].Widget.see(index)
-        self.window["-LIST-"].update(set_to_index=index)
+        list_widget.setCurrentRow(index)
 
         # 検索結果表示
         if len(match_index_list) > 0:
             logger.info(f"search result -> {len(match_index_list)} mylist(s) found.")
-            self.window["-INPUT2-"].update(value=f"{len(match_index_list)}件ヒット！")
+            self.set_bottom_textbox(f"{len(match_index_list)}件ヒット！")
         else:
             logger.info(f"search result -> Nothing mylist(s) found.")
-            self.window["-INPUT2-"].update(value="該当なし")
+            self.set_bottom_textbox("該当なし")
 
-        logger.info("MylistSearchFromVideo success.")
+        logger.info("MylistSearchFromVideo done.")
         return Result.success
 
 
@@ -173,7 +185,12 @@ class MylistSearchFromMylistURL(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリストURLでマイリストを検索
 
         Notes:
@@ -215,33 +232,32 @@ class MylistSearchFromMylistURL(ProcessBase):
                 match_index_list.append(i)
                 index = i  # 更新後にスクロールするインデックスを更新
         list_data = [m["showname"] for m in m_list]
-        self.window["-LIST-"].update(values=list_data)
 
-        # 新着マイリストの背景色とテキスト色を変更する
-        # update(values=list_data)で更新されるとデフォルトに戻る？
-        # 強調したいindexのみ適用すればそれ以外はデフォルトになる
-        for i in include_new_index_list:
-            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light pink")
-
-        # 検索でヒットした項目の背景色とテキスト色を変更する
-        for i in match_index_list:
-            self.window["-LIST-"].Widget.itemconfig(i, fg="black", bg="light goldenrod")
+        # マイリストの背景色を変更する
+        list_widget: QListWidget = self.window.list_widget
+        list_widget.clear()
+        for i, data in enumerate(list_data):
+            item = QListWidgetItem(data)
+            if i in include_new_index_list:
+                # 新着マイリストの背景色を変更する
+                item.setBackground(NEW_MYLIST_COLOR)
+            if i in match_index_list:
+                # 検索でヒットした項目の背景色を変更する
+                item.setBackground(MATCHED_MYLIST_COLOR)
+            list_widget.addItem(item)
 
         # indexをセットしてスクロール
-        # scroll_to_indexは強制的にindexを一番上に表示するのでWidget.seeを使用
-        # window["-LIST-"].update(scroll_to_index=index)
-        self.window["-LIST-"].Widget.see(index)
-        self.window["-LIST-"].update(set_to_index=index)
+        list_widget.setCurrentRow(index)
 
         # 検索結果表示
         if len(match_index_list) > 0:
             logger.info(f"search result -> {len(match_index_list)} mylist(s) found.")
-            self.window["-INPUT2-"].update(value=f"{len(match_index_list)}件ヒット！")
+            self.set_bottom_textbox(f"{len(match_index_list)}件ヒット！")
         else:
             logger.info(f"search result -> Nothing mylist(s) found.")
-            self.window["-INPUT2-"].update(value="該当なし")
+            self.set_bottom_textbox("該当なし")
 
-        logger.info("MylistSearchFromMylistURL success.")
+        logger.info("MylistSearchFromMylistURL done.")
         return Result.success
 
 
@@ -336,7 +352,7 @@ class VideoSearch(ProcessBase):
                 if is_hit:
                     # 背景色を変える
                     item = QTableWidgetItem(text)
-                    item.setBackground(QColor.fromRgb(96, 96, 0))
+                    item.setBackground(MATCHED_MYLIST_COLOR)
                     table_widget.setItem(i, j, item)
                 else:
                     # そのまま追加
@@ -365,7 +381,12 @@ class MylistSearchClear(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリスト表示のハイライトを解除する
 
         Notes:
@@ -380,7 +401,7 @@ class MylistSearchClear(ProcessBase):
 
         self.update_mylist_pane()
 
-        logger.info("MylistSearchClear success.")
+        logger.info("MylistSearchClear done.")
         return Result.success
 
 

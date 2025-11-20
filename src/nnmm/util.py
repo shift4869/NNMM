@@ -189,7 +189,7 @@ def load_mylist(mylist_db: MylistDBController, load_file_path: str) -> Result:
 
         # データ列の個数が不整合
         if len(mylist_cols) != len(elements):
-            continue 
+            continue
 
         param_dict = dict(zip(mylist_cols, elements))
         r = mylist_db.select_from_url(param_dict["url"])
@@ -318,6 +318,11 @@ def popup_get_text(message: str, title: str = None) -> str | None:
     Returns:
         str: 成功時 ユーザーが入力した文字列、キャンセル時 None
     """
+    # 空白指定するとデフォルト値の "python" が表示されるため
+    # 半角スペースのみをタイトルとして表示する
+    if not title:
+        title = " "
+
     input_text, result = QInputDialog.getText(None, title, message)
 
     if result:

@@ -1,6 +1,8 @@
 from logging import INFO, getLogger
 
 import pyperclip
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QTableWidget, QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
@@ -14,7 +16,12 @@ class CopyMylistUrl(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QQListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """選択されたマイリストのURLをクリップボードにコピーする
 
         "マイリストURLをクリップボードにコピー::-MR-"
@@ -34,7 +41,7 @@ class CopyMylistUrl(ProcessBase):
 
         # クリップボードに保存
         pyperclip.copy(mylist_url)
-        self.window["-INPUT2-"].update(value=f"マイリストURLコピー成功！")
+        self.set_bottom_textbox("マイリストURLコピー成功！")
 
         logger.info(f"CopyMylistUrl success.")
         return Result.success

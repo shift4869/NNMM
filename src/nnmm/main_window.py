@@ -263,23 +263,23 @@ class MainWindow(QDialog):
         process_list = [
             self.process_helper("---", None),
             self.process_helper("全動画表示", show_mylist_info_all.ShowMylistInfoAll),
-            # Process("マイリストURLをクリップボードにコピー", lambda: logger.info("dummy")),
+            self.process_helper("マイリストURLをクリップボードにコピー", copy_mylist_url.CopyMylistUrl),
             self.process_helper("---", None),
-            # Process("視聴済にする（選択）", lambda: logger.info("dummy")),
-            # Process("視聴済にする（全て）", lambda: logger.info("dummy")),
+            self.process_helper("視聴済にする（選択）", watched_mylist.WatchedMylist),
+            self.process_helper("視聴済にする（全て）", watched_all_mylist.WatchedAllMylist),
             self.process_helper("---", None),
-            # Process("上に移動", lambda: logger.info("dummy")),
-            # Process("下に移動", lambda: logger.info("dummy")),
+            self.process_helper("上に移動", move_up.MoveUp),
+            self.process_helper("下に移動", move_down.MoveDown),
             self.process_helper("---", None),
             self.process_helper("マイリスト追加", create_mylist.CreateMylist),
             self.process_helper("マイリスト削除", delete_mylist.DeleteMylist),
             self.process_helper("---", None),
-            # Process("検索（マイリスト名）", lambda: logger.info("dummy")),
-            # Process("検索（動画名）", lambda: logger.info("dummy")),
-            # Process("検索（URL）", lambda: logger.info("dummy")),
-            # Process("強調表示を解除", lambda: logger.info("dummy")),
+            self.process_helper("検索（マイリスト名）", search.MylistSearch),
+            self.process_helper("検索（動画名）", search.MylistSearchFromVideo),
+            self.process_helper("検索（URL）", search.MylistSearchFromMylistURL),
+            self.process_helper("強調表示を解除", search.MylistSearchClear),
             self.process_helper("---", None),
-            # Process("情報表示", lambda: logger.info("dummy")),
+            self.process_helper("情報表示", popup.PopupMylistWindow),
         ]
 
         for process in process_list:
@@ -288,10 +288,6 @@ class MainWindow(QDialog):
             else:
                 action: QAction = menu.addAction(process["name"])
                 action.triggered.connect(process["func"])
-
-        # subMenu = menu.addMenu("SubMenu")
-        # action_03 = subMenu.addAction("さぶめにゅー1")
-        # action_03.triggered.connect(lambda: print("C"))
 
         menu.exec(self.list_widget.mapToGlobal(pos))
 
@@ -321,10 +317,6 @@ class MainWindow(QDialog):
             else:
                 action: QAction = menu.addAction(process["name"])
                 action.triggered.connect(process["func"])
-
-        # subMenu = menu.addMenu("SubMenu")
-        # action_03 = subMenu.addAction("さぶめにゅー1")
-        # action_03.triggered.connect(lambda: print("C"))
 
         menu.exec(self.table_widget.mapToGlobal(pos))
 
@@ -422,16 +414,16 @@ class MainWindow(QDialog):
                 include_new_index_list.append(i)
         list_data = [m["showname"] for m in m_list]
 
-        # 新着マイリストの背景色とテキスト色を変更する
+        # 新着マイリストの背景色を変更する
         list_widget: QListWidget = self.list_widget
         list_widget.clear()
         for i, data in enumerate(list_data):
             if i not in include_new_index_list:
                 list_widget.addItem(data)
             else:
-                # 新着マイリストの背景色とテキスト色を変更する
+                # 新着マイリストの背景色を変更する
                 item = QListWidgetItem(data)
-                item.setBackground(QColor.fromRgb(233, 91, 107))
+                item.setBackground(base.NEW_MYLIST_COLOR)
                 list_widget.addItem(item)
 
         # indexをセットしてスクロール

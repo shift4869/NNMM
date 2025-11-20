@@ -1,5 +1,8 @@
 from logging import INFO, getLogger
 
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QWidget
+
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
@@ -12,7 +15,12 @@ class WatchedMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        """QQListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        return None
+
+    @Slot()
+    def callback(self) -> Result:
         """マイリストに含まれる動画情報についてすべて"視聴済"にする
 
         Notes:
@@ -46,7 +54,7 @@ class WatchedMylist(ProcessBase):
         self.update_mylist_pane()
         self.update_table_pane("")
 
-        logger.info(f"WatchedMylist success.")
+        logger.info(f"WatchedMylist done.")
         return Result.success
 
 
