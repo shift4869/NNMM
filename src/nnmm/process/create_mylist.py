@@ -211,7 +211,8 @@ class CreateMylist(ProcessBase):
         dst = get_now_datetime()
 
         # マイリスト情報をDBに格納
-        id_index = max([int(r["id"]) for r in self.mylist_db.select()]) + 1
+        now_mylist_id_list = [int(r["id"]) for r in self.mylist_db.select()]
+        id_index = max(now_mylist_id_list) + 1 if now_mylist_id_list else 1
         self.mylist_db.upsert(
             id_index,
             username,
