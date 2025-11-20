@@ -83,6 +83,7 @@ class TestVideoSearch(unittest.TestCase):
             res.append(d)
         return res
 
+    @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))

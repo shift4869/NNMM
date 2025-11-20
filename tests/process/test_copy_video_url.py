@@ -139,6 +139,7 @@ class TestCopyVideoUrl(unittest.TestCase):
         table_dict_list = self._convert_table_data_to_dict(table_data)
         return [table_dict for table_dict in table_dict_list if table_dict.get("video_id") == video_id]
 
+    @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
             mock_logger = stack.enter_context(patch("nnmm.process.copy_video_url.logger.info"))

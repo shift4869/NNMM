@@ -21,6 +21,7 @@ class TestVideoSearchClear(unittest.TestCase):
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
+    @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))

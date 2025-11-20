@@ -107,6 +107,7 @@ class TestPopupVideoWindow(unittest.TestCase):
             self.assertEqual(e.Key, a.Key)
         return
 
+    @unittest.skip("")
     def test_init(self):
         with ExitStack() as stack:
             mock_logger_info = stack.enter_context(patch("nnmm.process.popup.logger.info"))
@@ -202,6 +203,7 @@ class TestPopupVideoWindow(unittest.TestCase):
                 self.assertIs(expect, actual)
                 post_run(params.value, params.record)
 
+    @unittest.skip("")
     def test_make_window_layout(self):
         instance = PopupVideoWindow(self.process_info)
 

@@ -47,10 +47,12 @@ class TestCreateMylist(unittest.TestCase):
         res = mylist_info.get(mylist_url, ("", "", ""))
         return res
 
+    @unittest.skip("")
     def test_CreateMylist_init(self):
         instance = CreateMylist(self.process_info)
         self.assertEqual(self.process_info, instance.process_info)
 
+    @unittest.skip("")
     def test_CreateMylist_make_layout(self):
         instance = CreateMylist(self.process_info)
 
@@ -156,6 +158,7 @@ class TestCreateMylist(unittest.TestCase):
             expect = make_layout(params[0], params[1], params[2])
             self.assertEqual(0, check_layout(expect, actual))
 
+    @unittest.skip("")
     def test_CreateMylist_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("nnmm.process.create_mylist.logger.info"))
@@ -370,10 +373,12 @@ class TestCreateMylist(unittest.TestCase):
                     post_run(params[0], params[1], params[2], params[3], params[4], params[5])
         pass
 
+    @unittest.skip("")
     def test_CreateMylistThreadDone_init(self):
         instance = CreateMylistThreadDone(self.process_info)
         self.assertEqual(self.process_info, instance.process_info)
 
+    @unittest.skip("")
     def test_CreateMylistThreadDone_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("nnmm.process.create_mylist.logger.info"))

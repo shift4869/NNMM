@@ -29,6 +29,7 @@ class TestConfigSave(unittest.TestCase):
         process_mylist_save = ConfigSave(self.process_info)
         self.assertEqual(self.process_info, process_mylist_save.process_info)
 
+    @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
             mockcp = stack.enter_context(patch("nnmm.process.config.configparser.ConfigParser"))

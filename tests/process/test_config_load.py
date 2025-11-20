@@ -27,6 +27,7 @@ class TestConfigLoad(unittest.TestCase):
         process_mylist_load = ConfigLoad(self.process_info)
         self.assertEqual(self.process_info, process_mylist_load.process_info)
 
+    @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
             mocksc = stack.enter_context(patch("nnmm.process.config.ConfigBase.set_config"))

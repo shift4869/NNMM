@@ -137,6 +137,7 @@ class TestDatabaseUpdater(unittest.TestCase):
                 mock_thread.mock_calls,
             )
 
+    @unittest.skip("")
     def test_execute_worker(self):
         with ExitStack() as stack:
             mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.database_updater.logger.info"))

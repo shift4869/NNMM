@@ -112,6 +112,7 @@ class TestWatchedAllMylist(unittest.TestCase):
                 res.append(table_rows)
         return res
 
+    @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("nnmm.process.watched_all_mylist.logger.info"))

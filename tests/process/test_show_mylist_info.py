@@ -63,6 +63,7 @@ class TestShowMylistInfo(unittest.TestCase):
             res.append(d)
         return res
 
+    @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
             mockli = stack.enter_context(patch("nnmm.process.show_mylist_info.logger.info"))

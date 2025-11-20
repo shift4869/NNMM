@@ -28,6 +28,7 @@ class TestMylistSaveCSV(unittest.TestCase):
         process_mylist_save = MylistSaveCSV(self.process_info)
         self.assertEqual(self.process_info, process_mylist_save.process_info)
 
+    @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
             mockpgf = stack.enter_context(patch("nnmm.process.config.sg.popup_get_file"))

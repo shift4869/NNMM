@@ -29,7 +29,6 @@ class TestExecutorBase(unittest.TestCase):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
-        self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
@@ -37,7 +36,6 @@ class TestExecutorBase(unittest.TestCase):
         instance = ConcreteExecutorBase(self.process_info)
         self.assertEqual(self.process_info, instance.process_info)
         self.assertEqual(self.process_info.window, instance.window)
-        self.assertEqual(self.process_info.values, instance.values)
         self.assertEqual(self.process_info.mylist_db, instance.mylist_db)
         self.assertEqual(self.process_info.mylist_info_db, instance.mylist_info_db)
 
