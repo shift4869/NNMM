@@ -6,9 +6,8 @@ from PySide6.QtWidgets import QTableWidget, QWidget
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.process.value_objects.table_row import Status
-from nnmm.process.value_objects.table_row_index_list import SelectedTableRowIndexList, TableRowIndexList
+from nnmm.process.value_objects.table_row_index_list import SelectedTableRowIndexList
 from nnmm.process.value_objects.table_row_list import TableRowList
-from nnmm.process.value_objects.textbox_upper import UpperTextbox
 from nnmm.util import Result
 
 logger = getLogger(__name__)
@@ -81,7 +80,7 @@ class NotWatched(ProcessBase):
         # マイリスト画面表示更新
         self.update_mylist_pane()
 
-        logger.info("NotWatched success.")
+        logger.info("NotWatched done.")
         return Result.success
 
 

@@ -4,7 +4,7 @@ from logging import INFO, getLogger
 
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QDialog, QHeaderView, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QHeaderView, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem
 from PySide6.QtWidgets import QWidget
 
 from nnmm.process.base import NEW_MYLIST_COLOR, ProcessBase

@@ -1,7 +1,7 @@
 from logging import INFO, getLogger
 
-from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QPushButton, QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
@@ -84,7 +84,7 @@ class DeleteMylist(ProcessBase):
         self.set_upper_textbox("")
 
         self.set_bottom_textbox("マイリスト削除完了")
-        logger.info("Delete mylist success.")
+        logger.info("Delete mylist done.")
         return Result.success
 
 

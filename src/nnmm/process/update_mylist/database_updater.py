@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLineEdit
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController

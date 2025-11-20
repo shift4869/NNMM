@@ -1,8 +1,7 @@
 from logging import INFO, getLogger
 
-from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton
-from PySide6.QtWidgets import QTableWidget, QVBoxLayout, QWidget
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QListWidget, QTableWidget, QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
@@ -18,7 +17,7 @@ class ShowMylistInfoAll(ProcessBase):
         super().__init__(process_info)
 
     def create_component(self) -> QWidget:
-        """動画情報レコード表示はListWidgetダブルクリックから起動"""
+        """ListWidgetダブルクリックから起動するためコンポーネントは作成しない"""
         return None
 
     @Slot()
@@ -82,7 +81,7 @@ class ShowMylistInfoAll(ProcessBase):
         # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き
         # self.window["-TABLE-"].update(row_colors=[(0, "", "")])
 
-        logger.info("ShowMylistInfoAll success.")
+        logger.info("ShowMylistInfoAll done.")
         return Result.success
 
 

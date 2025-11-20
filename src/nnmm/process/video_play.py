@@ -70,7 +70,7 @@ class VideoPlay(ProcessBase):
             pb = Watched(self.process_info)
             pb.callback()
 
-        logger.info(f"VideoPlay success.")
+        logger.info(f"VideoPlay done.")
         return Result.success
 
 

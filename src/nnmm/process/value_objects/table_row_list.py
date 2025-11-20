@@ -42,7 +42,7 @@ class TableRowList:
         Args:
             table_row_list (list[list[str]]):
                 テーブル行を表す文字列リストのリスト
-                主に画面の window["-TABLE-"].Values を受け取る
+                主に画面のテーブルペインの選択行のリストを受け取る
                 空リストは許容する
 
         Raises:

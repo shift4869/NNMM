@@ -29,9 +29,7 @@ class BottomTextbox:
         """下部のテキストボックスに入力されている文字列を扱う
 
         Args:
-            input_text (str):
-                下部のテキストボックスに入力されている文字列
-                主に window["-INPUT2-"].get() を受け取る
+            input_text (str): 下部のテキストボックスに入力されている文字列
 
         Returns:
             Self: BottomTextbox インスタンス

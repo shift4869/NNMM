@@ -5,15 +5,8 @@ from logging import Logger
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
-from PySide6.QtGui import QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QShortcut, QStandardItem
-from PySide6.QtGui import QStandardItemModel, QTextCursor
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
-from PySide6.QtWidgets import QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout, QInputDialog
-from PySide6.QtWidgets import QLabel, QLineEdit, QListView, QMenu, QMessageBox, QPlainTextEdit, QProgressBar
-from PySide6.QtWidgets import QPushButton, QRadioButton, QScrollBar, QSizePolicy, QSlider, QSpinBox, QStyleFactory
-from PySide6.QtWidgets import QTableWidget, QTabWidget, QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView
-from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QDialog, QInputDialog, QMessageBox, QTextEdit
 
 from nnmm.model import Mylist
 from nnmm.mylist_db_controller import MylistDBController
@@ -32,6 +25,7 @@ class CustomLogger(Logger):
             kwargs["stacklevel"] = 2
         super().info(msg, *args, **kwargs)
 
+        # 通常呼び出し（自パッケージの呼び出し）のみ対象とする
         if args:
             return
 
@@ -68,6 +62,7 @@ class CustomLogger(Logger):
             kwargs["stacklevel"] = 2
         super().error(msg, *args, **kwargs)
 
+        # 通常呼び出し（自パッケージの呼び出し）のみ対象とする
         if args:
             return
 
@@ -343,10 +338,11 @@ def popup(message: str, title: str = None, ok_cancel: bool = False) -> str | Non
     Args:
         message (str): 表示メッセージ
         title (str): タイトル
-        ok_cancel (bool): yes/noを問い合わせるかのフラグ
+        ok_cancel (bool): ok/cancelを問い合わせるかのフラグ
 
     Returns:
-        str: 成功時 ユーザーが入力した "OK" または "Cancel" 文字列、指定しない場合は None
+        str: 成功時 ユーザーが入力した "OK" または "Cancel"
+             ok_cancelフラグを指定しない場合は None
     """
     msgbox = QMessageBox()
     msgbox.setText(message)

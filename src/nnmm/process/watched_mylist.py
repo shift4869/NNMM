@@ -16,7 +16,7 @@ class WatchedMylist(ProcessBase):
         super().__init__(process_info)
 
     def create_component(self) -> QWidget:
-        """QQListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
+        """QListWidgetの右クリックメニューから起動するためコンポーネントは作成しない"""
         return None
 
     @Slot()

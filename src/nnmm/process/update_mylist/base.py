@@ -1,11 +1,10 @@
-import logging.config
 import threading
 import time
 from abc import abstractmethod
 from logging import INFO, getLogger
 
-from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QPushButton, QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.update_mylist.database_updater import DatabaseUpdater
@@ -14,7 +13,7 @@ from nnmm.process.update_mylist.value_objects.mylist_dict_list import MylistDict
 from nnmm.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
 from nnmm.process.update_mylist.value_objects.video_dict_list import VideoDictList
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.util import CustomLogger, Result, is_mylist_include_new_video
+from nnmm.util import Result, is_mylist_include_new_video
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -65,7 +64,7 @@ class Base(ProcessBase):
         # 処理中もGUIイベントを処理するため別スレッドで起動
         threading.Thread(target=self.update_mylist_info_thread, daemon=True).start()
 
-        logger.info(f"{self.L_KIND} update thread start success.")
+        logger.info(f"{self.L_KIND} update thread start done.")
         return Result.success
 
     def update_mylist_info_thread(self) -> Result:
@@ -76,7 +75,6 @@ class Base(ProcessBase):
         m_list = self.get_target_mylist()
         if not m_list:
             logger.info("Target Mylist is nothing.")
-            # self.window.write_event_value(self.E_DONE, "")
             return Result.failed
 
         now_mylist_with_video_list = MylistWithVideoList.create(m_list, self.mylist_info_db)
@@ -112,7 +110,7 @@ class Base(ProcessBase):
         pb = self.post_process(process_info)
         threading.Thread(target=pb.callback, daemon=False).start()
 
-        logger.info(f"{self.L_KIND} update post process start success.")
+        logger.info(f"{self.L_KIND} update post process start done.")
         return Result.success
 
 

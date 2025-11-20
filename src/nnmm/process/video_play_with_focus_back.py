@@ -77,7 +77,7 @@ class VideoPlayWithFocusBack(ProcessBase):
             pb = Watched(self.process_info)
             pb.callback()
 
-        logger.info(f"VideoPlayWithFocusBack success.")
+        logger.info(f"VideoPlayWithFocusBack done.")
         return Result.success
 
 

@@ -29,9 +29,7 @@ class UpperTextbox:
         """上部のテキストボックスに入力されている文字列を扱う
 
         Args:
-            input_text (str):
-                上部のテキストボックスに入力されている文字列
-                主に window["-INPUT1-"].get() を受け取る
+            input_text (str): 上部のテキストボックスに入力されている文字列
 
         Returns:
             Self: UpperTextbox インスタンス

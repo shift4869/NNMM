@@ -1,6 +1,5 @@
 from logging import INFO, getLogger
 
-from nnmm.model import Mylist
 from nnmm.process.update_mylist.base import Base, ThreadDoneBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 

@@ -11,9 +11,9 @@ class TableRowIndexList:
     def __post_init__(self) -> None:
         """空リストは許容する"""
         if not isinstance(self._list, list):
-            raise ValueError(f"_list must be list.")
+            raise ValueError("_list must be list.")
         if not all([isinstance(r, TableRowIndex) for r in self._list]):
-            raise ValueError(f"_list element must be TableRowIndex.")
+            raise ValueError("_list element must be TableRowIndex.")
 
     def __iter__(self) -> Iterator[TableRowIndex]:
         return self._list.__iter__()
@@ -37,7 +37,7 @@ class TableRowIndexList:
         Args:
             table_row_index_list: (list[int]):
                 テーブル行インデックスを表す数値リストのリスト
-                主に画面の values["-TABLE-"] を受け取る
+                主に画面のテーブルペインの選択行の行番号リストを受け取る
                 空リストは許容する
 
         Raises:

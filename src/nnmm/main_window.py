@@ -1,26 +1,18 @@
 import asyncio
 import logging.config
 import sys
-import traceback
-from collections import namedtuple
 from logging import INFO, getLogger
 from pathlib import Path
 from typing import Callable
 
 import qdarktheme
-from PySide6.QtCore import QDateTime, QDir, QItemSelectionModel, QLibraryInfo, QModelIndex, QPoint, QSysInfo, Qt
-from PySide6.QtCore import QTimer, Slot, qVersion
-from PySide6.QtGui import QAction, QColor, QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QPalette
-from PySide6.QtGui import QShortcut, QStandardItem, QStandardItemModel
-from PySide6.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit
-from PySide6.QtWidgets import QDial, QDialog, QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout
-from PySide6.QtWidgets import QHeaderView, QLabel, QLayoutItem, QLineEdit, QListView, QListWidget, QListWidgetItem
-from PySide6.QtWidgets import QMenu, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy
-from PySide6.QtWidgets import QSlider, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QTabWidget
-from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
+from PySide6.QtCore import QPoint, Qt, Slot, qVersion
+from PySide6.QtGui import QAction, QIcon
+from PySide6.QtWidgets import QAbstractItemView, QApplication, QComboBox, QDialog, QGridLayout, QGroupBox, QHBoxLayout
+from PySide6.QtWidgets import QLabel, QLineEdit, QListWidget, QListWidgetItem, QMenu, QTableWidget, QTabWidget
+from PySide6.QtWidgets import QTextEdit, QVBoxLayout, QWidget
 
 import nnmm.util
-from nnmm.model import MylistInfo
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process import base, config, copy_mylist_url, copy_video_url, create_mylist, delete_mylist, move_down
@@ -48,6 +40,7 @@ class MainWindow(QDialog):
 
     def __init__(self) -> None:
         super().__init__()
+        logger.info("window setup start.")
 
         # 設定値初期化
         self.config = config.ConfigBase.set_config()
@@ -89,53 +82,6 @@ class MainWindow(QDialog):
         self.activateWindow()
 
         logger.info("window setup done.")
-        return
-
-        # テーブル初期化
-        def_data = [[]]
-        self.window["-TABLE-"].update(values=def_data)
-
-        # タイマーセットイベントを起動
-        self.window.write_event_value("-TIMER_SET-", "-FIRST_SET-")
-
-        # イベントと処理の辞書
-        self.dict = {
-            "ブラウザで開く::-TR-": video_play.VideoPlay,
-            "ブラウザで開く（フォーカスを戻す）::-TR-": video_play_with_focus_back.VideoPlayWithFocusBack,
-            "動画URLをクリップボードにコピー::-TR-": copy_video_url.CopyVideoUrl,
-            "視聴済にする::-TR-": watched.Watched,
-            "未視聴にする::-TR-": not_watched.NotWatched,
-            "検索（動画名）::-TR-": search.VideoSearch,
-            "強調表示を解除::-TR-": search.VideoSearchClear,
-            "情報表示::-TR-": popup.PopupVideoWindow,
-            "全動画表示::-MR-": show_mylist_info_all.ShowMylistInfoAll,
-            "マイリストURLをクリップボードにコピー::-MR-": copy_mylist_url.CopyMylistUrl,
-            "視聴済にする（選択）::-MR-": watched_mylist.WatchedMylist,
-            "視聴済にする（全て）::-MR-": watched_all_mylist.WatchedAllMylist,
-            "上に移動::-MR-": move_up.MoveUp,
-            "下に移動::-MR-": move_down.MoveDown,
-            "マイリスト追加::-MR-": create_mylist.CreateMylist,
-            "マイリスト削除::-MR-": delete_mylist.DeleteMylist,
-            "検索（マイリスト名）::-MR-": search.MylistSearch,
-            "検索（動画名）::-MR-": search.MylistSearchFromVideo,
-            "検索（URL）::-MR-": search.MylistSearchFromMylistURL,
-            "強調表示を解除::-MR-": search.MylistSearchClear,
-            "情報表示::-MR-": popup.PopupMylistWindow,
-            "-LIST-+DOUBLE CLICK+": show_mylist_info.ShowMylistInfo,
-            "-CREATE-": create_mylist.CreateMylist,
-            "-CREATE_THREAD_DONE-": create_mylist.CreateMylistThreadDone,
-            "-DELETE-": delete_mylist.DeleteMylist,
-            "-UPDATE-": single.Single,
-            "-UPDATE_THREAD_DONE-": single.SingleThreadDone,
-            "-ALL_UPDATE-": every.Every,
-            "-ALL_UPDATE_THREAD_DONE-": every.EveryThreadDone,
-            "-PARTIAL_UPDATE-": partial.Partial,
-            "-PARTIAL_UPDATE_THREAD_DONE-": partial.PartialThreadDone,
-            "-C_CONFIG_SAVE-": config.ConfigSave,
-            "-C_MYLIST_SAVE-": config.MylistSaveCSV,
-            "-C_MYLIST_LOAD-": config.MylistLoadCSV,
-            "-TIMER_SET-": timer.Timer,
-        }
 
     def create_layout(self) -> QVBoxLayout:
         """画面のレイアウトを作成する

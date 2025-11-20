@@ -2,7 +2,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO, getLogger
 
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLineEdit
 
 from nnmm.process.update_mylist.executor_base import ExecutorBase
 from nnmm.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList

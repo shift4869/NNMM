@@ -1,8 +1,7 @@
 from logging import INFO, getLogger
 
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit, QDial, QDialog
-from PySide6.QtWidgets import QTableWidget, QWidget
+from PySide6.QtWidgets import QApplication, QTableWidget, QWidget
 
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
@@ -83,7 +82,7 @@ class Watched(ProcessBase):
         # マイリスト画面表示更新
         self.update_mylist_pane()
 
-        logger.info("Watched success.")
+        logger.info("Watched done.")
         return Result.success
 
 

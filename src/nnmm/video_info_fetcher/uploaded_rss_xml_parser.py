@@ -8,10 +8,6 @@ import xmltodict
 
 from nnmm.util import MylistType, find_values
 from nnmm.video_info_fetcher.parser_base import ParserBase
-from nnmm.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
-from nnmm.video_info_fetcher.value_objects.mylist_url import MylistURL
-from nnmm.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
-from nnmm.video_info_fetcher.value_objects.mylistid import Mylistid
 from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
 from nnmm.video_info_fetcher.value_objects.registered_at import RegisteredAt
 from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
@@ -19,7 +15,6 @@ from nnmm.video_info_fetcher.value_objects.showname import Showname
 from nnmm.video_info_fetcher.value_objects.title import Title
 from nnmm.video_info_fetcher.value_objects.title_list import TitleList
 from nnmm.video_info_fetcher.value_objects.url import URL
-from nnmm.video_info_fetcher.value_objects.userid import Userid
 from nnmm.video_info_fetcher.value_objects.username import Username
 from nnmm.video_info_fetcher.value_objects.video_url import VideoURL
 from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList

@@ -32,7 +32,7 @@ class MylistRow(Showname):
         Args:
             showname_list (Showname | str):
                 選択されたマイリストを表す文字列 or Showname
-                主に画面の values["-LIST-"] を受け取る
+                主に画面のマイリストペインの選択文字列を受け取る
                 空文字列は許容されない
 
         Raises:
@@ -42,11 +42,11 @@ class MylistRow(Showname):
             Self: SelectedMylist インスタンス
         """
         if not isinstance(showname, Showname | str):
-            raise ValueError(f"showname must be Showname or str.")
+            raise ValueError("showname must be Showname or str.")
         if isinstance(showname, Showname):
             showname: str = showname.name
         if showname == "":
-            raise ValueError(f"showname must be non-empty.")
+            raise ValueError("showname must be non-empty.")
         if showname.startswith(cls.NEW_MARK):
             showname: str = str(showname[len(cls.NEW_MARK) :])
         return cls(showname)

@@ -1,11 +1,10 @@
-import logging.config
+import logging
 from logging import INFO, getLogger
 
-from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QWidget
 
 from nnmm.process.base import ProcessBase
-from nnmm.process.value_objects.mylist_row import SelectedMylistRow
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import CustomLogger, Result
 
@@ -51,7 +50,7 @@ class ShowMylistInfo(ProcessBase):
         self.update_table_pane(mylist_url)
 
         logger.info(f"{mylist_url} -> mylist info shown.")
-        logger.info("ShowMylistInfo success.")
+        logger.info("ShowMylistInfo done.")
         return Result.success
 
 

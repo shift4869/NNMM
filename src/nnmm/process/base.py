@@ -1,11 +1,11 @@
-import logging.config
+import logging
 import time
 from abc import ABC, abstractmethod
 
-from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QModelIndex, QSysInfo, Qt, QTimer, Slot, qVersion
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QDialog, QHeaderView, QLineEdit, QListWidget, QListWidgetItem, QTableWidget
-from PySide6.QtWidgets import QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QTableWidgetItem, QWidget
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController

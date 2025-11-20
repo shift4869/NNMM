@@ -1,16 +1,9 @@
 from abc import abstractmethod
 from logging import INFO, getLogger
 
-from PySide6.QtCore import QDateTime, QDir, QItemSelectionModel, QLibraryInfo, QModelIndex, QPoint, QSysInfo, Qt
-from PySide6.QtCore import QTimer, Slot, qVersion
-from PySide6.QtGui import QAction, QColor, QCursor, QDesktopServices, QGuiApplication, QIcon, QKeySequence, QPalette
-from PySide6.QtGui import QShortcut, QStandardItem, QStandardItemModel
-from PySide6.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QComboBox, QCommandLinkButton, QDateTimeEdit
-from PySide6.QtWidgets import QDial, QDialog, QDialogButtonBox, QFileSystemModel, QGridLayout, QGroupBox, QHBoxLayout
-from PySide6.QtWidgets import QHeaderView, QLabel, QLayoutItem, QLineEdit, QListView, QListWidget, QListWidgetItem
-from PySide6.QtWidgets import QMenu, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy
-from PySide6.QtWidgets import QSlider, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QTabWidget
-from PySide6.QtWidgets import QTextBrowser, QTextEdit, QToolBox, QToolButton, QTreeView, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import QApplication, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from nnmm.model import Mylist, MylistInfo
 from nnmm.process.base import ProcessBase

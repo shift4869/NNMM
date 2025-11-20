@@ -1,9 +1,8 @@
 import re
 from logging import INFO, getLogger
-from typing import Callable
 
-from PySide6.QtCore import QDateTime, QDir, QLibraryInfo, QSysInfo, Qt, QTimer, Slot, qVersion
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from nnmm.process import config as process_config
 from nnmm.process.base import ProcessBase
@@ -239,7 +238,7 @@ class CreateMylist(ProcessBase):
         mylist_url = self.get_upper_textbox().to_str()
         self.update_table_pane(mylist_url)
 
-        logger.info("Create mylist success.")
+        logger.info("Create mylist done.")
         return Result.success
 
 
@@ -261,7 +260,7 @@ class CreateMylistThreadDone(ProcessBase):
         mylist_url = self.get_upper_textbox().to_str()
         self.update_table_pane(mylist_url)
 
-        logger.info("Create mylist success.")
+        logger.info("Create mylist done.")
         return Result.success
 
 
