@@ -89,8 +89,8 @@ class MainWindow(QDialog):
         Returns:
             QVBoxLayout | None: 成功時レイアウトオブジェクト、失敗時None
         """
-        WINDOW_WIDTH = 1200  # 1330
-        WINDOW_HEIGHT = 850  # 900
+        WINDOW_WIDTH = 1200
+        WINDOW_HEIGHT = 850
         # 全体レイアウト
         layout = QVBoxLayout()
         # タブバー
@@ -206,7 +206,7 @@ class MainWindow(QDialog):
         return group
 
     @Slot(QPoint)
-    def list_context_menu(self, pos):
+    def list_context_menu(self, pos) -> None:
         menu = QMenu(self.list_widget)
 
         process_list = [
@@ -241,7 +241,7 @@ class MainWindow(QDialog):
         menu.exec(self.list_widget.mapToGlobal(pos))
 
     @Slot(QPoint)
-    def table_context_menu(self, pos):
+    def table_context_menu(self, pos) -> None:
         menu = QMenu(self.table_widget)
         process_list = [
             self.process_helper("---", None),
@@ -382,6 +382,7 @@ class MainWindow(QDialog):
     def init_config(self) -> Result:
         config_load = self.callback_helper("設定ロード", config.ConfigLoad)
         config_load()
+        return Result.success
 
 
 if __name__ == "__main__":
