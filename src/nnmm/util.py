@@ -29,31 +29,23 @@ class CustomLogger(Logger):
         if args:
             return
 
-        # GUI画面表示
+        # window指定確認
         global window_cache
         window = window_cache
-        if window and isinstance(window, QDialog):
-            # windowが指定されていたらキャッシュとして保存
-            if not window_cache:
-                window_cache = window
-        else:
-            # windowが指定されていない場合
-            if window_cache:
-                # キャッシュがあるならそれを採用
-                window = window_cache
-            else:
-                # そうでない場合、画面更新は何もせず終了
-                return
-
-        if not isinstance(window, QDialog):
+        if not window:
+            # window_cacheがNoneなら何もせず終了
             return
+        if not isinstance(window, QDialog):
+            # window_cacheがQDialogでないなら何もせず終了
+            return
+
+        # GUI画面表示
         textarea: QTextEdit = window.textarea
         # old_text = textarea.document().toPlainText()
         now_datetime = get_now_datetime()
         textarea.append(f"{now_datetime} {msg}")
         textarea.moveCursor(QTextCursor.MoveOperation.End)
         textarea.update()
-        # window.repaint()
 
     def error(self, msg: str, *args, **kwargs):
         # コンソールとファイル出力
@@ -66,21 +58,17 @@ class CustomLogger(Logger):
         if args:
             return
 
-        # GUI画面表示
+        # window指定確認
         global window_cache
         window = window_cache
-        if window:
-            # windowが指定されていたらキャッシュとして保存
-            if not window_cache:
-                window_cache = window
-        else:
-            # windowが指定されていない場合
-            if window_cache:
-                # キャッシュがあるならそれを採用
-                window = window_cache
-            else:
-                # そうでない場合、画面更新は何もせず終了
-                return
+        if not window:
+            # window_cacheがNoneなら何もせず終了
+            return
+        if not isinstance(window, QDialog):
+            # window_cacheがQDialogでないなら何もせず終了
+            return
+
+        # GUI画面表示
         textarea: QTextEdit = window.textarea
         # old_text = textarea.document().toPlainText()
         now_datetime = get_now_datetime()
@@ -366,4 +354,15 @@ def popup(message: str, title: str = None, ok_cancel: bool = False) -> str | Non
 
 
 if __name__ == "__main__":
-    pass
+    import sys
+
+    import qdarktheme
+    from PySide6.QtWidgets import QApplication
+
+    from nnmm.main_window import MainWindow
+
+    app = QApplication()
+    qdarktheme.setup_theme()
+    window_main = MainWindow()
+    window_main.show()
+    sys.exit(app.exec())

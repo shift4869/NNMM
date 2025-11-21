@@ -2,18 +2,18 @@ import copy
 import random
 import sys
 import unittest
-from contextlib import ExitStack
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import freezegun
 import orjson
 from mock import call, mock_open, patch
+from PySide6.QtWidgets import QMessageBox
 
 from nnmm.model import Mylist, MylistInfo
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.util import IncludeNewStatus, MylistType, Result, find_values, get_now_datetime, interval_translate
-from nnmm.util import is_mylist_include_new_video, load_mylist, popup_get_text, save_mylist
+from nnmm.util import is_mylist_include_new_video, load_mylist, popup, popup_get_text, save_mylist
 
 TEST_DB_PATH = ":memory:"
 CSV_PATH = "./tests/cache/result.csv"
@@ -590,19 +590,49 @@ class TestUtil(unittest.TestCase):
         expect = -1
         self.assertEqual(expect, actual)
 
-    @unittest.skip("")
     def test_popup_get_text(self):
-        """sg.popup_get_text のラッパーのテスト"""
-        mock_window = self.enterContext(patch("nnmm.util.QDialog"))
-        message = "message"
+        """popup_get_text のテスト"""
+        # 正常入力時
+        self.enterContext(patch("nnmm.util.QInputDialog.getText", return_value=("入力値", True)))
+        self.assertEqual(popup_get_text("メッセージ", "タイトル"), "入力値")
 
-        mock_window.return_value.read.side_effect = lambda: ("Ok", {"-INPUT-": "path"})
-        actual = popup_get_text(message)
-        self.assertEqual("path", actual)
+        # キャンセル時（タイトル省略もカバー）
+        self.enterContext(patch("nnmm.util.QInputDialog.getText", return_value=("", False)))
+        self.assertIsNone(popup_get_text("メッセージ"))
 
-        mock_window.return_value.read.side_effect = lambda: ("Cancel", None)
-        actual = popup_get_text(message)
-        self.assertEqual(None, actual)
+    def test_popup(self):
+        """popup のテスト（ok/cancel と通常表示）"""
+        # ok_cancel=True の場合 OK / Cancel を返す
+        mock_msg = self.enterContext(patch("nnmm.util.QMessageBox"))
+        mock_msg.return_value.exec.side_effect = lambda: mock_msg.StandardButton.Ok
+        actual = popup("message", "title", ok_cancel=True)
+        self.assertEqual("OK", actual)
+        mock_msg.return_value.setText.assert_called_with("message")
+        mock_msg.return_value.setWindowTitle.assert_called_with("title")
+        mock_msg.return_value.setStandardButtons.assert_called_with(
+            mock_msg.StandardButton.Ok | mock_msg.StandardButton.Cancel
+        )
+        mock_msg.return_value.exec.assert_called()
+        mock_msg.return_value.reset_mock()
+
+        mock_msg.return_value.exec.side_effect = lambda: mock_msg.StandardButton.Cancel
+        actual = popup("message", ok_cancel=True)
+        self.assertEqual("Cancel", actual)
+        mock_msg.return_value.setText.assert_called_with("message")
+        mock_msg.return_value.setWindowTitle.assert_called_with(" ")
+        mock_msg.return_value.setStandardButtons.assert_called_with(
+            mock_msg.StandardButton.Ok | mock_msg.StandardButton.Cancel
+        )
+        mock_msg.return_value.exec.assert_called()
+        mock_msg.return_value.reset_mock()
+
+        # ok_cancel=False の場合は None を返す（表示のみ）
+        mock_msg.return_value.exec.side_effect = lambda: mock_msg.StandardButton.Ok
+        actual = popup("message")
+        self.assertIsNone(actual)
+        mock_msg.return_value.setText.assert_called_with("message")
+        mock_msg.return_value.setStandardButtons.assert_not_called()
+        mock_msg.return_value.reset_mock()
 
 
 if __name__ == "__main__":
