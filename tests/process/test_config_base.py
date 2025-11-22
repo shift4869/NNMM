@@ -1,11 +1,10 @@
-import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 import orjson
-from mock import MagicMock, call, patch
+from mock import MagicMock, patch
 from PySide6.QtWidgets import QDialog, QWidget
 
 from nnmm.mylist_db_controller import MylistDBController
@@ -24,7 +23,7 @@ class ConcreteConfigBase(ConfigBase):
     def create_component(self) -> QWidget:
         return None
 
-    def callback() -> Result:
+    def callback(self) -> Result:
         return Result.success
 
 
@@ -44,6 +43,8 @@ class TestConfigBase(unittest.TestCase):
         self.assertEqual(self.process_info, process_config_base.process_info)
         self.assertEqual(ConcreteConfigBase.CONFIG_FILE_PATH, ConfigBase.CONFIG_FILE_PATH)
         self.assertEqual(None, ConfigBase.config)
+        self.assertEqual(None, process_config_base.create_component())
+        self.assertEqual(Result.success, process_config_base.callback())
 
     def test_get_config(self):
         """ConfigBase.get_config が set_config を呼び出して設定を取得し、キャッシュすることを確認する"""

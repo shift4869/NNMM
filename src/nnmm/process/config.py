@@ -123,7 +123,7 @@ class ConfigBrowserPath(ConfigBase):
                 logger.info("Browser path getting abort.")
                 return Result.failed
         except Exception:
-            logger.info(f"Dirname: '{str(browser_path)}' is invalid.")
+            logger.info(f"Dirname: '{str(browser_path_str)}' is invalid.")
             logger.info("Browser path getting abort.")
             return Result.failed
 
@@ -178,7 +178,7 @@ class ConfigRSSSavePath(ConfigBase):
                 logger.info("RSS path getting abort.")
                 return Result.failed
         except Exception:
-            logger.info(f"Dirname: '{str(rss_path)}' is invalid.")
+            logger.info(f"Dirname: '{str(rss_path_str)}' is invalid.")
             logger.info("RSS path getting abort.")
             return Result.failed
 
@@ -233,7 +233,7 @@ class ConfigDBSavePath(ConfigBase):
                 logger.info("DB path getting abort.")
                 return Result.failed
         except Exception:
-            logger.info(f"Dirname: '{str(db_path)}' is invalid.")
+            logger.info(f"Dirname: '{str(db_path_str)}' is invalid.")
             logger.info("DB path getting abort.")
             return Result.failed
 
