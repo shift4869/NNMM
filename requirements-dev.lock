@@ -22,7 +22,7 @@ cffi==2.0.0
     # via cryptography
 charset-normalizer==3.4.4
     # via requests
-coverage==7.11.3
+coverage==7.12.0
     # via nnmm
 cryptography==46.0.3
     # via nnmm
@@ -58,20 +58,20 @@ pyperclip==1.11.0
     # via nnmm
 pyqtdarktheme==2.1.0
     # via nnmm
-pyside6==6.10.0
+pyside6==6.10.1
     # via nnmm
-pyside6-addons==6.10.0
+pyside6-addons==6.10.1
     # via pyside6
-pyside6-essentials==6.10.0
+pyside6-essentials==6.10.1
     # via pyside6
     # via pyside6-addons
 python-dateutil==2.9.0.post0
     # via freezegun
 requests==2.32.5
     # via nnmm
-ruff==0.14.5
+ruff==0.14.6
     # via nnmm
-shiboken6==6.10.0
+shiboken6==6.10.1
     # via pyside6
     # via pyside6-addons
     # via pyside6-essentials
