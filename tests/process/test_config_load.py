@@ -1,6 +1,5 @@
 import sys
 import unittest
-from contextlib import ExitStack
 
 from mock import MagicMock, patch
 from PySide6.QtWidgets import QDialog
@@ -16,63 +15,107 @@ CONFIG_FILE_PATH = "./config/config.json"
 
 class TestConfigLoad(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.config.logger.info"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
-        self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def test_init(self):
-        process_mylist_load = ConfigLoad(self.process_info)
-        self.assertEqual(self.process_info, process_mylist_load.process_info)
+        instance = ConfigLoad(self.process_info)
+        self.assertEqual(self.process_info, instance.process_info)
 
-    def test_run(self):
-        mocksc = self.enterContext(patch("nnmm.process.config.ConfigBase.set_config"))
-        mockgc = self.enterContext(patch("nnmm.process.config.ConfigBase.get_config"))
+    def test_create_component(self):
+        instance = ConfigLoad(self.process_info)
+        component = instance.create_component()
+        self.assertIsNone(component)
 
-        expect_dict = {
-            "general": {
-                "browser_path": "browser_path",
-                "auto_reload": "auto_reload",
-                "rss_save_path": "rss_save_path",
-            },
-            "db": {
-                "save_path": "save_path",
-            },
+    def test_callback(self):
+        """ConfigLoad.callback が設定をウィジェットに反映すること（標準候補 / カスタム候補）"""
+        window = self.process_info.window
+        # 必要なウィジェットを用意
+        window.tbox_browser_path = MagicMock()
+        window.cbox = MagicMock()
+        window.tbox_rss_save_path = MagicMock()
+        window.tbox_db_path = MagicMock()
+
+        instance = ConfigLoad(self.process_info)
+
+        # 標準の auto_reload が候補に含まれる場合
+        cfg = {
+            "general": {"browser_path": "/path/browser", "auto_reload": "(使用しない)", "rss_save_path": "/path/rss"},
+            "db": {"save_path": "/path/nnmm.db"},
         }
-        mockgc.side_effect = [expect_dict]
+        self.enterContext(patch("nnmm.process.config.ConfigBase.get_config", return_value=cfg))
+        actual = instance.callback()
+        self.assertEqual(Result.success, actual)
+        window.tbox_browser_path.setText.assert_called_with("/path/browser")
+        window.tbox_rss_save_path.setText.assert_called_with("/path/rss")
+        window.tbox_db_path.setText.assert_called_with("/path/nnmm.db")
+        window.cbox.clear.assert_called_once()
+        window.cbox.addItems.assert_called_once()
+        window.cbox.setCurrentText.assert_called_with("(使用しない)")
 
-        mockup = MagicMock()
-        mockd = MagicMock()
-        type(mockd).update = mockup
-        mock_dict = {
-            "-C_BROWSER_PATH-": mockd,
-            "-C_AUTO_RELOAD-": mockd,
-            "-C_RSS_PATH-": mockd,
-            "-C_DB_PATH-": mockd,
-            "-C_ACCOUNT_EMAIL-": mockd,
-            "-C_ACCOUNT_PASSWORD-": mockd,
+        # リセット
+        window.cbox.reset_mock()
+        window.tbox_browser_path.reset_mock()
+        window.tbox_rss_save_path.reset_mock()
+        window.tbox_db_path.reset_mock()
+
+        # カスタムの "n分毎" フォーマットの場合は候補に追加され選択される
+        cfg = {
+            "general": {"browser_path": "/b2", "auto_reload": "20分毎", "rss_save_path": "/r2"},
+            "db": {"save_path": "/d2"},
         }
+        self.enterContext(patch("nnmm.process.config.ConfigBase.get_config", return_value=cfg))
+        actual = instance.callback()
+        self.assertEqual(Result.success, actual)
+        window.tbox_browser_path.setText.assert_called_with("/b2")
+        window.tbox_rss_save_path.setText.assert_called_with("/r2")
+        window.tbox_db_path.setText.assert_called_with("/d2")
+        window.cbox.clear.assert_called_once()
+        window.cbox.addItems.assert_called_once()
+        window.cbox.addItem.assert_called_with("20分毎")
+        window.cbox.setCurrentText.assert_called_with("20分毎")
 
-        self.process_info.window = mock_dict
-        process_config_load = ConfigLoad(self.process_info)
-        actual = process_config_load.run()
-        self.assertIs(Result.success, actual)
+        # リセット
+        window.cbox.reset_mock()
+        window.tbox_browser_path.reset_mock()
+        window.tbox_rss_save_path.reset_mock()
+        window.tbox_db_path.reset_mock()
 
-        # ucal[{n回目の呼び出し}][args=0]
-        # ucal[{n回目の呼び出し}][kwargs=1]
-        ucal = mockup.call_args_list
-        self.assertEqual(len(ucal), 5)
-        self.assertEqual({"value": expect_dict["general"]["browser_path"]}, ucal[0][1])
-        self.assertEqual({"value": expect_dict["general"]["auto_reload"]}, ucal[1][1])
-        self.assertEqual({"value": expect_dict["general"]["rss_save_path"]}, ucal[2][1])
-        self.assertEqual({"value": expect_dict["db"]["save_path"]}, ucal[3][1])
-        # self.assertEqual({"value": expect_dict["niconico"]["email"]}, ucal[4][1])
-        # self.assertEqual({"value": expect_dict["niconico"]["password"]}, ucal[5][1])
-        self.assertEqual({"select": False}, ucal[4][1])
-        mockup.reset_mock()
-        pass
+        # カスタムの "n分毎" フォーマットが不正な場合はデフォルトの"(使用しない)"が適用される
+        cfg = {
+            "general": {"browser_path": "/b3", "auto_reload": "invalid_format", "rss_save_path": "/r3"},
+            "db": {"save_path": "/d3"},
+        }
+        self.enterContext(patch("nnmm.process.config.ConfigBase.get_config", return_value=cfg))
+        actual = instance.callback()
+        self.assertEqual(Result.success, actual)
+        window.tbox_browser_path.setText.assert_called_with("/b3")
+        window.tbox_rss_save_path.setText.assert_called_with("/r3")
+        window.tbox_db_path.setText.assert_called_with("/d3")
+        window.cbox.clear.assert_called_once()
+        window.cbox.addItems.assert_called_once()
+        window.cbox.setCurrentText.assert_called_with("(使用しない)")
+
+        # リセット
+        window.cbox.reset_mock()
+        window.tbox_browser_path.reset_mock()
+        window.tbox_rss_save_path.reset_mock()
+        window.tbox_db_path.reset_mock()
+
+        # 異常系: ウィジェットが存在しない場合は失敗を返す
+        # window は QDialog だが tbox や cbox を持たない
+        self.process_info.window = MagicMock(spec=QDialog)
+        instance = ConfigLoad(self.process_info)
+
+        # 設定は空で返す（中身は使われない）
+        self.enterContext(patch("nnmm.process.config.ConfigBase.get_config", return_value={}))
+
+        res = instance.callback()
+        self.assertEqual(Result.failed, res)
 
 
 if __name__ == "__main__":

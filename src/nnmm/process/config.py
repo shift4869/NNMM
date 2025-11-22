@@ -376,7 +376,6 @@ class ConfigLoad(ConfigBase):
         browser_path = find_values(config, "browser_path", True)
         auto_reload = find_values(config, "auto_reload", True)
         rss_save_path = find_values(config, "rss_save_path", True)
-        focus_on_video_play = find_values(config, "focus_on_video_play", True)
         db_save_path = find_values(config, "save_path", True, ["db"])
 
         tbox_browser_path: QLineEdit = window.tbox_browser_path
@@ -458,9 +457,7 @@ class ConfigSave(ConfigBase):
                 interval = int(re.findall(pattern, auto_reload)[0])
             except Exception:
                 interval = -1
-            if interval > 0:
-                pass
-            else:
+            if interval <= 0:
                 auto_reload = "(使用しない)"
 
         tbox_rss_save_path: QLineEdit = window.tbox_rss_save_path
@@ -504,7 +501,6 @@ class ConfigSave(ConfigBase):
                 "browser_path": str(browser_path),
                 "auto_reload": str(auto_reload),
                 "rss_save_path": str(rss_save_path),
-                "focus_on_video_play": False,
             },
             "db": {"save_path": str(db_save_path)},
         }

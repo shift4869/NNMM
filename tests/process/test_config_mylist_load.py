@@ -1,10 +1,9 @@
 import sys
 import unittest
-from contextlib import ExitStack
 from pathlib import Path
 
 from mock import MagicMock, patch
-from PySide6.QtWidgets import QDialog
+from PySide6.QtWidgets import QDialog, QListWidget
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -12,128 +11,111 @@ from nnmm.process.config import MylistLoadCSV
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
 
-CONFIG_FILE_PATH = "./config/config.ini"
+TEST_INPUT_PATH = "./tests/cache/input.csv"
 
 
 class TestMylistLoadCSV(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.config.logger.info"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
-        self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def test_init(self):
-        process_mylist_load = MylistLoadCSV(self.process_info)
-        self.assertEqual(self.process_info, process_mylist_load.process_info)
+        instance = MylistLoadCSV(self.process_info)
+        self.assertEqual(self.process_info, instance.process_info)
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            mockpgf = self.enterContext(patch("nnmm.process.config.sg.popup_get_file"))
-            mockpu = self.enterContext(patch("nnmm.process.config.sg.popup"))
-            mocklml = self.enterContext(patch("nnmm.process.config.load_mylist"))
-            mockums = self.enterContext(patch("nnmm.process.config.ProcessBase.update_mylist_pane"))
+    def test_create_component(self):
+        """MylistLoadCSV.create_component が QPushButton("読込") を作成し、クリックに接続すること"""
+        mock_qpush = self.enterContext(patch("nnmm.process.config.QPushButton"))
+        mock_button = mock_qpush.return_value
+        # signal のモックを準備
+        mock_button.clicked = MagicMock()
+        mock_button.clicked.connect = MagicMock()
 
-            TEST_INPUT_PATH = "./tests/input.csv"
-            mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH, TEST_INPUT_PATH]
-            mocklml.side_effect = [0, -1]
-            Path(TEST_INPUT_PATH).touch()
+        instance = MylistLoadCSV(self.process_info)
+        actual = instance.create_component()
 
-            self.process_info.mylist_db.return_value = "mylist_db"
-            process_mylist_load = MylistLoadCSV(self.process_info)
+        mock_qpush.assert_called_with("読込")
+        self.assertIs(mock_button, actual)
+        mock_button.clicked.connect.assert_called()
 
-            # 正常系
-            # 実行
-            actual = process_mylist_load.run()
-            self.assertIs(Result.success, actual)
+    def test_callback(self):
+        """MylistLoadCSV.callback の主要ケースを網羅するテスト（成功 / キャンセル / ファイル未存在 / 読込失敗）"""
+        mock_file_dialog = self.enterContext(patch("nnmm.process.config.QFileDialog"))
+        mock_popup = self.enterContext(patch("nnmm.process.config.popup"))
+        mock_load_mylist = self.enterContext(patch("nnmm.process.config.load_mylist"))
+        mock_update_pane = self.enterContext(patch("nnmm.process.config.ProcessBase.update_mylist_pane"))
+        self.enterContext(patch("nnmm.process.config.time.sleep"))
 
-            # 呼び出し確認
-            default_path = Path("") / "input.csv"
-            expect_kwargs = {"default_path": default_path.absolute(), "default_extension": "csv", "save_as": False}
+        # 準備: テスト用ファイルを作成しておく（成功ケース）
+        Path(TEST_INPUT_PATH).touch()
 
-            # pgfcal[{n回目の呼び出し}][args=0]
-            # pgfcal[{n回目の呼び出し}][kwargs=1]
-            pgfcal = mockpgf.call_args_list
-            self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("読込ファイル選択",), pgfcal[0][0])
-            self.assertEqual(expect_kwargs, pgfcal[0][1])
-            mockpgf.reset_mock()
+        # 1) 正常系：ファイル選択 -> load_mylist が成功 -> update_mylist_pane 実行
+        mock_file_dialog.return_value.getOpenFileName.side_effect = lambda caption, dir, filter: (
+            TEST_INPUT_PATH,
+            filter,
+        )
+        mock_open_file_name = mock_file_dialog.return_value.getOpenFileName
+        mock_load_mylist.return_value = Result.success
+        self.process_info.window.list_widget = MagicMock(spec=QListWidget)
 
-            # lmlcal[{n回目の呼び出し}][args=0]
-            lmlcal = mocklml.call_args_list
-            self.assertEqual(len(lmlcal), 1)
-            self.assertEqual((self.process_info.mylist_db, str(Path(TEST_INPUT_PATH))), lmlcal[0][0])
-            mocklml.reset_mock()
+        instance = MylistLoadCSV(self.process_info)
 
-            # pucal[{n回目の呼び出し}][args=0]
-            pucal = mockpu.call_args_list
-            self.assertEqual(len(pucal), 1)
-            self.assertEqual(("読込完了",), pucal[0][0])
-            mockpu.reset_mock()
+        actual = instance.callback()
+        self.assertIs(Result.success, actual)
 
-            # mockums[{n回目の呼び出し}][args=0]
-            umscal = mockums.call_args_list
-            self.assertEqual(len(umscal), 1)
-            self.assertEqual((), umscal[0][0])
-            mockums.reset_mock()
+        # getOpenFileName が呼ばれていること
+        pgf_calls = mock_open_file_name.call_args_list
+        self.assertGreaterEqual(len(pgf_calls), 1)
+        # load_mylist が指定ファイルで呼ばれること
+        mock_load_mylist.assert_called_with(self.process_info.mylist_db, str(Path(TEST_INPUT_PATH)))
+        # 成功時は完了メッセージが表示され、update_mylist_pane が呼ばれる
+        mock_popup.assert_any_call("読込完了")
+        mock_update_pane.assert_called()
 
-            # 異常系
-            # ファイル選択をキャンセルされた
-            actual = process_mylist_load.run()
-            self.assertIs(Result.failed, actual)
+        mock_open_file_name.reset_mock()
+        mock_popup.reset_mock()
+        mock_load_mylist.reset_mock()
+        mock_update_pane.reset_mock()
 
-            # 呼び出し確認
-            pgfcal = mockpgf.call_args_list
-            self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("読込ファイル選択",), pgfcal[0][0])
-            self.assertEqual(expect_kwargs, pgfcal[0][1])
-            mockpgf.reset_mock()
+        # 2) キャンセルされた場合：getOpenFileName が None を返す -> failed
+        mock_open_file_name.side_effect = lambda caption, dir, filter: (None, filter)
+        actual = instance.callback()
+        self.assertIs(Result.failed, actual)
+        mock_load_mylist.assert_not_called()
+        mock_popup.assert_not_called()
 
-            mocklml.assert_not_called()
-            mockpu.assert_not_called()
+        mock_open_file_name.reset_mock()
+        mock_popup.reset_mock()
+        mock_load_mylist.reset_mock()
 
-            # ファイルが存在しない
-            Path(TEST_INPUT_PATH).unlink(missing_ok=True)
-            actual = process_mylist_load.run()
-            self.assertIs(Result.failed, actual)
+        # 3) ファイルが存在しない場合：getOpenFileName がパスを返すが実ファイルなし -> failed & エラーメッセージ
+        # ensure file removed
+        Path(TEST_INPUT_PATH).unlink(missing_ok=True)
+        mock_open_file_name.side_effect = lambda caption, dir, filter: (TEST_INPUT_PATH, filter)
+        actual = instance.callback()
+        self.assertIs(Result.failed, actual)
+        mock_popup.assert_any_call("読込ファイルが存在しません")
+        mock_load_mylist.assert_not_called()
 
-            # 呼び出し確認
-            pgfcal = mockpgf.call_args_list
-            self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("読込ファイル選択",), pgfcal[0][0])
-            self.assertEqual(expect_kwargs, pgfcal[0][1])
-            mockpgf.reset_mock()
+        mock_open_file_name.reset_mock()
+        mock_popup.reset_mock()
+        mock_load_mylist.reset_mock()
 
-            mocklml.assert_not_called()
+        # 4) 読込に失敗した場合：load_mylist がエラーを返す -> failed & 読込失敗メッセージ
+        Path(TEST_INPUT_PATH).touch()
+        mock_open_file_name.return_value = TEST_INPUT_PATH
+        mock_load_mylist.return_value = Result.failed
+        actual = instance.callback()
+        self.assertIs(Result.failed, actual)
+        mock_load_mylist.assert_called()
+        mock_popup.assert_any_call("読込失敗")
 
-            pucal = mockpu.call_args_list
-            self.assertEqual(len(pucal), 1)
-            self.assertEqual(("読込ファイルが存在しません",), pucal[0][0])
-            mockpu.reset_mock()
-
-            # 読込に失敗
-            Path(TEST_INPUT_PATH).touch()
-            actual = process_mylist_load.run()
-            self.assertIs(Result.failed, actual)
-
-            # 呼び出し確認
-            pgfcal = mockpgf.call_args_list
-            self.assertEqual(len(pgfcal), 1)
-            self.assertEqual(("読込ファイル選択",), pgfcal[0][0])
-            self.assertEqual(expect_kwargs, pgfcal[0][1])
-            mockpgf.reset_mock()
-
-            mocklml.assert_called()
-
-            pucal = mockpu.call_args_list
-            self.assertEqual(len(pucal), 1)
-            self.assertEqual(("読込失敗",), pucal[0][0])
-            mockpu.reset_mock()
-
-            Path(TEST_INPUT_PATH).unlink(missing_ok=True)
-        pass
+        # 後片付け
+        Path(TEST_INPUT_PATH).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

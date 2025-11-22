@@ -30,6 +30,7 @@ class ConcreteConfigBase(ConfigBase):
 
 class TestConfigBase(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.config.logger.info"))
         ConfigBase.config = None
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
@@ -77,7 +78,6 @@ class TestConfigBase(unittest.TestCase):
                     "browser_path": "/path/to/browser",
                     "auto_reload": "(使用しない)",
                     "rss_save_path": "/path/to/rss",
-                    "focus_on_video_play": False,  # 追加のキーも許容される
                 },
                 "db": {"save_path": "/path/to/nnmm.db"},
             }
