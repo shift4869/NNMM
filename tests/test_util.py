@@ -8,9 +8,8 @@ from pathlib import Path
 import freezegun
 import orjson
 from mock import call, mock_open, patch
-from PySide6.QtWidgets import QMessageBox
 
-from nnmm.model import Mylist, MylistInfo
+from nnmm.model import Mylist
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.util import IncludeNewStatus, MylistType, Result, find_values, get_now_datetime, interval_translate
 from nnmm.util import is_mylist_include_new_video, load_mylist, popup, popup_get_text, save_mylist
@@ -191,34 +190,6 @@ class TestUtil(unittest.TestCase):
             ),
         ]
         return video_info
-
-    def _make_mylist_info_sample(self, id: int, mylist_id: int) -> MylistInfo:
-        """MylistInfoオブジェクトを作成する
-
-        Note:
-            動画情報セット
-                video_id (str): 動画ID(smxxxxxxxx)
-                title (str): 動画タイトル
-                username (str): 投稿者名
-                status (str): 視聴状況({"未視聴", ""})
-                uploaded_at (str): 投稿日時
-                registered_at (str): 登録日時
-                video_url (str): 動画URL
-                created_at (str): 作成日時
-            マイリスト情報セット
-                mylist_url (str): 所属マイリストURL
-
-        Args:
-            id (int): 動画情報セットのid
-            mylist_id (int): マイリスト情報セットのid
-
-        Returns:
-            MylistInfo: MylistInfoオブジェクト
-        """
-        v = self._get_video_info_list()[id]
-        mylist_url = self._get_mylist_url_list()[mylist_id]
-        r = MylistInfo(v[0], v[1], v[2], v[3], v[4], v[5], v[6], mylist_url, v[7])
-        return r
 
     def test_Result(self):
         self.assertEqual(True, hasattr(Result, "success"))

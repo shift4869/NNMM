@@ -1,9 +1,12 @@
+import os
 import sys
+import tempfile
 import unittest
-from contextlib import ExitStack
+from pathlib import Path
 
+import orjson
 from mock import MagicMock, call, patch
-from PySide6.QtWidgets import QDialog
+from PySide6.QtWidgets import QDialog, QWidget
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -11,14 +14,17 @@ from nnmm.process.config import ConfigBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
 
-CONFIG_FILE_PATH = "./config/config.ini"
-
 
 class ConcreteConfigBase(ConfigBase):
+    CONFIG_FILE_PATH = "./config/config.json"
+
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def run(self) -> Result:
+    def create_component(self) -> QWidget:
+        return None
+
+    def callback() -> Result:
         return Result.success
 
 
@@ -32,102 +38,103 @@ class TestConfigBase(unittest.TestCase):
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
     def test_init(self):
-        return
         process_config_base = ConcreteConfigBase(self.process_info)
 
         self.assertEqual(self.process_info, process_config_base.process_info)
-        self.assertEqual(CONFIG_FILE_PATH, ConfigBase.CONFIG_FILE_PATH)
+        self.assertEqual(ConcreteConfigBase.CONFIG_FILE_PATH, ConfigBase.CONFIG_FILE_PATH)
         self.assertEqual(None, ConfigBase.config)
 
-    def test_make_layout(self):
-        return
-        def expect_config_layout() -> sg.Frame:
-            auto_reload_combo_box = sg.InputCombo(
-                ("(使用しない)", "15分毎", "30分毎", "60分毎"),
-                default_value="(使用しない)",
-                key="-C_AUTO_RELOAD-",
-                size=(20, 10),
-            )
-
-            horizontal_line = "-" * 100
-
-            cf = [
-                [sg.Text(horizontal_line)],
-                [sg.Text("・「ブラウザで再生」時に使用するブラウザパス")],
-                [sg.Input(key="-C_BROWSER_PATH-"), sg.FileBrowse()],
-                [sg.Text("・オートリロードする間隔")],
-                [auto_reload_combo_box],
-                [sg.Text("・RSS保存先パス")],
-                [sg.Input(key="-C_RSS_PATH-"), sg.FolderBrowse()],
-                [sg.Text("・マイリスト一覧保存")],
-                [sg.Button("保存", key="-C_MYLIST_SAVE-")],
-                [sg.Text("・マイリスト一覧読込")],
-                [sg.Button("読込", key="-C_MYLIST_LOAD-")],
-                [sg.Text(horizontal_line)],
-                [sg.Text("・マイリスト・動画情報保存DBのパス")],
-                [sg.Input(key="-C_DB_PATH-"), sg.FileBrowse()],
-                [sg.Text(horizontal_line)],
-                [sg.Text("")],
-                [sg.Text("")],
-                [sg.Column([[sg.Button("設定保存", key="-C_CONFIG_SAVE-")]], justification="right")],
-            ]
-            layout = [[sg.Frame("Config", cf, size=(1070, 100))]]
-            return layout
-
-        expect = expect_config_layout()
-        actual = ConfigBase.make_layout()
-
-        self.assertEqual(type(expect), type(actual))
-        self.assertEqual(len(expect), len(actual))
-        for e1, a1 in zip(expect, actual):
-            self.assertEqual(len(e1), len(a1))
-            for e2, a2 in zip(e1, a1):
-                for e3, a3 in zip(e2.Rows, a2.Rows):
-                    self.assertEqual(len(e3), len(a3))
-                    for e4, a4 in zip(e3, a3):
-                        if hasattr(a4, "DisplayText") and a4.DisplayText:
-                            self.assertEqual(e4.DisplayText, a4.DisplayText)
-                        if hasattr(a4, "Key") and a4.Key:
-                            self.assertEqual(e4.Key, a4.Key)
-
     def test_get_config(self):
-        with ExitStack() as stack:
-            mock_set_config = stack.enter_context(patch("nnmm.process.config.ConfigBase.set_config"))
+        """ConfigBase.get_config が set_config を呼び出して設定を取得し、キャッシュすることを確認する"""
+        config_sample = {"general": {"browser_path": "/path"}}
 
-            # 初回取得
-            ConfigBase.config = None
-            actual = ConfigBase.get_config()
-            self.assertEqual(None, actual)
-            mock_set_config.assert_called_once()
-            mock_set_config.reset_mock()
+        def set_config():
+            ConfigBase.config = config_sample
 
-            # 2回目
-            ConfigBase.config = "loaded config"
-            actual = ConfigBase.get_config()
-            self.assertEqual("loaded config", actual)
-            mock_set_config.assert_not_called()
-            mock_set_config.reset_mock()
+        mock_set_config = self.enterContext(patch("nnmm.process.config.ConfigBase.set_config", side_effect=set_config))
+
+        # 初回は set_config が呼ばれ、返り値が返る
+        actual1 = ConfigBase.get_config()
+        self.assertEqual(ConfigBase.config, actual1)
+        mock_set_config.assert_called_once()
+        mock_set_config.reset_mock()
+
+        # 2回目はキャッシュから返るため set_config は呼ばれない
+        actual2 = ConfigBase.get_config()
+        self.assertEqual(ConfigBase.config, actual2)
+        mock_set_config.assert_not_called()
 
     def test_set_config(self):
-        return
-        with ExitStack() as stack:
-            mock_configparser = stack.enter_context(patch("nnmm.process.config.configparser.ConfigParser"))
-            mock_config = MagicMock()
-            mock_configparser.side_effect = lambda: mock_config
+        """ConfigBase.set_config が orjson.loads と Path.read_bytes を使って設定を読み込むことを確認する"""
 
-            actual = ConfigBase.set_config()
-            self.assertEqual(mock_config, actual)
+        orig_path = ConfigBase.CONFIG_FILE_PATH
 
-            self.assertEqual([call(CONFIG_FILE_PATH, encoding="utf-8")], mock_config.read.mock_calls)
+        # 正常系: 実ファイルに orjson.dumps で書き込み、set_config が辞書を返すこと
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            sample = {
+                "general": {
+                    "browser_path": "/path/to/browser",
+                    "auto_reload": "(使用しない)",
+                    "rss_save_path": "/path/to/rss",
+                    "focus_on_video_play": False,  # 追加のキーも許容される
+                },
+                "db": {"save_path": "/path/to/nnmm.db"},
+            }
+            tmp.close()
+            Path(tmp.name).write_bytes(orjson.dumps(sample))
+            ConfigBase.CONFIG_FILE_PATH = tmp.name
 
-        # 実際に取得してiniファイルの構造を調べる
-        actual = ConfigBase.set_config()
-        self.assertTrue("general" in actual)
-        self.assertTrue("browser_path" in actual["general"])
-        self.assertTrue("auto_reload" in actual["general"])
-        self.assertTrue("rss_save_path" in actual["general"])
-        self.assertTrue("db" in actual)
-        self.assertTrue("save_path" in actual["db"])
+            cfg = ConfigBase.set_config()
+            self.assertIsInstance(cfg, dict)
+            self.assertIn("general", cfg)
+            self.assertIn("db", cfg)
+            self.assertEqual("/path/to/browser", cfg["general"]["browser_path"])
+            self.assertEqual("(使用しない)", cfg["general"]["auto_reload"])
+            self.assertEqual("/path/to/rss", cfg["general"]["rss_save_path"])
+            self.assertEqual("/path/to/nnmm.db", cfg["db"]["save_path"])
+            # キャッシュにも格納されていること
+            self.assertEqual(ConfigBase.config, cfg)
+        finally:
+            ConfigBase.CONFIG_FILE_PATH = orig_path
+            Path(tmp.name).unlink(missing_ok=True)
+
+        # 異常系: ファイルが存在しない場合は IOError
+        ConfigBase.CONFIG_FILE_PATH = orig_path + ".not_exists"
+        with self.assertRaises(IOError):
+            ConfigBase.set_config()
+        ConfigBase.CONFIG_FILE_PATH = orig_path
+
+        # 異常系: JSON が null 等で空の設定となる場合は IOError
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            tmp.close()
+            Path(tmp.name).write_bytes(b"null")
+            ConfigBase.CONFIG_FILE_PATH = tmp.name
+            with self.assertRaises(IOError):
+                ConfigBase.set_config()
+        finally:
+            ConfigBase.CONFIG_FILE_PATH = orig_path
+            Path(tmp.name).unlink(missing_ok=True)
+
+        # 異常系: JSON は存在するが構造が期待と異なる場合は IOError を投げる
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            tmp.close()
+            # 'db' セクション欠如や general 内のキー不足など、構造不正を示す JSON
+            bad_sample = {"general": {"browser_path": "/only_one_key"}}
+            Path(tmp.name).write_bytes(orjson.dumps(bad_sample))
+            ConfigBase.CONFIG_FILE_PATH = tmp.name
+            with self.assertRaises(IOError):
+                ConfigBase.set_config()
+
+            # 別パターン：トップレベルキーが想定外
+            Path(tmp.name).write_bytes(orjson.dumps({"unexpected": {}}))
+            with self.assertRaises(IOError):
+                ConfigBase.set_config()
+        finally:
+            ConfigBase.CONFIG_FILE_PATH = orig_path
+            Path(tmp.name).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

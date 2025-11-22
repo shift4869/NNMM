@@ -51,7 +51,7 @@ class ConfigBase(ProcessBase):
         """クラス変数configを設定する
 
         Notes:
-            config.iniをロードしてプラグラム内で用いる変数に適用する
+            CONFIG_FILE_PATH をロードしてプラグラム内で用いる変数に適用する
 
         Returns:
             ConfigParser: クラス変数config
@@ -62,6 +62,20 @@ class ConfigBase(ProcessBase):
         cls.config = orjson.loads(Path(cls.CONFIG_FILE_PATH).read_bytes())
         if not cls.config:
             raise IOError("Config file is invalid.")
+
+        # 構造チェック
+        match cls.config:
+            case {
+                "general": {
+                    "browser_path": _,
+                    "auto_reload": _,
+                    "rss_save_path": _,
+                },
+                "db": _,
+            }:
+                pass
+            case _:
+                raise IOError("Config file is invalid structure.")
         return cls.config
 
 
