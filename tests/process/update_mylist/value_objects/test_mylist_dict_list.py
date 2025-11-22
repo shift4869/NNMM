@@ -29,7 +29,7 @@ class TestMylistDictList(unittest.TestCase):
 
     def test_typed_mylist_list(self):
         with ExitStack() as stack:
-            mock_typed_mylist_list = stack.enter_context(
+            mock_typed_mylist_list = self.enterContext(
                 patch("nnmm.process.update_mylist.value_objects.mylist_dict_list.TypedMylistList.create")
             )
             mock_typed_mylist_list.side_effect = lambda m: "TypedMylistList.create()"
@@ -43,7 +43,7 @@ class TestMylistDictList(unittest.TestCase):
 
     def test_create(self):
         with ExitStack() as stack:
-            mock_mylist_dict = stack.enter_context(
+            mock_mylist_dict = self.enterContext(
                 patch("nnmm.process.update_mylist.value_objects.mylist_dict_list.MylistDict.create")
             )
             mylist_dict = MagicMock(spec=MylistDict)

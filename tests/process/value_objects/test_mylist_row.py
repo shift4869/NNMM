@@ -42,7 +42,7 @@ class TestMylistRow(unittest.TestCase):
 
     def test_is_new_mark(self):
         with ExitStack() as stack:
-            mock_without_new_mark_name = stack.enter_context(
+            mock_without_new_mark_name = self.enterContext(
                 patch("nnmm.process.value_objects.mylist_row.MylistRow.without_new_mark_name")
             )
             showname = "投稿者1さんの投稿動画"
@@ -69,7 +69,7 @@ class TestMylistRow(unittest.TestCase):
 
     def test_with_new_mark_name(self):
         with ExitStack() as stack:
-            mock_without_new_mark_name = stack.enter_context(
+            mock_without_new_mark_name = self.enterContext(
                 patch("nnmm.process.value_objects.mylist_row.MylistRow.without_new_mark_name")
             )
             showname = "投稿者1さんの投稿動画"

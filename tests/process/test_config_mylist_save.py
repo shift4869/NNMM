@@ -31,9 +31,9 @@ class TestMylistSaveCSV(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockpgf = stack.enter_context(patch("nnmm.process.config.sg.popup_get_file"))
-            mocksml = stack.enter_context(patch("nnmm.process.config.save_mylist"))
-            mockpu = stack.enter_context(patch("nnmm.process.config.sg.popup"))
+            mockpgf = self.enterContext(patch("nnmm.process.config.sg.popup_get_file"))
+            mocksml = self.enterContext(patch("nnmm.process.config.save_mylist"))
+            mockpu = self.enterContext(patch("nnmm.process.config.sg.popup"))
 
             TEST_RESULT_PATH = "./tests/result.csv"
             mockpgf.side_effect = [TEST_RESULT_PATH, None, TEST_RESULT_PATH]

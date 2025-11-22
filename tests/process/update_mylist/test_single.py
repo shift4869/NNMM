@@ -44,7 +44,7 @@ class TestSingle(unittest.TestCase):
 
     def test_get_target_mylist(self):
         with ExitStack() as stack:
-            mock_get_upper_textbox = stack.enter_context(
+            mock_get_upper_textbox = self.enterContext(
                 patch("nnmm.process.update_mylist.single.Base.get_upper_textbox")
             )
 

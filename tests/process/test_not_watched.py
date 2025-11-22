@@ -117,17 +117,15 @@ class TestNotWatched(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.not_watched.logger.info"))
-            mockle = stack.enter_context(patch("nnmm.process.not_watched.logger.error"))
-            mock_selected_table_row_index_list = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.not_watched.logger.info"))
+            mockle = self.enterContext(patch("nnmm.process.not_watched.logger.error"))
+            mock_selected_table_row_index_list = self.enterContext(
                 patch("nnmm.process.not_watched.ProcessBase.get_selected_table_row_index_list")
             )
-            mock_all_table_row = stack.enter_context(patch("nnmm.process.not_watched.ProcessBase.get_all_table_row"))
-            mock_upper_textbox = stack.enter_context(patch("nnmm.process.not_watched.ProcessBase.get_upper_textbox"))
-            mock_update_table_pane = stack.enter_context(
-                patch("nnmm.process.not_watched.ProcessBase.update_table_pane")
-            )
-            mock_update_mylist_pane = stack.enter_context(
+            mock_all_table_row = self.enterContext(patch("nnmm.process.not_watched.ProcessBase.get_all_table_row"))
+            mock_upper_textbox = self.enterContext(patch("nnmm.process.not_watched.ProcessBase.get_upper_textbox"))
+            mock_update_table_pane = self.enterContext(patch("nnmm.process.not_watched.ProcessBase.update_table_pane"))
+            mock_update_mylist_pane = self.enterContext(
                 patch("nnmm.process.not_watched.ProcessBase.update_mylist_pane")
             )
 

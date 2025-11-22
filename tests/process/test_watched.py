@@ -123,16 +123,16 @@ class TestWatched(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.watched.logger.info"))
-            mockle = stack.enter_context(patch("nnmm.process.watched.logger.error"))
-            mock_selected_table_row_index_list = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.watched.logger.info"))
+            mockle = self.enterContext(patch("nnmm.process.watched.logger.error"))
+            mock_selected_table_row_index_list = self.enterContext(
                 patch("nnmm.process.watched.ProcessBase.get_selected_table_row_index_list")
             )
-            mock_all_table_row = stack.enter_context(patch("nnmm.process.watched.ProcessBase.get_all_table_row"))
-            mock_include_new_video = stack.enter_context(patch("nnmm.process.watched.is_mylist_include_new_video"))
-            mock_upper_textbox = stack.enter_context(patch("nnmm.process.watched.ProcessBase.get_upper_textbox"))
-            mock_update_table_pane = stack.enter_context(patch("nnmm.process.watched.ProcessBase.update_table_pane"))
-            mock_update_mylist_pane = stack.enter_context(patch("nnmm.process.watched.ProcessBase.update_mylist_pane"))
+            mock_all_table_row = self.enterContext(patch("nnmm.process.watched.ProcessBase.get_all_table_row"))
+            mock_include_new_video = self.enterContext(patch("nnmm.process.watched.is_mylist_include_new_video"))
+            mock_upper_textbox = self.enterContext(patch("nnmm.process.watched.ProcessBase.get_upper_textbox"))
+            mock_update_table_pane = self.enterContext(patch("nnmm.process.watched.ProcessBase.update_table_pane"))
+            mock_update_mylist_pane = self.enterContext(patch("nnmm.process.watched.ProcessBase.update_mylist_pane"))
 
             instance = Watched(self.process_info)
 

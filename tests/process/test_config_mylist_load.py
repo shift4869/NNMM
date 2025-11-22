@@ -31,10 +31,10 @@ class TestMylistLoadCSV(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockpgf = stack.enter_context(patch("nnmm.process.config.sg.popup_get_file"))
-            mockpu = stack.enter_context(patch("nnmm.process.config.sg.popup"))
-            mocklml = stack.enter_context(patch("nnmm.process.config.load_mylist"))
-            mockums = stack.enter_context(patch("nnmm.process.config.ProcessBase.update_mylist_pane"))
+            mockpgf = self.enterContext(patch("nnmm.process.config.sg.popup_get_file"))
+            mockpu = self.enterContext(patch("nnmm.process.config.sg.popup"))
+            mocklml = self.enterContext(patch("nnmm.process.config.load_mylist"))
+            mockums = self.enterContext(patch("nnmm.process.config.ProcessBase.update_mylist_pane"))
 
             TEST_INPUT_PATH = "./tests/input.csv"
             mockpgf.side_effect = [TEST_INPUT_PATH, None, TEST_INPUT_PATH, TEST_INPUT_PATH]

@@ -29,7 +29,7 @@ class TestVideoDictList(unittest.TestCase):
 
     def test_to_typed_video_list(self):
         with ExitStack() as stack:
-            mock_typed_video_list = stack.enter_context(
+            mock_typed_video_list = self.enterContext(
                 patch("nnmm.process.update_mylist.value_objects.video_dict_list.TypedVideoList.create")
             )
             mock_typed_video_list.side_effect = lambda m: "TypedVideoList.create()"
@@ -43,7 +43,7 @@ class TestVideoDictList(unittest.TestCase):
 
     def test_create(self):
         with ExitStack() as stack:
-            mock_video_dict = stack.enter_context(
+            mock_video_dict = self.enterContext(
                 patch("nnmm.process.update_mylist.value_objects.video_dict_list.VideoDict.create")
             )
             video_dict = MagicMock(spec=VideoDict)

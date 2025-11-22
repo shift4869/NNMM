@@ -46,8 +46,8 @@ class TestBase(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.update_mylist.base.logger.info"))
-            mock_thread = stack.enter_context(patch("nnmm.process.update_mylist.base.threading"))
+            mockli = self.enterContext(patch("nnmm.process.update_mylist.base.logger.info"))
+            mock_thread = self.enterContext(patch("nnmm.process.update_mylist.base.threading"))
 
             instance = ConcreteBase(self.process_info)
 
@@ -73,17 +73,15 @@ class TestBase(unittest.TestCase):
 
     def test_update_mylist_info_thread(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.update_mylist.base.logger.info"))
-            mock_get_target_mylist = stack.enter_context(
-                patch("nnmm.process.update_mylist.base.Base.get_target_mylist")
-            )
-            mock_time = stack.enter_context(patch("nnmm.process.update_mylist.base.time"))
-            mock_mylist_with_video_list = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.update_mylist.base.logger.info"))
+            mock_get_target_mylist = self.enterContext(patch("nnmm.process.update_mylist.base.Base.get_target_mylist"))
+            mock_time = self.enterContext(patch("nnmm.process.update_mylist.base.time"))
+            mock_mylist_with_video_list = self.enterContext(
                 patch("nnmm.process.update_mylist.base.MylistWithVideoList.create")
             )
-            mock_fetcher = stack.enter_context(patch("nnmm.process.update_mylist.base.Fetcher"))
-            mock_database_updater = stack.enter_context(patch("nnmm.process.update_mylist.base.DatabaseUpdater"))
-            mock_thread = stack.enter_context(patch("nnmm.process.update_mylist.base.threading"))
+            mock_fetcher = self.enterContext(patch("nnmm.process.update_mylist.base.Fetcher"))
+            mock_database_updater = self.enterContext(patch("nnmm.process.update_mylist.base.DatabaseUpdater"))
+            mock_thread = self.enterContext(patch("nnmm.process.update_mylist.base.threading"))
 
             mock_time.time.return_value = 0
 
@@ -139,7 +137,7 @@ class TestBase(unittest.TestCase):
     @unittest.skip("")
     def test_thread_done(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.update_mylist.base.logger.info"))
+            mockli = self.enterContext(patch("nnmm.process.update_mylist.base.logger.info"))
             instance = ConcreteBase(self.process_info)
 
             instance.post_process = MagicMock()

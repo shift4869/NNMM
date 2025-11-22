@@ -63,17 +63,17 @@ class TestBase(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.base.logger.info"))
-            mock_get_upper_textbox = stack.enter_context(
+            mock_logger = self.enterContext(patch("nnmm.process.update_mylist.base.logger.info"))
+            mock_get_upper_textbox = self.enterContext(
                 patch("nnmm.process.update_mylist.base.ProcessBase.get_upper_textbox")
             )
-            mock_update_table_pane = stack.enter_context(
+            mock_update_table_pane = self.enterContext(
                 patch("nnmm.process.update_mylist.base.ProcessBase.update_table_pane")
             )
-            mock_is_mylist_include_new_video = stack.enter_context(
+            mock_is_mylist_include_new_video = self.enterContext(
                 patch("nnmm.process.update_mylist.base.is_mylist_include_new_video")
             )
-            mock_update_mylist_pane = stack.enter_context(
+            mock_update_mylist_pane = self.enterContext(
                 patch("nnmm.process.update_mylist.base.ProcessBase.update_mylist_pane")
             )
 

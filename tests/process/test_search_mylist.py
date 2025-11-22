@@ -67,9 +67,9 @@ class TestMylistSearch(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))
-            mock_popup_get_text = stack.enter_context(patch("nnmm.process.search.popup_get_text"))
-            mock_selected_mylist_row_index = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.search.logger.info"))
+            mock_popup_get_text = self.enterContext(patch("nnmm.process.search.popup_get_text"))
+            mock_selected_mylist_row_index = self.enterContext(
                 patch("nnmm.process.search.ProcessBase.get_selected_mylist_row_index")
             )
             mock_mylist_db = MagicMock()

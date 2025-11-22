@@ -50,7 +50,7 @@ class TestVideoDict(unittest.TestCase):
 
     def test_to_typed_video(self):
         with ExitStack() as stack:
-            mock_typed_video = stack.enter_context(
+            mock_typed_video = self.enterContext(
                 patch("nnmm.process.update_mylist.value_objects.video_dict.TypedVideo.create")
             )
             mock_typed_video.side_effect = lambda m: "TypedVideo.create()"

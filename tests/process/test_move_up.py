@@ -25,16 +25,16 @@ class TestMoveUp(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.move_up.logger.info"))
-            mockle = stack.enter_context(patch("nnmm.process.move_up.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(patch("nnmm.process.move_up.ProcessBase.update_mylist_pane"))
-            mock_selected_mylist_row = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.move_up.logger.info"))
+            mockle = self.enterContext(patch("nnmm.process.move_up.logger.error"))
+            mock_update_mylist_pane = self.enterContext(patch("nnmm.process.move_up.ProcessBase.update_mylist_pane"))
+            mock_selected_mylist_row = self.enterContext(
                 patch("nnmm.process.move_up.ProcessBase.get_selected_mylist_row")
             )
-            mock_selected_mylist_row_index = stack.enter_context(
+            mock_selected_mylist_row_index = self.enterContext(
                 patch("nnmm.process.move_up.ProcessBase.get_selected_mylist_row_index")
             )
-            mock_all_mylist_row = stack.enter_context(patch("nnmm.process.move_up.ProcessBase.get_all_mylist_row"))
+            mock_all_mylist_row = self.enterContext(patch("nnmm.process.move_up.ProcessBase.get_all_mylist_row"))
 
             instance = MoveUp(self.process_info)
 

@@ -54,12 +54,12 @@ class TestPopupWindowBase(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger_info = stack.enter_context(patch("nnmm.process.popup.logger.info"))
-            mock_window = stack.enter_context(patch("nnmm.process.popup.QDialog"))
-            mock_init = stack.enter_context(patch("nnmm.process.popup.PopupWindowBase.init"))
-            mock_layout = stack.enter_context(patch("nnmm.process.popup.PopupWindowBase.make_window_layout"))
-            mock_popup_ok = stack.enter_context(patch("nnmm.process.popup.sg.popup_ok"))
-            mock_process_info = stack.enter_context(patch("nnmm.process.popup.ProcessInfo"))
+            mock_logger_info = self.enterContext(patch("nnmm.process.popup.logger.info"))
+            mock_window = self.enterContext(patch("nnmm.process.popup.QDialog"))
+            mock_init = self.enterContext(patch("nnmm.process.popup.PopupWindowBase.init"))
+            mock_layout = self.enterContext(patch("nnmm.process.popup.PopupWindowBase.make_window_layout"))
+            mock_popup_ok = self.enterContext(patch("nnmm.process.popup.sg.popup_ok"))
+            mock_process_info = self.enterContext(patch("nnmm.process.popup.ProcessInfo"))
             mock_process_base = MagicMock()
 
             event_list = [("-DO-", "value1"), ("-DO_NOTHING-", "value2"), ("-EXIT-", "value3")]

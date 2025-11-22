@@ -86,12 +86,12 @@ class TestVideoSearch(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))
-            mock_popup_get_text = stack.enter_context(patch("nnmm.process.search.popup_get_text"))
-            mock_table_row_index_list = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.search.logger.info"))
+            mock_popup_get_text = self.enterContext(patch("nnmm.process.search.popup_get_text"))
+            mock_table_row_index_list = self.enterContext(
                 patch("nnmm.process.search.ProcessBase.get_selected_table_row_index_list")
             )
-            mock_all_table_row = stack.enter_context(patch("nnmm.process.search.ProcessBase.get_all_table_row"))
+            mock_all_table_row = self.enterContext(patch("nnmm.process.search.ProcessBase.get_all_table_row"))
 
             instance = VideoSearch(self.process_info)
 

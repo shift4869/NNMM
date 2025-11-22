@@ -40,8 +40,8 @@ class TestPopupMylistWindowSave(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger_info = stack.enter_context(patch("nnmm.process.popup.logger.info"))
-            mock_logger_error = stack.enter_context(patch("nnmm.process.popup.logger.error"))
+            mock_logger_info = self.enterContext(patch("nnmm.process.popup.logger.info"))
+            mock_logger_error = self.enterContext(patch("nnmm.process.popup.logger.error"))
             mock_window = MagicMock()
             mock_mylist_db = MagicMock()
 

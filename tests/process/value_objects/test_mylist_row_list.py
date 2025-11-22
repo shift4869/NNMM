@@ -43,7 +43,7 @@ class TestMylistRowList(unittest.TestCase):
 
     def test_create(self):
         with ExitStack() as stack:
-            mock_mylist_row = stack.enter_context(patch("nnmm.process.value_objects.mylist_row_list.MylistRow.create"))
+            mock_mylist_row = self.enterContext(patch("nnmm.process.value_objects.mylist_row_list.MylistRow.create"))
             mylist_row = MagicMock(spec=MylistRow)
             mock_mylist_row.side_effect = lambda m: mylist_row
 

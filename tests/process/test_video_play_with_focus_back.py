@@ -145,19 +145,19 @@ class TestVideoPlayWithFocusBack(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.video_play_with_focus_back.logger.info"))
-            mock_config = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.video_play_with_focus_back.logger.info"))
+            mock_config = self.enterContext(
                 patch("nnmm.process.video_play_with_focus_back.process_config.ConfigBase.get_config")
             )
-            mock_execute = stack.enter_context(
+            mock_execute = self.enterContext(
                 patch("nnmm.process.video_play_with_focus_back.sg.execute_command_subprocess")
             )
-            mock_popup = stack.enter_context(patch("nnmm.process.video_play_with_focus_back.sg.popup_ok"))
-            mock_watched = stack.enter_context(patch("nnmm.process.video_play_with_focus_back.Watched"))
-            mock_selected_table_row_index_list = stack.enter_context(
+            mock_popup = self.enterContext(patch("nnmm.process.video_play_with_focus_back.sg.popup_ok"))
+            mock_watched = self.enterContext(patch("nnmm.process.video_play_with_focus_back.Watched"))
+            mock_selected_table_row_index_list = self.enterContext(
                 patch("nnmm.process.video_play_with_focus_back.ProcessBase.get_selected_table_row_index_list")
             )
-            mock_selected_table_row_list = stack.enter_context(
+            mock_selected_table_row_list = self.enterContext(
                 patch("nnmm.process.video_play_with_focus_back.ProcessBase.get_selected_table_row_list")
             )
 

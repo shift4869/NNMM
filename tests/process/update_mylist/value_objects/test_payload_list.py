@@ -36,7 +36,7 @@ class TestPayloadList(unittest.TestCase):
 
     def test_create(self):
         with ExitStack() as stack:
-            mock_create = stack.enter_context(
+            mock_create = self.enterContext(
                 patch("nnmm.process.update_mylist.value_objects.payload_list.Payload.create")
             )
             payload = MagicMock(spec=Payload)

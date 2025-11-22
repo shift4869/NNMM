@@ -32,11 +32,11 @@ class TestConfigSave(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockcp = stack.enter_context(patch("nnmm.process.config.configparser.ConfigParser"))
-            mockfp = stack.enter_context(patch("nnmm.process.config.Path.open", mock_open()))
-            mocksc = stack.enter_context(patch("nnmm.process.config.ConfigBase.set_config"))
-            mockmc = stack.enter_context(patch("nnmm.process.config.MylistDBController"))
-            mockmbc = stack.enter_context(patch("nnmm.process.config.MylistInfoDBController"))
+            mockcp = self.enterContext(patch("nnmm.process.config.configparser.ConfigParser"))
+            mockfp = self.enterContext(patch("nnmm.process.config.Path.open", mock_open()))
+            mocksc = self.enterContext(patch("nnmm.process.config.ConfigBase.set_config"))
+            mockmc = self.enterContext(patch("nnmm.process.config.MylistDBController"))
+            mockmbc = self.enterContext(patch("nnmm.process.config.MylistInfoDBController"))
 
             mockread = MagicMock()
             TEST_PREV_SAVE_PATH = "./tests/p_test.db"

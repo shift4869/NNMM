@@ -66,8 +66,8 @@ class TestShowMylistInfoAll(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.show_mylist_info_all.logger.info"))
-            mock_selected_mylist_row_index = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.show_mylist_info_all.logger.info"))
+            mock_selected_mylist_row_index = self.enterContext(
                 patch("nnmm.process.show_mylist_info_all.ProcessBase.get_selected_mylist_row_index")
             )
 

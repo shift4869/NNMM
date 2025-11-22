@@ -142,12 +142,12 @@ class TestCopyVideoUrl(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("nnmm.process.copy_video_url.logger.info"))
-            mock_pyperclip = stack.enter_context(patch("nnmm.process.copy_video_url.pyperclip"))
-            mock_selected_table_row_index_list = stack.enter_context(
+            mock_logger = self.enterContext(patch("nnmm.process.copy_video_url.logger.info"))
+            mock_pyperclip = self.enterContext(patch("nnmm.process.copy_video_url.pyperclip"))
+            mock_selected_table_row_index_list = self.enterContext(
                 patch("nnmm.process.copy_video_url.ProcessBase.get_selected_table_row_index_list")
             )
-            mock_selected_table_row_list = stack.enter_context(
+            mock_selected_table_row_list = self.enterContext(
                 patch("nnmm.process.copy_video_url.ProcessBase.get_selected_table_row_list")
             )
 

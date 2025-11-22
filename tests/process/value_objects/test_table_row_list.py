@@ -61,7 +61,7 @@ class TestTableRowList(unittest.TestCase):
 
     def test_create(self):
         with ExitStack() as stack:
-            mock_table_row = stack.enter_context(patch("nnmm.process.value_objects.table_row_list.TableRow.create"))
+            mock_table_row = self.enterContext(patch("nnmm.process.value_objects.table_row_list.TableRow.create"))
             table_row = MagicMock(spec=TableRow)
             mock_table_row.side_effect = lambda m: table_row
 

@@ -27,21 +27,21 @@ class TestDeleteMylist(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.delete_mylist.logger.info"))
-            mockle = stack.enter_context(patch("nnmm.process.delete_mylist.logger.error"))
-            mock_update_mylist_pane = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.delete_mylist.logger.info"))
+            mockle = self.enterContext(patch("nnmm.process.delete_mylist.logger.error"))
+            mock_update_mylist_pane = self.enterContext(
                 patch("nnmm.process.delete_mylist.ProcessBase.update_mylist_pane")
             )
-            mock_get_selected_mylist_row = stack.enter_context(
+            mock_get_selected_mylist_row = self.enterContext(
                 patch("nnmm.process.delete_mylist.ProcessBase.get_selected_mylist_row")
             )
-            mock_get_upper_textbox = stack.enter_context(
+            mock_get_upper_textbox = self.enterContext(
                 patch("nnmm.process.delete_mylist.ProcessBase.get_upper_textbox")
             )
-            mock_get_bottom_textbox = stack.enter_context(
+            mock_get_bottom_textbox = self.enterContext(
                 patch("nnmm.process.delete_mylist.ProcessBase.get_bottom_textbox")
             )
-            mock_popup_ok_cancel = stack.enter_context(patch("nnmm.process.delete_mylist.sg.popup_ok_cancel"))
+            mock_popup_ok_cancel = self.enterContext(patch("nnmm.process.delete_mylist.sg.popup_ok_cancel"))
             mock_mylist_db = MagicMock()
 
             instance = DeleteMylist(self.process_info)

@@ -145,15 +145,15 @@ class TestVideoPlay(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.video_play.logger.info"))
-            mock_config = stack.enter_context(patch("nnmm.process.video_play.process_config.ConfigBase.get_config"))
-            mock_execute = stack.enter_context(patch("nnmm.process.video_play.sg.execute_command_subprocess"))
-            mock_popup = stack.enter_context(patch("nnmm.process.video_play.sg.popup_ok"))
-            mock_watched = stack.enter_context(patch("nnmm.process.video_play.Watched"))
-            mock_selected_table_row_index_list = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.video_play.logger.info"))
+            mock_config = self.enterContext(patch("nnmm.process.video_play.process_config.ConfigBase.get_config"))
+            mock_execute = self.enterContext(patch("nnmm.process.video_play.sg.execute_command_subprocess"))
+            mock_popup = self.enterContext(patch("nnmm.process.video_play.sg.popup_ok"))
+            mock_watched = self.enterContext(patch("nnmm.process.video_play.Watched"))
+            mock_selected_table_row_index_list = self.enterContext(
                 patch("nnmm.process.video_play.ProcessBase.get_selected_table_row_index_list")
             )
-            mock_selected_table_row_list = stack.enter_context(
+            mock_selected_table_row_list = self.enterContext(
                 patch("nnmm.process.video_play.ProcessBase.get_selected_table_row_list")
             )
 

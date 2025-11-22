@@ -153,8 +153,8 @@ class TestPopupMylistWindow(unittest.TestCase):
     @unittest.skip("")
     def test_init(self):
         with ExitStack() as stack:
-            mock_logger_error = stack.enter_context(patch("nnmm.process.popup.logger.error"))
-            mock_selected_mylist_row = stack.enter_context(
+            mock_logger_error = self.enterContext(patch("nnmm.process.popup.logger.error"))
+            mock_selected_mylist_row = self.enterContext(
                 patch("nnmm.process.popup.ProcessBase.get_selected_mylist_row")
             )
 

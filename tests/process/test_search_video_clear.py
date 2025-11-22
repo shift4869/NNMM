@@ -24,8 +24,8 @@ class TestVideoSearchClear(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))
-            mock_update_table_pane = stack.enter_context(patch("nnmm.process.search.ProcessBase.update_table_pane"))
+            mockli = self.enterContext(patch("nnmm.process.search.logger.info"))
+            mock_update_table_pane = self.enterContext(patch("nnmm.process.search.ProcessBase.update_table_pane"))
 
             instance = VideoSearchClear(self.process_info)
             mylist_url = "mylist_url_1"

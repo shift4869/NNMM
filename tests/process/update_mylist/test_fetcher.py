@@ -33,8 +33,8 @@ class TestFetcher(unittest.TestCase):
 
     def test_execute(self):
         with ExitStack() as stack:
-            mock_thread = stack.enter_context(patch("nnmm.process.update_mylist.fetcher.ThreadPoolExecutor"))
-            mock_create = stack.enter_context(patch("nnmm.process.update_mylist.fetcher.PayloadList.create"))
+            mock_thread = self.enterContext(patch("nnmm.process.update_mylist.fetcher.ThreadPoolExecutor"))
+            mock_create = self.enterContext(patch("nnmm.process.update_mylist.fetcher.PayloadList.create"))
 
             mock_thread.return_value.__enter__.return_value.submit.return_value.result.return_value = (
                 "executor.submit().result()"
@@ -64,8 +64,8 @@ class TestFetcher(unittest.TestCase):
     @unittest.skip("")
     def test_execute_worker(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.fetcher.logger.info"))
-            mock_fetch_videoinfo = stack.enter_context(
+            mock_logger = self.enterContext(patch("nnmm.process.update_mylist.fetcher.logger.info"))
+            mock_fetch_videoinfo = self.enterContext(
                 patch("nnmm.process.update_mylist.fetcher.VideoInfoFetcher.fetch_videoinfo")
             )
             mock_fetch_videoinfo.side_effect = lambda url: "VideoInfoFetcher.fetch_videoinfo()"

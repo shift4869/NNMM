@@ -45,13 +45,13 @@ class TestTimer(unittest.TestCase):
     def test_run(self):
         with ExitStack() as stack:
             f_now = "2021-11-23 01:00:00"
-            mockfg = stack.enter_context(freezegun.freeze_time(f_now))
-            mockli = stack.enter_context(patch("nnmm.process.timer.logger.info"))
-            mockle = stack.enter_context(patch("nnmm.process.timer.logger.error"))
-            mock_config = stack.enter_context(patch("nnmm.process.timer.ConfigBase.get_config"))
-            mock_threading_timer = stack.enter_context(patch("nnmm.process.timer.threading.Timer"))
-            mock_timer_cancel = stack.enter_context(patch("nnmm.process.timer.Timer._timer_cancel"))
-            mock_bottom_textbox = stack.enter_context(patch("nnmm.process.timer.ProcessBase.get_bottom_textbox"))
+            mockfg = self.enterContext(freezegun.freeze_time(f_now))
+            mockli = self.enterContext(patch("nnmm.process.timer.logger.info"))
+            mockle = self.enterContext(patch("nnmm.process.timer.logger.error"))
+            mock_config = self.enterContext(patch("nnmm.process.timer.ConfigBase.get_config"))
+            mock_threading_timer = self.enterContext(patch("nnmm.process.timer.threading.Timer"))
+            mock_timer_cancel = self.enterContext(patch("nnmm.process.timer.Timer._timer_cancel"))
+            mock_bottom_textbox = self.enterContext(patch("nnmm.process.timer.ProcessBase.get_bottom_textbox"))
             mock_timer_thread = MagicMock()
 
             instance = Timer(self.process_info)

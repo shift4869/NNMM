@@ -11,7 +11,7 @@ from nnmm.process.config import ConfigLoad
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
 
-CONFIG_FILE_PATH = "./config/config.ini"
+CONFIG_FILE_PATH = "./config/config.json"
 
 
 class TestConfigLoad(unittest.TestCase):
@@ -27,53 +27,51 @@ class TestConfigLoad(unittest.TestCase):
         process_mylist_load = ConfigLoad(self.process_info)
         self.assertEqual(self.process_info, process_mylist_load.process_info)
 
-    @unittest.skip("")
     def test_run(self):
-        with ExitStack() as stack:
-            mocksc = stack.enter_context(patch("nnmm.process.config.ConfigBase.set_config"))
-            mockgc = stack.enter_context(patch("nnmm.process.config.ConfigBase.get_config"))
+        mocksc = self.enterContext(patch("nnmm.process.config.ConfigBase.set_config"))
+        mockgc = self.enterContext(patch("nnmm.process.config.ConfigBase.get_config"))
 
-            expect_dict = {
-                "general": {
-                    "browser_path": "browser_path",
-                    "auto_reload": "auto_reload",
-                    "rss_save_path": "rss_save_path",
-                },
-                "db": {
-                    "save_path": "save_path",
-                },
-            }
-            mockgc.side_effect = [expect_dict]
+        expect_dict = {
+            "general": {
+                "browser_path": "browser_path",
+                "auto_reload": "auto_reload",
+                "rss_save_path": "rss_save_path",
+            },
+            "db": {
+                "save_path": "save_path",
+            },
+        }
+        mockgc.side_effect = [expect_dict]
 
-            mockup = MagicMock()
-            mockd = MagicMock()
-            type(mockd).update = mockup
-            mock_dict = {
-                "-C_BROWSER_PATH-": mockd,
-                "-C_AUTO_RELOAD-": mockd,
-                "-C_RSS_PATH-": mockd,
-                "-C_DB_PATH-": mockd,
-                "-C_ACCOUNT_EMAIL-": mockd,
-                "-C_ACCOUNT_PASSWORD-": mockd,
-            }
+        mockup = MagicMock()
+        mockd = MagicMock()
+        type(mockd).update = mockup
+        mock_dict = {
+            "-C_BROWSER_PATH-": mockd,
+            "-C_AUTO_RELOAD-": mockd,
+            "-C_RSS_PATH-": mockd,
+            "-C_DB_PATH-": mockd,
+            "-C_ACCOUNT_EMAIL-": mockd,
+            "-C_ACCOUNT_PASSWORD-": mockd,
+        }
 
-            self.process_info.window = mock_dict
-            process_config_load = ConfigLoad(self.process_info)
-            actual = process_config_load.run()
-            self.assertIs(Result.success, actual)
+        self.process_info.window = mock_dict
+        process_config_load = ConfigLoad(self.process_info)
+        actual = process_config_load.run()
+        self.assertIs(Result.success, actual)
 
-            # ucal[{n回目の呼び出し}][args=0]
-            # ucal[{n回目の呼び出し}][kwargs=1]
-            ucal = mockup.call_args_list
-            self.assertEqual(len(ucal), 5)
-            self.assertEqual({"value": expect_dict["general"]["browser_path"]}, ucal[0][1])
-            self.assertEqual({"value": expect_dict["general"]["auto_reload"]}, ucal[1][1])
-            self.assertEqual({"value": expect_dict["general"]["rss_save_path"]}, ucal[2][1])
-            self.assertEqual({"value": expect_dict["db"]["save_path"]}, ucal[3][1])
-            # self.assertEqual({"value": expect_dict["niconico"]["email"]}, ucal[4][1])
-            # self.assertEqual({"value": expect_dict["niconico"]["password"]}, ucal[5][1])
-            self.assertEqual({"select": False}, ucal[4][1])
-            mockup.reset_mock()
+        # ucal[{n回目の呼び出し}][args=0]
+        # ucal[{n回目の呼び出し}][kwargs=1]
+        ucal = mockup.call_args_list
+        self.assertEqual(len(ucal), 5)
+        self.assertEqual({"value": expect_dict["general"]["browser_path"]}, ucal[0][1])
+        self.assertEqual({"value": expect_dict["general"]["auto_reload"]}, ucal[1][1])
+        self.assertEqual({"value": expect_dict["general"]["rss_save_path"]}, ucal[2][1])
+        self.assertEqual({"value": expect_dict["db"]["save_path"]}, ucal[3][1])
+        # self.assertEqual({"value": expect_dict["niconico"]["email"]}, ucal[4][1])
+        # self.assertEqual({"value": expect_dict["niconico"]["password"]}, ucal[5][1])
+        self.assertEqual({"select": False}, ucal[4][1])
+        mockup.reset_mock()
         pass
 
 

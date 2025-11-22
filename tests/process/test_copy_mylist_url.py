@@ -26,9 +26,9 @@ class TestCopyMylistUrl(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("nnmm.process.copy_mylist_url.logger"))
-            mock_pyperclip = stack.enter_context(patch("nnmm.process.copy_mylist_url.pyperclip"))
-            mock_selected_mylist_row = stack.enter_context(
+            mock_logger = self.enterContext(patch("nnmm.process.copy_mylist_url.logger"))
+            mock_pyperclip = self.enterContext(patch("nnmm.process.copy_mylist_url.pyperclip"))
+            mock_selected_mylist_row = self.enterContext(
                 patch("nnmm.process.copy_mylist_url.ProcessBase.get_selected_mylist_row")
             )
             instance = CopyMylistUrl(self.process_info)

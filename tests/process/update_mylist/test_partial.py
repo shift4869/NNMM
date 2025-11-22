@@ -47,8 +47,8 @@ class TestPartial(unittest.TestCase):
     def test_get_target_mylist(self):
         with ExitStack() as stack:
             f_now = "2023-12-23 12:34:56"
-            freeze_gun = stack.enter_context(freezegun.freeze_time(f_now))
-            mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.partial.logger"))
+            freeze_gun = self.enterContext(freezegun.freeze_time(f_now))
+            mock_logger = self.enterContext(patch("nnmm.process.update_mylist.partial.logger"))
 
             MAX_CHECK_FAILED_COUNT = 10
             mylist_dict_list = [self._get_mylist_dict(i) for i in range(4)]

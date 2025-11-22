@@ -24,8 +24,8 @@ class TestMylistSearchClear(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.search.logger.info"))
-            mock_update_mylist_pane = stack.enter_context(patch("nnmm.process.search.ProcessBase.update_mylist_pane"))
+            mockli = self.enterContext(patch("nnmm.process.search.logger.info"))
+            mock_update_mylist_pane = self.enterContext(patch("nnmm.process.search.ProcessBase.update_mylist_pane"))
             instance = MylistSearchClear(self.process_info)
             actual = instance.run()
             self.assertIs(Result.success, actual)

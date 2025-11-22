@@ -66,11 +66,11 @@ class TestShowMylistInfo(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.show_mylist_info.logger.info"))
-            mock_update_table_pane = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.show_mylist_info.logger.info"))
+            mock_update_table_pane = self.enterContext(
                 patch("nnmm.process.show_mylist_info.ProcessBase.update_table_pane")
             )
-            mock_selected_mylist_row = stack.enter_context(
+            mock_selected_mylist_row = self.enterContext(
                 patch("nnmm.process.show_mylist_info.ProcessBase.get_selected_mylist_row")
             )
 

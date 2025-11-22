@@ -110,8 +110,8 @@ class TestPopupVideoWindow(unittest.TestCase):
     @unittest.skip("")
     def test_init(self):
         with ExitStack() as stack:
-            mock_logger_info = stack.enter_context(patch("nnmm.process.popup.logger.info"))
-            mock_logger_error = stack.enter_context(patch("nnmm.process.popup.logger.error"))
+            mock_logger_info = self.enterContext(patch("nnmm.process.popup.logger.info"))
+            mock_logger_error = self.enterContext(patch("nnmm.process.popup.logger.error"))
             mock_values = MagicMock()
             mock_window = MagicMock()
             mock_mylist_info_db = MagicMock()

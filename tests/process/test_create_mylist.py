@@ -161,16 +161,16 @@ class TestCreateMylist(unittest.TestCase):
     @unittest.skip("")
     def test_CreateMylist_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.create_mylist.logger.info"))
-            mockle = stack.enter_context(patch("nnmm.process.create_mylist.logger.error"))
-            mockpu = stack.enter_context(patch("nnmm.process.create_mylist.sg.popup"))
-            mock_get_config = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.create_mylist.logger.info"))
+            mockle = self.enterContext(patch("nnmm.process.create_mylist.logger.error"))
+            mockpu = self.enterContext(patch("nnmm.process.create_mylist.sg.popup"))
+            mock_get_config = self.enterContext(
                 patch("nnmm.process.create_mylist.process_config.ConfigBase.get_config")
             )
-            mock_get_now_datetime = stack.enter_context(patch("nnmm.process.create_mylist.get_now_datetime"))
-            mock_popup_get_text = stack.enter_context(patch("nnmm.process.create_mylist.popup_get_text"))
-            mock_window = stack.enter_context(patch("nnmm.process.create_mylist.QDialog"))
-            mock_make_layout = stack.enter_context(patch("nnmm.process.create_mylist.CreateMylist.make_layout"))
+            mock_get_now_datetime = self.enterContext(patch("nnmm.process.create_mylist.get_now_datetime"))
+            mock_popup_get_text = self.enterContext(patch("nnmm.process.create_mylist.popup_get_text"))
+            mock_window = self.enterContext(patch("nnmm.process.create_mylist.QDialog"))
+            mock_make_layout = self.enterContext(patch("nnmm.process.create_mylist.CreateMylist.make_layout"))
             mock_select_from_url = MagicMock()
             instance = CreateMylist(self.process_info)
 
@@ -381,14 +381,14 @@ class TestCreateMylist(unittest.TestCase):
     @unittest.skip("")
     def test_CreateMylistThreadDone_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.create_mylist.logger.info"))
-            mock_update_mylist_pane = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.create_mylist.logger.info"))
+            mock_update_mylist_pane = self.enterContext(
                 patch("nnmm.process.create_mylist.ProcessBase.update_mylist_pane")
             )
-            mock_update_table_pane = stack.enter_context(
+            mock_update_table_pane = self.enterContext(
                 patch("nnmm.process.create_mylist.ProcessBase.update_table_pane")
             )
-            mock_get_upper_textbox = stack.enter_context(
+            mock_get_upper_textbox = self.enterContext(
                 patch("nnmm.process.create_mylist.ProcessBase.get_upper_textbox")
             )
 

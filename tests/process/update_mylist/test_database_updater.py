@@ -111,7 +111,7 @@ class TestDatabaseUpdater(unittest.TestCase):
 
     def test_execute(self):
         with ExitStack() as stack:
-            mock_thread = stack.enter_context(patch("nnmm.process.update_mylist.database_updater.ThreadPoolExecutor"))
+            mock_thread = self.enterContext(patch("nnmm.process.update_mylist.database_updater.ThreadPoolExecutor"))
 
             mock_thread.return_value.__enter__.return_value.submit.return_value.result.return_value = (
                 "executor.submit().result()"
@@ -140,14 +140,12 @@ class TestDatabaseUpdater(unittest.TestCase):
     @unittest.skip("")
     def test_execute_worker(self):
         with ExitStack() as stack:
-            mock_logger = stack.enter_context(patch("nnmm.process.update_mylist.database_updater.logger.info"))
-            mock_mylist_db = stack.enter_context(
-                patch("nnmm.process.update_mylist.database_updater.MylistDBController")
-            )
-            mock_mylist_info_db = stack.enter_context(
+            mock_logger = self.enterContext(patch("nnmm.process.update_mylist.database_updater.logger.info"))
+            mock_mylist_db = self.enterContext(patch("nnmm.process.update_mylist.database_updater.MylistDBController"))
+            mock_mylist_info_db = self.enterContext(
                 patch("nnmm.process.update_mylist.database_updater.MylistInfoDBController")
             )
-            mock_get_now_datetime = stack.enter_context(
+            mock_get_now_datetime = self.enterContext(
                 patch("nnmm.process.update_mylist.database_updater.get_now_datetime")
             )
             dst = "2023-12-23 15:49:43"

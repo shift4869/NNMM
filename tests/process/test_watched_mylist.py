@@ -66,15 +66,15 @@ class TestWatchedMylist(unittest.TestCase):
     @unittest.skip("")
     def test_run(self):
         with ExitStack() as stack:
-            mockli = stack.enter_context(patch("nnmm.process.watched_mylist.logger.info"))
-            mockle = stack.enter_context(patch("nnmm.process.watched_mylist.logger.error"))
-            mock_selected_mylist_row = stack.enter_context(
+            mockli = self.enterContext(patch("nnmm.process.watched_mylist.logger.info"))
+            mockle = self.enterContext(patch("nnmm.process.watched_mylist.logger.error"))
+            mock_selected_mylist_row = self.enterContext(
                 patch("nnmm.process.watched_mylist.ProcessBase.get_selected_mylist_row")
             )
-            mock_update_mylist_pane = stack.enter_context(
+            mock_update_mylist_pane = self.enterContext(
                 patch("nnmm.process.watched_mylist.ProcessBase.update_mylist_pane")
             )
-            mock_update_table_pane = stack.enter_context(
+            mock_update_table_pane = self.enterContext(
                 patch("nnmm.process.watched_mylist.ProcessBase.update_table_pane")
             )
 
