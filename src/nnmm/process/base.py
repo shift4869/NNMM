@@ -51,12 +51,13 @@ class ProcessBase(ABC):
         raise NotImplementedError
 
     def get_selected_mylist_row_index(self) -> SelectedMylistRowIndex | None:
-        """self.window["-LIST-"].get_indexes()[0] から SelectedMylistRowIndex を取得
+        """list_widget から SelectedMylistRowIndex を取得
 
         マイリストの選択は単数想定
+        未選択時は SelectedMylistRowIndex(0) を返す
 
         Returns:
-            SelectedMylistRowIndex | None: 選択マイリストインデックス
+            SelectedMylistRowIndex | None: 現在選択中のマイリストのインデックス, エラー時None
         """
         if not hasattr(self.window, "list_widget"):
             return None
@@ -188,7 +189,7 @@ class ProcessBase(ABC):
             if n == 0:
                 return None
             m = len(table_row_list[0].to_row())
-            if m == 0:
+            if m != len(table_cols_name):
                 return None
             table_widget.setRowCount(n)
             table_widget.setColumnCount(m)
@@ -353,19 +354,13 @@ class ProcessBase(ABC):
                 table_row_list.append(table_row)
             def_data = TableRowList.create(table_row_list)
 
-        # 画面更新
-        # LIST は空のときにindexを設定しても問題ないが、
-        # TABLE は空のときにselect_rowsしてはいけない
-        # self.window["-LIST-"].update(set_to_index=index)
+        # マイリストについて、インデックスを設定してスクロール
         list_widget: QListWidget = self.window.list_widget
         list_widget.setCurrentRow(index)
 
-        table_widget: QTableWidget = self.window.table_widget
+        # テーブルについて、データを設定して表示を更新
         self.set_all_table_row(def_data)
-        # if len(def_data) > 0:
-        #     table_widget.selectRow(0)
-        # 1行目は背景色がリセットされないので個別に指定してdefaultの色で上書き
-        # self.window["-TABLE-"].update(row_colors=[(0, "", "")])
+
         return Result.success
 
 
