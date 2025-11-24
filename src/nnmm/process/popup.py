@@ -72,6 +72,8 @@ class PopupWindowBase(ProcessBase):
 
 
 class PopupMylistWindow(PopupWindowBase):
+    """マイリスト情報表示時にポップアップするウィンドウクラス"""
+
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
@@ -157,8 +159,8 @@ class PopupMylistWindow(PopupWindowBase):
         except ValueError:
             return None  # キャスト失敗エラー
 
-        if check_interval_num < 0:
-            return None  # 負の数ならエラー([1-59]の範囲想定)
+        if check_interval_num <= 0:
+            return None  # 0以下の数ならエラー([1-59]の範囲想定)
 
         if check_interval_unit not in unit_list:
             return None  # 想定外の単位ならエラー
@@ -254,6 +256,8 @@ class PopupMylistWindow(PopupWindowBase):
 
     def update_mylist_info(self) -> Result:
         if not hasattr(self, "component"):
+            logger.error("component attribute not found.")
+            self.popup_window.close()
             return Result.failed
         component: dict[str, QPushButton] | dict[str, dict[str, QComboBox]] = self.component
 
@@ -273,6 +277,8 @@ class PopupMylistWindow(PopupWindowBase):
             "未視聴フラグ",
         ]
         if list(component.keys()) != COMPONENT_KEYS:
+            logger.error("component keys is invalid.")
+            self.popup_window.close()
             return Result.failed
 
         # 値の設定
@@ -297,6 +303,7 @@ class PopupMylistWindow(PopupWindowBase):
         if dt < -1:
             # インターバル文字列解釈エラー
             logger.error(f"update interval setting is invalid : {interval_str}")
+            self.popup_window.close()
             return Result.failed
 
         # マイリスト情報更新

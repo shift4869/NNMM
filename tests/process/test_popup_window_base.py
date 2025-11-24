@@ -4,7 +4,7 @@ from collections import namedtuple
 from contextlib import ExitStack
 
 from mock import MagicMock, call, patch
-from PySide6.QtWidgets import QDialog
+from PySide6.QtWidgets import QDialog, QVBoxLayout
 
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
@@ -13,149 +13,95 @@ from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
 
 
-# テスト用具体化PopupWindowBase
 class ConcretePopupWindowBase(PopupWindowBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
+        self._init_ret = Result.success
+        self._layout_ret = MagicMock(spec=QVBoxLayout)
 
-    def create_window_layout(self):
-        return [["layout"]]
+    def create_window_layout(self) -> QVBoxLayout | None:
+        return self._layout_ret
 
     def init(self) -> Result:
-        return Result.success
+        return self._init_ret
 
 
 class TestPopupWindowBase(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.popup.logger.info"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
-        self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    @unittest.skip("")
     def test_init(self):
         instance = ConcretePopupWindowBase(self.process_info)
 
         self.assertEqual(self.process_info, instance.process_info)
         self.assertEqual(None, instance.popup_window)
         self.assertEqual("", instance.title)
-        self.assertEqual((100, 100), instance.size)
-        self.assertEqual({}, instance.process_dict)
+        self.assertEqual("", instance.url)
 
-        self.assertIs(Result.success, instance.init())
+    def test_create_component(self):
+        instance = ConcretePopupWindowBase(self.process_info)
+        self.assertIsNone(instance.create_component())
 
-    @unittest.skip("")
+    def test_init_method(self):
+        instance = ConcretePopupWindowBase(self.process_info)
+        self.assertEqual(Result.success, instance.init())
+
     def test_make_window_layout(self):
         instance = ConcretePopupWindowBase(self.process_info)
-        self.assertEqual([["layout"]], instance.create_window_layout())
+        self.assertIsInstance(instance.create_window_layout(), QVBoxLayout)
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            mock_logger_info = self.enterContext(patch("nnmm.process.popup.logger.info"))
-            mock_window = self.enterContext(patch("nnmm.process.popup.QDialog"))
-            mock_init = self.enterContext(patch("nnmm.process.popup.PopupWindowBase.init"))
-            mock_layout = self.enterContext(patch("nnmm.process.popup.PopupWindowBase.make_window_layout"))
-            mock_popup_ok = self.enterContext(patch("nnmm.process.popup.sg.popup_ok"))
-            mock_process_info = self.enterContext(patch("nnmm.process.popup.ProcessInfo"))
-            mock_process_base = MagicMock()
+    def test_callback(self):
+        mock_popup = self.enterContext(patch("nnmm.process.popup.popup"))
+        mock_qdialog = self.enterContext(patch("nnmm.process.popup.QDialog"))
+        qdialog_inst = mock_qdialog.return_value
+        qdialog_inst.setWindowTitle = MagicMock()
+        qdialog_inst.setLayout = MagicMock()
+        qdialog_inst.exec = MagicMock()
 
-            event_list = [("-DO-", "value1"), ("-DO_NOTHING-", "value2"), ("-EXIT-", "value3")]
-            instance = ConcretePopupWindowBase(self.process_info)
+        # 正常系
+        instance = ConcretePopupWindowBase(self.process_info)
+        instance.title = "テストタイトル"
+        instance.url = "テストURL"
 
-            def pre_run(s_init, s_layout):
-                mock_init.reset_mock()
-                mock_init.return_value = s_init
-                instance.init = mock_init
+        actual = instance.callback()
 
-                mock_layout.reset_mock()
-                mock_layout.return_value = s_layout
-                instance.create_window_layout = mock_layout
+        self.assertEqual(Result.success, actual)
+        mock_popup.assert_not_called()
+        mock_qdialog.assert_called_once()
+        qdialog_inst.setWindowTitle.assert_called_once_with("テストタイトル")
+        qdialog_inst.setLayout.assert_called_once_with(instance._layout_ret)
+        qdialog_inst.exec.assert_called_once()
 
-                mock_window.reset_mock()
-                mock_window.return_value.read.side_effect = event_list
-                mock_process_base.reset_mock()
-                instance.process_dict = {"-DO-": mock_process_base}
-                mock_process_info.reset_mock()
-                mock_popup_ok.reset_mock()
+        mock_popup.reset_mock()
+        mock_qdialog.reset_mock()
 
-            def post_run(s_init, s_layout):
-                self.assertEqual(
-                    [
-                        call(),
-                    ],
-                    mock_init.mock_calls,
-                )
-                if s_init == Result.failed:
-                    self.assertEqual(
-                        [
-                            call("情報ウィンドウの初期化に失敗しました。"),
-                        ],
-                        mock_popup_ok.mock_calls,
-                    )
-                    mock_layout.assert_not_called()
-                    mock_window.assert_not_called()
-                    mock_process_info.assert_not_called()
-                    mock_process_base.assert_not_called()
-                    return
+        # 異常系: ウィンドウレイアウト作成失敗
+        instance = ConcretePopupWindowBase(self.process_info)
+        instance._layout_ret = None
 
-                self.assertEqual(
-                    [
-                        call(),
-                    ],
-                    mock_layout.mock_calls,
-                )
-                if not s_layout:
-                    self.assertEqual(
-                        [
-                            call("情報ウィンドウのレイアウト表示に失敗しました。"),
-                        ],
-                        mock_popup_ok.mock_calls,
-                    )
-                    mock_window.assert_not_called()
-                    mock_process_info.assert_not_called()
-                    mock_process_base.assert_not_called()
-                    return
+        actual = instance.callback()
 
-                self.assertEqual(
-                    [
-                        call(instance.title, s_layout, size=(100, 100), finalize=True, resizable=True, modal=True),
-                        call().read(),
-                        call().read(),
-                        call().read(),
-                        call().close(),
-                    ],
-                    mock_window.mock_calls,
-                )
+        self.assertEqual(Result.failed, actual)
+        mock_popup.assert_called_with("情報ウィンドウのレイアウト表示に失敗しました。")
+        mock_qdialog.assert_not_called()
 
-                self.assertEqual(
-                    [
-                        call(
-                            "-DO-", instance.popup_window, instance.values, instance.mylist_db, instance.mylist_info_db
-                        )
-                    ],
-                    mock_process_info.mock_calls,
-                )
+        mock_popup.reset_mock()
+        mock_qdialog.reset_mock()
 
-                self.assertEqual(
-                    [call.__bool__(), call(mock_process_info()), call().run()], mock_process_base.mock_calls
-                )
+        # 異常系: ウィンドウレイアウト作成失敗
+        instance = ConcretePopupWindowBase(self.process_info)
+        instance._init_ret = Result.failed
 
-            Params = namedtuple("Params", ["init", "layout", "result"])
-            params_list = [
-                Params(Result.success, [["layout"]], Result.success),
-                Params(Result.success, None, Result.failed),
-                Params(Result.failed, [["layout"]], Result.failed),
-            ]
-            for params in params_list:
-                pre_run(params.init, params.layout)
-                actual = instance.run()
-                expect = params.result
-                self.assertIs(expect, actual)
-                post_run(params.init, params.layout)
-        pass
+        res = instance.callback()
+
+        self.assertEqual(Result.failed, res)
+        mock_popup.assert_called_with("情報ウィンドウの初期化に失敗しました。")
+        mock_qdialog.assert_not_called()
 
 
 if __name__ == "__main__":
