@@ -9,8 +9,8 @@ import qdarktheme
 from PySide6.QtCore import QPoint, Qt, Slot, qVersion
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QAbstractItemView, QApplication, QComboBox, QDialog, QGridLayout, QGroupBox, QHBoxLayout
-from PySide6.QtWidgets import QLabel, QLineEdit, QListWidget, QListWidgetItem, QMenu, QTableWidget, QTabWidget
-from PySide6.QtWidgets import QTextEdit, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLabel, QLineEdit, QListWidget, QListWidgetItem, QMenu, QPushButton, QTableWidget
+from PySide6.QtWidgets import QTabWidget, QTextEdit, QVBoxLayout, QWidget
 
 import nnmm.util
 from nnmm.mylist_db_controller import MylistDBController
@@ -139,7 +139,8 @@ class MainWindow(QDialog):
         leftpane = QVBoxLayout()
         update_button = QHBoxLayout()
         all_update_button = self.component_helper("すべて更新", every.Every)
-        partial_update_button = self.component_helper("インターバル更新", partial.Partial)
+        partial_update_button: QPushButton = self.component_helper("インターバル更新", partial.Partial)
+        partial_update_button.setAutoDefault(True)
         single_update_button = self.component_helper("更新", single.Single)
         update_button.addWidget(all_update_button)
         update_button.addWidget(partial_update_button)

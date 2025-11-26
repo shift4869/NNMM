@@ -67,7 +67,7 @@ class ShowMylistInfoAll(ProcessBase):
         def_data = TableRowList.create(table_row_list)
 
         # 右上のマイリストURLは空白にする
-        self.set_upper_textbox("")
+        self.set_upper_textbox("", False)
 
         # テーブル更新
         # update_table_paneはリフレッシュには使えるが初回は別に設定が必要なため使用できない
