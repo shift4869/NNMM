@@ -74,11 +74,14 @@ class Fetcher(ExecutorBase):
 
         with self.lock:
             self.done_count = self.done_count + 1
-            p_str = f"取得中({self.done_count}/{all_index_num})"
-            oneline_log: QLineEdit = self.window.oneline_log
-            oneline_log.setText(p_str)
-            oneline_log.update()
-            logger.info(mylist_url + f" : getting done ... ({self.done_count}/{all_index_num}).")
+            if isinstance(result, FetchedVideoInfo):
+                p_str = f"取得中({self.done_count}/{all_index_num})"
+                oneline_log: QLineEdit = self.window.oneline_log
+                oneline_log.setText(p_str)
+                oneline_log.update()
+                logger.info(mylist_url + f" : getting done ... ({self.done_count}/{all_index_num}).")
+            else:
+                logger.info(mylist_url + f" : fetching failed. ({self.done_count}/{all_index_num}).")
         return result
 
 

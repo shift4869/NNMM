@@ -35,7 +35,6 @@ class TestDatabaseUpdater(unittest.TestCase):
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
-        self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
@@ -137,112 +136,111 @@ class TestDatabaseUpdater(unittest.TestCase):
                 mock_thread.mock_calls,
             )
 
-    @unittest.skip("")
     def test_execute_worker(self):
-        with ExitStack() as stack:
-            mock_logger = self.enterContext(patch("nnmm.process.update_mylist.database_updater.logger.info"))
-            mock_mylist_db = self.enterContext(patch("nnmm.process.update_mylist.database_updater.MylistDBController"))
-            mock_mylist_info_db = self.enterContext(
-                patch("nnmm.process.update_mylist.database_updater.MylistInfoDBController")
-            )
-            mock_get_now_datetime = self.enterContext(
-                patch("nnmm.process.update_mylist.database_updater.get_now_datetime")
-            )
-            dst = "2023-12-23 15:49:43"
-            mock_get_now_datetime.return_value = dst
-            payload_list = MagicMock(spec=PayloadList)
-            payload = MagicMock(spec=PayloadList)
+        mock_logger = self.enterContext(patch("nnmm.process.update_mylist.database_updater.logger.info"))
+        mock_mylist_db = self.enterContext(patch("nnmm.process.update_mylist.database_updater.MylistDBController"))
+        mock_mylist_info_db = self.enterContext(
+            patch("nnmm.process.update_mylist.database_updater.MylistInfoDBController")
+        )
+        mock_get_now_datetime = self.enterContext(
+            patch("nnmm.process.update_mylist.database_updater.get_now_datetime")
+        )
+        dst = "2023-12-23 15:49:43"
+        mock_get_now_datetime.return_value = dst
+        payload_list = MagicMock(spec=PayloadList)
+        payload = MagicMock(spec=PayloadList)
 
-            instance = DatabaseUpdater(payload_list, self.process_info)
-            instance.mylist_db.dbname = "mylist_db.dbname"
-            instance.mylist_info_db.dbname = "mylist_info_db.dbname"
+        instance = DatabaseUpdater(payload_list, self.process_info)
+        instance.mylist_db.dbname = "mylist_db.dbname"
+        instance.mylist_info_db.dbname = "mylist_info_db.dbname"
+        instance.window.oneline_log = MagicMock()
 
-            def get_payload(is_valid_fetched_info, add_new_video_flag):
-                mylist = self._get_typed_mylist()
-                video_list = self._get_typed_video_list()
-                fetched_info = self._get_fetched_video_info()
+        def get_payload(is_valid_fetched_info, add_new_video_flag):
+            mylist = self._get_typed_mylist()
+            video_list = self._get_typed_video_list()
+            fetched_info = self._get_fetched_video_info()
 
-                if not is_valid_fetched_info:
-                    fetched_info = Result.failed
+            if not is_valid_fetched_info:
+                fetched_info = Result.failed
 
-                if not add_new_video_flag:
-                    video_list = [v.replace_from_str(status="") for v in video_list]
-                    video_list = [v.replace_from_str(video_id="sm12345678") for v in video_list]
+            if not add_new_video_flag:
+                video_list = [v.replace_from_str(status="") for v in video_list]
+                video_list = [v.replace_from_str(video_id="sm12345678") for v in video_list]
 
-                all_index_num = 1
-                payload = (mylist, video_list, fetched_info, all_index_num)
-                return payload
+            all_index_num = 1
+            payload = (mylist, video_list, fetched_info, all_index_num)
+            return payload
 
-            def pre_run(payload, is_valid_fetched_info, add_new_video_flag):
-                mock_mylist_db.reset_mock()
-                mock_mylist_info_db.reset_mock()
-                instance.window.reset_mock()
-                instance.done_count = 0
+        def pre_run(payload, is_valid_fetched_info, add_new_video_flag):
+            mock_mylist_db.reset_mock()
+            mock_mylist_info_db.reset_mock()
+            instance.window.reset_mock()
+            instance.done_count = 0
 
-            def post_run(payload, is_valid_fetched_info, add_new_video_flag):
-                mylist_url = payload[0].url.non_query_url
-                if not is_valid_fetched_info:
-                    self.assertEqual(
-                        [call("mylist_db.dbname"), call().update_check_failed_count(mylist_url)],
-                        mock_mylist_db.mock_calls,
-                    )
-                    self.assertEqual([call("mylist_info_db.dbname")], mock_mylist_info_db.mock_calls)
-                    instance.window.assert_not_called()
-                    return
-
-                expect_mylist_db_calls = [
-                    call("mylist_db.dbname"),
-                    call().reset_check_failed_count(mylist_url),
-                    call().update_checked_at(mylist_url, dst),
-                ]
-                if add_new_video_flag:
-                    expect_mylist_db_calls.append(call().update_updated_at(mylist_url, dst))
-                self.assertEqual(expect_mylist_db_calls, mock_mylist_db.mock_calls)
-
-                if not add_new_video_flag:
-                    status = ""
-                else:
-                    status = "未視聴"
-
+        def post_run(payload, is_valid_fetched_info, add_new_video_flag):
+            mylist_url = payload[0].url.non_query_url
+            if not is_valid_fetched_info:
                 self.assertEqual(
-                    [
-                        call("mylist_info_db.dbname"),
-                        call().upsert_from_list([
-                            {
-                                "id": "1",
-                                "video_id": "sm12345678",
-                                "title": "テスト動画",
-                                "username": "投稿者1",
-                                "status": status,
-                                "uploaded_at": "2022-05-06 00:00:01",
-                                "registered_at": "2022-05-06 00:01:01",
-                                "video_url": "https://www.nicovideo.jp/watch/sm12345678",
-                                "mylist_url": "https://www.nicovideo.jp/user/1234567/mylist/12345678",
-                                "created_at": "2023-12-23 15:49:43",
-                            }
-                        ]),
-                    ],
-                    mock_mylist_info_db.mock_calls,
+                    [call("mylist_db.dbname"), call().update_check_failed_count(mylist_url)],
+                    mock_mylist_db.mock_calls,
                 )
+                self.assertEqual([call("mylist_info_db.dbname")], mock_mylist_info_db.mock_calls)
+                instance.window.assert_not_called()
+                return
 
-                self.assertEqual(
-                    [call.__getitem__("-INPUT2-"), call.__getitem__().update(value="更新中(1/1)")],
-                    instance.window.mock_calls,
-                )
-
-            Params = namedtuple("Params", ["is_valid_fetched_info", "add_new_video_flag", "result"])
-            params_list = [
-                Params(True, True, Result.success),
-                Params(True, False, Result.success),
-                Params(False, True, Result.failed),
+            expect_mylist_db_calls = [
+                call("mylist_db.dbname"),
+                call().reset_check_failed_count(mylist_url),
+                call().update_checked_at(mylist_url, dst),
             ]
-            for params in params_list:
-                payload = get_payload(*params[:-1])
-                pre_run(payload, *params[:-1])
-                actual = instance.execute_worker(*payload)
-                expect = params.result
-                self.assertEqual(expect, actual)
-                post_run(payload, *params[:-1])
+            if add_new_video_flag:
+                expect_mylist_db_calls.append(call().update_updated_at(mylist_url, dst))
+            self.assertEqual(expect_mylist_db_calls, mock_mylist_db.mock_calls)
+
+            if not add_new_video_flag:
+                status = ""
+            else:
+                status = "未視聴"
+
+            self.assertEqual(
+                [
+                    call("mylist_info_db.dbname"),
+                    call().upsert_from_list([
+                        {
+                            "id": "1",
+                            "video_id": "sm12345678",
+                            "title": "テスト動画",
+                            "username": "投稿者1",
+                            "status": status,
+                            "uploaded_at": "2022-05-06 00:00:01",
+                            "registered_at": "2022-05-06 00:01:01",
+                            "video_url": "https://www.nicovideo.jp/watch/sm12345678",
+                            "mylist_url": "https://www.nicovideo.jp/user/1234567/mylist/12345678",
+                            "created_at": "2023-12-23 15:49:43",
+                        }
+                    ]),
+                ],
+                mock_mylist_info_db.mock_calls,
+            )
+
+            self.assertEqual(
+                [call.oneline_log.setText("更新中(1/1)"), call.oneline_log.update()],
+                instance.window.mock_calls,
+            )
+
+        Params = namedtuple("Params", ["is_valid_fetched_info", "add_new_video_flag", "result"])
+        params_list = [
+            Params(True, True, Result.success),
+            Params(True, False, Result.success),
+            Params(False, True, Result.failed),
+        ]
+        for params in params_list:
+            payload = get_payload(*params[:-1])
+            pre_run(payload, *params[:-1])
+            actual = instance.execute_worker(*payload)
+            expect = params.result
+            self.assertEqual(expect, actual)
+            post_run(payload, *params[:-1])
 
 
 if __name__ == "__main__":

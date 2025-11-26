@@ -6,6 +6,7 @@ from logging import INFO, getLogger
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QPushButton, QWidget
 
+from nnmm.process import show_mylist_info_all
 from nnmm.process.base import ProcessBase
 from nnmm.process.update_mylist.database_updater import DatabaseUpdater
 from nnmm.process.update_mylist.fetcher import Fetcher
@@ -51,6 +52,7 @@ class Base(ProcessBase):
     def create_component(self) -> QWidget:
         add_mylist_button = QPushButton(self.name)
         add_mylist_button.clicked.connect(lambda: self.callback())
+        add_mylist_button.setAutoDefault(False)
         return add_mylist_button
 
     @Slot()
@@ -137,8 +139,11 @@ class ThreadDoneBase(ProcessBase):
 
         # テーブルの表示を更新する
         mylist_url = self.get_upper_textbox().to_str()
-        if mylist_url != "":
-            self.update_table_pane(mylist_url)
+        if mylist_url == "":
+            # 現在何もテーブルに表示されていない場合
+            # 横断表示する
+            show_mylist_info_all.ShowMylistInfoAll(ProcessInfo.create("全動画表示", self.window)).callback()
+        self.update_table_pane(mylist_url)
 
         # マイリストの新着表示を表示するかどうか判定する
         m_list = self.mylist_db.select()

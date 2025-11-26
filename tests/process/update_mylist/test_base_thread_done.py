@@ -1,7 +1,6 @@
 import sys
 import unittest
 from collections import namedtuple
-from contextlib import ExitStack
 
 from mock import MagicMock, call, patch
 from PySide6.QtWidgets import QDialog
@@ -9,6 +8,7 @@ from PySide6.QtWidgets import QDialog
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process.update_mylist.base import ThreadDoneBase
+from nnmm.process.update_mylist.value_objects.mylist_dict_list import MylistDictList
 from nnmm.process.update_mylist.value_objects.video_dict_list import VideoDictList
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
@@ -16,10 +16,10 @@ from nnmm.util import Result
 
 class TestBase(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.update_mylist.base.logger.info"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
-        self.process_info.values = MagicMock(spec=dict)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
@@ -31,9 +31,9 @@ class TestBase(unittest.TestCase):
             "type": "uploaded",
             "showname": "投稿者1さんの投稿動画",
             "url": "https://www.nicovideo.jp/user/10000001/video",
-            "created_at": "2023-12-22 12:34:56",
-            "updated_at": "2023-12-22 12:34:56",
-            "checked_at": "2023-12-22 12:34:56",
+            "created_at": "2025-11-25 12:34:56",
+            "updated_at": "2025-11-25 12:34:56",
+            "checked_at": "2025-11-25 12:34:56",
             "check_interval": "15分",
             "check_failed_count": 0,
             "is_include_new": True,
@@ -47,11 +47,11 @@ class TestBase(unittest.TestCase):
             "title": "title_1",
             "username": "username_1",
             "status": "未視聴",
-            "uploaded_at": "2023-12-22 12:34:51",
-            "registered_at": "2023-12-22 12:34:51",
+            "uploaded_at": "2025-11-25 12:34:51",
+            "registered_at": "2025-11-25 12:34:51",
             "video_url": "https://www.nicovideo.jp/watch/sm12345671",
             "mylist_url": mylist_url,
-            "created_at": "2023-12-22 12:34:51",
+            "created_at": "2025-11-25 12:34:51",
         }
         return [typed_video]
 
@@ -60,90 +60,126 @@ class TestBase(unittest.TestCase):
         self.assertEqual(self.process_info, instance.process_info)
         self.assertEqual("UpdateMylist Base", instance.L_KIND)
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            mock_logger = self.enterContext(patch("nnmm.process.update_mylist.base.logger.info"))
-            mock_get_upper_textbox = self.enterContext(
-                patch("nnmm.process.update_mylist.base.ProcessBase.get_upper_textbox")
-            )
-            mock_update_table_pane = self.enterContext(
-                patch("nnmm.process.update_mylist.base.ProcessBase.update_table_pane")
-            )
-            mock_is_mylist_include_new_video = self.enterContext(
-                patch("nnmm.process.update_mylist.base.is_mylist_include_new_video")
-            )
-            mock_update_mylist_pane = self.enterContext(
-                patch("nnmm.process.update_mylist.base.ProcessBase.update_mylist_pane")
-            )
+    def test_create_component(self):
+        instance = ThreadDoneBase(self.process_info)
+        self.assertIsNone(instance.create_component())
 
+    def test_callback(self):
+        mock_show_mylist_info_all = self.enterContext(patch("nnmm.process.update_mylist.base.show_mylist_info_all"))
+        mock_is_mylist_include_new_video = self.enterContext(
+            patch("nnmm.process.update_mylist.base.is_mylist_include_new_video")
+        )
+
+        Params = namedtuple(
+            "Params",
+            [
+                "is_valid_mylist_url",
+                "is_valid_typed_mylist_list",
+                "is_valid_typed_video_list",
+                "is_mylist_include_new_video",
+                "result",
+            ],
+        )
+
+        def pre_run(params: Params) -> ThreadDoneBase:
             instance = ThreadDoneBase(self.process_info)
+            instance.window.mylist_db = instance.mylist_db
+            instance.window.mylist_info_db = instance.mylist_info_db
+            instance.set_bottom_textbox = MagicMock()
 
-            def pre_run(is_valid_mylist_url, is_mylist_include_new_video):
-                mylist_dict = self._get_mylist_dict()
-                mylist_url = mylist_dict["url"]
+            mylist_dict = self._get_mylist_dict()
+            valid_mylist_url = mylist_dict["url"]
+            records = self._get_video_dict_list(valid_mylist_url)
 
-                mock_get_upper_textbox.reset_mock()
-                if is_valid_mylist_url:
-                    mock_get_upper_textbox.return_value.to_str.side_effect = lambda: mylist_url
-                else:
-                    mock_get_upper_textbox.return_value.to_str.side_effect = lambda: ""
+            mock_show_mylist_info_all.reset_mock()
+            instance.get_upper_textbox = MagicMock()
+            if params.is_valid_mylist_url:
+                instance.get_upper_textbox.return_value.to_str.return_value = valid_mylist_url
+            else:
+                instance.get_upper_textbox.return_value.to_str.return_value = ""
 
-                mock_update_table_pane.reset_mock()
-                instance.mylist_db.reset_mock()
-                instance.mylist_db.select.side_effect = lambda: [mylist_dict]
+            instance.update_table_pane = MagicMock()
 
-                video_dict_list = self._get_video_dict_list(mylist_url)
-                instance.mylist_info_db.reset_mock()
-                instance.mylist_info_db.select_from_mylist_url.side_effect = lambda url: video_dict_list
+            instance.mylist_db.reset_mock()
+            if params.is_valid_typed_mylist_list:
+                instance.mylist_db.select.return_value = [mylist_dict]
+            else:
+                instance.mylist_db.select.return_value = []
 
-                mock_is_mylist_include_new_video.reset_mock()
+            instance.mylist_info_db.reset_mock()
+            if params.is_valid_typed_video_list:
+                instance.mylist_info_db.select_from_mylist_url.return_value = records
+            else:
+                instance.mylist_info_db.select_from_mylist_url.return_value = []
 
-                def f(def_data):
-                    return is_mylist_include_new_video
+            mock_is_mylist_include_new_video.reset_mock()
+            if params.is_mylist_include_new_video:
+                mock_is_mylist_include_new_video.side_effect = lambda def_data: True
+            else:
+                mock_is_mylist_include_new_video.side_effect = lambda def_data: False
 
-                mock_is_mylist_include_new_video.side_effect = f
+            instance.update_mylist_pane = MagicMock()
+            return instance
 
-                mock_update_mylist_pane.reset_mock()
+        def post_run(actual: Result, instance: ThreadDoneBase, params: Params) -> None:
+            self.assertEqual(params.result, actual)
 
-            def post_run(is_valid_maylist_url, is_mylist_include_new_video):
-                mylist_dict = self._get_mylist_dict()
-                mylist_url = mylist_dict["url"]
-                self.assertEqual([call(), call().to_str()], mock_get_upper_textbox.mock_calls)
+            instance.set_bottom_textbox.assert_called_once_with("更新完了！", False)
 
-                if is_valid_maylist_url:
-                    self.assertEqual([call(mylist_url)], mock_update_table_pane.mock_calls)
+            mylist_url = ""
+            mylist_dict = self._get_mylist_dict()
+            valid_mylist_url = mylist_dict["url"]
+            records = self._get_video_dict_list(valid_mylist_url)
 
-                expect_mylist_db_calls = [call.select()]
-                if is_mylist_include_new_video:
-                    expect_mylist_db_calls.append(call.update_include_flag(mylist_url, True))
-                self.assertEqual(expect_mylist_db_calls, instance.mylist_db.mock_calls)
+            if params.is_valid_mylist_url:
+                mylist_url = valid_mylist_url
+                mock_show_mylist_info_all.assert_not_called()
+            else:
+                self.assertEqual(
+                    [
+                        call.ShowMylistInfoAll(ProcessInfo.create("全動画表示", instance.window)),
+                        call.ShowMylistInfoAll().callback(),
+                    ],
+                    mock_show_mylist_info_all.mock_calls,
+                )
 
-                self.assertEqual([call.select_from_mylist_url(mylist_url)], instance.mylist_info_db.mock_calls)
+            instance.update_table_pane.assert_called_once_with(mylist_url)
+            instance.mylist_db.select.assert_called_once_with()
 
-                video_dict_list = self._get_video_dict_list(mylist_url)
-                video_dict_list = VideoDictList.create(video_dict_list)
-                typed_video_list = video_dict_list.to_typed_video_list()
+            if params.is_valid_typed_mylist_list:
+                mylist_dict_list = MylistDictList.create([mylist_dict])
+                typed_mylist = mylist_dict_list.to_typed_mylist_list()[0]
+                mylist_url = typed_mylist.url.non_query_url
+                instance.mylist_info_db.select_from_mylist_url.assert_called_once_with(mylist_url)
+
+                video_dict_list = VideoDictList.create(records)
+                typed_video = video_dict_list.to_typed_video_list()[0]
                 def_data = []
-                for typed_video in typed_video_list:
+                if params.is_valid_typed_video_list:
                     def_data.append(list(typed_video.to_dict().values()))
-                self.assertEqual([call(def_data)], mock_is_mylist_include_new_video.mock_calls)
 
-                self.assertEqual([call()], mock_update_mylist_pane.mock_calls)
+                mock_is_mylist_include_new_video.assert_called_once_with(def_data)
 
-            Params = namedtuple("Params", ["is_valid_maylist_url", "is_mylist_include_new_video", "result"])
-            params_list = [
-                Params(True, True, Result.success),
-                Params(True, False, Result.success),
-                Params(False, True, Result.success),
-                Params(False, False, Result.success),
-            ]
-            for params in params_list:
-                pre_run(*params[:-1])
-                actual = instance.run()
-                expect = params.result
-                self.assertIs(expect, actual)
-                post_run(*params[:-1])
+                if params.is_mylist_include_new_video:
+                    instance.mylist_db.update_include_flag.assert_called_once_with(mylist_url, True)
+                else:
+                    instance.mylist_db.update_include_flag.assert_not_called()
+            else:
+                instance.mylist_info_db.select_from_mylist_url.assert_not_called()
+                mock_is_mylist_include_new_video.assert_not_called()
+                instance.mylist_db.update_include_flag.assert_not_called()
+
+        params_list = [
+            Params(True, True, True, True, Result.success),
+            Params(True, True, True, False, Result.success),
+            Params(True, True, False, False, Result.success),
+            Params(True, False, False, False, Result.success),
+            Params(False, False, False, False, Result.success),
+        ]
+        for params in params_list:
+            instance = pre_run(params)
+            actual = instance.callback()
+            post_run(actual, instance, params)
 
 
 if __name__ == "__main__":

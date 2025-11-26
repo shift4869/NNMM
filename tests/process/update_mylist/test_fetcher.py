@@ -13,10 +13,12 @@ from nnmm.process.update_mylist.value_objects.mylist_with_video import MylistWit
 from nnmm.process.update_mylist.value_objects.mylist_with_video_list import MylistWithVideoList
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
+from nnmm.video_info_fetcher.value_objects.fetched_video_info import FetchedVideoInfo
 
 
 class TestFetcher(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.update_mylist.fetcher.logger.info"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
@@ -32,69 +34,71 @@ class TestFetcher(unittest.TestCase):
             instance = Fetcher("invalid", self.process_info)
 
     def test_execute(self):
-        with ExitStack() as stack:
-            mock_thread = self.enterContext(patch("nnmm.process.update_mylist.fetcher.ThreadPoolExecutor"))
-            mock_create = self.enterContext(patch("nnmm.process.update_mylist.fetcher.PayloadList.create"))
+        mock_thread = self.enterContext(patch("nnmm.process.update_mylist.fetcher.ThreadPoolExecutor"))
+        mock_create = self.enterContext(patch("nnmm.process.update_mylist.fetcher.PayloadList.create"))
 
-            mock_thread.return_value.__enter__.return_value.submit.return_value.result.return_value = (
-                "executor.submit().result()"
-            )
-            mock_create.side_effect = lambda p: "PayloadList.create()"
-            mylist_with_video_list = MagicMock(spec=MylistWithVideoList)
-            mylist_with_video = MagicMock(spec=MylistWithVideo)
-            mylist_with_video.mylist.url.non_query_url = MagicMock()
+        mock_thread.return_value.__enter__.return_value.submit.return_value.result.return_value = (
+            "executor.submit().result()"
+        )
+        mock_create.side_effect = lambda p: "PayloadList.create()"
+        mylist_with_video_list = MagicMock(spec=MylistWithVideoList)
+        mylist_with_video = MagicMock(spec=MylistWithVideo)
+        mylist_with_video.mylist.url.non_query_url = MagicMock()
 
-            instance = Fetcher(mylist_with_video_list, self.process_info)
-            instance.mylist_with_video_list = [mylist_with_video]
-            actual = instance.execute()
-            self.assertEqual("PayloadList.create()", actual)
+        instance = Fetcher(mylist_with_video_list, self.process_info)
+        instance.mylist_with_video_list = [mylist_with_video]
+        actual = instance.execute()
+        self.assertEqual("PayloadList.create()", actual)
 
-            self.assertEqual(
-                [
-                    call(max_workers=8, thread_name_prefix="ap_thread"),
-                    call().__enter__(),
-                    call().__enter__().submit(instance.execute_worker, mylist_with_video.mylist.url.non_query_url, 1),
-                    call().__enter__().submit().result(),
-                    call().__exit__(None, None, None),
-                ],
-                mock_thread.mock_calls,
-            )
-            self.assertEqual([call([(mylist_with_video, "executor.submit().result()")])], mock_create.mock_calls)
+        self.assertEqual(
+            [
+                call(max_workers=8, thread_name_prefix="ap_thread"),
+                call().__enter__(),
+                call().__enter__().submit(instance.execute_worker, mylist_with_video.mylist.url.non_query_url, 1),
+                call().__enter__().submit().result(),
+                call().__exit__(None, None, None),
+            ],
+            mock_thread.mock_calls,
+        )
+        self.assertEqual([call([(mylist_with_video, "executor.submit().result()")])], mock_create.mock_calls)
 
-    @unittest.skip("")
     def test_execute_worker(self):
-        with ExitStack() as stack:
-            mock_logger = self.enterContext(patch("nnmm.process.update_mylist.fetcher.logger.info"))
-            mock_fetch_videoinfo = self.enterContext(
-                patch("nnmm.process.update_mylist.fetcher.VideoInfoFetcher.fetch_videoinfo")
-            )
-            mock_fetch_videoinfo.side_effect = lambda url: "VideoInfoFetcher.fetch_videoinfo()"
-            mylist_with_video_list = MagicMock(spec=MylistWithVideoList)
-            instance = Fetcher(mylist_with_video_list, self.process_info)
+        mock_fetch_videoinfo = self.enterContext(
+            patch("nnmm.process.update_mylist.fetcher.VideoInfoFetcher.fetch_videoinfo")
+        )
+        mylist_with_video_list = MagicMock(spec=MylistWithVideoList)
+        instance = Fetcher(mylist_with_video_list, self.process_info)
+        instance.window.oneline_log = MagicMock()
 
-            mylist_url = "https://www.nicovideo.jp/user/1111111/mylist/10000001"
-            all_index_num = 2
-            actual = instance.execute_worker(mylist_url, all_index_num)
-            expect = "VideoInfoFetcher.fetch_videoinfo()"
-            self.assertEqual(expect, actual)
+        mylist_url = "https://www.nicovideo.jp/user/1111111/mylist/10000001"
+        all_index_num = 2
 
-            self.assertEqual([call(mylist_url)], mock_fetch_videoinfo.mock_calls)
-            self.assertEqual(
-                [call.__getitem__("-INPUT2-"), call.__getitem__().update(value="取得中(1/2)")],
-                instance.window.mock_calls,
-            )
-            mock_fetch_videoinfo.reset_mock()
-            instance.window.reset_mock()
+        # 正常系
+        fetched_video_info = MagicMock(spec=FetchedVideoInfo)
+        mock_fetch_videoinfo.return_value = fetched_video_info
 
-            mock_fetch_videoinfo.side_effect = httpx.HTTPStatusError
-            actual = instance.execute_worker(mylist_url, all_index_num)
-            self.assertEqual(Result.failed, actual)
+        actual = instance.execute_worker(mylist_url, all_index_num)
+        expect = fetched_video_info
+        self.assertEqual(expect, actual)
+        self.assertEqual([call(mylist_url), call().__eq__(fetched_video_info)], mock_fetch_videoinfo.mock_calls)
+        self.assertEqual(
+            [call.setText("取得中(1/2)"), call.update()],
+            instance.window.oneline_log.mock_calls,
+        )
 
-            self.assertEqual([call(mylist_url)], mock_fetch_videoinfo.mock_calls)
-            self.assertEqual(
-                [call.__getitem__("-INPUT2-"), call.__getitem__().update(value="取得中(2/2)")],
-                instance.window.mock_calls,
-            )
+        mock_fetch_videoinfo.reset_mock()
+        instance.window.oneline_log.reset_mock()
+
+        # 異常系: fetch 時に例外が発生しても処理は続行される
+        mock_fetch_videoinfo.side_effect = httpx.HTTPStatusError
+
+        actual = instance.execute_worker(mylist_url, all_index_num)
+        self.assertEqual(Result.failed, actual)
+        self.assertEqual([call(mylist_url)], mock_fetch_videoinfo.mock_calls)
+        instance.window.oneline_log.assert_not_called()
+
+        mock_fetch_videoinfo.reset_mock()
+        instance.window.oneline_log.reset_mock()
 
 
 if __name__ == "__main__":
