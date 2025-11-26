@@ -6,12 +6,13 @@ from mock import MagicMock, call, patch
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QAbstractItemView, QListWidgetItem
 
+import nnmm.main_window
 from nnmm.main_window import MainWindow
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process import config, copy_mylist_url, copy_video_url, create_mylist, delete_mylist, move_down, move_up
-from nnmm.process import not_watched, popup, search, show_mylist_info_all, video_play
-from nnmm.process import video_play_with_focus_back, watched, watched_all_mylist, watched_mylist
+from nnmm.process import not_watched, popup, search, show_mylist_info_all, video_play, video_play_with_focus_back
+from nnmm.process import watched, watched_all_mylist, watched_mylist
 from nnmm.process.base import ProcessBase
 from nnmm.process.value_objects.process_info import ProcessInfo
 from nnmm.util import Result
@@ -87,6 +88,7 @@ class TestWindowMain(unittest.TestCase):
 
     def test_init(self):
         """WindowMainの初期化後の状態をテストする"""
+        # 正常系
         instance = self._get_instance()
 
         self.assertIsInstance(instance, MainWindow)
@@ -98,6 +100,20 @@ class TestWindowMain(unittest.TestCase):
 
         for mock_item in self.mock_list:
             mock_item.assert_called()
+
+        # 異常系: アイコンパスが不正な場合はデフォルトを使用する
+        prev_path = nnmm.main_window.ICON_PATH
+        nnmm.main_window.ICON_PATH = "not exist path"
+        instance = MainWindow()  # 2重のenterCntextを防ぐために _get_instance は呼ばずに普通に作る
+
+        self.assertIsInstance(instance, MainWindow)
+        self.assertTrue(hasattr(instance, "config"))
+        self.assertTrue(hasattr(instance, "db_fullpath"))
+        self.assertTrue(hasattr(instance, "mylist_db"))
+        self.assertTrue(hasattr(instance, "mylist_info_db"))
+        self.assertTrue(hasattr(instance, "time"))
+
+        nnmm.main_window.ICON_PATH = prev_path
 
     def test_create_layout(self):
         """MainWindowのレイアウト作成呼び出しをテストする"""

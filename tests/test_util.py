@@ -135,62 +135,6 @@ class TestUtil(unittest.TestCase):
         r = Mylist(ml[0], ml[1], ml[2], ml[3], ml[4], mylist_url, ml[5], ml[6], ml[7], ml[8], ml[9], ml[10])
         return r
 
-    def _get_video_info_list(self) -> list[tuple]:
-        """動画情報セットを返す（mylist_url以外）"""
-        video_info = [
-            (
-                "sm11111111",
-                "動画タイトル1",
-                "投稿者1",
-                "未視聴",
-                "2021-05-29 22:00:11",
-                "2021-05-29 22:01:11",
-                "https://www.nicovideo.jp/watch/sm11111111",
-                "2021-10-16 00:00:11",
-            ),
-            (
-                "sm22222222",
-                "動画タイトル2",
-                "投稿者1",
-                "未視聴",
-                "2021-05-29 22:00:22",
-                "2021-05-29 22:02:22",
-                "https://www.nicovideo.jp/watch/sm22222222",
-                "2021-10-16 00:00:22",
-            ),
-            (
-                "sm33333333",
-                "動画タイトル3",
-                "投稿者1",
-                "未視聴",
-                "2021-05-29 22:00:33",
-                "2021-05-29 22:03:33",
-                "https://www.nicovideo.jp/watch/sm33333333",
-                "2021-10-16 00:00:33",
-            ),
-            (
-                "sm44444444",
-                "動画タイトル4",
-                "投稿者2",
-                "未視聴",
-                "2021-05-29 22:00:44",
-                "2021-05-29 22:04:44",
-                "https://www.nicovideo.jp/watch/sm44444444",
-                "2021-10-16 00:00:44",
-            ),
-            (
-                "sm55555555",
-                "動画タイトル5",
-                "投稿者2",
-                "未視聴",
-                "2021-05-29 22:00:55",
-                "2021-05-29 22:05:55",
-                "https://www.nicovideo.jp/watch/sm55555555",
-                "2021-10-16 00:00:55",
-            ),
-        ]
-        return video_info
-
     def test_Result(self):
         self.assertEqual(True, hasattr(Result, "success"))
         self.assertEqual(True, hasattr(Result, "failed"))
@@ -507,15 +451,12 @@ class TestUtil(unittest.TestCase):
             table_list = table_list_factory()
             table_list = [t[:STATUS_INDEX] for t in table_list]
             actual = is_mylist_include_new_video(table_list)
-            self.assertEqual(False, actual)
 
         # 状況ステータスの位置が異なる
         with self.assertRaises(KeyError):
             table_list = table_list_factory()
             table_list = [[t[-1]] + t[:-1] for t in table_list]
             actual = is_mylist_include_new_video(table_list)
-            self.assertEqual(False, actual)
-        pass
 
     def test_interval_translate(self):
         """インターバルを解釈する関数のテスト"""

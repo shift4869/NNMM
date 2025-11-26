@@ -170,10 +170,8 @@ class TestMylistDBController(unittest.TestCase):
                 return f"{username}さんの投稿動画"
 
             pattern = "^https://www.nicovideo.jp/user/[0-9]+/mylist/[0-9]+$"
-            if re.search(pattern, url):
-                res_str = re.sub("-(.*)さんのマイリスト", f"-{username}さんのマイリスト", old_showname)
-                return res_str
-            return ""
+            res_str = re.sub("-(.*)さんのマイリスト", f"-{username}さんのマイリスト", old_showname)
+            return res_str
 
         for r in expect:
             now_username = "新しい" + r["username"]
