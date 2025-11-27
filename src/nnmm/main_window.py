@@ -140,7 +140,7 @@ class MainWindow(QDialog):
         update_button = QHBoxLayout()
         all_update_button = self.component_helper("すべて更新", every.Every)
         partial_update_button: QPushButton = self.component_helper("インターバル更新", partial.Partial)
-        partial_update_button.setAutoDefault(True)
+        partial_update_button.setFocus()
         single_update_button = self.component_helper("更新", single.Single)
         update_button.addWidget(all_update_button)
         update_button.addWidget(partial_update_button)

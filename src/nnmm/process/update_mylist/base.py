@@ -52,7 +52,6 @@ class Base(ProcessBase):
     def create_component(self) -> QWidget:
         add_mylist_button = QPushButton(self.name)
         add_mylist_button.clicked.connect(lambda: self.callback())
-        add_mylist_button.setAutoDefault(False)
         return add_mylist_button
 
     @Slot()

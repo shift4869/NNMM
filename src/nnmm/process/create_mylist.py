@@ -18,8 +18,9 @@ class CreateMylist(ProcessBase):
     def __init__(self, process_info: ProcessInfo) -> None:
         super().__init__(process_info)
 
-    def popup_for_detail(self, mylist_type: MylistType, mylist_url: str, window_title: str) -> dict:
+    def popup_for_detail(self, mylist_type: MylistType, mylist_url: str, window_title: str) -> dict | ValueError:
         horizontal_line = "-" * 132
+        csize = 80
         dialog = QDialog()
         dialog.setWindowTitle(window_title)
         vbox = QVBoxLayout()
@@ -27,21 +28,21 @@ class CreateMylist(ProcessBase):
 
         hbox2 = QHBoxLayout()
         label2 = QLabel("URL")
-        label2.setMinimumWidth(80)
+        label2.setMinimumWidth(csize)
         tbox2 = QLineEdit(mylist_url, readOnly=True)
         hbox2.addWidget(label2)
         hbox2.addWidget(tbox2)
 
         hbox3 = QHBoxLayout()
         label3 = QLabel("URLタイプ")
-        label3.setMinimumWidth(80)
+        label3.setMinimumWidth(csize)
         tbox3 = QLineEdit(mylist_type.value, readOnly=True)
         hbox3.addWidget(label3)
         hbox3.addWidget(tbox3)
 
         hbox4 = QHBoxLayout()
         label4 = QLabel("ユーザー名")
-        label4.setMinimumWidth(80)
+        label4.setMinimumWidth(csize)
         self.tbox_username = QLineEdit()
         self.tbox_username.setStyleSheet("QLineEdit {background-color: olive;}")
         hbox4.addWidget(label4)
@@ -52,7 +53,7 @@ class CreateMylist(ProcessBase):
         elif mylist_type == MylistType.mylist:
             hbox5 = QHBoxLayout()
             label5 = QLabel("マイリスト名")
-            label5.setMinimumWidth(80)
+            label5.setMinimumWidth(csize)
             self.tbox_mylistname = QLineEdit()
             self.tbox_mylistname.setStyleSheet("QLineEdit {background-color: olive;}")
             hbox5.addWidget(label5)
@@ -60,18 +61,20 @@ class CreateMylist(ProcessBase):
         elif mylist_type == MylistType.series:
             hbox5 = QHBoxLayout()
             label5 = QLabel("シリーズ名")
-            label5.setMinimumWidth(80)
+            label5.setMinimumWidth(csize)
             self.tbox_mylistname = QLineEdit()
             self.tbox_mylistname.setStyleSheet("QLineEdit {background-color: olive;}")
             hbox5.addWidget(label5)
             hbox5.addWidget(self.tbox_mylistname)
+        else:
+            raise ValueError("Invalid mylist_type.")
 
         label6 = QLabel(horizontal_line)
 
         hbox7 = QHBoxLayout()
         button_register = QPushButton("登録")
         button_cancel = QPushButton("キャンセル")
-        self.register_or_cancel = "cancel"
+        # self.register_or_cancel = "cancel"
 
         def register_or_cancel(args: str) -> None:
             self.register_or_cancel = args
@@ -92,7 +95,7 @@ class CreateMylist(ProcessBase):
 
         dialog.setLayout(vbox)
         dialog.exec()
-        result = self.register_or_cancel
+        result = self.register_or_cancel if hasattr(self, "register_or_cancel") else "cancel"
 
         if mylist_type == MylistType.uploaded:
             username = self.tbox_username.text()
@@ -109,6 +112,9 @@ class CreateMylist(ProcessBase):
             mylistname = self.tbox_mylistname.text()
             showname = f"「{mylistname}」-{username}さんのシリーズ"
             is_include_new = False
+        else:
+            raise ValueError("Invalid mylist_type.")
+
         return {
             "result": result,
             "username": username,
@@ -236,28 +242,6 @@ class CreateMylist(ProcessBase):
         self.update_mylist_pane()
 
         # テーブル表示更新
-        mylist_url = self.get_upper_textbox().to_str()
-        self.update_table_pane(mylist_url)
-
-        logger.info("Create mylist done.")
-        return Result.success
-
-
-class CreateMylistThreadDone(ProcessBase):
-    def __init__(self, process_info: ProcessInfo) -> None:
-        super().__init__(process_info)
-
-    def run(self) -> Result:
-        """マイリスト追加の後処理
-
-        Notes:
-            "-CREATE_THREAD_DONE-"
-            -CREATE-の処理が終わった後の処理
-        """
-        # マイリスト画面表示更新
-        self.update_mylist_pane()
-
-        # テーブルの表示を更新する
         mylist_url = self.get_upper_textbox().to_str()
         self.update_table_pane(mylist_url)
 
