@@ -2,11 +2,11 @@ import re
 import sys
 import unittest
 from collections import namedtuple
-from contextlib import ExitStack
 
 from mock import MagicMock, call, patch
 from PySide6.QtWidgets import QDialog
 
+import nnmm.process.search
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process.search import MylistSearch
@@ -17,11 +17,16 @@ from nnmm.util import Result
 
 class TestMylistSearch(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.search.logger.info"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
+
+    def _get_instance(self) -> MylistSearch:
+        instance = MylistSearch(self.process_info)
+        return instance
 
     def _make_mylist_db(self) -> list[dict]:
         NUM = 5
@@ -47,9 +52,9 @@ class TestMylistSearch(unittest.TestCase):
                 "uploaded",
                 f"投稿者{i + 1}さんの投稿動画",
                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                "2022-02-01 02:30:00",
-                "2022-02-01 02:30:00",
-                "2022-02-01 02:30:00",
+                "2025-11-27 12:34:56",
+                "2025-11-27 12:34:56",
+                "2025-11-27 12:34:56",
                 "15分",
                 False,
             ]
@@ -63,119 +68,109 @@ class TestMylistSearch(unittest.TestCase):
             res.append(d)
         return res
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            mockli = self.enterContext(patch("nnmm.process.search.logger.info"))
-            mock_popup_get_text = self.enterContext(patch("nnmm.process.search.popup_get_text"))
-            mock_selected_mylist_row_index = self.enterContext(
-                patch("nnmm.process.search.ProcessBase.get_selected_mylist_row_index")
-            )
-            mock_mylist_db = MagicMock()
+    def test_init(self):
+        instance = self._get_instance()
+        self.assertEqual(self.process_info, instance.process_info)
 
+    def test_create_component(self):
+        instance = self._get_instance()
+        self.assertIsNone(instance.create_component())
+
+    def test_callback(self):
+        mock_popup_get_text = self.enterContext(patch("nnmm.process.search.popup_get_text"))
+        mock_qlist_widget_item = self.enterContext(patch("nnmm.process.search.QListWidgetItem"))
+
+        Params = namedtuple("Params", ["pattern", "get_indexes", "is_include_new", "is_hit", "result"])
+
+        def pre_run(params: Params) -> MylistSearch:
             instance = MylistSearch(self.process_info)
+            mock_popup_get_text.reset_mock()
+            mock_popup_get_text.side_effect = lambda message: params.pattern
 
-            def pre_run(pattern, get_indexes, is_include_new, is_hit):
-                mock_popup_get_text.reset_mock()
-                mock_popup_get_text.side_effect = lambda message: pattern
+            instance.get_selected_mylist_row_index = MagicMock()
+            if params.get_indexes >= 0:
+                instance.get_selected_mylist_row_index.side_effect = lambda: SelectedMylistRowIndex(params.get_indexes)
+            else:
+                instance.get_selected_mylist_row_index.side_effect = lambda: None
+            instance.window = MagicMock()
 
-                mock_selected_mylist_row_index.reset_mock()
-                if get_indexes >= 0:
+            m_list = self._make_mylist_db()
+            if params.is_include_new:
+                m_list = [m | {"is_include_new": True} for m in m_list]
+            if not params.is_hit:
+                no_hit_showname = "「no_hit」-no_hitさんのマイリスト"
+                m_list = [m | {"showname": no_hit_showname} for m in m_list]
+            instance.mylist_db = MagicMock()
+            instance.mylist_db.select.side_effect = lambda: m_list
 
-                    def f():
-                        return SelectedMylistRowIndex(get_indexes)
+            mock_qlist_widget_item.reset_mock()
+            instance.set_bottom_textbox = MagicMock()
+            return instance
 
-                    mock_selected_mylist_row_index.side_effect = f
-                else:
-                    mock_selected_mylist_row_index.side_effect = lambda: None
-                instance.window.reset_mock()
+        def post_run(actual: Result, instance: MylistSearch, params: Params) -> None:
+            self.assertEqual(params.result, actual)
+            self.assertEqual([call("マイリスト名検索（正規表現可）")], mock_popup_get_text.mock_calls)
 
-                m_list = self._make_mylist_db()
-                if is_include_new:
-                    m_list = [m | {"is_include_new": True} for m in m_list]
-                if not is_hit:
-                    no_hit_showname = "「no_hit」-no_hitさんのマイリスト"
-                    m_list = [m | {"showname": no_hit_showname} for m in m_list]
-                mock_mylist_db.reset_mock()
-                mock_mylist_db.select.side_effect = lambda: m_list
-                instance.mylist_db.reset_mock()
-                instance.mylist_db = mock_mylist_db
+            if params.pattern is None or params.pattern == "":
+                instance.get_selected_mylist_row_index.assert_not_called()
+                instance.mylist_db.assert_not_called()
+                instance.window.assert_not_called()
+                mock_qlist_widget_item.assert_not_called()
+                return
 
-            def post_run(pattern, get_indexes, is_include_new, is_hit):
-                self.assertEqual([call("マイリスト名検索（正規表現可）")], mock_popup_get_text.mock_calls)
+            instance.get_selected_mylist_row_index.assert_called_once_with()
+            index = params.get_indexes
 
-                if pattern is None or pattern == "":
-                    instance.window.assert_not_called()
-                    mock_selected_mylist_row_index.assert_not_called()
-                    mock_mylist_db.assert_not_called()
-                    return
+            self.assertEqual([call.select()], instance.mylist_db.mock_calls)
+            m_list = self._make_mylist_db()
+            if params.is_include_new:
+                m_list = [m | {"is_include_new": True} for m in m_list]
+            if not params.is_hit:
+                no_hit_showname = "「no_hit」-no_hitさんのマイリスト"
+                m_list = [m | {"showname": no_hit_showname} for m in m_list]
+            NEW_MARK = "*:"
+            include_new_index_list = []
+            match_index_list = []
+            for i, m in enumerate(m_list):
+                if m["is_include_new"]:
+                    m["showname"] = NEW_MARK + m["showname"]
+                    include_new_index_list.append(i)
+                if re.findall(params.pattern, m["showname"]):
+                    match_index_list.append(i)
+                    index = i
+            list_data = [m["showname"] for m in m_list]
 
-                index = get_indexes
-                expect_calls = []
+            list_widget_calls = [call.list_widget.clear()]
+            list_item_calls = []
+            for i, data in enumerate(list_data):
+                list_item_calls.append(call(data))
+                if i in include_new_index_list:
+                    list_item_calls.append(call().setBackground(nnmm.process.search.NEW_MYLIST_COLOR))
+                if i in match_index_list:
+                    list_item_calls.append(call().setBackground(nnmm.process.search.MATCHED_MYLIST_COLOR))
+                list_widget_calls.append(call.list_widget.addItem(mock_qlist_widget_item.return_value))
+            list_widget_calls.append(call.list_widget.setCurrentRow(index))
 
-                m_list = self._make_mylist_db()
-                if is_include_new:
-                    m_list = [m | {"is_include_new": True} for m in m_list]
-                if not is_hit:
-                    no_hit_showname = "「no_hit」-no_hitさんのマイリスト"
-                    m_list = [m | {"showname": no_hit_showname} for m in m_list]
-                NEW_MARK = "*:"
-                include_new_index_list = []
-                match_index_list = []
-                for i, m in enumerate(m_list):
-                    if m["is_include_new"]:
-                        m["showname"] = NEW_MARK + m["showname"]
-                        include_new_index_list.append(i)
-                    if re.findall(pattern, m["showname"]):
-                        match_index_list.append(i)
-                        index = i
-                list_data = [m["showname"] for m in m_list]
-                expect_calls.extend([
-                    call.__getitem__("-LIST-"),
-                    call.__getitem__().update(values=list_data),
-                ])
-                for i in include_new_index_list:
-                    expect_calls.extend([
-                        call.__getitem__("-LIST-"),
-                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light pink"),
-                    ])
-                for i in match_index_list:
-                    expect_calls.extend([
-                        call.__getitem__("-LIST-"),
-                        call.__getitem__().Widget.itemconfig(i, fg="black", bg="light goldenrod"),
-                    ])
-                expect_calls.extend([
-                    call.__getitem__("-LIST-"),
-                    call.__getitem__().Widget.see(index),
-                    call.__getitem__("-LIST-"),
-                    call.__getitem__().update(set_to_index=index),
-                ])
-                if len(match_index_list) > 0:
-                    expect_calls.extend([
-                        call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value=f"{len(match_index_list)}件ヒット！"),
-                    ])
-                else:
-                    expect_calls.extend([call.__getitem__("-INPUT2-"), call.__getitem__().update(value="該当なし")])
-                self.assertEqual(expect_calls, instance.window.mock_calls)
+            self.assertEqual(list_widget_calls, instance.window.mock_calls)
+            self.assertEqual(list_item_calls, mock_qlist_widget_item.mock_calls)
 
-                self.assertEqual([call.select()], mock_mylist_db.mock_calls)
+            if len(match_index_list) > 0:
+                instance.set_bottom_textbox.assert_called_once_with(f"{len(match_index_list)}件ヒット！")
+            else:
+                instance.set_bottom_textbox.assert_called_once_with("該当なし")
 
-            Params = namedtuple("Params", ["pattern", "get_indexes", "is_include_new", "is_hit", "result"])
-            params_list = [
-                Params("投稿者", 0, True, True, Result.success),
-                Params("not found", 0, True, True, Result.success),
-                Params("投稿者", -1, True, True, Result.success),
-                Params("投稿者", 0, False, True, Result.success),
-                Params("投稿者", 0, True, False, Result.success),
-                Params("", 0, True, True, Result.failed),
-            ]
-            for params in params_list:
-                pre_run(params.pattern, params.get_indexes, params.is_include_new, params.is_hit)
-                actual = instance.run()
-                expect = params.result
-                self.assertIs(expect, actual)
-                post_run(params.pattern, params.get_indexes, params.is_include_new, params.is_hit)
+        params_list = [
+            Params("投稿者", 0, True, True, Result.success),
+            Params("not found", 0, True, True, Result.success),
+            Params("投稿者", -1, True, True, Result.success),
+            Params("投稿者", 0, False, True, Result.success),
+            Params("投稿者", 0, True, False, Result.success),
+            Params("", 0, True, True, Result.failed),
+        ]
+        for params in params_list:
+            instance = pre_run(params)
+            actual = instance.callback()
+            post_run(actual, instance, params)
 
 
 if __name__ == "__main__":
