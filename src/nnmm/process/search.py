@@ -4,8 +4,7 @@ from logging import INFO, getLogger
 
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QHeaderView, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QHeaderView, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem, QWidget
 
 from nnmm.process.base import NEW_MYLIST_COLOR, ProcessBase
 from nnmm.process.value_objects.mylist_row import MylistRow
@@ -291,12 +290,6 @@ class VideoSearch(ProcessBase):
 
         logger.info(f"search word -> {pattern}.")
 
-        # 現在動画テーブルが選択中の場合indexを保存
-        selected_table_row_index_list = self.get_selected_table_row_index_list()
-        index = 0
-        if selected_table_row_index_list:
-            index = min([int(v) for v in selected_table_row_index_list.to_int_list()])
-
         # 既存のテーブルの内容を取得
         table_row_list = self.get_all_table_row()
 
@@ -358,15 +351,11 @@ class VideoSearch(ProcessBase):
                     # そのまま追加
                     table_widget.setItem(i, j, QTableWidgetItem(text))
 
-        # indexをセットしてスクロール
-        if match_index_list:
-            for match_index in match_index_list:
-                table_widget.selectRow(match_index)
-        # else:
-        #     table_widget.selectRow(index)
-
         # 検索結果表示
         if len(match_index_list) > 0:
+            # indexをセットしてスクロール
+            table_widget.selectRow(match_index_list[-1])
+
             logger.info(f"search result -> {len(match_index_list)} record(s) found.")
             self.set_bottom_textbox(f"{len(match_index_list)}件ヒット！")
         else:

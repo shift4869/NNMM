@@ -2,11 +2,11 @@ import re
 import sys
 import unittest
 from collections import namedtuple
-from contextlib import ExitStack
 
 from mock import MagicMock, call, patch
 from PySide6.QtWidgets import QDialog
 
+import nnmm.process.search
 from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process.search import VideoSearch
@@ -18,35 +18,64 @@ from nnmm.util import Result
 
 class TestVideoSearch(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.search.logger.info"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    def _make_mylist_info_db(self, mylist_url) -> list[list[dict]]:
+    def _get_instance(self) -> VideoSearch:
+        instance = VideoSearch(self.process_info)
+        return instance
+
+    def _make_mylist_db(self) -> list[dict]:
+        NUM = 5
+        res = []
+        col = [
+            "id",
+            "username",
+            "mylistname",
+            "type",
+            "showname",
+            "url",
+            "created_at",
+            "updated_at",
+            "checked_at",
+            "check_interval",
+            "is_include_new",
+        ]
+        rows = [
+            [
+                i,
+                f"投稿者{i + 1}",
+                "投稿動画",
+                "uploaded",
+                f"投稿者{i + 1}さんの投稿動画",
+                f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
+                "2025-11-28 12:34:56",
+                "2025-11-28 12:34:56",
+                "2025-11-28 12:34:56",
+                "15分",
+                True if i % 2 == 0 else False,
+            ]
+            for i in range(NUM)
+        ]
+
+        for row in rows:
+            d = {}
+            for r, c in zip(row, col):
+                d[c] = r
+            res.append(d)
+        return res
+
+    def _make_mylist_info_db(self, mylist_url) -> list[dict]:
         NUM = 5
         res = []
 
-        m = -1
         pattern = r"https://www.nicovideo.jp/user/1000000(\d)/video"
-        if re.search(pattern, mylist_url):
-            m = int(re.search(pattern, mylist_url)[1])
-        if m == -1:
-            return []
+        m = int(re.search(pattern, mylist_url)[1])
 
-        table_cols_name = [
-            "No.",
-            "動画ID",
-            "動画名",
-            "投稿者",
-            "状況",
-            "投稿日時",
-            "登録日時",
-            "動画URL",
-            "所属マイリストURL",
-            "作成日時",
-        ]
         table_cols = [
             "no",
             "video_id",
@@ -66,11 +95,11 @@ class TestVideoSearch(unittest.TestCase):
                 f"動画タイトル{m}_{i + 1}",
                 f"投稿者{m}",
                 "",
-                "2022-02-01 02:30:00",
-                "2022-02-02 02:30:00",
+                "2025-11-01 02:30:00",
+                "2025-11-02 02:30:00",
                 f"https://www.nicovideo.jp/watch/sm{m}000000{i + 1}",
                 f"https://www.nicovideo.jp/user/1000000{m}/video",
-                "2022-02-03 02:30:00",
+                "2025-11-03 02:30:00",
             ]
             for i in range(NUM)
         ]
@@ -82,115 +111,158 @@ class TestVideoSearch(unittest.TestCase):
             res.append(d)
         return res
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            mockli = self.enterContext(patch("nnmm.process.search.logger.info"))
-            mock_popup_get_text = self.enterContext(patch("nnmm.process.search.popup_get_text"))
-            mock_table_row_index_list = self.enterContext(
-                patch("nnmm.process.search.ProcessBase.get_selected_table_row_index_list")
-            )
-            mock_all_table_row = self.enterContext(patch("nnmm.process.search.ProcessBase.get_all_table_row"))
+    def _make_table_row(self, mylist_url) -> list[list[str]]:
+        records = []
+        video_info_list = self._make_mylist_info_db(mylist_url)
+        for video_info in video_info_list:
+            record = video_info
+            record["no"] = record["no"] + 1  # 1ベース
+            del record["created_at"]
+            records.append(list(record.values()))
+        return records
 
+    def test_init(self):
+        instance = self._get_instance()
+        self.assertEqual(self.process_info, instance.process_info)
+
+    def test_create_component(self):
+        instance = self._get_instance()
+        self.assertIsNone(instance.create_component())
+
+    def test_callback(self):
+        mock_popup_get_text = self.enterContext(patch("nnmm.process.search.popup_get_text"))
+        mock_qtable_widget_item = self.enterContext(patch("nnmm.process.search.QTableWidgetItem"))
+        self.enterContext(patch("nnmm.process.search.time"))
+
+        Params = namedtuple("Params", ["pattern", "kind_all_table_row", "is_hit", "result"])
+
+        def pre_run(params: Params) -> VideoSearch:
             instance = VideoSearch(self.process_info)
+            mock_popup_get_text.reset_mock()
+            mock_popup_get_text.side_effect = lambda message: params.pattern
 
-            def pre_run(pattern, values, is_hit):
-                mock_popup_get_text.reset_mock()
-                mock_popup_get_text.side_effect = lambda message: pattern
+            instance.get_all_table_row = MagicMock()
+            if params.kind_all_table_row == "valid":
+                mylist_url = self._make_mylist_db()[0]["url"]
+                records = self._make_table_row(mylist_url)
+                if not params.is_hit:
+                    for record in records:
+                        record[2] = "no_hit"
+                instance.get_all_table_row.return_value = TableRowList.create(records)
+            elif params.kind_all_table_row == "invalid_col":
+                mock_row = MagicMock()
+                mock_row.to_row.return_value = []
+                instance.get_all_table_row.return_value = [mock_row]
+            else:  # "invalid_row"
+                instance.get_all_table_row.return_value = []
 
-                mock_table_row_index_list.reset_mock()
-                if values:
+            instance.window = MagicMock()
 
-                    def f():
-                        return TableRowIndexList.create([values])
+            mock_qtable_widget_item.reset_mock()
+            instance.set_bottom_textbox = MagicMock()
+            return instance
 
-                    mock_table_row_index_list.side_effect = f
-                else:
-                    mock_table_row_index_list.side_effect = lambda: []
+        def post_run(actual: Result, instance: VideoSearch, params: Params) -> None:
+            self.assertEqual(params.result, actual)
+            self.assertEqual([call("動画名検索（正規表現可）")], mock_popup_get_text.mock_calls)
 
-                mylist_url = "https://www.nicovideo.jp/user/10000001/video"
-                records = self._make_mylist_info_db(mylist_url)
-                if not is_hit:
-                    records = [r | {"title": "no_hit"} for r in records]
-                records = [[i + 1] + list(r.values())[1:-1] for i, r in enumerate(records)]
-                all_table_row = TableRowList.create(records)
+            if params.pattern is None or params.pattern == "":
+                instance.get_all_table_row.assert_not_called()
+                instance.window.assert_not_called()
+                mock_qtable_widget_item.assert_not_called()
+                instance.set_bottom_textbox.assert_not_called()
+                return
 
-                mock_all_table_row.reset_mock()
-                mock_all_table_row.side_effect = lambda: all_table_row
-                instance.window.reset_mock()
+            instance.get_all_table_row.assert_called_once_with()
 
-            def post_run(pattern, values, is_hit):
-                self.assertEqual([call("動画名検索（正規表現可）")], mock_popup_get_text.mock_calls)
+            if params.kind_all_table_row != "valid":
+                instance.window.assert_not_called()
+                mock_qtable_widget_item.assert_not_called()
+                instance.set_bottom_textbox.assert_called_once_with("該当なし")
+                return
 
-                if pattern is None or pattern == "":
-                    instance.values.assert_not_called()
-                    instance.window.assert_not_called()
-                    mock_table_row_index_list.assert_not_called()
-                    mock_all_table_row.assert_not_called()
-                    return
+            mylist_url = self._make_mylist_db()[0]["url"]
+            records = self._make_table_row(mylist_url)
+            if not params.is_hit:
+                for record in records:
+                    record[2] = "no_hit"
+            table_row_list = TableRowList.create(records)
 
-                self.assertEqual([call()], mock_table_row_index_list.mock_calls)
-
-                index = values
-                expect_window_calls = []
-
-                mylist_url = "https://www.nicovideo.jp/user/10000001/video"
-                records = self._make_mylist_info_db(mylist_url)
-                if not is_hit:
-                    records = [r | {"title": "no_hit"} for r in records]
-                records = [[i + 1] + list(r.values())[1:-1] for i, r in enumerate(records)]
-                all_table_row = TableRowList.create(records)
-
-                match_index_list = []
-                for i, r in enumerate(all_table_row):
-                    if re.findall(pattern, r.title.name):
-                        match_index_list.append(i)
-                        index = i
-                row_colors_data = [(i, "black", "light goldenrod") for i in match_index_list]
-                expect_window_calls.extend([
-                    call.__getitem__("-TABLE-"),
-                    call.__getitem__().update(row_colors=row_colors_data),
-                    call.__getitem__("-TABLE-"),
-                    call.__getitem__().Widget.see(index + 1),
-                ])
-                if match_index_list:
-                    expect_window_calls.extend([
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__("-TABLE-").update(select_rows=match_index_list),
-                    ])
-                else:
-                    expect_window_calls.extend([
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(select_rows=[index]),
-                    ])
-
-                if len(match_index_list) > 0:
-                    expect_window_calls.extend([
-                        call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value=f"{len(match_index_list)}件ヒット！"),
-                    ])
-                else:
-                    expect_window_calls.extend([
-                        call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value="該当なし"),
-                    ])
-                self.assertEqual(expect_window_calls, instance.window.mock_calls)
-
-            Params = namedtuple("Params", ("pattern", "values", "is_hit", "result"))
-            params_list = [
-                Params("動画タイトル1_1", 1, True, Result.success),
-                Params("not found", 1, True, Result.success),
-                Params("動画タイトル1_1", 0, True, Result.success),
-                Params("動画タイトル1_1", 1, False, Result.success),
-                Params("動画タイトル1_1", 1, True, Result.success),
-                Params("", 1, True, Result.failed),
+            n = len(table_row_list)
+            m = len(table_row_list[0].to_row())
+            table_cols_name = [
+                "No.",
+                "動画ID",
+                "動画名",
+                "投稿者",
+                "状況",
+                "投稿日時",
+                "登録日時",
+                "動画URL",
+                "所属マイリストURL",
             ]
-            for params in params_list:
-                pre_run(params.pattern, params.values, params.is_hit)
-                actual = instance.run()
-                expect = params.result
-                self.assertIs(expect, actual)
-                post_run(params.pattern, params.values, params.is_hit)
+            table_widget_calls = [
+                call.table_widget.clearContents(),
+                call.table_widget.setRowCount(0),
+                call.table_widget.setColumnCount(0),
+                call.table_widget.setRowCount(n),
+                call.table_widget.setColumnCount(m),
+                call.table_widget.setHorizontalHeaderLabels(table_cols_name),
+                call.table_widget.verticalHeader(),
+                call.table_widget.verticalHeader().hide(),
+            ]
+            cols_width = [35, 100, 350, 100, 60, 120, 120, 30, 30]
+            for i, section_size in enumerate(cols_width):
+                table_widget_calls.append(call.table_widget.horizontalHeader())
+                table_widget_calls.append(
+                    call.table_widget.horizontalHeader().setSectionResizeMode(
+                        i, nnmm.process.search.QHeaderView.ResizeMode.Interactive
+                    )
+                )
+                table_widget_calls.append(call.table_widget.horizontalHeader())
+                table_widget_calls.append(call.table_widget.horizontalHeader().resizeSection(i, section_size))
+
+            table_item_calls = []
+
+            match_index_list = []
+            for i, table_row in enumerate(table_row_list):
+                if is_hit := re.findall(params.pattern, table_row.title.name):
+                    match_index_list.append(i)
+                row = table_row.to_row()
+                for j, text in enumerate(row):
+                    if is_hit:
+                        table_item_calls.append(call(text))
+                        table_item_calls.append(call().setBackground(nnmm.process.search.MATCHED_MYLIST_COLOR))
+                        table_widget_calls.append(
+                            call.table_widget.setItem(i, j, mock_qtable_widget_item.return_value)
+                        )
+                    else:
+                        table_item_calls.append(call(text))
+                        table_widget_calls.append(
+                            call.table_widget.setItem(i, j, mock_qtable_widget_item.return_value)
+                        )
+
+            if len(match_index_list) > 0:
+                table_widget_calls.append(call.table_widget.selectRow(match_index_list[-1]))
+                instance.set_bottom_textbox.assert_called_once_with(f"{len(match_index_list)}件ヒット！")
+            else:
+                instance.set_bottom_textbox.assert_called_once_with("該当なし")
+
+            self.assertEqual(table_widget_calls, instance.window.mock_calls)
+            self.assertEqual(table_item_calls, mock_qtable_widget_item.mock_calls)
+
+        params_list = [
+            Params("動画タイトル1_1", "valid", True, Result.success),
+            Params("動画タイトル1_1", "valid", False, Result.success),
+            Params("not found", "valid", True, Result.success),
+            Params("動画タイトル1_1", "invalid_col", True, Result.failed),
+            Params("動画タイトル1_1", "invalid_row", True, Result.failed),
+            Params("", "valid", True, Result.failed),
+        ]
+        for params in params_list:
+            instance = pre_run(params)
+            actual = instance.callback()
+            post_run(actual, instance, params)
 
 
 if __name__ == "__main__":
