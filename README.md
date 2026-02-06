@@ -59,6 +59,6 @@ NNMM = NicoNicoMylistManager
 
 ## License/Author
 GNU Lesser General Public License v3.0（PySide6を使用している）  
-Copyright (c) 2021 - 2025 [shift](https://twitter.com/_shift4869)  
+Copyright (c) 2021 ~ [shift](https://twitter.com/_shift4869)  
 
 
