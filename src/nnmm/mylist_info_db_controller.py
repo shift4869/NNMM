@@ -68,7 +68,7 @@ class MylistInfoDBController(DBControllerBase):
             p.title = r.title
             p.username = r.username
             p.status = r.status
-            p.uploaded_at = r.uploaded_at
+            # p.uploaded_at = r.uploaded_at
             p.registered_at = r.registered_at
             p.video_url = r.video_url
             p.mylist_url = r.mylist_url

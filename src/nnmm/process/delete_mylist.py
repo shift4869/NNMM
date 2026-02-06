@@ -51,6 +51,9 @@ class DeleteMylist(ProcessBase):
             elif textbox := self.get_bottom_textbox():
                 # (3)左下のテキストボックス
                 mylist_url = textbox.to_str()
+            else:
+                # どこにもマイリストURLの候補が無い場合は何もしない方向に倒す
+                mylist_url = ""
 
             # 既存マイリストに存在していない場合何もしない
             prev_mylist = self.mylist_db.select_from_url(mylist_url)[0]

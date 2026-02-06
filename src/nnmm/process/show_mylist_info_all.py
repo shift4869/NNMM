@@ -17,7 +17,7 @@ class ShowMylistInfoAll(ProcessBase):
         super().__init__(process_info)
 
     def create_component(self) -> QWidget:
-        """ListWidgetダブルクリックから起動するためコンポーネントは作成しない"""
+        """ListWidget上の右クリックから起動するためコンポーネントは作成しない"""
         return None
 
     @Slot()
@@ -45,11 +45,19 @@ class ShowMylistInfoAll(ProcessBase):
             index = int(selected_mylist_row_index)
 
         # 全動画情報を取得
-        NUM = 100
+        NUM = 1000
         video_info_list = self.mylist_info_db.select()  # DB内にある全ての動画情報を取得
-        records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[
+
+        # 動画IDを基準にソート
+        # records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[
+        #     0:NUM
+        # ]  # 最大1000要素までのスライス
+
+        # 投稿日時を基準にソート
+        records = sorted(video_info_list, key=lambda x: x["uploaded_at"], reverse=True)[
             0:NUM
-        ]  # 最大100要素までのスライス
+        ]  # 最大1000要素までのスライス
+
         table_row_list = []
         for i, r in enumerate(records):
             a = [

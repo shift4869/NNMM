@@ -134,8 +134,10 @@ class MainWindow(QDialog):
         }
 
     def create_mylist_tab_layout(self, window_w: int, window_h: int) -> QGroupBox:
+        # マイリストタブ（メインタブ）のレイアウト設定
         group = QGroupBox("マイリスト")
 
+        # 左ペイン
         leftpane = QVBoxLayout()
         update_button = QHBoxLayout()
         all_update_button = self.component_helper("すべて更新", every.Every)
@@ -146,6 +148,7 @@ class MainWindow(QDialog):
         update_button.addWidget(partial_update_button)
         update_button.addWidget(single_update_button)
 
+        # マイリストペイン（左ペイン内）
         self.list_widget = QListWidget()
         self.list_widget.setMinimumWidth(window_w * 1 / 4)
         self.list_widget.setMinimumHeight(window_h)
@@ -176,6 +179,7 @@ class MainWindow(QDialog):
         leftpane.addLayout(mylist_control_button)
         leftpane.addWidget(self.oneline_log)
 
+        # 右ペイン
         rightpane = QVBoxLayout()
         self.tbox_mylist_url = QLineEdit()
         table_cols_name = [
@@ -189,6 +193,7 @@ class MainWindow(QDialog):
             "動画URL",
             "所属マイリストURL",
         ]
+        # テーブルペイン（右ペイン内）
         self.table_widget = QTableWidget()
         self.table_widget.setMinimumWidth(window_w * 3 / 4)
         self.table_widget.setMinimumHeight(window_h)
@@ -196,6 +201,7 @@ class MainWindow(QDialog):
         self.table_widget.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_widget.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table_widget.setSortingEnabled(True)
         # self.table_widget.setAlternatingRowColors(True)
         self.table_widget.customContextMenuRequested.connect(self.table_context_menu)
         rightpane.addWidget(self.tbox_mylist_url)

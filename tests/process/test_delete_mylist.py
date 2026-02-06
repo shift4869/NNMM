@@ -1,6 +1,6 @@
 import sys
 import unittest
-from contextlib import ExitStack
+from collections import namedtuple
 
 from mock import MagicMock, call, patch
 from PySide6.QtWidgets import QDialog
@@ -17,11 +17,110 @@ from nnmm.util import Result
 
 class TestDeleteMylist(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.delete_mylist.logger.info"))
+        self.enterContext(patch("nnmm.process.delete_mylist.logger.error"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
+
+    def _get_instance(self) -> DeleteMylist:
+        instance = DeleteMylist(self.process_info)
+        return instance
+
+    def _make_mylist_db(self, num: int = 5) -> list[dict]:
+        """mylist_db.select()で取得されるマイリストデータセット"""
+        res = []
+        col = [
+            "id",
+            "username",
+            "mylistname",
+            "type",
+            "showname",
+            "url",
+            "created_at",
+            "updated_at",
+            "checked_at",
+            "check_interval",
+            "is_include_new",
+        ]
+        rows = [
+            [
+                i,
+                f"投稿者{i + 1}",
+                "投稿動画",
+                "uploaded",
+                f"投稿者{i + 1}さんの投稿動画",
+                f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "2022-02-01 02:30:00",
+                "15分",
+                False,
+            ]
+            for i in range(num)
+        ]
+
+        for row in rows:
+            d = {}
+            for r, c in zip(row, col):
+                d[c] = r
+            res.append(d)
+        return res
+
+    def test_init(self):
+        instance = self._get_instance()
+        self.assertEqual(self.process_info, instance.process_info)
+
+    def test_component(self):
+        mock_btn = self.enterContext(patch("nnmm.process.delete_mylist.QPushButton"))
+        instance = self._get_instance()
+        actual = instance.create_component()
+        self.assertEqual(mock_btn.return_value, actual)
+        mock_btn.assert_any_call(self.process_info.name)
+        mock_btn.return_value.clicked.connect.assert_called_once()
+
+    def callback(self) -> Result:
+        mock_popup = self.enterContext(patch("nnmm.process.delete_mylist.popup"))
+
+        Params = namedtuple(
+            "Params",
+            ["kind_selected_mylist_row", "kind_select_from_url", "popup", "result"],
+        )
+
+        def pre_run(params: Params) -> DeleteMylist:
+            instance = self._get_instance()
+            instance.get_selected_mylist_row = MagicMock()
+            instance.get_upper_textbox = MagicMock()
+            instance.get_bottom_textbox = MagicMock()
+            m_list = self._make_mylist_db()
+            mylist_url = m_list["url"]
+            if params.kind_selected_mylist_row == "mylist":
+                showname = "投稿者1さんの投稿動画"
+                instance.get_selected_mylist_row.return_value = SelectedMylistRow.create(showname)
+            elif params.kind_selected_mylist_row == "upper":
+                textbox = MagicMock()
+                textbox.to_str.return_value = mylist_url
+                instance.get_upper_textbox.return_value = textbox
+            elif params.kind_selected_mylist_row == "bottom":
+                textbox = MagicMock()
+                textbox.to_str.return_value = mylist_url
+                instance.get_bottom_textbox.return_value = textbox
+            else:  # "invalid"
+                pass
+
+            instance.mylist_db = MagicMock()
+            if params.kind_select_from_url == "valid":
+                pass
+            elif params.kind_select_from_url == "not_exist":
+                pass
+            else:  # "error"
+                pass
+            return instance
+
+        def post_run(actual: Result, instance: DeleteMylist, params: Params) -> None:
+            pass
 
     @unittest.skip("")
     def test_run(self):
