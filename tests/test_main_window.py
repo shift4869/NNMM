@@ -186,7 +186,6 @@ class TestWindowMain(unittest.TestCase):
         }
         self.assertEqual(expect, actual)
 
-    @unittest.skip("")
     def test_create_mylist_tab_layout(self):
         """マイリストタブのレイアウトをテストする"""
         mock_list = [
@@ -239,6 +238,7 @@ class TestWindowMain(unittest.TestCase):
                 call.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows),
                 call.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers),
                 call.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu),
+                call.setSortingEnabled(True),
                 call.customContextMenuRequested.connect(mock_list[9]),
             ],
             [],

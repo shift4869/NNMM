@@ -1,7 +1,6 @@
 import sys
 import unittest
 from collections import namedtuple
-from contextlib import ExitStack
 
 import freezegun
 from mock import MagicMock, call, patch
@@ -11,163 +10,131 @@ from nnmm.mylist_db_controller import MylistDBController
 from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process.timer import Timer
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.process.value_objects.textbox_bottom import BottomTextbox
 from nnmm.util import Result
 
 
 class TestTimer(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.timer.logger.info"))
+        self.enterContext(patch("nnmm.process.timer.logger.error"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
+    def _get_instance(self) -> Timer:
+        instance = Timer(self.process_info)
+        return instance
+
     def test_init(self):
-        instance = Timer(self.process_info)
+        instance = self._get_instance()
+        self.assertEqual(self.process_info, instance.process_info)
         self.assertIsNone(instance.timer)
+        self.assertTrue(instance.first_set)
 
-    @unittest.skip("")
     def test_timer_cancel(self):
-        instance = Timer(self.process_info)
-
+        instance = self._get_instance()
         instance.timer = MagicMock()
+
+        instance.timer.remainingTime.return_value = 0
+        actual = instance._timer_cancel()
+        self.assertIsNone(actual)
+        instance.timer.stop.assert_not_called()
+
+        instance.timer.remainingTime.return_value = 10
         actual = instance._timer_cancel()
         self.assertIsNone(actual)
         self.assertIsNone(instance.timer)
 
-        instance.timer = None
-        actual = instance._timer_cancel()
+    def test_component(self):
+        instance = self._get_instance()
+        actual = instance.create_component()
         self.assertIsNone(actual)
-        self.assertIsNone(instance.timer)
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            f_now = "2021-11-23 01:00:00"
-            mockfg = self.enterContext(freezegun.freeze_time(f_now))
-            mockli = self.enterContext(patch("nnmm.process.timer.logger.info"))
-            mockle = self.enterContext(patch("nnmm.process.timer.logger.error"))
-            mock_config = self.enterContext(patch("nnmm.process.timer.ConfigBase.get_config"))
-            mock_threading_timer = self.enterContext(patch("nnmm.process.timer.threading.Timer"))
-            mock_timer_cancel = self.enterContext(patch("nnmm.process.timer.Timer._timer_cancel"))
-            mock_bottom_textbox = self.enterContext(patch("nnmm.process.timer.ProcessBase.get_bottom_textbox"))
-            mock_timer_thread = MagicMock()
+    def test_callback(self) -> Result:
+        mock_config = self.enterContext(patch("nnmm.process.timer.ConfigBase.get_config"))
+        mock_partial = self.enterContext(patch("nnmm.process.timer.partial.Partial"))
+        mock_qtimer = self.enterContext(patch("nnmm.process.timer.QTimer"))
+        mock_process_info = self.enterContext(patch("nnmm.process.timer.ProcessInfo.create"))
+        self.enterContext(freezegun.freeze_time("2026-02-07 00:01:00"))
+        Params = namedtuple(
+            "Params",
+            [
+                "config_i_str",
+                "kind_skip",
+                "result",
+            ],
+        )
 
-            instance = Timer(self.process_info)
+        def pre_run(params: Params) -> Timer:
+            instance = self._get_instance()
+            instance.get_bottom_textbox = MagicMock()
+            instance._timer_cancel = MagicMock()
+            mock_config.reset_mock()
+            mock_partial.reset_mock()
+            mock_qtimer.reset_mock()
+            mock_process_info.reset_mock()
 
-            def pre_run(is_use_auto_reload, interval_num, skip_kind, is_cancel):
-                mock_config.reset_mock()
-                if is_use_auto_reload:
-                    if isinstance(interval_num, int):
-                        config_dict = {"auto_reload": f"{interval_num}分毎"}
-                    else:
-                        config_dict = {"auto_reload": "invalid_interval_num"}
-                else:
-                    config_dict = {"auto_reload": "(使用しない)"}
-                mock_config.return_value.__getitem__.side_effect = lambda key: config_dict
+            mock_config.return_value = {"general": {"auto_reload": params.config_i_str}}
 
-                instance.window.reset_mock()
-                instance.values.reset_mock()
-                mock_bottom_textbox.reset_mock()
-                if skip_kind == "-FIRST_SET-":
+            if params.kind_skip == "first_set":
+                instance.first_set = True
+                instance.get_bottom_textbox.return_value.to_str.return_value = ""
+            elif params.kind_skip == "running":
+                instance.first_set = False
+                instance.get_bottom_textbox.return_value.to_str.return_value = "更新中"
+            else:  # "start"
+                instance.first_set = False
+                instance.get_bottom_textbox.return_value.to_str.return_value = ""
 
-                    def f():
-                        return BottomTextbox.create("")
+            return instance
 
-                    mock_bottom_textbox.side_effect = f
-                    instance.values.get.side_effect = lambda key: "-FIRST_SET-"
-                elif skip_kind == "-NOW_PROCESSING-":
+        def post_run(actual: Result, instance: Timer, params: Params) -> None:
+            self.assertEqual(params.result, actual)
+            mock_config.assert_called_once_with()
+            i_str = params.config_i_str
+            if i_str == "(使用しない)" or i_str == "":
+                instance._timer_cancel.assert_called_once_with()
+                mock_process_info.assert_not_called()
+                mock_partial.assert_not_called()
+                mock_qtimer.assert_not_called()
+                return
 
-                    def f():
-                        return BottomTextbox.create("更新中")
+            if i_str == "invalid":
+                instance._timer_cancel.assert_not_called()
+                mock_process_info.assert_not_called()
+                mock_partial.assert_not_called()
+                mock_qtimer.assert_not_called()
+                return
 
-                    mock_bottom_textbox.side_effect = f
-                    instance.values.get.side_effect = lambda key: ""
-                else:
+            instance.get_bottom_textbox.return_value.to_str.assert_called_once_with()
 
-                    def f():
-                        return BottomTextbox.create("")
+            if params.kind_skip == "first_set":
+                mock_process_info.assert_not_called()
+                mock_partial.assert_not_called()
+            elif params.kind_skip == "running":
+                mock_process_info.assert_not_called()
+                mock_partial.assert_not_called()
+            else:  # "start"
+                mock_process_info.assert_called_once_with("インターバル更新", instance.window)
+                self.assertEqual([call(mock_process_info.return_value), call().callback()], mock_partial.mock_calls)
 
-                    mock_bottom_textbox.side_effect = f
-                    instance.values.get.side_effect = lambda key: ""
+            instance._timer_cancel.assert_called_once_with()
+            mock_qtimer.assert_called()
 
-                mock_timer_thread.reset_mock()
-                if is_cancel:
-                    instance.timer = mock_timer_thread
-                else:
-                    instance.timer = None
-                mock_threading_timer.reset_mock()
-                mock_timer_cancel.reset_mock()
-
-            def post_run(is_use_auto_reload, interval_num, skip_kind, is_cancel):
-                self.assertEqual([call(), call().__getitem__("general")], mock_config.mock_calls)
-
-                if is_use_auto_reload:
-                    if not isinstance(interval_num, int) or interval_num < 0:
-                        instance.window.assert_not_called()
-                        instance.values.assert_not_called()
-                        mock_timer_thread.assert_not_called()
-                        mock_threading_timer.assert_not_called()
-                        mock_bottom_textbox.assert_not_called()
-                        return
-                else:
-                    mock_timer_cancel.assert_called_once_with()
-
-                    mock_timer_thread.assert_not_called()
-                    instance.window.assert_not_called()
-                    instance.values.assert_not_called()
-                    mock_timer_thread.assert_not_called()
-                    mock_threading_timer.assert_not_called()
-                    mock_bottom_textbox.assert_not_called()
-                    return
-
-                self.assertEqual(
-                    [
-                        call(),
-                    ],
-                    mock_bottom_textbox.mock_calls,
-                )
-
-                expect_window_call = []
-                expect_values_call = [call.get("-TIMER_SET-")]
-                if skip_kind == "-FIRST_SET-":
-                    expect_values_call.append(call.__setitem__("-TIMER_SET-", ""))
-                elif skip_kind == "-NOW_PROCESSING-":
-                    expect_values_call.append(call.__setitem__("-TIMER_SET-", ""))
-                else:
-                    expect_window_call.append(call.write_event_value("-PARTIAL_UPDATE-", ""))
-
-                self.assertEqual(expect_window_call, instance.window.mock_calls)
-                self.assertEqual(expect_values_call, instance.values.mock_calls)
-
-                mock_timer_cancel.assert_called_once_with()
-
-                self.assertEqual(
-                    [call(interval_num * 60, instance.run), call().setDaemon(True), call().start()],
-                    mock_threading_timer.mock_calls,
-                )
-
-            Params = namedtuple("Params", ["is_use_auto_reload", "interval_num", "skip_kind", "is_cancel", "result"])
-            params_list = [
-                Params(True, 15, "", True, Result.success),
-                Params(True, 15, "-FIRST_SET-", True, Result.success),
-                Params(True, 15, "-NOW_PROCESSING-", True, Result.success),
-                Params(True, 15, "", False, Result.success),
-                Params(True, 15, "-FIRST_SET-", False, Result.success),
-                Params(True, 15, "-NOW_PROCESSING-", False, Result.success),
-                Params(True, -1, "", True, Result.failed),
-                Params(True, "invalid_interval_num", "", True, Result.failed),
-                Params(False, 15, "", True, Result.failed),
-                Params(False, 15, "", False, Result.failed),
-            ]
-            for params in params_list:
-                pre_run(params.is_use_auto_reload, params.interval_num, params.skip_kind, params.is_cancel)
-                actual = instance.run()
-                expect = params.result
-                self.assertIs(expect, actual)
-                post_run(params.is_use_auto_reload, params.interval_num, params.skip_kind, params.is_cancel)
-        pass
+        params_list = [
+            Params("15分毎", "first_set", Result.success),
+            Params("15分毎", "running", Result.success),
+            Params("15分毎", "start", Result.success),
+            Params("(使用しない)", "first_set", Result.failed),
+            Params("", "first_set", Result.failed),
+            Params("invalid", "first_set", Result.failed),
+        ]
+        for params in params_list:
+            instance = pre_run(params)
+            actual = instance.callback()
+            post_run(actual, instance, params)
 
 
 if __name__ == "__main__":

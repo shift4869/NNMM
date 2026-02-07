@@ -769,9 +769,7 @@ class TestProcessBase(unittest.TestCase):
 
             # selected index の挙動
             if mylist_url == "":
-                instance.get_selected_mylist_row_index = MagicMock(
-                    return_value=params.selected_mylist_row_index
-                )
+                instance.get_selected_mylist_row_index = MagicMock(return_value=params.selected_mylist_row_index)
             else:
                 instance.get_selected_mylist_row_index = MagicMock(return_value=None)
 

@@ -1,8 +1,6 @@
 import sys
 import unittest
 from collections import namedtuple
-from contextlib import ExitStack
-from copy import deepcopy
 
 from mock import MagicMock, call, patch
 from PySide6.QtWidgets import QDialog
@@ -17,13 +15,20 @@ from nnmm.util import Result
 
 class TestWatchedMylist(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.watched_mylist.logger.info"))
+        self.enterContext(patch("nnmm.process.watched_mylist.logger.error"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
 
-    def _make_mylist_db(self, num: int = 5) -> list[dict]:
+    def _get_instance(self) -> WatchedMylist:
+        instance = WatchedMylist(self.process_info)
+        return instance
+
+    def _make_mylist_db(self) -> list[dict]:
+        NUM = 5
         res = []
         col = [
             "id",
@@ -46,13 +51,13 @@ class TestWatchedMylist(unittest.TestCase):
                 "uploaded",
                 f"投稿者{i + 1}さんの投稿動画",
                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                "2022-02-01 02:30:00",
-                "2022-02-01 02:30:00",
-                "2022-02-01 02:30:00",
+                "2026-02-07 02:30:00",
+                "2026-02-07 02:30:00",
+                "2026-02-07 02:30:00",
                 "15分",
-                i % 2 == 0,
+                True,
             ]
-            for i in range(num)
+            for i in range(NUM)
         ]
 
         for row in rows:
@@ -62,93 +67,141 @@ class TestWatchedMylist(unittest.TestCase):
             res.append(d)
         return res
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            mockli = self.enterContext(patch("nnmm.process.watched_mylist.logger.info"))
-            mockle = self.enterContext(patch("nnmm.process.watched_mylist.logger.error"))
-            mock_selected_mylist_row = self.enterContext(
-                patch("nnmm.process.watched_mylist.ProcessBase.get_selected_mylist_row")
-            )
-            mock_update_mylist_pane = self.enterContext(
-                patch("nnmm.process.watched_mylist.ProcessBase.update_mylist_pane")
-            )
-            mock_update_table_pane = self.enterContext(
-                patch("nnmm.process.watched_mylist.ProcessBase.update_table_pane")
-            )
+    def _make_table_row_list(self, mylist_url) -> list[list[str]]:
+        """テーブル情報動画データセット"""
+        NUM = 5
+        res = []
+        table_cols_name = [
+            "No.",
+            "動画ID",
+            "動画名",
+            "投稿者",
+            "状況",
+            "投稿日時",
+            "登録日時",
+            "動画URL",
+            "所属マイリストURL",
+        ]
+        for k in range(NUM):
+            for i in range(NUM):
+                # MylistInfo + showname系
+                number = i + (k * NUM) + 1
+                video_id = f"sm{k + 1}000000{i + 1}"
+                title = f"動画タイトル{k + 1}_{i + 1}"
+                username = f"投稿者{k + 1}"
+                status = "未視聴"
+                uploaded_at = f"2026-02-02 0{k + 1}:00:0{i + 1}"
+                registered_at = f"2026-02-03 0{k + 1}:00:0{i + 1}"
+                video_url = f"https://www.nicovideo.jp/watch/sm{k + 1}000000{i + 1}"
+                table_rows = [
+                    number,
+                    video_id,
+                    title,
+                    username,
+                    status,
+                    uploaded_at,
+                    registered_at,
+                    video_url,
+                    mylist_url,
+                ]
+                res.append(table_rows)
+        return res
 
-            instance = WatchedMylist(self.process_info)
+    def test_init(self):
+        instance = self._get_instance()
+        self.assertEqual(self.process_info, instance.process_info)
+
+    def test_component(self):
+        instance = self._get_instance()
+        actual = instance.create_component()
+        self.assertIsNone(actual)
+
+    def test_callback(self) -> Result:
+        Params = namedtuple(
+            "Params",
+            [
+                "kind_get_selected_mylist_row",
+                "is_include_new",
+                "result",
+            ],
+        )
+
+        def pre_run(params: Params) -> WatchedMylist:
+            instance = self._get_instance()
+            instance.get_selected_mylist_row = MagicMock()
+            instance.update_mylist_pane = MagicMock()
+            instance.update_table_pane = MagicMock()
+            instance.mylist_db = MagicMock()
+            instance.mylist_info_db = MagicMock()
 
             m_list = self._make_mylist_db()
+            if params.kind_get_selected_mylist_row == "valid":
+                showname = m_list[0]["showname"]
+                instance.get_selected_mylist_row.return_value = SelectedMylistRow.create(showname)
+            else:  # "invalid"
+                instance.get_selected_mylist_row.return_value = None
+
+            def select_from_showname(s):
+                for mylist in m_list:
+                    if mylist["showname"] == s:
+                        mylist["is_include_new"] = params.is_include_new
+                        return [mylist]
+                return []
+
+            instance.mylist_db.select_from_showname.side_effect = select_from_showname
+            return instance
+
+        def post_run(actual: Result, instance: WatchedMylist, params: Params) -> None:
+            self.assertEqual(params.result, actual)
+            instance.get_selected_mylist_row.assert_called_once_with()
+
+            if params.kind_get_selected_mylist_row == "valid":
+                pass
+            else:  # "invalid"
+                instance.update_mylist_pane.assert_not_called()
+                instance.update_table_pane.assert_not_called()
+                instance.mylist_db.assert_not_called()
+                instance.mylist_info_db.assert_not_called()
+                return
+
+            if params.is_include_new:
+                pass
+            else:
+                instance.update_mylist_pane.assert_not_called()
+                instance.update_table_pane.assert_not_called()
+                instance.mylist_db.assert_not_called()
+                instance.mylist_info_db.assert_not_called()
+                return
+
+            m_list = self._make_mylist_db()
+            showname = m_list[0]["showname"]
             mylist_url = m_list[0]["url"]
+            self.assertEqual(
+                [
+                    call.select_from_showname(showname),
+                    call.update_include_flag(mylist_url, False),
+                ],
+                instance.mylist_db.mock_calls,
+            )
+            self.assertEqual(
+                [
+                    call.update_status_in_mylist(mylist_url, ""),
+                ],
+                instance.mylist_info_db.mock_calls,
+            )
 
-            def pre_run(s_values, is_include_new):
-                mock_selected_mylist_row.reset_mock()
-                if s_values:
+            instance.update_mylist_pane.assert_called_once_with()
+            instance.update_table_pane.assert_called_once_with("")
 
-                    def f():
-                        return SelectedMylistRow.create(s_values)
-
-                    mock_selected_mylist_row.side_effect = f
-                else:
-
-                    def f():
-                        return None
-
-                    mock_selected_mylist_row.side_effect = f
-
-                s_m_list = deepcopy(m_list)
-                s_m_list[0]["is_include_new"] = is_include_new
-                instance.mylist_db.reset_mock()
-                instance.mylist_db.select_from_showname.side_effect = lambda showname: s_m_list
-
-                instance.mylist_info_db.reset_mock()
-                mock_update_mylist_pane.reset_mock()
-                mock_update_table_pane.reset_mock()
-
-            def post_run(s_values, is_include_new):
-                self.assertEqual([call()], mock_selected_mylist_row.mock_calls)
-                if not s_values:
-                    instance.mylist_db.assert_not_called()
-                    instance.mylist_info_db.assert_not_called()
-                    mock_update_mylist_pane.assert_not_called()
-                    mock_update_table_pane.assert_not_called()
-                    return
-
-                NEW_MARK = "*:"
-                if s_values[:2] == NEW_MARK:
-                    s_values = s_values[2:]
-                if is_include_new:
-                    self.assertEqual(
-                        [call.select_from_showname(s_values), call.update_include_flag(mylist_url, False)],
-                        instance.mylist_db.mock_calls,
-                    )
-                else:
-                    self.assertEqual([call.select_from_showname(s_values)], instance.mylist_db.mock_calls)
-                    instance.mylist_info_db.assert_not_called()
-                    mock_update_mylist_pane.assert_not_called()
-                    mock_update_table_pane.assert_not_called()
-                    return
-
-                self.assertEqual([call.update_status_in_mylist(mylist_url, "")], instance.mylist_info_db.mock_calls)
-
-                mock_update_mylist_pane.assert_called_once_with()
-                mock_update_table_pane.assert_called_once_with("")
-
-            Params = namedtuple("Params", ["s_values", "is_include_new", "result"])
-            showname_1 = "投稿者1さんの投稿動画"
-            params_list = [
-                Params(showname_1, True, Result.success),
-                Params("*:" + showname_1, True, Result.success),
-                Params(showname_1, False, Result.failed),
-                Params("", True, Result.failed),
-            ]
-            for params in params_list:
-                pre_run(*params[:-1])
-                actual = instance.run()
-                expect = params.result
-                self.assertIs(expect, actual)
-                post_run(*params[:-1])
+        params_list = [
+            Params("valid", True, Result.success),
+            Params("valid", False, Result.failed),
+            Params("invalid", True, Result.failed),
+        ]
+        for params in params_list:
+            instance = pre_run(params)
+            actual = instance.callback()
+            post_run(actual, instance, params)
 
 
 if __name__ == "__main__":

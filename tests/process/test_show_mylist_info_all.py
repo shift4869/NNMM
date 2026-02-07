@@ -1,9 +1,8 @@
 import sys
 import unittest
 from collections import namedtuple
-from contextlib import ExitStack
 
-from mock import MagicMock, call, patch
+from mock import MagicMock, patch
 from PySide6.QtWidgets import QDialog
 
 from nnmm.mylist_db_controller import MylistDBController
@@ -11,17 +10,22 @@ from nnmm.mylist_info_db_controller import MylistInfoDBController
 from nnmm.process.show_mylist_info_all import ShowMylistInfoAll
 from nnmm.process.value_objects.mylist_row_index import SelectedMylistRowIndex
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.process.value_objects.table_row_list import TableRowList
 from nnmm.util import Result
 
 
 class TestShowMylistInfoAll(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch("nnmm.process.show_mylist_info_all.logger.info"))
+        self.enterContext(patch("nnmm.process.show_mylist_info_all.logger.error"))
         self.process_info = MagicMock(spec=ProcessInfo)
         self.process_info.name = "-TEST_PROCESS-"
         self.process_info.window = MagicMock(spec=QDialog)
         self.process_info.mylist_db = MagicMock(spec=MylistDBController)
         self.process_info.mylist_info_db = MagicMock(spec=MylistInfoDBController)
+
+    def _get_instance(self) -> ShowMylistInfoAll:
+        instance = ShowMylistInfoAll(self.process_info)
+        return instance
 
     def _make_mylist_info_db(self) -> list[dict]:
         NUM = 5
@@ -62,99 +66,71 @@ class TestShowMylistInfoAll(unittest.TestCase):
                 res.append(d)
         return res
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            mockli = self.enterContext(patch("nnmm.process.show_mylist_info_all.logger.info"))
-            mock_selected_mylist_row_index = self.enterContext(
-                patch("nnmm.process.show_mylist_info_all.ProcessBase.get_selected_mylist_row_index")
-            )
+    def test_init(self):
+        instance = self._get_instance()
+        self.assertEqual(self.process_info, instance.process_info)
 
-            instance = ShowMylistInfoAll(self.process_info)
+    def test_component(self):
+        instance = self._get_instance()
+        actual = instance.create_component()
+        self.assertIsNone(actual)
 
-            def pre_run(s_index, not_empty_records):
-                mock_selected_mylist_row_index.reset_mock()
-                if s_index >= 0:
+    def test_callback(self) -> Result:
+        Params = namedtuple(
+            "Params",
+            [
+                "kind_get_selected_mylist_row_index",
+                "kind_video_info_list",
+                "result",
+            ],
+        )
 
-                    def f():
-                        return SelectedMylistRowIndex(s_index)
+        def pre_run(params: Params) -> ShowMylistInfoAll:
+            instance = self._get_instance()
+            instance.get_selected_mylist_row_index = MagicMock()
+            instance.set_upper_textbox = MagicMock()
+            instance.set_all_table_row = MagicMock()
+            instance.mylist_info_db = MagicMock()
+            instance.window.list_widget = MagicMock()
+            instance.window.table_widget = MagicMock()
 
-                    mock_selected_mylist_row_index.side_effect = f
-                else:
-                    mock_selected_mylist_row_index.side_effect = lambda: None
+            if params.kind_get_selected_mylist_row_index == "valid":
+                instance.get_selected_mylist_row_index.return_value = SelectedMylistRowIndex(0)
+            else:  # "invalid"
+                instance.get_selected_mylist_row_index.return_value = None
 
-                video_info_list = self._make_mylist_info_db()
-                instance.mylist_info_db.reset_mock()
-                if not_empty_records:
-                    instance.mylist_info_db.select.side_effect = lambda: video_info_list
-                else:
-                    instance.mylist_info_db.select.side_effect = lambda: []
-                instance.window.reset_mock()
+            mylist_info = self._make_mylist_info_db()
+            if params.kind_get_selected_mylist_row_index == "valid":
+                instance.mylist_info_db.select.return_value = mylist_info
+            else:  # "empty"
+                instance.mylist_info_db.select.return_value = []
 
-            def post_run(s_index, not_empty_records):
-                expect_window_call = []
-                index = 0
-                if s_index >= 0:
-                    index = s_index
+            return instance
 
-                expect_window_call.extend([
-                    call.__getitem__("-INPUT1-"),
-                    call.__getitem__().update(value=""),
-                    call.__getitem__("-LIST-"),
-                    call.__getitem__().update(set_to_index=index),
-                ])
-                if not_empty_records:
-                    NUM = 100
-                    video_info_list = self._make_mylist_info_db()
-                    records = sorted(video_info_list, key=lambda x: int(x["video_id"][2:]), reverse=True)[0:NUM]
-                    table_row_list = []
-                    for i, r in enumerate(records):
-                        a = [
-                            i + 1,
-                            r["video_id"],
-                            r["title"],
-                            r["username"],
-                            r["status"],
-                            r["uploaded_at"],
-                            r["registered_at"],
-                            r["video_url"],
-                            r["mylist_url"],
-                        ]
-                        table_row_list.append(a)
-                    def_data = TableRowList.create(table_row_list)
-                    expect_window_call.extend([
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(values=def_data.to_table_data()),
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(select_rows=[0]),
-                    ])
-                else:
-                    def_data = TableRowList.create([])
-                    expect_window_call.extend([
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(values=def_data.to_table_data()),
-                    ])
-                expect_window_call.extend([
-                    call.__getitem__("-TABLE-"),
-                    call.__getitem__().update(row_colors=[(0, "", "")]),
-                ])
-                self.assertEqual(expect_window_call, instance.window.mock_calls)
+        def post_run(actual: Result, instance: ShowMylistInfoAll, params: Params) -> None:
+            self.assertEqual(params.result, actual)
 
-                self.assertEqual([call.select()], instance.mylist_info_db.mock_calls)
+            instance.get_selected_mylist_row_index.assert_called_once_with()
 
-            Params = namedtuple("Params", ["index", "not_empty_records", "result"])
-            params_list = [
-                Params(0, True, Result.success),
-                Params(1, True, Result.success),
-                Params(-1, True, Result.success),
-                Params(0, False, Result.success),
-            ]
-            for params in params_list:
-                pre_run(params.index, params.not_empty_records)
-                actual = instance.run()
-                expect = params.result
-                self.assertIs(expect, actual)
-                post_run(params.index, params.not_empty_records)
+            instance.mylist_info_db.select.assert_called_once_with()
+            instance.set_upper_textbox.assert_called_once_with("", False)
+            instance.window.list_widget.setCurrentRow.assert_called_once_with(0)
+            instance.set_all_table_row.assert_called()
+
+            if params.kind_get_selected_mylist_row_index == "valid":
+                instance.window.table_widget.selectRow.assert_called_once_with(0)
+            else:  # "empty"
+                instance.window.table_widget.selectRow.assert_not_called()
+
+        params_list = [
+            Params("valid", "valid", Result.success),
+            Params("valid", "empty", Result.success),
+            Params("invalid", "valid", Result.success),
+        ]
+        for params in params_list:
+            instance = pre_run(params)
+            actual = instance.callback()
+            post_run(actual, instance, params)
 
 
 if __name__ == "__main__":

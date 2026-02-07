@@ -53,9 +53,9 @@ class TestDeleteMylist(unittest.TestCase):
                 "uploaded",
                 f"投稿者{i + 1}さんの投稿動画",
                 f"https://www.nicovideo.jp/user/1000000{i + 1}/video",
-                "2022-02-01 02:30:00",
-                "2022-02-01 02:30:00",
-                "2022-02-01 02:30:00",
+                "2026-02-07 02:30:00",
+                "2026-02-07 02:30:00",
+                "2026-02-07 02:30:00",
                 "15分",
                 False,
             ]
@@ -81,12 +81,17 @@ class TestDeleteMylist(unittest.TestCase):
         mock_btn.assert_any_call(self.process_info.name)
         mock_btn.return_value.clicked.connect.assert_called_once()
 
-    def callback(self) -> Result:
+    def test_callback(self) -> Result:
         mock_popup = self.enterContext(patch("nnmm.process.delete_mylist.popup"))
 
         Params = namedtuple(
             "Params",
-            ["kind_selected_mylist_row", "kind_select_from_url", "popup", "result"],
+            [
+                "kind_selected_mylist_row",
+                "kind_select_from_url",
+                "popup",
+                "result",
+            ],
         )
 
         def pre_run(params: Params) -> DeleteMylist:
@@ -94,202 +99,128 @@ class TestDeleteMylist(unittest.TestCase):
             instance.get_selected_mylist_row = MagicMock()
             instance.get_upper_textbox = MagicMock()
             instance.get_bottom_textbox = MagicMock()
+            instance.mylist_db = MagicMock()
+            instance.mylist_info_db = MagicMock()
+
             m_list = self._make_mylist_db()
-            mylist_url = m_list["url"]
+            mylist_url = m_list[0]["url"]
             if params.kind_selected_mylist_row == "mylist":
                 showname = "投稿者1さんの投稿動画"
                 instance.get_selected_mylist_row.return_value = SelectedMylistRow.create(showname)
+                instance.mylist_db.select_from_showname.return_value = m_list
             elif params.kind_selected_mylist_row == "upper":
+                instance.get_selected_mylist_row.return_value = None
                 textbox = MagicMock()
                 textbox.to_str.return_value = mylist_url
                 instance.get_upper_textbox.return_value = textbox
+                instance.get_bottom_textbox.return_value = None
             elif params.kind_selected_mylist_row == "bottom":
+                instance.get_selected_mylist_row.return_value = None
                 textbox = MagicMock()
                 textbox.to_str.return_value = mylist_url
+                instance.get_upper_textbox.return_value = None
                 instance.get_bottom_textbox.return_value = textbox
             else:  # "invalid"
-                pass
+                instance.get_selected_mylist_row.return_value = None
+                instance.get_upper_textbox.return_value = None
+                instance.get_bottom_textbox.return_value = None
 
-            instance.mylist_db = MagicMock()
             if params.kind_select_from_url == "valid":
-                pass
+                instance.mylist_db.select_from_url.return_value = m_list
             elif params.kind_select_from_url == "not_exist":
-                pass
+                instance.mylist_db.select_from_url.return_value = [{}]
             else:  # "error"
-                pass
+                instance.mylist_db.select_from_url.return_value = []
+
+            mock_popup.reset_mock()
+            if params.popup == "popup_ok":
+                mock_popup.return_value = "OK"
+            else:  # "popup_cancel"
+                mock_popup.return_value = "Cancel"
+
+            instance.update_mylist_pane = MagicMock()
+            instance.set_all_table_row = MagicMock()
+            instance.set_upper_textbox = MagicMock()
+            instance.set_bottom_textbox = MagicMock()
+
             return instance
 
         def post_run(actual: Result, instance: DeleteMylist, params: Params) -> None:
-            pass
+            self.assertEqual(params.result, actual)
+            m_list = self._make_mylist_db()
+            mylist_url = m_list[0]["url"]
 
-    @unittest.skip("")
-    def test_run(self):
-        with ExitStack() as stack:
-            mockli = self.enterContext(patch("nnmm.process.delete_mylist.logger.info"))
-            mockle = self.enterContext(patch("nnmm.process.delete_mylist.logger.error"))
-            mock_update_mylist_pane = self.enterContext(
-                patch("nnmm.process.delete_mylist.ProcessBase.update_mylist_pane")
-            )
-            mock_get_selected_mylist_row = self.enterContext(
-                patch("nnmm.process.delete_mylist.ProcessBase.get_selected_mylist_row")
-            )
-            mock_get_upper_textbox = self.enterContext(
-                patch("nnmm.process.delete_mylist.ProcessBase.get_upper_textbox")
-            )
-            mock_get_bottom_textbox = self.enterContext(
-                patch("nnmm.process.delete_mylist.ProcessBase.get_bottom_textbox")
-            )
-            mock_popup_ok_cancel = self.enterContext(patch("nnmm.process.delete_mylist.sg.popup_ok_cancel"))
-            mock_mylist_db = MagicMock()
+            instance.get_selected_mylist_row.assert_called_once_with()
+            if params.kind_selected_mylist_row == "mylist":
+                instance.mylist_db.select_from_showname.assert_called()
+                instance.get_upper_textbox.return_value.to_str.assert_not_called()
+                instance.get_bottom_textbox.return_value.to_str.assert_not_called()
+            elif params.kind_selected_mylist_row == "upper":
+                instance.mylist_db.select_from_showname.assert_not_called()
+                instance.get_upper_textbox.return_value.to_str.assert_called_once_with()
+            elif params.kind_selected_mylist_row == "bottom":
+                instance.mylist_db.select_from_showname.assert_not_called()
+                instance.get_bottom_textbox.return_value.to_str.assert_called_once_with()
+            else:  # "invalid"
+                instance.mylist_db.select_from_showname.assert_not_called()
+                instance.get_upper_textbox.assert_called_once_with()
+                instance.get_bottom_textbox.assert_called_once_with()
+                instance.mylist_db.select_from_url.assert_called()
+                mock_popup.assert_not_called()
+                instance.mylist_info_db.delete_in_mylist.assert_not_called()
+                instance.mylist_db.delete_from_mylist_url.assert_not_called()
+                instance.update_mylist_pane.assert_not_called()
+                instance.set_all_table_row.assert_not_called()
+                instance.set_upper_textbox.assert_not_called()
+                instance.set_bottom_textbox.assert_not_called()
+                return
 
-            instance = DeleteMylist(self.process_info)
+            instance.mylist_db.select_from_url.assert_called()
+            if params.kind_select_from_url not in ["valid", "not_exist"]:
+                # "invalid"
+                mock_popup.assert_not_called()
+                instance.mylist_info_db.delete_in_mylist.assert_not_called()
+                instance.mylist_db.delete_from_mylist_url.assert_not_called()
+                instance.update_mylist_pane.assert_not_called()
+                instance.set_all_table_row.assert_not_called()
+                instance.set_upper_textbox.assert_not_called()
+                instance.set_bottom_textbox.assert_not_called()
+                return
 
-            # 正常系
-            showname_s = "投稿者1さんの投稿動画"
-            mylist_url_s = "https://www.nicovideo.jp/user/11111111/video"
+            prev_mylist = m_list[0]
+            showname = prev_mylist.get("showname", "")
+            msg = f"{showname}\n{mylist_url}\nマイリスト削除します"
+            mock_popup.assert_called_once_with(message=msg, title="削除確認", ok_cancel=True)
+            if params.popup == "popup_ok":
+                pass
+            else:  # "popup_cancel"
+                instance.set_bottom_textbox.assert_called_once_with("マイリスト削除キャンセル")
+                instance.mylist_info_db.delete_in_mylist.assert_not_called()
+                instance.mylist_db.delete_from_mylist_url.assert_not_called()
+                instance.update_mylist_pane.assert_not_called()
+                instance.set_all_table_row.assert_not_called()
+                instance.set_upper_textbox.assert_not_called()
+                return
 
-            def return_select_from_showname(showname):
-                url_dict = {
-                    showname_s: {"url": mylist_url_s},
-                }
-                res = url_dict.get(showname, {})
-                return [res] if res else []
+            instance.mylist_info_db.delete_in_mylist.assert_called_once_with(mylist_url)
+            instance.mylist_db.delete_from_mylist_url.assert_called_once_with(mylist_url)
+            instance.update_mylist_pane.assert_called_once_with()
+            instance.set_all_table_row.assert_called_once_with([])
+            instance.set_upper_textbox.assert_called_once_with("")
+            instance.set_bottom_textbox.assert_called_once_with("マイリスト削除完了")
 
-            def return_select_from_url(mylist_url):
-                showname_dict = {
-                    mylist_url_s: {"showname": showname_s},
-                }
-                return [showname_dict.get(mylist_url, {})]
-
-            def pre_run(values_kind, s_prev_mylist, s_popup_ok_cancel):
-                instance.window.reset_mock()
-                mock_mylist_db.select_from_showname.reset_mock()
-                mock_get_selected_mylist_row.reset_mock()
-                mock_get_upper_textbox.reset_mock()
-                mock_get_bottom_textbox.reset_mock()
-                if values_kind == "-LIST-":
-
-                    def f():
-                        return SelectedMylistRow.create(showname_s)
-
-                    mock_get_selected_mylist_row.side_effect = f
-                    mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
-                elif values_kind == "-LIST_NEW_MARK-":
-
-                    def f():
-                        return SelectedMylistRow.create("*:" + showname_s)
-
-                    mock_get_selected_mylist_row.side_effect = f
-                    mock_mylist_db.select_from_showname.side_effect = return_select_from_showname
-                elif values_kind == "-INPUT1-":
-
-                    def f():
-                        return UpperTextbox(mylist_url_s)
-
-                    mock_get_upper_textbox.side_effect = f
-                    mock_get_selected_mylist_row.side_effect = lambda: 0
-                elif values_kind == "-INPUT2-":
-
-                    def f():
-                        return BottomTextbox(mylist_url_s)
-
-                    mock_get_bottom_textbox.side_effect = f
-                    mock_get_selected_mylist_row.side_effect = lambda: 0
-                    mock_get_upper_textbox.side_effect = lambda: 0
-
-                mock_mylist_db.select_from_url.reset_mock()
-                if s_prev_mylist == "":
-                    mock_mylist_db.select_from_url.side_effect = lambda mylist_url: [{}]
-                elif s_prev_mylist == "invalid":
-                    mock_mylist_db.select_from_url.side_effect = lambda mylist_url: ""
-                else:
-                    mock_mylist_db.select_from_url.side_effect = return_select_from_url
-                mock_mylist_db.delete_from_mylist_url.reset_mock()
-                instance.mylist_db = mock_mylist_db
-
-                mock_popup_ok_cancel.reset_mock()
-                if s_popup_ok_cancel:
-                    mock_popup_ok_cancel.return_value = "Ok"
-                else:
-                    mock_popup_ok_cancel.return_value = "Cancel"
-
-                instance.mylist_info_db.delete_in_mylist = MagicMock()
-                mock_update_mylist_pane.reset_mock()
-
-            def post_run(values_kind, s_prev_mylist, s_popup_ok_cancel):
-                mock_get_selected_mylist_row.assert_called_once_with()
-                if values_kind in ["-LIST-", "-LIST_NEW_MARK-"]:
-                    instance.mylist_db.select_from_showname.assert_called_once_with(showname_s)
-                    mock_get_upper_textbox.assert_not_called()
-                    mock_get_bottom_textbox.assert_not_called()
-                elif values_kind == "-INPUT1-":
-                    mock_get_upper_textbox.assert_called_once_with()
-                    mock_get_bottom_textbox.assert_not_called()
-                    instance.mylist_db.select_from_showname.assert_not_called()
-                elif values_kind == "-INPUT2-":
-                    mock_get_upper_textbox.assert_called_once_with()
-                    mock_get_bottom_textbox.assert_called_once_with()
-                    instance.mylist_db.select_from_showname.assert_not_called()
-
-                instance.mylist_db.select_from_url.assert_called_once_with(mylist_url_s)
-                if s_prev_mylist in ["", "invalid"]:
-                    mock_popup_ok_cancel.assert_not_called()
-                    instance.mylist_info_db.delete_in_mylist.assert_not_called()
-                    instance.mylist_db.delete_from_mylist_url.assert_not_called()
-                    instance.window.assert_not_called()
-                    mock_update_mylist_pane.assert_not_called()
-                    return
-
-                mock_popup_ok_cancel.assert_called_once_with(
-                    f"{showname_s}\n{mylist_url_s}\nマイリスト削除します", title="削除確認"
-                )
-                if s_popup_ok_cancel:
-                    pass
-                else:
-                    instance.mylist_info_db.delete_in_mylist.assert_not_called()
-                    instance.mylist_db.delete_from_mylist_url.assert_not_called()
-                    self.assertEqual(
-                        [
-                            call.__getitem__("-INPUT2-"),
-                            call.__getitem__().update(value="マイリスト削除キャンセル"),
-                        ],
-                        instance.window.mock_calls,
-                    )
-                    mock_update_mylist_pane.assert_not_called()
-                    return
-
-                instance.mylist_info_db.delete_in_mylist.assert_called_once_with(mylist_url_s)
-                instance.mylist_db.delete_from_mylist_url.assert_called_once_with(mylist_url_s)
-                mock_update_mylist_pane.assert_called_once_with()
-
-                self.assertEqual(
-                    [
-                        call.__getitem__("-TABLE-"),
-                        call.__getitem__().update(values=[[]]),
-                        call.__getitem__("-INPUT1-"),
-                        call.__getitem__().update(value=""),
-                        call.__getitem__("-INPUT2-"),
-                        call.__getitem__().update(value="マイリスト削除完了"),
-                    ],
-                    instance.window.mock_calls,
-                )
-
-            params_list = [
-                ("-LIST-", "s_prev_mylist", True, Result.success),
-                ("-LIST_NEW_MARK-", "s_prev_mylist", True, Result.success),
-                ("-INPUT1-", "s_prev_mylist", True, Result.success),
-                ("-INPUT2-", "s_prev_mylist", True, Result.success),
-                ("-LIST-", "", True, Result.failed),
-                ("-LIST-", "invalid", True, Result.failed),
-                ("-LIST-", "s_prev_mylist", False, Result.failed),
-            ]
-            for params in params_list:
-                pre_run(params[0], params[1], params[2])
-                actual = instance.run()
-                expect = params[-1]
-                self.assertIs(expect, actual)
-                post_run(params[0], params[1], params[2])
-        pass
+        params_list = [
+            Params("mylist", "valid", "popup_ok", Result.success),
+            Params("upper", "valid", "popup_ok", Result.success),
+            Params("bottom", "valid", "popup_ok", Result.success),
+            Params("invalid", "not_exist", "popup_ok", Result.failed),
+            Params("mylist", "invalid", "popup_ok", Result.failed),
+            Params("mylist", "valid", "popup_cancel", Result.failed),
+        ]
+        for params in params_list:
+            instance = pre_run(params)
+            actual = instance.callback()
+            post_run(actual, instance, params)
 
 
 if __name__ == "__main__":

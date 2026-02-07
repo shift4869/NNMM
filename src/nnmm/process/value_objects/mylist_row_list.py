@@ -38,7 +38,7 @@ class MylistRowList:
         Args:
             mylist_row_list (list[str]]):
                 マイリスト行を表す文字列リストのリスト
-                主に画面の window["-LIST-"].Values を受け取る
+                主に画面の list_widget の要素の配列を受け取る
                 空リストは許容する
 
         Raises:

@@ -43,7 +43,7 @@ class CopyMylistUrl(ProcessBase):
         pyperclip.copy(mylist_url)
         self.set_bottom_textbox("マイリストURLコピー成功！")
 
-        logger.info(f"CopyMylistUrl succdone")
+        logger.info(f"CopyMylistUrl done.")
         return Result.success
 
 

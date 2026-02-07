@@ -73,7 +73,6 @@ class NotWatched(ProcessBase):
         self.set_all_table_row(table_row_list)
 
         # テーブルの表示を更新する
-        mylist_url = self.get_upper_textbox().to_str()
         table_widget: QTableWidget = self.window.table_widget
         table_widget.selectRow(row_index)
 
