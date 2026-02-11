@@ -10,11 +10,11 @@
 #   universal: false
 
 -e file:.
-anyio==4.11.0
+anyio==4.12.1
     # via httpx
-beautifulsoup4==4.14.2
+beautifulsoup4==4.14.3
     # via nnmm
-certifi==2025.11.12
+certifi==2026.1.4
     # via httpcore
     # via httpx
     # via requests
@@ -22,9 +22,9 @@ cffi==2.0.0
     # via cryptography
 charset-normalizer==3.4.4
     # via requests
-coverage==7.12.0
+coverage==7.13.4
     # via nnmm
-cryptography==46.0.3
+cryptography==46.0.5
     # via nnmm
 darkdetect==0.7.1
     # via pyqtdarktheme
@@ -32,7 +32,7 @@ emoji==2.15.0
     # via nnmm
 freezegun==1.5.5
     # via nnmm
-greenlet==3.2.4
+greenlet==3.3.1
     # via sqlalchemy
 h11==0.16.0
     # via httpcore
@@ -48,46 +48,44 @@ isort==7.0.0
     # via nnmm
 mock==5.2.0
     # via nnmm
-orjson==3.11.4
+orjson==3.11.7
     # via nnmm
 pycodestyle==2.14.0
     # via nnmm
-pycparser==2.23
+pycparser==3.0
     # via cffi
 pyperclip==1.11.0
     # via nnmm
 pyqtdarktheme==2.1.0
     # via nnmm
-pyside6==6.10.1
+pyside6==6.10.2
     # via nnmm
-pyside6-addons==6.10.1
+pyside6-addons==6.10.2
     # via pyside6
-pyside6-essentials==6.10.1
+pyside6-essentials==6.10.2
     # via pyside6
     # via pyside6-addons
 python-dateutil==2.9.0.post0
     # via freezegun
 requests==2.32.5
     # via nnmm
-ruff==0.14.6
+ruff==0.15.0
     # via nnmm
-shiboken6==6.10.1
+shiboken6==6.10.2
     # via pyside6
     # via pyside6-addons
     # via pyside6-essentials
 six==1.17.0
     # via python-dateutil
-sniffio==1.3.1
-    # via anyio
-soupsieve==2.8
+soupsieve==2.8.3
     # via beautifulsoup4
-sqlalchemy==2.0.44
+sqlalchemy==2.0.46
     # via nnmm
 typing-extensions==4.15.0
     # via anyio
     # via beautifulsoup4
     # via sqlalchemy
-urllib3==2.5.0
+urllib3==2.6.3
     # via requests
 xmltodict==1.0.2
     # via nnmm
