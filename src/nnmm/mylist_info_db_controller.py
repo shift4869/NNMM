@@ -6,6 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from nnmm.db_controller_base import DBControllerBase
 from nnmm.model import MylistInfo
+from nnmm.video_info_fetcher.value_objects.videoid import Videoid
 
 
 class MylistInfoDBController(DBControllerBase):
@@ -180,7 +181,7 @@ class MylistInfoDBController(DBControllerBase):
         if status not in ["未視聴", ""]:
             return -1
 
-        pattern = "sm[0-9]+"
+        pattern = "s[ms][0-9]+"
         if not re.search(pattern, video_id):
             return -1
 
@@ -188,7 +189,8 @@ class MylistInfoDBController(DBControllerBase):
         Session = sessionmaker(bind=self.engine, autoflush=False)
         session = Session()
         record = (
-            session.query(MylistInfo)
+            session
+            .query(MylistInfo)
             .filter(and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url))
             .with_for_update()
             .first()
@@ -331,7 +333,7 @@ class MylistInfoDBController(DBControllerBase):
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
-        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
+        res_dict.sort(key=lambda x: Videoid(x["video_id"]).numeric_id, reverse=True)
 
         session.close()
         return res_dict
@@ -356,7 +358,7 @@ class MylistInfoDBController(DBControllerBase):
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
-        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
+        res_dict.sort(key=lambda x: Videoid(x["video_id"]).numeric_id, reverse=True)
 
         session.close()
         return res_dict
@@ -379,7 +381,8 @@ class MylistInfoDBController(DBControllerBase):
         session = Session()
 
         res = (
-            session.query(MylistInfo)
+            session
+            .query(MylistInfo)
             .filter(and_(MylistInfo.video_id == video_id, MylistInfo.mylist_url == mylist_url))
             .with_for_update()
             .all()
@@ -409,7 +412,7 @@ class MylistInfoDBController(DBControllerBase):
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
-        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
+        res_dict.sort(key=lambda x: Videoid(x["video_id"]).numeric_id, reverse=True)
 
         session.close()
         return res_dict
@@ -434,7 +437,7 @@ class MylistInfoDBController(DBControllerBase):
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDで降順ソート
-        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
+        res_dict.sort(key=lambda x: Videoid(x["video_id"]).numeric_id, reverse=True)
 
         session.close()
         return res_dict
@@ -458,7 +461,7 @@ class MylistInfoDBController(DBControllerBase):
         res_dict = [r.to_dict() for r in res]  # 辞書リストに変換
 
         # 動画IDでソート
-        res_dict.sort(key=lambda x: int(str(x["video_id"]).replace("sm", "")), reverse=True)
+        res_dict.sort(key=lambda x: Videoid(x["video_id"]).numeric_id, reverse=True)
 
         session.close()
         return res_dict

@@ -23,8 +23,8 @@ class VideoURL:
     url: URL
 
     # 対象URLのパターン
-    VIDEO_URL_PATTERN = r"^https://www.nicovideo.jp/watch/(sm[0-9]+)$"
-    VIDEO_ID_PATTERN = r"sm[0-9]"
+    VIDEO_URL_PATTERN = r"^https://www.nicovideo.jp/watch/(s[ms][0-9]+)$"
+    VIDEO_ID_PATTERN = r"s[ms][0-9]"
 
     def __post_init__(self) -> None:
         """初期化後処理

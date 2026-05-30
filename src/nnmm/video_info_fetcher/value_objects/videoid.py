@@ -26,13 +26,18 @@ class Videoid:
         """
         if not isinstance(self._id, str):
             raise TypeError("id is not string, invalid Videoid.")
-        if not re.search("^sm[0-9]+$", self._id):
+        if not re.search("^s[ms][0-9]+$", self._id):
             raise ValueError(f"'{self._id}' is invalid Videoid")
 
     @property
     def id(self) -> str:
         """保持している動画IDを返す"""
         return self._id
+
+    @property
+    def numeric_id(self) -> int:
+        """保持している動画IDを数値として返す"""
+        return int(self._id[2:])
 
 
 if __name__ == "__main__":
