@@ -81,7 +81,6 @@ class MylistHtmlParser(ParserBase):
             )
             video_url_list.append(VideoURL.create(URL(video_url).non_query_url))
 
-
         video_id_list = VideoidList.create(video_id_list)
         title_list = TitleList.create(title_list)
         registered_at_list = RegisteredAtList.create(registered_at_list)
