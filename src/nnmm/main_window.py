@@ -20,16 +20,14 @@ from nnmm.process import move_up, not_watched, popup, search, show_mylist_info, 
 from nnmm.process import video_play, video_play_with_focus_back, watched, watched_all_mylist, watched_mylist
 from nnmm.process.update_mylist import every, partial, single
 from nnmm.process.value_objects.process_info import ProcessInfo
-from nnmm.util import CustomLogger, Result
+from nnmm.util import CustomLogger, Result, log_suppress
 
 APP_NAME = "NNMM"
 ICON_PATH = "./image/icon.png"
 
 # ログ設定
 logging.config.fileConfig("./log/logging.ini", disable_existing_loggers=False)
-for name in logging.root.manager.loggerDict:
-    if "nnmm" not in name:
-        getLogger(name).disabled = True
+log_suppress()
 logging.setLoggerClass(CustomLogger)
 logger = getLogger(__name__)
 logger.setLevel(INFO)
@@ -49,6 +47,7 @@ class MainWindow(QDialog):
         self.db_fullpath = Path(self.config["db"].get("save_path", ""))
         self.mylist_db = MylistDBController(db_fullpath=str(self.db_fullpath))
         self.mylist_info_db = MylistInfoDBController(db_fullpath=str(self.db_fullpath))
+        log_suppress()
 
         # アイコン画像設定
         if Path(ICON_PATH).exists():

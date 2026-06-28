@@ -7,6 +7,7 @@ authors = [
 ]
 dependencies = [
     "beautifulsoup4>=4.14.3",
+    "browser-cookie3>=0.20.1",
     "coverage>=7.13.4",
     "cryptography>=46.0.5",
     "emoji>=2.15.0",
@@ -62,7 +63,7 @@ dev-dependencies = []
 [tool.rye.scripts]
 unittest = "python -m unittest"
 cover = {chain = ["coverage run --source . -m unittest discover", "coverage html -i"]}
-copy_to_run = "./copy_to_run.bat"
+deploy = "./copy_to_run.bat"
 
 [tool.hatch.metadata]
 allow-direct-references = true

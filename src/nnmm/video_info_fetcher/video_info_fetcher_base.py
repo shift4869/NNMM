@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from logging import CRITICAL, INFO, getLogger
 
+import browser_cookie3
 import httpx
 import xmltodict
 
@@ -65,10 +66,22 @@ class VideoInfoFetcherBase(ABC):
         follow_redirects = True
         timeout = httpx.Timeout(60, read=10)
         transport = httpx.AsyncHTTPTransport(retries=self.MAX_RETRY_NUM)
+        cj = browser_cookie3.firefox(domain_name="nicovideo.jp")
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,application/json;charset=utf-8",
+            "Origin": "https://www.nicovideo.jp",
+            "Referer": "https://www.nicovideo.jp/",
+            "X-Frontend-Id": "6",
+            "X-Frontend-Version": "0",
+            "X-Niconico-Language": "ja-jp",
+        }
         try:
             async with httpx.AsyncClient(
                 follow_redirects=follow_redirects, timeout=timeout, transport=transport
             ) as client:
+                client.cookies.update(cj)
+                client.headers.update(headers)
                 response = await client.get(request_url)
                 response.raise_for_status()
         except Exception:

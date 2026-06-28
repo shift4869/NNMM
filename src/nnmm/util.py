@@ -1,7 +1,8 @@
 import enum
+import logging
 import re
 from datetime import datetime
-from logging import Logger
+from logging import Logger, getLogger
 from pathlib import Path
 from typing import Any
 
@@ -93,6 +94,12 @@ class MylistType(enum.Enum):
 class IncludeNewStatus(enum.Enum):
     yes = True
     no = False
+
+
+def log_suppress():
+    for name in logging.root.manager.loggerDict:
+        if "nnmm" not in name and "__main__" not in name:
+            getLogger(name).disabled = True
 
 
 def find_values(

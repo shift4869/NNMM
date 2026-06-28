@@ -1,14 +1,14 @@
 from nnmm.util import MylistType
-from nnmm.video_info_fetcher.mylist_rss_xml_parser import MylistRSSXmlParser
+from nnmm.video_info_fetcher.mylist_html_parser import MylistHtmlParser
 from nnmm.video_info_fetcher.parser_base import ParserBase
 from nnmm.video_info_fetcher.series_api_response_json_parser import SeriesAPIResponseJsonParser
-from nnmm.video_info_fetcher.uploaded_rss_xml_parser import UploadedRSSXmlParser
+from nnmm.video_info_fetcher.uploaded_html_parser import UploadedHtmlParser
 
 
 class ParserFactory:
     _class_dict: dict = {
-        MylistType.uploaded: UploadedRSSXmlParser,
-        MylistType.mylist: MylistRSSXmlParser,
+        MylistType.uploaded: UploadedHtmlParser,
+        MylistType.mylist: MylistHtmlParser,
         MylistType.series: SeriesAPIResponseJsonParser,
     }
 

@@ -29,6 +29,9 @@ class UserMylistURL(MylistURL):
     # 対象URLのパターン
     USER_MYLIST_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)$"
 
+    # マイリスト情報を取得するエンドポイントベース
+    USER_MYLIST_API_ENDPOINT_BASE = "https://nvapi.nicovideo.jp/v2/mylists/"
+
     # RSSリクエストURLサフィックス
     RSS_URL_SUFFIX = "?rss=2.0"
 
@@ -41,14 +44,17 @@ class UserMylistURL(MylistURL):
 
     @property
     def fetch_url(self) -> str:
-        """RSS取得用のURLを返す
+        """マイリスト取得用のAPIエンドポイントを返す
 
-        https://www.nicovideo.jp/mylist/[0-9]+/?rss=2.0 形式でないとそのマイリストのRSSが取得できない
+        要user_sessionクッキー
+        "https://nvapi.nicovideo.jp/v2/mylists/[0-9]+"
         """
-        # /user/{userid} 部分を削除
-        non_user_url = re.sub("/user/[0-9]+", "", str(self.non_query_url))
-        # サフィックスを付与
-        fetch_url = non_user_url + self.RSS_URL_SUFFIX
+        # # /user/{userid} 部分を削除
+        # non_user_url = re.sub("/user/[0-9]+", "", str(self.non_query_url))
+        # # サフィックスを付与
+        # fetch_url = non_user_url + self.RSS_URL_SUFFIX
+
+        fetch_url = self.USER_MYLIST_API_ENDPOINT_BASE + self.mylistid.id
         return fetch_url
 
     @property
