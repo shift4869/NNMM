@@ -11,6 +11,7 @@ from nnmm.video_info_fetcher.value_objects.showname import Showname
 from nnmm.video_info_fetcher.value_objects.title_list import TitleList
 from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from nnmm.video_info_fetcher.value_objects.userid import Userid
+from nnmm.video_info_fetcher.value_objects.username import Username
 from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
 from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
@@ -38,6 +39,7 @@ class FetchedVideoInfo:
 
     no: list[int]  # No. [1, ..., len()-1]
     userid: Userid  # ユーザーID 1234567
+    username: Username  # ユーザー名 「投稿者1」
     mylistid: Mylistid  # マイリストID 12345678
     showname: Showname  # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
     myshowname: Myshowname  # マイリスト名 「まとめマイリスト」
@@ -84,6 +86,8 @@ class FetchedVideoInfo:
         """
         if not isinstance(self.userid, Userid):
             raise TypeError("userid must be Userid.")
+        if not isinstance(self.username, Username):
+            raise TypeError("username must be Username.")
         if not isinstance(self.mylistid, Mylistid):
             raise TypeError("mylistid must be Mylistid.")
         if not isinstance(self.showname, Showname):
@@ -190,20 +194,6 @@ class FetchedVideoInfo:
         """
         return self.result_dict
 
-    @classmethod
-    def merge(cls, fvi_page: "FetchedPageVideoInfo", fvi_api: "FetchedAPIVideoInfo") -> "FetchedVideoInfo":
-        """マージ
-
-        FetchedPageVideoInfo とFetchedAPIVideoInfo の結果をマージして
-        FetchedVideoInfo のインスタンスを作成する
-        同じキーがある場合はFetchedAPIVideoInfo の値を優先する
-
-        Returns:
-            FetchedVideoInfo: fetchingの最終的な出力となるデータクラス
-        """
-        d = dict(fvi_page.to_dict(), **fvi_api.to_dict())
-        return FetchedVideoInfo(**d)
-
 
 if __name__ == "__main__":
     from nnmm.video_info_fetcher.value_objects.fetched_api_video_info import FetchedAPIVideoInfo
@@ -250,6 +240,4 @@ if __name__ == "__main__":
         video_url_list,
     )
     fvi_api = FetchedAPIVideoInfo(no, video_id_list, title_list, uploaded_at_list, video_url_list, username_list)
-    fvi_d = FetchedVideoInfo.merge(fvi_page, fvi_api)
-    print(fvi == fvi_d)
     pprint(fvi.result)

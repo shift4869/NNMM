@@ -25,6 +25,7 @@ from nnmm.video_info_fetcher.value_objects.title_list import TitleList
 from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from nnmm.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from nnmm.video_info_fetcher.value_objects.userid import Userid
+from nnmm.video_info_fetcher.value_objects.username import Username
 from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
 from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
@@ -72,6 +73,7 @@ class TestDatabaseUpdater(unittest.TestCase):
 
     def _get_fetched_video_info(self) -> FetchedVideoInfo:
         userid = Userid("1234567")
+        username = Username("username_1")
         mylistid = Mylistid("12345678")
         showname = Showname("「まとめマイリスト」-shift4869さんのマイリスト")
         myshowname = Myshowname("「まとめマイリスト」")
@@ -87,6 +89,7 @@ class TestDatabaseUpdater(unittest.TestCase):
         fetched_video_info = FetchedVideoInfo(
             no,
             userid,
+            username,
             mylistid,
             showname,
             myshowname,

@@ -43,7 +43,6 @@ class VideoInfoFetcher(VideoInfoFetcherBase):
                                "所属マイリストURL", "マイリスト表示名", "マイリスト名"]
             table_cols = ["no", "video_id", "title", "username", "status",
                           "uploaded_at", "registered_at", "video_url", "mylist_url", "showname", "mylistname"]
-            RSSは取得が速い代わりに最大30件までしか情報を取得できない
 
         Returns:
             video_info_list (list[dict]): 動画情報をまとめた辞書リスト キーはNotesを参照, エラー時 空リスト
@@ -53,21 +52,10 @@ class VideoInfoFetcher(VideoInfoFetcherBase):
         if not response:
             raise ValueError("fetch request failed.")
 
-        # RSS/APIから必要な情報を収集する
+        # fetch した情報をもとに必要な情報を収集する
         fetched_d = await self._analysis_response_text(response.text)
-
         userid = fetched_d.userid
         mylistid = fetched_d.mylistid
-        video_id_list = fetched_d.video_id_list
-
-        # 動画IDについてAPIを通して情報を取得する
-        api_d = await self._get_videoinfo_from_api(video_id_list)
-
-        # バリデーション
-        if fetched_d.title_list != api_d.title_list:
-            raise ValueError("video title from fetched data and from api is different.")
-        if fetched_d.video_url_list != api_d.video_url_list:
-            raise ValueError("video url from fetched data and from api is different.")
 
         # config取得
         config = process_config.ConfigBase.get_config()
@@ -91,9 +79,9 @@ class VideoInfoFetcher(VideoInfoFetcherBase):
             logger.error(traceback.format_exc())
             pass  # 仮に書き込みに失敗しても以降の処理は続行する
 
-        # 結合
-        video_d = FetchedVideoInfo.merge(fetched_d, api_d)
-        return video_d
+        # FetchedPageVideoInfo 型から FetchedVideoInfo 型に変換
+        fetched_dict = fetched_d.to_dict()
+        return FetchedVideoInfo(**fetched_dict)
 
     async def _fetch_videoinfo(self) -> FetchedVideoInfo:
         return await self._fetch_videoinfo_from_fetch_url()
@@ -104,12 +92,12 @@ if __name__ == "__main__":
     process_config.ConfigBase.set_config()
 
     urls = [
-        # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
+        "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
         # "https://www.nicovideo.jp/user/31784111/video",  # 投稿動画0件
         # "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト
         # "https://www.nicovideo.jp/user/31784111/mylist/73141814",  # 0件マイリスト
         # "https://www.nicovideo.jp/user/12899156/mylist/99999999",  # 存在しないマイリスト
-        "https://www.nicovideo.jp/user/12899156/series/442402",  # シリーズ
+        # "https://www.nicovideo.jp/user/12899156/series/442402",  # シリーズ
     ]
 
     loop = asyncio.new_event_loop()

@@ -19,12 +19,11 @@ class TestUploadedURL(unittest.TestCase):
         """UploadedURL の初期化後の状態をテストする"""
         # 正常系
         # 通常の投稿動画ページのURL（クエリ付き）
-        EXPECT_RSS_URL_SUFFIX = "?rss=2.0"
         url = URL("https://www.nicovideo.jp/user/1234567/video?ref=pc_mypage_nicorepo")
         uploaded_url = UploadedURL(url)
         self.assertEqual(url.non_query_url, uploaded_url.non_query_url)
         self.assertEqual(url.original_url, uploaded_url.original_url)
-        self.assertEqual(url.non_query_url + EXPECT_RSS_URL_SUFFIX, uploaded_url.fetch_url)
+        self.assertEqual(UploadedURL.UPLOADED_API_ENDPOINT_BASE.format(uploaded_url.userid.id), uploaded_url.fetch_url)
 
         non_query_url = uploaded_url.non_query_url
         userid = re.findall(UploadedURL.UPLOADED_URL_PATTERN, non_query_url)[0]

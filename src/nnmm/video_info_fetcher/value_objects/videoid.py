@@ -26,7 +26,7 @@ class Videoid:
         """
         if not isinstance(self._id, str):
             raise TypeError("id is not string, invalid Videoid.")
-        if not re.search("^s[ms][0-9]+$", self._id):
+        if not re.search("^[a-z][a-z][0-9]+$", self._id):
             raise ValueError(f"'{self._id}' is invalid Videoid")
 
     @property

@@ -84,6 +84,8 @@ class TestVideoInfoFetcherBase(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         mock_get = AsyncMock()
         mock_get.get.side_effect = lambda url: mock_response
+        mock_get.cookies = MagicMock()
+        mock_get.headers = MagicMock()
         mock_aenter = MagicMock()
         mock_aenter.__aenter__.side_effect = lambda: mock_get
         mock_async_client.side_effect = lambda follow_redirects, timeout, transport: mock_aenter
@@ -124,6 +126,8 @@ class TestVideoInfoFetcherBase(unittest.IsolatedAsyncioTestCase):
 
         mock_get = AsyncMock()
         mock_get.get.side_effect = lambda url: make_response(url)
+        mock_get.cookies = MagicMock()
+        mock_get.headers = MagicMock()
         mock_aenter = MagicMock()
         mock_aenter.__aenter__.side_effect = lambda: mock_get
         mock_async_client.side_effect = lambda follow_redirects, timeout, transport: mock_aenter

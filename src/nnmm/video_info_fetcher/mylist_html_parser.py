@@ -1,5 +1,4 @@
 import asyncio
-import html
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -9,13 +8,14 @@ from bs4 import BeautifulSoup
 from nnmm.util import MylistType, find_values
 from nnmm.video_info_fetcher.parser_base import ParserBase
 from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
-from nnmm.video_info_fetcher.value_objects.registered_at import RegisteredAt
-from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
 from nnmm.video_info_fetcher.value_objects.showname import Showname
 from nnmm.video_info_fetcher.value_objects.title import Title
 from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.uploaded_at import UploadedAt
+from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from nnmm.video_info_fetcher.value_objects.url import URL
 from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
 from nnmm.video_info_fetcher.value_objects.video_url import VideoURL
 from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from nnmm.video_info_fetcher.value_objects.videoid import Videoid
@@ -45,7 +45,6 @@ class MylistHtmlParser(ParserBase):
 
     def _get_showname_myshowname(self) -> tuple[Showname, Myshowname]:
         """マイリスト名収集"""
-        # マイリスト情報
         mylist_name = find_values(self.data, "name", True, ["data", "mylist"], [])
         username = self._get_username()
 
@@ -53,39 +52,42 @@ class MylistHtmlParser(ParserBase):
         showname = Showname.create(MylistType.mylist, username, myshowname)
         return (showname, myshowname)
 
-    def _get_entries(self) -> tuple[VideoidList, TitleList, RegisteredAtList, VideoURLList]:
+    def _get_entries(self) -> tuple[VideoidList, TitleList, UploadedAtList, VideoURLList, UsernameList]:
         """エントリー収集"""
-        # 動画一覧
         items = find_values(self.data, "items", True, ["data", "mylist"], [])
 
         video_id_list = []
         title_list = []
-        registered_at_list = []
+        uploaded_at_list = []
         video_url_list = []
+        username_list = []
 
         for item in items:
             e = item["video"]
             video_id = e["id"]
             title = e["title"]
-            registered_at = e["registeredAt"]
+            uploaded_at = e["registeredAt"]
             video_url = f"https://www.nicovideo.jp/watch/{video_id}"
+            username = e["owner"]["name"]
 
             video_id_list.append(Videoid(video_id))
             title_list.append(Title(title))
-            registered_at_list.append(
-                RegisteredAt(
-                    datetime.strptime(registered_at, self.SOURCE_DATETIME_FORMAT).strftime(
+            uploaded_at_list.append(
+                UploadedAt(
+                    datetime.strptime(uploaded_at, self.SOURCE_DATETIME_FORMAT).strftime(
                         self.DESTINATION_DATETIME_FORMAT
                     )
                 )
             )
             video_url_list.append(VideoURL.create(URL(video_url).non_query_url))
+            username_list.append(username)
 
         video_id_list = VideoidList.create(video_id_list)
         title_list = TitleList.create(title_list)
-        registered_at_list = RegisteredAtList.create(registered_at_list)
+        uploaded_at_list = UploadedAtList.create(uploaded_at_list)
         video_url_list = VideoURLList.create(video_url_list)
-        return (video_id_list, title_list, registered_at_list, video_url_list)
+        username_list = UsernameList.create(username_list)
+        return (video_id_list, title_list, uploaded_at_list, video_url_list, username_list)
 
 
 if __name__ == "__main__":

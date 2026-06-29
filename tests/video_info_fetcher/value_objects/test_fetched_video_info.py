@@ -16,6 +16,7 @@ from nnmm.video_info_fetcher.value_objects.title_list import TitleList
 from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from nnmm.video_info_fetcher.value_objects.user_mylist_url import UserMylistURL
 from nnmm.video_info_fetcher.value_objects.userid import Userid
+from nnmm.video_info_fetcher.value_objects.username import Username
 from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
 from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
@@ -25,6 +26,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
     def make_instance(self, max_index_num: int = 5) -> FetchedVideoInfo:
         n = max_index_num
         userid = Userid(str(n) * 7)
+        username = Username("test_user")
         mylistid = Mylistid(str(n) * 8)
         showname = Showname("「testマイリスト」-test_userさんのマイリスト")
         myshowname = Myshowname("「testマイリスト」")
@@ -40,6 +42,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
         fvi = FetchedVideoInfo(
             no,
             userid,
+            username,
             mylistid,
             showname,
             myshowname,
@@ -131,6 +134,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
         p = (
             instance.no,
             instance.userid,
+            instance.username,
             instance.mylistid,
             instance.showname,
             instance.myshowname,
@@ -143,20 +147,21 @@ class TestFetchedVideoInfo(unittest.TestCase):
             instance.username_list,
         )
         params_list = [
-            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
-            (None, p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
-            (p[0], None, p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
-            (p[0], p[1], None, p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
-            (p[0], p[1], p[2], None, p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
-            (p[0], p[1], p[2], p[3], None, p[5], p[6], p[7], p[8], p[9], p[10], p[11]),
-            (p[0], p[1], p[2], p[3], p[4], None, p[6], p[7], p[8], p[9], p[10], p[11]),
-            (p[0], p[1], p[2], p[3], p[4], p[5], None, p[7], p[8], p[9], p[10], p[11]),
-            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], None, p[8], p[9], p[10], p[11]),
-            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], None, p[9], p[10], p[11]),
-            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], None, p[10], p[11]),
-            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], None, p[11]),
-            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], None),
-            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], another_title_list, p[8], p[9], p[10], p[11]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12]),
+            (None, p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12]),
+            (p[0], None, p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12]),
+            (p[0], p[1], None, p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12]),
+            (p[0], p[1], p[2], None, p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12]),
+            (p[0], p[1], p[2], p[3], None, p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12]),
+            (p[0], p[1], p[2], p[3], p[4], None, p[6], p[7], p[8], p[9], p[10], p[11], p[12]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], None, p[7], p[8], p[9], p[10], p[11], p[12]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], None, p[8], p[9], p[10], p[11], p[12]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], None, p[9], p[10], p[11], p[12]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], None, p[10], p[11], p[12]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], None, p[11], p[12]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], None, p[12]),
+            (p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], None),
+            (p[0], p[1], p[2], p[3], p[4], p[5], another_title_list, p[6], p[8], p[9], p[10], p[11], p[12]),
         ]
 
         for i, params in enumerate(params_list):
@@ -174,6 +179,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
                     params[9],
                     params[10],
                     params[11],
+                    params[12],
                 )
                 self.assertEqual(True, fvi._is_valid())
             else:
@@ -191,6 +197,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
                         params[9],
                         params[10],
                         params[11],
+                        params[12],
                     )
 
     def test_make_result_dict(self):
@@ -280,6 +287,7 @@ class TestFetchedVideoInfo(unittest.TestCase):
         expect = {
             "no": instance.no,
             "userid": instance.userid,
+            "username": instance.username,
             "mylistid": instance.mylistid,
             "showname": instance.showname,
             "myshowname": instance.myshowname,
@@ -294,31 +302,6 @@ class TestFetchedVideoInfo(unittest.TestCase):
         }
         actual = instance.to_dict()
         self.assertEqual(expect, actual)
-
-    def test_merge(self):
-        instance = self.make_instance(5)
-        fvi_page = FetchedPageVideoInfo(
-            instance.no,
-            instance.userid,
-            instance.mylistid,
-            instance.showname,
-            instance.myshowname,
-            instance.mylist_url,
-            instance.video_id_list,
-            instance.title_list,
-            instance.registered_at_list,
-            instance.video_url_list,
-        )
-        fvi_api = FetchedAPIVideoInfo(
-            instance.no,
-            instance.video_id_list,
-            instance.title_list,
-            instance.uploaded_at_list,
-            instance.video_url_list,
-            instance.username_list,
-        )
-        fvi_d = FetchedVideoInfo.merge(fvi_page, fvi_api)
-        self.assertEqual(instance, fvi_d)
 
 
 if __name__ == "__main__":

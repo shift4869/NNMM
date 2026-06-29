@@ -10,7 +10,9 @@ from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
 from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
 from nnmm.video_info_fetcher.value_objects.showname import Showname
 from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
 from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
@@ -22,8 +24,8 @@ class ConcreteParser(ParserBase):
     def _get_showname_myshowname(self) -> tuple[Showname, Myshowname]:
         return "showname", "myshowname"
 
-    def _get_entries(self) -> tuple[VideoidList, TitleList, RegisteredAtList, VideoURLList]:
-        return VideoidList([]), TitleList([]), RegisteredAtList([]), VideoURLList([])
+    def _get_entries(self) -> tuple[VideoidList, TitleList, UploadedAtList, VideoURLList, UsernameList]:
+        return VideoidList([]), TitleList([]), UploadedAtList([]), VideoURLList([]), UsernameList([])
 
 
 class TestParserBase(unittest.IsolatedAsyncioTestCase):
@@ -97,14 +99,17 @@ class TestParserBase(unittest.IsolatedAsyncioTestCase):
             expect = {
                 "no": [],
                 "userid": userid,
+                "username": "username",
                 "mylistid": mylistid,
                 "showname": "showname",
                 "myshowname": "myshowname",
                 "mylist_url": mylist_url,
                 "video_id_list": VideoidList([]),
                 "title_list": TitleList([]),
+                "uploaded_at_list": UploadedAtList([]),
                 "registered_at_list": RegisteredAtList([]),
                 "video_url_list": VideoURLList([]),
+                "username_list": UsernameList([]),
             }
             self.assertEqual(expect, actual)
 

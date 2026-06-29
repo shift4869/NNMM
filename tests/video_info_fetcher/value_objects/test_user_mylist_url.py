@@ -14,14 +14,11 @@ class TestUserMylistURL(unittest.TestCase):
         """UserMylistURL の初期化後の状態をテストする"""
         # 正常系
         # 通常のマイリストページのURL（クエリ付き）
-        EXPECT_RSS_URL_SUFFIX = "?rss=2.0"
         url = URL("https://www.nicovideo.jp/user/1234567/mylist/12345678?ref=pc_mypage_nicorepo")
         mylist_url = UserMylistURL(url)
         self.assertEqual(url.non_query_url, mylist_url.non_query_url)
         self.assertEqual(url.original_url, mylist_url.original_url)
-
-        non_user_url = re.sub("/user/[0-9]+", "", str(url.non_query_url))
-        self.assertEqual(non_user_url + EXPECT_RSS_URL_SUFFIX, mylist_url.fetch_url)
+        self.assertEqual(UserMylistURL.USER_MYLIST_API_ENDPOINT_BASE + mylist_url.mylistid.id, mylist_url.fetch_url)
 
         non_query_url = mylist_url.non_query_url
         userid, mylistid = re.findall(UserMylistURL.USER_MYLIST_URL_PATTERN, non_query_url)[0]

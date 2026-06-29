@@ -3,16 +3,20 @@ import pprint
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from nnmm.util import get_now_datetime
 from nnmm.video_info_fetcher.value_objects.fetched_page_video_info import FetchedPageVideoInfo
 from nnmm.video_info_fetcher.value_objects.mylist_url import MylistURL
 from nnmm.video_info_fetcher.value_objects.mylist_url_factory import MylistURLFactory
 from nnmm.video_info_fetcher.value_objects.mylistid import Mylistid
 from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
+from nnmm.video_info_fetcher.value_objects.registered_at import RegisteredAt
 from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
 from nnmm.video_info_fetcher.value_objects.showname import Showname
 from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from nnmm.video_info_fetcher.value_objects.userid import Userid
 from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
 from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
@@ -46,7 +50,7 @@ class ParserBase(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _get_entries(self) -> tuple[VideoidList, TitleList, RegisteredAtList, VideoURLList]:
+    def _get_entries(self) -> tuple[VideoidList, TitleList, UploadedAtList, VideoURLList, UsernameList]:
         """エントリー収集"""
         raise NotImplementedError
 
@@ -73,30 +77,38 @@ class ParserBase(ABC):
         showname, myshowname = self._get_showname_myshowname()
 
         # 動画エントリ取得
-        video_id_list, title_list, registered_at_list, video_url_list = self._get_entries()
+        video_id_list, title_list, uploaded_at_list, video_url_list, username_list = self._get_entries()
 
         num = len(video_url_list)
         check_list = [
             num == len(video_url_list),
             num == len(video_id_list),
             num == len(title_list),
-            num == len(registered_at_list),
+            num == len(uploaded_at_list),
+            num == len(username_list),
         ]
         if not all(check_list):
             raise ValueError("video entry parse failed.")
+
+        # 登録日設定
+        registered_at = get_now_datetime()
+        registered_at_list = RegisteredAtList([RegisteredAt(registered_at) for _ in range(num)])
 
         # 返り値設定
         res = {
             "no": list(range(1, num + 1)),  # No. [1, ..., len()-1]
             "userid": userid,  # ユーザーID 1234567
+            "username": username,  # 所属マイリストのユーザー名 「投稿者1」
             "mylistid": mylistid,  # マイリストID 12345678
             "showname": showname,  # マイリスト表示名 「投稿者1さんの投稿動画」
             "myshowname": myshowname,  # マイリスト名 「投稿動画」
             "mylist_url": mylist_url,  # マイリストURL https://www.nicovideo.jp/user/11111111/video
             "video_id_list": video_id_list,  # 動画IDリスト [sm12345678]
             "title_list": title_list,  # 動画タイトルリスト [テスト動画]
+            "uploaded_at_list": uploaded_at_list,  # 投稿日時リスト [%Y-%m-%d %H:%M:%S]
             "registered_at_list": registered_at_list,  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
             "video_url_list": video_url_list,  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+            "username_list": username_list,  # 動画投稿者リスト [投稿者1]
         }
         return FetchedPageVideoInfo(**res)
 
@@ -105,10 +117,10 @@ if __name__ == "__main__":
     from nnmm.video_info_fetcher.video_info_fetcher import VideoInfoFetcher
 
     urls = [
-        # "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
+        "https://www.nicovideo.jp/user/37896001/video",  # 投稿動画
         # "https://www.nicovideo.jp/user/31784111/video",  # 投稿動画0件
         # "https://www.nicovideo.jp/user/6063658/mylist/72036443",  # テスト用マイリスト
-        "https://www.nicovideo.jp/user/12899156/series/442402",  # シリーズ
+        # "https://www.nicovideo.jp/user/12899156/series/442402",  # シリーズ
         # "https://www.nicovideo.jp/user/31784111/mylist/73141814",  # 0件マイリスト
         # "https://www.nicovideo.jp/user/12899156/mylist/99999999",  # 存在しないマイリスト
     ]

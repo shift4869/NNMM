@@ -28,8 +28,8 @@ class UploadedURL(MylistURL):
     # 対象URLのパターン
     UPLOADED_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/video$"
 
-    # RSSリクエストURLサフィックス
-    RSS_URL_SUFFIX = "?rss=2.0"
+    # マイリスト情報を取得するエンドポイントベース
+    UPLOADED_API_ENDPOINT_BASE = "https://nvapi.nicovideo.jp/v3/users/{}/videos"
 
     def __init__(self, url: str | Self) -> None:
         super().__init__(url)
@@ -40,8 +40,8 @@ class UploadedURL(MylistURL):
 
     @property
     def fetch_url(self) -> str:
-        """RSS取得用のURLを返す"""
-        fetch_url = self.non_query_url + self.RSS_URL_SUFFIX
+        """動画情報取得用のURLを返す"""
+        fetch_url = self.UPLOADED_API_ENDPOINT_BASE.format(self.userid.id)
         return fetch_url
 
     @property

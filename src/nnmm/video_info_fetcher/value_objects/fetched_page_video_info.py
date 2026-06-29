@@ -7,7 +7,10 @@ from nnmm.video_info_fetcher.value_objects.myshowname import Myshowname
 from nnmm.video_info_fetcher.value_objects.registered_at_list import RegisteredAtList
 from nnmm.video_info_fetcher.value_objects.showname import Showname
 from nnmm.video_info_fetcher.value_objects.title_list import TitleList
+from nnmm.video_info_fetcher.value_objects.uploaded_at_list import UploadedAtList
 from nnmm.video_info_fetcher.value_objects.userid import Userid
+from nnmm.video_info_fetcher.value_objects.username import Username
+from nnmm.video_info_fetcher.value_objects.username_list import UsernameList
 from nnmm.video_info_fetcher.value_objects.video_url_list import VideoURLList
 from nnmm.video_info_fetcher.value_objects.videoid_list import VideoidList
 
@@ -28,14 +31,17 @@ class FetchedPageVideoInfo:
 
     no: list[int]  # No. [1, ..., len()-1]
     userid: Userid  # ユーザーID 1234567
+    username: Username  # ユーザー名 「投稿者1」
     mylistid: Mylistid  # マイリストID 12345678
     showname: Showname  # マイリスト表示名 「{myshowname}」-{username}さんのマイリスト
     myshowname: Myshowname  # マイリスト名 「まとめマイリスト」
     mylist_url: MylistURL  # マイリストURL https://www.nicovideo.jp/user/1234567/mylist/12345678
     video_id_list: VideoidList  # 動画IDリスト [sm12345678]
     title_list: TitleList  # 動画タイトルリスト [テスト動画]
+    uploaded_at_list: UploadedAtList  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
     registered_at_list: RegisteredAtList  # 登録日時リスト [%Y-%m-%d %H:%M:%S]
     video_url_list: VideoURLList  # 動画URLリスト [https://www.nicovideo.jp/watch/sm12345678]
+    username_list: UsernameList  # 投稿者名リスト [投稿者1]
 
     def __post_init__(self) -> None:
         """初期化後処理
@@ -52,6 +58,8 @@ class FetchedPageVideoInfo:
         """
         if not isinstance(self.userid, Userid):
             raise TypeError("userid must be Userid.")
+        if not isinstance(self.username, Username):
+            raise TypeError("username must be Username.")
         if not isinstance(self.mylistid, Mylistid):
             raise TypeError("mylistid must be Mylistid.")
         if not isinstance(self.showname, Showname):
@@ -66,17 +74,23 @@ class FetchedPageVideoInfo:
             raise TypeError("video_id_list must be VideoidList.")
         if not isinstance(self.title_list, TitleList):
             raise TypeError("title_list must be TitleList.")
+        if not isinstance(self.uploaded_at_list, UploadedAtList):
+            raise TypeError("uploaded_at_list must be UploadedAtList.")
         if not isinstance(self.registered_at_list, RegisteredAtList):
             raise TypeError("registered_at_list must be RegisteredAtList.")
         if not isinstance(self.video_url_list, VideoURLList):
             raise TypeError("video_url_list must be VideoURLList.")
+        if not isinstance(self.username_list, UsernameList):
+            raise TypeError("username_list must be UsernameList.")
 
         num = len(self.no)
         if not all([
             len(self.video_id_list) == num,
             len(self.title_list) == num,
+            len(self.uploaded_at_list) == num,
             len(self.registered_at_list) == num,
             len(self.video_url_list) == num,
+            len(self.username_list) == num,
         ]):
             raise ValueError("There are different size (*_list).")
         return True

@@ -4,10 +4,10 @@ import unittest
 from mock import call, patch
 
 from nnmm.util import MylistType
-from nnmm.video_info_fetcher.mylist_rss_xml_parser import MylistRSSXmlParser
+from nnmm.video_info_fetcher.mylist_html_parser import MylistHtmlParser
 from nnmm.video_info_fetcher.parser_factory import ParserFactory
 from nnmm.video_info_fetcher.series_api_response_json_parser import SeriesAPIResponseJsonParser
-from nnmm.video_info_fetcher.uploaded_rss_xml_parser import UploadedRSSXmlParser
+from nnmm.video_info_fetcher.uploaded_html_parser import UploadedHtmlParser
 
 
 class TestParserFactory(unittest.TestCase):
@@ -15,8 +15,8 @@ class TestParserFactory(unittest.TestCase):
         class_dict = ParserFactory._class_dict
         self.assertEqual(
             {
-                MylistType.uploaded: UploadedRSSXmlParser,
-                MylistType.mylist: MylistRSSXmlParser,
+                MylistType.uploaded: UploadedHtmlParser,
+                MylistType.mylist: MylistHtmlParser,
                 MylistType.series: SeriesAPIResponseJsonParser,
             },
             class_dict,
