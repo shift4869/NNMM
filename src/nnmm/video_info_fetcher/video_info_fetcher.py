@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from logging import INFO, getLogger
 from pathlib import Path
 
+import orjson
+
 from nnmm.process import config as process_config
 from nnmm.video_info_fetcher.parser_base import ParserBase
 from nnmm.video_info_fetcher.parser_factory import ParserFactory
@@ -52,32 +54,39 @@ class VideoInfoFetcher(VideoInfoFetcherBase):
         if not response:
             raise ValueError("fetch request failed.")
 
-        # fetch した情報をもとに必要な情報を収集する
-        fetched_d = await self._analysis_response_text(response.text)
-        userid = fetched_d.userid
-        mylistid = fetched_d.mylistid
-
         # config取得
         config = process_config.ConfigBase.get_config()
         if not config:
             raise ValueError("config read failed.")
 
-        # fetch したデータを保存
-        # THINK:: jsonをfetchしてもxmlで保存される
+        # fetch したデータをキャッシュファイルに保存
+        userid = self.mylist_url.userid
+        mylistid = self.mylist_url.mylistid
+        cache_file_name = f"{userid.id}.json"
+        if mylistid.id != "":
+            cache_file_name = f"{userid.id}_{mylistid.id}.json"
+
         rd_str = config["general"].get("rss_save_path", "")
         rd_path = Path(rd_str)
         rd_path.mkdir(exist_ok=True, parents=True)
-        rss_file_name = f"{userid.id}.xml"
-        if mylistid.id != "":
-            rss_file_name = f"{userid.id}_{mylistid.id}.xml"
+        cache_file_path = rd_path / cache_file_name
         try:
-            with (rd_path / rss_file_name).open("w", encoding="utf-8") as fout:
-                fout.write(response.text)
+            # この段階ではまだJSONとして取得できているか分からないのでテキストとして保存
+            cache_file_path.write_text(response.text, encoding="utf-8")
         except Exception:
             logger.error(f"{self.mylist_url.fetch_url}, getting failed.")
-            logger.error("RSS file save failed, but continue process.")
+            logger.error("Cache file save failed, but continue process.")
             logger.error(traceback.format_exc())
             pass  # 仮に書き込みに失敗しても以降の処理は続行する
+
+        # fetch した情報をもとに必要な情報を収集する
+        fetched_d = await self._analysis_response_text(response.text)
+
+        # 正常に情報が取得できた場合キャッシュファイルをJSONとして作り直す
+        if cache_file_path.exists():
+            data = orjson.loads(cache_file_path.read_bytes())
+            cache_file_path.unlink(missing_ok=True)
+            cache_file_path.write_bytes(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS))
 
         # FetchedPageVideoInfo 型から FetchedVideoInfo 型に変換
         fetched_dict = fetched_d.to_dict()

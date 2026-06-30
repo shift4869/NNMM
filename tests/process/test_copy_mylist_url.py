@@ -67,46 +67,6 @@ class TestCopyMylistUrl(unittest.TestCase):
             res.append(d)
         return res
 
-    def _make_table_row_list(self, mylist_url) -> list[list[str]]:
-        """テーブル情報動画データセット"""
-        NUM = 5
-        res = []
-        table_cols_name = [
-            "No.",
-            "動画ID",
-            "動画名",
-            "投稿者",
-            "状況",
-            "投稿日時",
-            "登録日時",
-            "動画URL",
-            "所属マイリストURL",
-        ]
-        for k in range(NUM):
-            for i in range(NUM):
-                # MylistInfo + showname系
-                number = i + (k * NUM) + 1
-                video_id = f"sm{k + 1}000000{i + 1}"
-                title = f"動画タイトル{k + 1}_{i + 1}"
-                username = f"投稿者{k + 1}"
-                status = "未視聴"
-                uploaded_at = f"2026-02-02 0{k + 1}:00:0{i + 1}"
-                registered_at = f"2026-02-03 0{k + 1}:00:0{i + 1}"
-                video_url = f"https://www.nicovideo.jp/watch/sm{k + 1}000000{i + 1}"
-                table_rows = [
-                    number,
-                    video_id,
-                    title,
-                    username,
-                    status,
-                    uploaded_at,
-                    registered_at,
-                    video_url,
-                    mylist_url,
-                ]
-                res.append(table_rows)
-        return res
-
     def test_init(self):
         instance = self._get_instance()
         self.assertEqual(self.process_info, instance.process_info)

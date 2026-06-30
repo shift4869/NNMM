@@ -82,9 +82,7 @@ class TestVideoInfoFetcher(unittest.IsolatedAsyncioTestCase):
         mock_path: MagicMock = self.enterContext(
             patch("nnmm.video_info_fetcher.video_info_fetcher.Path.open", mock_open())
         )
-        mock_fvi = self.enterContext(
-            patch("nnmm.video_info_fetcher.video_info_fetcher.FetchedVideoInfo")
-        )
+        mock_fvi = self.enterContext(patch("nnmm.video_info_fetcher.video_info_fetcher.FetchedVideoInfo"))
 
         response_text = "response_text"
         urls = self._get_url_set()
@@ -165,17 +163,17 @@ class TestVideoInfoFetcher(unittest.IsolatedAsyncioTestCase):
                 mock_path.assert_not_called()
                 return
 
-            self.assertEqual([call(response_text)], mock_analysis.mock_calls)
-            if not is_valid_title_list:
-                mock_config.assert_not_called()
-                mock_path.assert_not_called()
-                return
-
             if not is_valid_config:
                 self.assertEqual(
                     [call()],
                     mock_config.mock_calls,
                 )
+                mock_path.assert_not_called()
+                return
+
+            self.assertEqual([call(response_text)], mock_analysis.mock_calls)
+            if not is_valid_title_list:
+                mock_config.assert_not_called()
                 mock_path.assert_not_called()
                 return
 
@@ -192,7 +190,7 @@ class TestVideoInfoFetcher(unittest.IsolatedAsyncioTestCase):
             if is_valid_write:
                 self.assertEqual(
                     [
-                        call("w", encoding="utf-8"),
+                        call(mode="w", encoding="utf-8", errors=None, newline=None),
                         call().__enter__(),
                         call().write(response_text),
                         call().__exit__(None, None, None),
@@ -216,12 +214,10 @@ class TestVideoInfoFetcher(unittest.IsolatedAsyncioTestCase):
         )
         params_list = [
             Params(True, True, True, True, "mylistid", True),
-            # Params(True, True, True, True, "", True),
-            # Params(True, True, True, True, "mylistid", False),
-            # Params(True, True, True, False, "mylistid", True),
-            # Params(True, True, False, True, "mylistid", True),
-            # Params(True, False, True, True, "mylistid", True),
-            # Params(False, True, True, True, "mylistid", True),
+            Params(True, True, True, True, "", True),
+            Params(True, True, True, True, "mylistid", False),
+            Params(True, True, True, False, "mylistid", True),
+            Params(False, True, True, True, "mylistid", True),
         ]
 
         for params in params_list:
