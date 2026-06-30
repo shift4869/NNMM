@@ -30,7 +30,7 @@ class UserMylistURL(MylistURL):
     USER_MYLIST_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/mylist/([0-9]+)$"
 
     # マイリスト情報を取得するエンドポイントベース
-    USER_MYLIST_API_ENDPOINT_BASE = "https://nvapi.nicovideo.jp/v2/mylists/"
+    USER_MYLIST_API_ENDPOINT_BASE = "https://nvapi.nicovideo.jp/v2/mylists/{}?pageSize=100&page=1"
 
     def __init__(self, url: str | Self) -> None:
         super().__init__(url)
@@ -45,7 +45,7 @@ class UserMylistURL(MylistURL):
 
         要user_sessionクッキー
         """
-        fetch_url = self.USER_MYLIST_API_ENDPOINT_BASE + self.mylistid.id
+        fetch_url = self.USER_MYLIST_API_ENDPOINT_BASE.format(self.mylistid.id)
         return fetch_url
 
     @property

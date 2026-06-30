@@ -18,7 +18,9 @@ class TestUserMylistURL(unittest.TestCase):
         mylist_url = UserMylistURL(url)
         self.assertEqual(url.non_query_url, mylist_url.non_query_url)
         self.assertEqual(url.original_url, mylist_url.original_url)
-        self.assertEqual(UserMylistURL.USER_MYLIST_API_ENDPOINT_BASE + mylist_url.mylistid.id, mylist_url.fetch_url)
+        self.assertEqual(
+            UserMylistURL.USER_MYLIST_API_ENDPOINT_BASE.format(mylist_url.mylistid.id), mylist_url.fetch_url
+        )
 
         non_query_url = mylist_url.non_query_url
         userid, mylistid = re.findall(UserMylistURL.USER_MYLIST_URL_PATTERN, non_query_url)[0]

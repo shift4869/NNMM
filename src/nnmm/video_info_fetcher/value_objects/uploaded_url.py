@@ -29,7 +29,9 @@ class UploadedURL(MylistURL):
     UPLOADED_URL_PATTERN = "^https://www.nicovideo.jp/user/([0-9]+)/video$"
 
     # マイリスト情報を取得するエンドポイントベース
-    UPLOADED_API_ENDPOINT_BASE = "https://nvapi.nicovideo.jp/v3/users/{}/videos"
+    UPLOADED_API_ENDPOINT_BASE = (
+        "https://nvapi.nicovideo.jp/v3/users/{}/videos?pageSize=100&page=1&sortKey=registeredAt&sortOrder=desc"
+    )
 
     def __init__(self, url: str | Self) -> None:
         super().__init__(url)
